@@ -70,7 +70,7 @@ Do:
 - Port referensi UI dari `velzon` melalui compat adapter tipis dan review ulang asset yang benar-benar diperlukan.
 - Gunakan namespace `appShell` bila menyentuh `PUT /settings/theme`.
 - Jika modul baru menambah opsi shell, ikuti shape canonical `appShell` ala Velzon penuh; jangan membuat namespace preferensi baru untuk tenant atau admin.
-- Untuk field tenant settings, pisahkan domain organisasi tenant dari account user dan pertahankan route di `/t/{tenant}/settings/*`.
+- Untuk field tenant settings, pisahkan domain organisasi tenant dari account user dan pertahankan route di `https://{tenant}.appsah.my.id/settings/*`.
 - Untuk unauthorized state tenant workspace, pertahankan pola forbidden cover yang konsisten; jangan menggantinya dengan modal generik.
 
 Don't:

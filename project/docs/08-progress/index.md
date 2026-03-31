@@ -13,6 +13,7 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 | Subscription | In Progress | 85% | Platform Team | 2026-03-30 | [Subscription Progress](./modules/subscription.md) |
 | Tenant Settings | In Progress | 90% | Platform Team | 2026-03-30 | Tenant profile, billing, localization, dan branding upload per tenant sudah aktif; tersisa verifikasi browser/E2E visual. |
 | WhatsApp | Done | 100% | Integration Team | 2026-03-31 | [WhatsApp Progress](./modules/whatsapp.md) (cursor pagination 15/batch, 401 recovery, PM2 Reverb profile, auto-command ping/help, settings command guide, guard 1 connected_jid lintas tenant) |
+| Routing & Websocket | Done | 100% | Platform Team | 2026-03-31 | Migrasi dari path-based (/t/{tenant}) ke subdomain-based ({tenant}.appsah.my.id), perbaikan CORS Inertia, dan dynamisasi Reverb WSS. |
 
 ## Top Global Blocker
 

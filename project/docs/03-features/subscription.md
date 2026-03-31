@@ -15,7 +15,7 @@ flowchart TD
   A["Tenant request feature"] --> B["tenant.feature:module,action"]
   B --> C{"Plan allows?"}
   C -->|Yes| D["Controller execute"]
-  C -->|No web| E["Redirect /t/{tenant}/upgrade-required"]
+  C -->|No web| E["Redirect https://{tenant}.appsah.my.id/upgrade-required"]
   C -->|No api| F["403 FEATURE_NOT_AVAILABLE"]
   D --> G{"Quota check?"}
   G -->|limit reached| H["422 PLAN_QUOTA_EXCEEDED"]
@@ -26,7 +26,7 @@ flowchart TD
 
 | UI/API | Route | Middleware | Backend |
 |---|---|---|---|
-| Tenant feature pages | `/t/{tenant}/*` | `tenant.feature:*` | `TenantWorkspaceController` |
+| Tenant feature pages | `https://{tenant}.appsah.my.id/*` | `tenant.feature:*` | `TenantWorkspaceController` |
 | Tenant API mutation | `/api/v1/tenants/{tenant}/*` | `tenant.feature:*` + throttle | `Tenant*ApiController` |
 | Admin subscription panel | `/admin/tenants/subscriptions` | `superadmin.only` | `TenantSubscriptionController` |
 

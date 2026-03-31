@@ -12,7 +12,7 @@ Stack utama:
 
 - Core shell aktif hanya terdiri dari `Auth`, `Tenant`, `Admin`, dan `Landing`.
 - Logged-in app (`Tenant`, `Admin`, dan halaman account`) memakai satu shared shell di `resources/js/app-shell/*`.
-- Account user tetap berada di `/profile*`, sedangkan pengaturan organisasi tenant hidup di `/t/{tenant}/settings/*`.
+- Account user tetap berada di `/profile*`, sedangkan pengaturan organisasi tenant hidup di `https://{tenant}.appsah.my.id/settings/*`.
 - Wrapper `Auth` dan `Landing` tetap terpisah, tetapi memakai visual system yang sama: token, typography, component styling, dan spacing mengikuti fondasi Velzon yang sama.
 - Persistensi shell sekarang memakai satu namespace `ui_preferences.appShell` dengan kontrak layout penuh ala Velzon (`layoutType`, `layoutModeType`, `layoutWidthType`, `leftsidbarSizeType`, `leftSidebarType`, dan pasangan state shell terkait).
 - Navigasi tenant/admin berasal dari satu source of truth: `resources/js/common/shellNavigation.ts`.
@@ -21,10 +21,10 @@ Stack utama:
 ## Tenant Settings Domain
 
 - Tenant settings production-grade sekarang dipisah menjadi empat surface:
-  - `/t/{tenant}/settings/profile`
-  - `/t/{tenant}/settings/branding`
-  - `/t/{tenant}/settings/localization`
-  - `/t/{tenant}/settings/billing`
+  - `https://{tenant}.appsah.my.id/settings/profile`
+  - `https://{tenant}.appsah.my.id/settings/branding`
+  - `https://{tenant}.appsah.my.id/settings/localization`
+  - `https://{tenant}.appsah.my.id/settings/billing`
 - Access model untuk surface ini berbasis permission matrix:
   - `tenant.settings.view`
   - `tenant.settings.manage`
@@ -104,7 +104,7 @@ flowchart LR
   - `/landing`
   - auth screens
 - Route tenant:
-  - `/t/{tenant}/*` dengan `tenant.initialize`, `tenant.access`, `permission.team`, dan `tenant.feature:*`
+  - `https://{tenant}.appsah.my.id/*` dengan `tenant.initialize`, `tenant.access`, `permission.team`, dan `tenant.feature:*`
   - tenant settings dikecualikan dari `tenant.feature:*` karena sifatnya adalah kontrol organisasi inti, bukan module entitlement
 - Route admin:
   - `/admin/*` dengan `superadmin.only`

@@ -13,7 +13,7 @@ RBAC di project ini memastikan akses per-tenant dengan kombinasi:
 
 ```mermaid
 flowchart TD
-  A["User request /t/{tenant}/roles"] --> B["tenant.initialize"]
+  A["User request https://{tenant}.appsah.my.id/roles"] --> B["tenant.initialize"]
   B --> C["tenant.access"]
   C --> D["permission.team"]
   D --> E["tenant.feature:team.roles,view"]
@@ -26,7 +26,7 @@ flowchart TD
 
 | UI | Route | Middleware Kunci | Backend |
 |---|---|---|---|
-| Roles page | `GET /t/{tenant}/roles` | `tenant.initialize`, `tenant.access`, `permission.team`, `tenant.feature:team.roles,view` | `TenantWorkspaceController::roles` |
+| Roles page | `GET https://{tenant}.appsah.my.id/roles` | `tenant.initialize`, `tenant.access`, `permission.team`, `tenant.feature:team.roles,view` | `TenantWorkspaceController::roles` |
 | Roles API list | `GET /api/v1/tenants/{tenant}/roles` | sama + `auth:sanctum` | `TenantRoleApiController::index`, `TenantRolePolicy::viewAny` |
 | Update role permissions | `PATCH /api/v1/tenants/{tenant}/roles/{role}/permissions` | `tenant.feature:team.roles,assign` | `TenantRoleApiController::updatePermissions`, `TenantRolePolicy::assignPermissions` |
 

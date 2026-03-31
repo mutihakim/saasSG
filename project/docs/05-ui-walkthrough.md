@@ -8,18 +8,18 @@ Dokumen ini memetakan halaman UI ke route dan backend contract untuk mempercepat
 
 | UI Page | Inertia Page | Web Route | Guard Kunci |
 |---|---|---|---|
-| Dashboard | `Tenant/Dashboard` | `/t/{tenant}/dashboard` | `tenant.feature:dashboard,view` |
-| Members | `Tenant/Members/Index` | `/t/{tenant}/members` | `tenant.feature:team.members,view` |
-| Roles | `Tenant/Roles/Index` | `/t/{tenant}/roles` | `tenant.feature:team.roles,view` |
-| Invitations | `Tenant/Invitations/Index` | `/t/{tenant}/invitations` | `tenant.feature:team.invitations,view` |
-| WhatsApp Settings | `Tenant/WhatsApp/Settings` | `/t/{tenant}/whatsapp/settings` | `tenant.feature:whatsapp.settings,view` |
-| WhatsApp Chats | `Tenant/WhatsApp/Chats` | `/t/{tenant}/whatsapp/chats` | `tenant.feature:whatsapp.chats,view` |
-| Settings landing | redirect | `/t/{tenant}/settings` | `tenant.initialize`, `tenant.access`, `permission.team` |
-| Organization Profile | `Tenant/Settings/Profile` | `/t/{tenant}/settings/profile` | `tenant.initialize`, `tenant.access`, `permission.team`, controller permission check |
-| Branding | `Tenant/Settings/Branding` | `/t/{tenant}/settings/branding` | `tenant.initialize`, `tenant.access`, `permission.team`, controller permission check |
-| Localization | `Tenant/Settings/Localization` | `/t/{tenant}/settings/localization` | `tenant.initialize`, `tenant.access`, `permission.team`, controller permission check |
-| Billing | `Tenant/Settings/Billing` | `/t/{tenant}/settings/billing` | `tenant.initialize`, `tenant.access`, `permission.team`, controller permission check |
-| Upgrade Required | `Tenant/UpgradeRequired` | `/t/{tenant}/upgrade-required` | redirect dari `tenant.feature` |
+| Dashboard | `Tenant/Dashboard` | `https://{tenant}.appsah.my.id/dashboard` | `tenant.feature:dashboard,view` |
+| Members | `Tenant/Members/Index` | `https://{tenant}.appsah.my.id/members` | `tenant.feature:team.members,view` |
+| Roles | `Tenant/Roles/Index` | `https://{tenant}.appsah.my.id/roles` | `tenant.feature:team.roles,view` |
+| Invitations | `Tenant/Invitations/Index` | `https://{tenant}.appsah.my.id/invitations` | `tenant.feature:team.invitations,view` |
+| WhatsApp Settings | `Tenant/WhatsApp/Settings` | `https://{tenant}.appsah.my.id/whatsapp/settings` | `tenant.feature:whatsapp.settings,view` |
+| WhatsApp Chats | `Tenant/WhatsApp/Chats` | `https://{tenant}.appsah.my.id/whatsapp/chats` | `tenant.feature:whatsapp.chats,view` |
+| Settings landing | redirect | `https://{tenant}.appsah.my.id/settings` | `tenant.initialize`, `tenant.access`, `permission.team` |
+| Organization Profile | `Tenant/Settings/Profile` | `https://{tenant}.appsah.my.id/settings/profile` | `tenant.initialize`, `tenant.access`, `permission.team`, controller permission check |
+| Branding | `Tenant/Settings/Branding` | `https://{tenant}.appsah.my.id/settings/branding` | `tenant.initialize`, `tenant.access`, `permission.team`, controller permission check |
+| Localization | `Tenant/Settings/Localization` | `https://{tenant}.appsah.my.id/settings/localization` | `tenant.initialize`, `tenant.access`, `permission.team`, controller permission check |
+| Billing | `Tenant/Settings/Billing` | `https://{tenant}.appsah.my.id/settings/billing` | `tenant.initialize`, `tenant.access`, `permission.team`, controller permission check |
+| Upgrade Required | `Tenant/UpgradeRequired` | `https://{tenant}.appsah.my.id/upgrade-required` | redirect dari `tenant.feature` |
 
 ## Admin Area
 
