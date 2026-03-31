@@ -69,9 +69,9 @@ class TenantSubscriptionGuardTest extends TestCase
         [$tenant, $user] = $this->seedTenant('free');
 
         $response = $this->actingAs($user)
-            ->get("/t/{$tenant->slug}/invitations");
+            ->get(route('tenant.invitations', $tenant->slug));
 
-        $response->assertRedirect("/t/{$tenant->slug}/upgrade-required?module=team.invitations");
+        $response->assertRedirect(route('tenant.upgrade.required', ['tenant' => $tenant->slug, 'module' => 'team.invitations']));
     }
 
     public function test_roles_web_route_returns_forbidden_cover_for_unauthorized_member(): void
@@ -89,7 +89,7 @@ class TenantSubscriptionGuardTest extends TestCase
         ]);
 
         $response = $this->actingAs($memberUser)
-            ->get("/t/{$tenant->slug}/roles");
+            ->get(route('tenant.roles', $tenant->slug));
 
         $response->assertStatus(403);
         $response->assertInertia(fn (Assert $page) => $page->component('Tenant/Forbidden'));
@@ -111,7 +111,7 @@ class TenantSubscriptionGuardTest extends TestCase
         ]);
 
         $response = $this->actingAs($memberUser)
-            ->get("/t/{$tenant->slug}/whatsapp/settings");
+            ->get(route('tenant.whatsapp.settings', $tenant->slug));
 
         $response->assertStatus(403);
         $response->assertInertia(fn (Assert $page) => $page->component('Tenant/Forbidden'));

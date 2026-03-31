@@ -25,10 +25,11 @@ class AuthenticationTest extends TestCase
         $response = $this->post('/login', [
             'email' => $user->email,
             'password' => 'password',
-        ]);
+        ], ['X-Inertia' => 'true']);
 
         $this->assertAuthenticated();
-        $response->assertRedirect(RouteServiceProvider::HOME);
+        $response->assertStatus(409);
+        $this->assertEquals(url(RouteServiceProvider::HOME), $response->headers->get('X-Inertia-Location'));
     }
 
     public function test_users_can_not_authenticate_with_invalid_password(): void
@@ -47,9 +48,10 @@ class AuthenticationTest extends TestCase
     {
         $user = User::factory()->create();
 
-        $response = $this->actingAs($user)->post('/logout');
+        $response = $this->actingAs($user)->post('/logout', [], ['X-Inertia' => 'true']);
 
         $this->assertGuest();
-        $response->assertRedirect('/');
+        $response->assertStatus(409);
+        $this->assertEquals(config('app.url'), $response->headers->get('X-Inertia-Location'));
     }
 }

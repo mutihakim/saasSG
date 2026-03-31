@@ -65,7 +65,7 @@ class AuthenticatedSessionController extends Controller
         }
 
         $url = session()->pull('url.intended', $target);
-        return Inertia::location($url);
+        return Inertia::location(url($url));
     }
 
     /**

@@ -50,7 +50,7 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request, TenantProvisioningService $provisioningService, TurnstileService $turnstile): RedirectResponse
+    public function store(Request $request, TenantProvisioningService $provisioningService, TurnstileService $turnstile): mixed
     {
         $request->validate([
             'name' => 'required|string|max:255',
@@ -115,7 +115,7 @@ class RegisteredUserController extends Controller
             ->first();
 
         if ($membership?->tenant?->slug) {
-            return redirect("/t/{$membership->tenant->slug}/dashboard");
+            return Inertia::location(route('tenant.dashboard', ['tenant' => $membership->tenant->slug]));
         }
 
         return redirect('/tenant-access-required');

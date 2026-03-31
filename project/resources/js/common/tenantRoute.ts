@@ -6,14 +6,14 @@ function buildTenantPath(slug: string | undefined, isSuperadmin: boolean, path =
     return `//${slug}.appsah.my.id${normalized}`;
 }
 
-function tenantSlugFromPath(pathname: string): string | undefined {
+function tenantSlugFromPath(): string | undefined {
     const match = window.location.hostname.match(/^([^.]+)\.appsah\.my\.id/);
     return match?.[1];
 }
 
 export function useTenantRoute() {
     const page = usePage<any>();
-    const slug = page.props.currentTenant?.slug ?? tenantSlugFromPath(window.location.pathname);
+    const slug = page.props.currentTenant?.slug ?? tenantSlugFromPath();
     const isSuperadmin = Boolean(page.props.auth?.user?.is_superadmin);
 
     return {
