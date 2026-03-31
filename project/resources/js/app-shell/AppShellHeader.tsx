@@ -28,7 +28,7 @@ function resolveHomeLink(props: SharedPageProps) {
     }
 
     if (props.currentTenant?.slug) {
-        return `/t/${props.currentTenant.slug}/dashboard`;
+        return '/dashboard';
     }
 
     return '/tenant-access-required';

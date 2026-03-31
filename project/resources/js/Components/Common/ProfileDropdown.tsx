@@ -16,7 +16,7 @@ export default function ProfileDropdown() {
         const slugFromPath = window.location.pathname.match(/^\/t\/([^/]+)/)?.[1];
         const tenantSlug = props.currentTenant?.slug ?? slugFromPath;
 
-        return tenantSlug ? `/t/${tenantSlug}/dashboard` : '/tenant-access-required';
+        return tenantSlug ? '/dashboard' : '/tenant-access-required';
     }, [props.currentTenant?.slug]);
 
     if (!user) {

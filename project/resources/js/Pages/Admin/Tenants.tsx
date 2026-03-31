@@ -41,7 +41,7 @@ function TenantsPage({ tenants }: Props) {
         setLoadingTenantId(tenant.id);
         try {
             await axios.post(`/admin/impersonations/${targetId}`);
-            window.location.href = `/t/${tenant.slug}/dashboard`;
+            window.location.href = `//${tenant.slug}.appsah.my.id/dashboard`;
         } catch (err: any) {
             const parsed = parseApiError(err, t('admin.notifications.impersonation_start_failed_title'));
             notify.error({
@@ -110,62 +110,62 @@ function TenantsPage({ tenants }: Props) {
             >
                 <Card className="border-0 shadow-none mb-0">
                     <Card.Body className="p-0">
-                    <div className="table-responsive">
-                        <Table className="align-middle mb-0">
-                            <thead className="table-light">
-                                <tr>
-                                    <th>Tenant</th>
-                                    <th>Status</th>
-                                    <th>Plan</th>
-                                    <th>Owner</th>
-                                    <th className="text-end">Actions</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {tenants.map((tenant) => (
-                                    <tr key={tenant.id}>
-                                        <td>
-                                            <div className="fw-semibold">{tenant.name}</div>
-                                            <small className="text-muted">{tenant.slug}</small>
-                                        </td>
-                                        <td>
-                                            <Badge bg={tenant.status === 'active' ? 'success-subtle' : 'warning-subtle'} text={tenant.status === 'active' ? 'success' : 'warning'} className="text-capitalize">
-                                                {tenant.status}
-                                            </Badge>
-                                        </td>
-                                        <td className="text-capitalize">{tenant.plan_code}</td>
-                                        <td>
-                                            {tenant.owner ? (
-                                                <>
-                                                    <div>{tenant.owner.name}</div>
-                                                    <small className="text-muted">{tenant.owner.email}</small>
-                                                </>
-                                            ) : (
-                                                <span className="text-muted">-</span>
-                                            )}
-                                        </td>
-                                        <td className="text-end">
-                                            <Link href={`/t/${tenant.slug}/dashboard`} className="btn btn-soft-primary btn-sm me-2">
-                                                Open Read-only
-                                            </Link>
-                                            <Button
-                                                size="sm"
-                                                variant="soft-warning"
-                                                className="me-2"
-                                                disabled={loadingTenantId === tenant.id}
-                                                onClick={() => impersonate(tenant)}
-                                            >
-                                                Impersonate Owner
-                                            </Button>
-                                            <Link href="/admin/tenants/subscriptions" className="btn btn-soft-info btn-sm">
-                                                Manage Subscription
-                                            </Link>
-                                        </td>
+                        <div className="table-responsive">
+                            <Table className="align-middle mb-0">
+                                <thead className="table-light">
+                                    <tr>
+                                        <th>Tenant</th>
+                                        <th>Status</th>
+                                        <th>Plan</th>
+                                        <th>Owner</th>
+                                        <th className="text-end">Actions</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </Table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {tenants.map((tenant) => (
+                                        <tr key={tenant.id}>
+                                            <td>
+                                                <div className="fw-semibold">{tenant.name}</div>
+                                                <small className="text-muted">{tenant.slug}</small>
+                                            </td>
+                                            <td>
+                                                <Badge bg={tenant.status === 'active' ? 'success-subtle' : 'warning-subtle'} text={tenant.status === 'active' ? 'success' : 'warning'} className="text-capitalize">
+                                                    {tenant.status}
+                                                </Badge>
+                                            </td>
+                                            <td className="text-capitalize">{tenant.plan_code}</td>
+                                            <td>
+                                                {tenant.owner ? (
+                                                    <>
+                                                        <div>{tenant.owner.name}</div>
+                                                        <small className="text-muted">{tenant.owner.email}</small>
+                                                    </>
+                                                ) : (
+                                                    <span className="text-muted">-</span>
+                                                )}
+                                            </td>
+                                            <td className="text-end">
+                                                <a href={`//${tenant.slug}.appsah.my.id/dashboard`} className="btn btn-soft-primary btn-sm me-2">
+                                                    Open Read-only
+                                                </a>
+                                                <Button
+                                                    size="sm"
+                                                    variant="soft-warning"
+                                                    className="me-2"
+                                                    disabled={loadingTenantId === tenant.id}
+                                                    onClick={() => impersonate(tenant)}
+                                                >
+                                                    Impersonate Owner
+                                                </Button>
+                                                <Link href="/admin/tenants/subscriptions" className="btn btn-soft-info btn-sm">
+                                                    Manage Subscription
+                                                </Link>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </Table>
+                        </div>
                     </Card.Body>
                 </Card>
             </CompatPageSection>
