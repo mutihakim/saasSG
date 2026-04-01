@@ -36,7 +36,10 @@ class HandleInertiaRequests extends Middleware
     public function share(Request $request): array
     {
         $entitlementService = app(SubscriptionEntitlements::class);
-        $isAdminArea = $request->is('admin') || $request->is('admin/*');
+        $host = $request->getHost();
+        $centralDomains = config('tenancy.central_domains', []);
+        $isCentralDomain = in_array($host, $centralDomains);
+        $isAdminArea = ($request->is('admin') || $request->is('admin/*')) && $isCentralDomain;
         $tenant = $request->attributes->get('currentTenant');
         $user = $request->user();
 

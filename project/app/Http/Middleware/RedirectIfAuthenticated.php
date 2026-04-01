@@ -35,7 +35,19 @@ class RedirectIfAuthenticated
                     ->first();
 
                 if ($membership?->tenant?->slug) {
-                    return redirect("/t/{$membership->tenant->slug}/dashboard");
+                    $centralDomain = 'appsah.my.id'; // Default central domain
+                    $host = $request->getHost();
+                    $centralDomains = config('tenancy.central_domains', []);
+                    
+                    // Identify which central domain we are on
+                    foreach ($centralDomains as $cd) {
+                        if (str_contains($host, $cd)) {
+                            $centralDomain = $cd;
+                            break;
+                        }
+                    }
+                    
+                    return redirect()->away("https://{$membership->tenant->slug}.{$centralDomain}/admin/dashboard");
                 }
 
                 return redirect('/tenant-access-required');

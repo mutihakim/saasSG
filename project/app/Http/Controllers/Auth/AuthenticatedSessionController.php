@@ -59,8 +59,16 @@ class AuthenticatedSessionController extends Controller
                 ->first();
 
             if ($membership?->tenant?->slug) {
-                // Generate full absolute URL to subdomain dashboard
-                $target = route('tenant.dashboard', ['tenant' => $membership->tenant->slug]);
+                $centralDomain = 'appsah.my.id';
+                $host = $request->getHost();
+                $centralDomains = config('tenancy.central_domains', []);
+                foreach ($centralDomains as $cd) {
+                    if (str_contains($host, $cd)) {
+                        $centralDomain = $cd;
+                        break;
+                    }
+                }
+                $target = "https://{$membership->tenant->slug}.{$centralDomain}/admin/dashboard";
             }
         }
 
