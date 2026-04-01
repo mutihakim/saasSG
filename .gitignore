@@ -16,7 +16,6 @@ Thumbs.db
 
 # Build / output
 dist/
-build/
 
 # Monorepo-specific runtime/build artifacts
 services/whatsapp/.wwebjs_cache/

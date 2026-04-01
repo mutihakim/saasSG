@@ -1,0 +1,1 @@
+import{j as t,R as r}from"./app-CxUChzFE.js";const a=e=>t.jsx(r.Fragment,{children:e.getValue()}),s=e=>t.jsx(r.Fragment,{children:e.getValue()}),u=e=>t.jsx(r.Fragment,{children:e.getValue()}),c=e=>t.jsx(r.Fragment,{children:e.getValue()});export{s as AvgPrice,u as CurrentValue,a as Quantity,c as Returns};

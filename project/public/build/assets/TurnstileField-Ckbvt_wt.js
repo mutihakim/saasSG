@@ -1,0 +1,1 @@
+import{j as e,f as t}from"./react-vendor-DXQcTQFn.js";function o({enabled:n,siteKey:s,onVerify:r}){return!n||!s?null:e.jsx("div",{className:"my-3",children:e.jsx(t,{siteKey:s,onSuccess:r,options:{theme:"light"}})})}export{o as T};
