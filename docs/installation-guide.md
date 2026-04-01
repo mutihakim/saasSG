@@ -188,3 +188,35 @@ cd ../services/whatsapp && pm2 start pm2.config.js
 
 pm2 save
 ```
+
+---
+
+## 10. Troubleshooting & Tips (Migrasi/Kloning)
+
+Berikut adalah beberapa kendala umum yang ditemukan saat melakukan kloning proyek ke instansi baru:
+
+### 1. Missing Dependencies (Vendor & Node Modules)
+Pastikan folder `vendor` dan `node_modules` tersedia di setiap sub-folder aplikasi (`project/`, `velzon/Saas/`, `services/whatsapp/`). Jika melakukan kloning manual, Anda wajib menjalankan `composer install` dan `npm install`, atau menyalinnya secara rekursif (`cp -r`) dari instansi yang sudah ada.
+
+### 2. Izin Akses Folder (Permissions)
+Web server (User `www-data`) harus memiliki hak akses tulis pada folder berikut agar tidak terjadi Error 500:
+```bash
+sudo chown -R www-data:www-data storage bootstrap/cache
+sudo chmod -R 775 storage bootstrap/cache
+```
+
+### 3. Kendala Database SQLite Bersama
+Jika dua instansi berbagi satu file SQLite (misal untuk demo Velzon), pastikan file `.sqlite` dan folder `database/` tempat file itu berada dimiliki oleh `www-data` agar bisa dibaca dan ditulis:
+```bash
+sudo chown www-data:www-data /path/to/database/database.sqlite
+sudo chmod 664 /path/to/database/database.sqlite
+```
+
+### 4. Konfigurasi Reverb (WebSocket)
+Untuk menghindari error "Authentication signature invalid", gunakan konfigurasi **Dual Host**:
+- **Internal (Broadcast)**: `REVERB_HOST=127.0.0.1` dan `REVERB_SCHEME=http`.
+- **External (Vite)**: `VITE_REVERB_HOST=domain.com`, `VITE_REVERB_PORT=443`, `VITE_REVERB_SCHEME=https`.
+Pastikan menjalankan `npm run build` setelah mengubah variabel `VITE_`.
+
+### 5. WhatsApp Service Callback
+Pastikan `WHATSAPP_SERVICE_URL` di `.env` aplikasi utama mengarah ke port yang benar (misal `3026`) dan gunakan IP lokal (`127.0.0.1`) agar lebih cepat dan stabil.
