@@ -1,0 +1,19 @@
+{
+    "name": "family2",
+    "version": "1.0.0",
+    "private": true,
+    "type": "module",
+    "description": "Family SaaS Application Monorepo",
+    "scripts": {
+        "docs:dev": "vitepress dev docs",
+        "docs:build": "vitepress build docs",
+        "docs:preview": "vitepress preview docs",
+        "project:dev": "npm run dev --prefix project",
+        "project:build": "npm run build --prefix project",
+        "velzon:dev": "npm run dev --prefix velzon/Saas",
+        "velzon:build": "npm run build --prefix velzon/Saas"
+    },
+    "devDependencies": {
+        "vitepress": "^1.0.0"
+    }
+}
