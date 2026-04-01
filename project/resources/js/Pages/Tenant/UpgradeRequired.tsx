@@ -52,7 +52,7 @@ function UpgradeRequired() {
                                 <Button variant="light" onClick={() => window.history.back()}>
                                     {t('Back')}
                                 </Button>
-                                <Button href={tenantRoute.to('/dashboard')}>
+                                <Button href={tenantRoute.to('/admin/dashboard')}>
                                     {t('tenant.errors.actions.back_to_dashboard')}
                                 </Button>
                             </div>

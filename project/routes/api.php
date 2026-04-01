@@ -15,7 +15,7 @@ Route::prefix('v1')
     ->group(function () {
         Route::post('/tenants', [TenantLifecycleApiController::class, 'createTenant'])->middleware('throttle:tenant.mutation');
 
-        Route::middleware(['tenant.initialize', 'tenant.access', 'permission.team'])
+        Route::middleware(['tenant.resolve', 'tenant.access', 'permission.team'])
             ->prefix('tenants/{tenant}')
             ->group(function () {
                 Route::get('/members', [TenantMemberApiController::class, 'index'])->middleware('tenant.feature:team.members,view');

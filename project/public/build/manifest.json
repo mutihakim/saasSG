@@ -3,16 +3,16 @@
     "file": "assets/AppShellLayout-Bxv5fQ1d.css",
     "src": "_AppShellLayout-!~{00S}~.js"
   },
-  "_AppShellLayout-C2X8gwTl.js": {
-    "file": "assets/AppShellLayout-C2X8gwTl.js",
+  "_AppShellLayout-Cn4C8hh5.js": {
+    "file": "assets/AppShellLayout-Cn4C8hh5.js",
     "name": "AppShellLayout",
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_ApplicationLogo-CpxND3MK.js",
+      "_ApplicationLogo-i6QfSmcq.js",
       "_avatar-1-PHP4S1R6.js"
     ],
     "css": [
@@ -20,12 +20,12 @@
     ],
     "assets": [
       "assets/favicon-Tl-PrZVt.ico",
+      "assets/id-JCxZqgZB.svg",
+      "assets/us-C8Qg3PI3.svg",
       "assets/img-1-C6VsSbnm.jpg",
       "assets/img-2-B0ULeiCa.jpg",
       "assets/img-3-h1U1KdmN.jpg",
       "assets/img-4-iSVl4_tu.jpg",
-      "assets/id-JCxZqgZB.svg",
-      "assets/us-C8Qg3PI3.svg",
       "assets/materialdesignicons-webfont-Cd51xsCA.eot",
       "assets/materialdesignicons-webfont-DsMmahHu.woff2",
       "assets/materialdesignicons-webfont-BqTIB9TP.woff",
@@ -58,43 +58,43 @@
       "assets/modal-bg-lSTJOrdl.png"
     ]
   },
-  "_ApplicationLogo-CpxND3MK.js": {
-    "file": "assets/ApplicationLogo-CpxND3MK.js",
+  "_ApplicationLogo-i6QfSmcq.js": {
+    "file": "assets/ApplicationLogo-i6QfSmcq.js",
     "name": "ApplicationLogo",
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js"
+      "_inertia-BF-sYduu.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js"
     ],
     "assets": [
-      "assets/appsah-logo-sm-C_2SwDY3.png"
+      "assets/logo-sm-C_2SwDY3.png"
     ]
   },
-  "_GuestLayout-CxpL9DZK.js": {
-    "file": "assets/GuestLayout-CxpL9DZK.js",
+  "_GuestLayout-BOy6WYHp.js": {
+    "file": "assets/GuestLayout-BOy6WYHp.js",
     "name": "GuestLayout",
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_ApplicationLogo-CpxND3MK.js",
+      "_ApplicationLogo-i6QfSmcq.js",
       "_ui-kit-Da4e3fbB.js"
     ]
   },
-  "_TenantLayout-CZLY6Kwk.js": {
-    "file": "assets/TenantLayout-CZLY6Kwk.js",
+  "_TenantLayout-CS-QyS_3.js": {
+    "file": "assets/TenantLayout-CS-QyS_3.js",
     "name": "TenantLayout",
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_AppShellLayout-C2X8gwTl.js"
+      "_AppShellLayout-Cn4C8hh5.js"
     ]
   },
-  "_TenantPageTitle-BuiA3T5G.js": {
-    "file": "assets/TenantPageTitle-BuiA3T5G.js",
+  "_TenantPageTitle-CV73exWy.js": {
+    "file": "assets/TenantPageTitle-CV73exWy.js",
     "name": "TenantPageTitle",
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_tenantRoute-BW2dtBGA.js",
+      "_inertia-BF-sYduu.js",
+      "_tenantRoute-LZmcInrE.js",
       "_i18n-Bb1Pbb_g.js"
     ]
   },
@@ -116,18 +116,18 @@
     "file": "assets/app-vendor-CD-HSM4U.js",
     "name": "app-vendor"
   },
-  "_appsah-logo-dark-BgH3pkWm.js": {
-    "file": "assets/appsah-logo-dark-BgH3pkWm.js",
+  "_appsah-logo-dark-Dh4DV6bR.js": {
+    "file": "assets/appsah-logo-dark-Dh4DV6bR.js",
     "name": "appsah-logo-dark",
     "assets": [
-      "assets/appsah-logo-dark-DEgjC4YH.png"
+      "assets/logo-dark-DEgjC4YH.png"
     ]
   },
-  "_appsah-logo-light-CeJKZvI_.js": {
-    "file": "assets/appsah-logo-light-CeJKZvI_.js",
+  "_appsah-logo-light-l2wwNDet.js": {
+    "file": "assets/appsah-logo-light-l2wwNDet.js",
     "name": "appsah-logo-light",
     "assets": [
-      "assets/appsah-logo-light-ClrpaeKd.png"
+      "assets/logo-light-ClrpaeKd.png"
     ]
   },
   "_autoplay-!~{012}~.js": {
@@ -180,8 +180,8 @@
       "_react-vendor-DXQcTQFn.js"
     ]
   },
-  "_inertia--Wtx3N6k.js": {
-    "file": "assets/inertia--Wtx3N6k.js",
+  "_inertia-BF-sYduu.js": {
+    "file": "assets/inertia-BF-sYduu.js",
     "name": "inertia",
     "imports": [
       "_app-vendor-CD-HSM4U.js",
@@ -237,11 +237,11 @@
       "assets/react-vendor-SHj6Nzvp.css"
     ]
   },
-  "_tenantRoute-BW2dtBGA.js": {
-    "file": "assets/tenantRoute-BW2dtBGA.js",
+  "_tenantRoute-LZmcInrE.js": {
+    "file": "assets/tenantRoute-LZmcInrE.js",
     "name": "tenantRoute",
     "imports": [
-      "_inertia--Wtx3N6k.js"
+      "_inertia-BF-sYduu.js"
     ]
   },
   "_ui-kit-Da4e3fbB.js": {
@@ -272,6 +272,66 @@
   "resources/fonts/boxicons.woff2": {
     "file": "assets/boxicons-CeGEncwm.woff2",
     "src": "resources/fonts/boxicons.woff2"
+  },
+  "resources/fonts/hkgrotesk-bold.ttf": {
+    "file": "assets/hkgrotesk-bold-DfZ8A5MJ.ttf",
+    "src": "resources/fonts/hkgrotesk-bold.ttf"
+  },
+  "resources/fonts/hkgrotesk-bold.woff": {
+    "file": "assets/hkgrotesk-bold-CNnIfM9m.woff",
+    "src": "resources/fonts/hkgrotesk-bold.woff"
+  },
+  "resources/fonts/hkgrotesk-bold.woff2": {
+    "file": "assets/hkgrotesk-bold-6ttUrHGX.woff2",
+    "src": "resources/fonts/hkgrotesk-bold.woff2"
+  },
+  "resources/fonts/hkgrotesk-light.eot": {
+    "file": "assets/hkgrotesk-light-CFOlwwJU.eot",
+    "src": "resources/fonts/hkgrotesk-light.eot"
+  },
+  "resources/fonts/hkgrotesk-light.woff": {
+    "file": "assets/hkgrotesk-light-Bch7Jc8H.woff",
+    "src": "resources/fonts/hkgrotesk-light.woff"
+  },
+  "resources/fonts/hkgrotesk-light.woff2": {
+    "file": "assets/hkgrotesk-light-D-IvdBaW.woff2",
+    "src": "resources/fonts/hkgrotesk-light.woff2"
+  },
+  "resources/fonts/hkgrotesk-medium.eot": {
+    "file": "assets/hkgrotesk-medium-DhAVEcVM.eot",
+    "src": "resources/fonts/hkgrotesk-medium.eot"
+  },
+  "resources/fonts/hkgrotesk-medium.woff": {
+    "file": "assets/hkgrotesk-medium-CPEAN8-4.woff",
+    "src": "resources/fonts/hkgrotesk-medium.woff"
+  },
+  "resources/fonts/hkgrotesk-medium.woff2": {
+    "file": "assets/hkgrotesk-medium-Uuv9AilU.woff2",
+    "src": "resources/fonts/hkgrotesk-medium.woff2"
+  },
+  "resources/fonts/hkgrotesk-regular.eot": {
+    "file": "assets/hkgrotesk-regular-C5FQFgYW.eot",
+    "src": "resources/fonts/hkgrotesk-regular.eot"
+  },
+  "resources/fonts/hkgrotesk-regular.woff": {
+    "file": "assets/hkgrotesk-regular-BONCcfZ_.woff",
+    "src": "resources/fonts/hkgrotesk-regular.woff"
+  },
+  "resources/fonts/hkgrotesk-regular.woff2": {
+    "file": "assets/hkgrotesk-regular-CTvFlCD0.woff2",
+    "src": "resources/fonts/hkgrotesk-regular.woff2"
+  },
+  "resources/fonts/hkgrotesk-semibold.eot": {
+    "file": "assets/hkgrotesk-semibold-D2R7JsFz.eot",
+    "src": "resources/fonts/hkgrotesk-semibold.eot"
+  },
+  "resources/fonts/hkgrotesk-semibold.woff": {
+    "file": "assets/hkgrotesk-semibold-CaqhRViJ.woff",
+    "src": "resources/fonts/hkgrotesk-semibold.woff"
+  },
+  "resources/fonts/hkgrotesk-semibold.woff2": {
+    "file": "assets/hkgrotesk-semibold-Dc-_Vk5k.woff2",
+    "src": "resources/fonts/hkgrotesk-semibold.woff2"
   },
   "resources/fonts/la-brands-400.eot": {
     "file": "assets/la-brands-400-LN4CMlGg.eot",
@@ -357,6 +417,10 @@
     "file": "assets/remixicon-Dm70R5XZ.svg",
     "src": "resources/fonts/remixicon.svg"
   },
+  "resources/fonts/remixicon.symbol.svg": {
+    "file": "assets/remixicon.symbol-KRROSsn7.svg",
+    "src": "resources/fonts/remixicon.symbol.svg"
+  },
   "resources/fonts/remixicon.ttf": {
     "file": "assets/remixicon-DIVZIXW2.ttf",
     "src": "resources/fonts/remixicon.ttf"
@@ -369,25 +433,65 @@
     "file": "assets/remixicon-B83Wci9r.woff2",
     "src": "resources/fonts/remixicon.woff2"
   },
+  "resources/fonts/summernote.eot": {
+    "file": "assets/summernote-B1N06S7p.eot",
+    "src": "resources/fonts/summernote.eot"
+  },
+  "resources/fonts/summernote.ttf": {
+    "file": "assets/summernote-8zP0c0sh.ttf",
+    "src": "resources/fonts/summernote.ttf"
+  },
+  "resources/fonts/summernote.woff": {
+    "file": "assets/summernote-BqZWhL_b.woff",
+    "src": "resources/fonts/summernote.woff"
+  },
+  "resources/images/404-error.png": {
+    "file": "assets/404-error-BjIXfBUI.png",
+    "src": "resources/images/404-error.png"
+  },
+  "resources/images/about.jpg": {
+    "file": "assets/about-CLyLYak9.jpg",
+    "src": "resources/images/about.jpg"
+  },
   "resources/images/appsah-logo-dark.png": {
-    "file": "assets/appsah-logo-dark-DEgjC4YH.png",
-    "src": "resources/images/appsah-logo-dark.png"
+    "file": "assets/logo-dark-DEgjC4YH.png",
+    "src": "resources/images/logo-dark.png"
   },
   "resources/images/appsah-logo-light.png": {
-    "file": "assets/appsah-logo-light-ClrpaeKd.png",
-    "src": "resources/images/appsah-logo-light.png"
+    "file": "assets/logo-light-ClrpaeKd.png",
+    "src": "resources/images/logo-light.png"
   },
   "resources/images/appsah-logo-sm.png": {
-    "file": "assets/appsah-logo-sm-C_2SwDY3.png",
-    "src": "resources/images/appsah-logo-sm.png"
+    "file": "assets/logo-sm-C_2SwDY3.png",
+    "src": "resources/images/logo-sm.png"
+  },
+  "resources/images/auth-offline.gif": {
+    "file": "assets/auth-offline-C35CvTay.gif",
+    "src": "resources/images/auth-offline.gif"
   },
   "resources/images/auth-one-bg.jpg": {
     "file": "assets/auth-one-bg-B8I8eEkd.jpg",
     "src": "resources/images/auth-one-bg.jpg"
   },
+  "resources/images/bg-auth.jpg": {
+    "file": "assets/bg-auth-DaX8npbL.jpg",
+    "src": "resources/images/bg-auth.jpg"
+  },
+  "resources/images/bg-d.png": {
+    "file": "assets/bg-d-Dga_prX8.png",
+    "src": "resources/images/bg-d.png"
+  },
   "resources/images/chat-bg-pattern.png": {
     "file": "assets/chat-bg-pattern-Wh8Pe75p.png",
     "src": "resources/images/chat-bg-pattern.png"
+  },
+  "resources/images/coming-soon-img.png": {
+    "file": "assets/coming-soon-img-BmZnXhcP.png",
+    "src": "resources/images/coming-soon-img.png"
+  },
+  "resources/images/comingsoon.png": {
+    "file": "assets/comingsoon-age3OYGO.png",
+    "src": "resources/images/comingsoon.png"
   },
   "resources/images/cover-pattern.png": {
     "file": "assets/cover-pattern-CzcjCYXt.png",
@@ -421,25 +525,1153 @@
     "file": "assets/saas-DuEIPsS_.png",
     "src": "resources/images/demos/saas.png"
   },
+  "resources/images/error.svg": {
+    "file": "assets/error-DDEd8Ao5.svg",
+    "src": "resources/images/error.svg"
+  },
   "resources/images/error400-cover.png": {
     "file": "assets/error400-cover-2FE8Pq_7.png",
     "src": "resources/images/error400-cover.png"
+  },
+  "resources/images/error500.png": {
+    "file": "assets/error500-Bu0WTsOs.png",
+    "src": "resources/images/error500.png"
+  },
+  "resources/images/faq-img.png": {
+    "file": "assets/faq-img-DpB9erTr.png",
+    "src": "resources/images/faq-img.png"
   },
   "resources/images/favicon.ico": {
     "file": "assets/favicon-Tl-PrZVt.ico",
     "src": "resources/images/favicon.ico"
   },
+  "resources/images/file.png": {
+    "file": "assets/file-UUcTCh9r.png",
+    "src": "resources/images/file.png"
+  },
+  "resources/images/flags/ac.svg": {
+    "file": "assets/ac-D7D9PYwJ.svg",
+    "src": "resources/images/flags/ac.svg"
+  },
+  "resources/images/flags/ad.svg": {
+    "file": "assets/ad-BLNJJBny.svg",
+    "src": "resources/images/flags/ad.svg"
+  },
+  "resources/images/flags/ae.svg": {
+    "file": "assets/ae-9VMosuIo.svg",
+    "src": "resources/images/flags/ae.svg"
+  },
+  "resources/images/flags/af.svg": {
+    "file": "assets/af-DB5PZ-uQ.svg",
+    "src": "resources/images/flags/af.svg"
+  },
+  "resources/images/flags/ag.svg": {
+    "file": "assets/ag-BuOaTByT.svg",
+    "src": "resources/images/flags/ag.svg"
+  },
+  "resources/images/flags/ai.svg": {
+    "file": "assets/ai-BZFnw-fc.svg",
+    "src": "resources/images/flags/ai.svg"
+  },
+  "resources/images/flags/al.svg": {
+    "file": "assets/al-CILYWioi.svg",
+    "src": "resources/images/flags/al.svg"
+  },
+  "resources/images/flags/am.svg": {
+    "file": "assets/am-Brwuaa2u.svg",
+    "src": "resources/images/flags/am.svg"
+  },
+  "resources/images/flags/ao.svg": {
+    "file": "assets/ao-BdhsxdlM.svg",
+    "src": "resources/images/flags/ao.svg"
+  },
+  "resources/images/flags/aq.svg": {
+    "file": "assets/aq-DBYM-ScO.svg",
+    "src": "resources/images/flags/aq.svg"
+  },
+  "resources/images/flags/ar.svg": {
+    "file": "assets/ar-o406yzIH.svg",
+    "src": "resources/images/flags/ar.svg"
+  },
+  "resources/images/flags/as.svg": {
+    "file": "assets/as-BBWb0VLV.svg",
+    "src": "resources/images/flags/as.svg"
+  },
+  "resources/images/flags/at.svg": {
+    "file": "assets/at-Bd1UH8n6.svg",
+    "src": "resources/images/flags/at.svg"
+  },
+  "resources/images/flags/au.svg": {
+    "file": "assets/au-Bdo1ETlp.svg",
+    "src": "resources/images/flags/au.svg"
+  },
+  "resources/images/flags/aw.svg": {
+    "file": "assets/aw-DCnzCFAp.svg",
+    "src": "resources/images/flags/aw.svg"
+  },
+  "resources/images/flags/ax.svg": {
+    "file": "assets/ax-Bly_ijXn.svg",
+    "src": "resources/images/flags/ax.svg"
+  },
+  "resources/images/flags/az.svg": {
+    "file": "assets/az-PtLKWgfN.svg",
+    "src": "resources/images/flags/az.svg"
+  },
+  "resources/images/flags/ba.svg": {
+    "file": "assets/ba-Dbx9Aran.svg",
+    "src": "resources/images/flags/ba.svg"
+  },
+  "resources/images/flags/bb.svg": {
+    "file": "assets/bb-AWGobXc7.svg",
+    "src": "resources/images/flags/bb.svg"
+  },
+  "resources/images/flags/bd.svg": {
+    "file": "assets/bd-DvPoLH3C.svg",
+    "src": "resources/images/flags/bd.svg"
+  },
+  "resources/images/flags/be.svg": {
+    "file": "assets/be-hI05Ag8w.svg",
+    "src": "resources/images/flags/be.svg"
+  },
+  "resources/images/flags/bf.svg": {
+    "file": "assets/bf-DCbfaYlw.svg",
+    "src": "resources/images/flags/bf.svg"
+  },
+  "resources/images/flags/bg.svg": {
+    "file": "assets/bg-xQluPOC1.svg",
+    "src": "resources/images/flags/bg.svg"
+  },
+  "resources/images/flags/bh.svg": {
+    "file": "assets/bh-DgfmyT2n.svg",
+    "src": "resources/images/flags/bh.svg"
+  },
+  "resources/images/flags/bi.svg": {
+    "file": "assets/bi-cELXgJIL.svg",
+    "src": "resources/images/flags/bi.svg"
+  },
+  "resources/images/flags/bj.svg": {
+    "file": "assets/bj-DD8Q8hnh.svg",
+    "src": "resources/images/flags/bj.svg"
+  },
+  "resources/images/flags/bl.svg": {
+    "file": "assets/bl-Ci30-2xD.svg",
+    "src": "resources/images/flags/bl.svg"
+  },
+  "resources/images/flags/bm.svg": {
+    "file": "assets/bm-7XrHt736.svg",
+    "src": "resources/images/flags/bm.svg"
+  },
+  "resources/images/flags/bn.svg": {
+    "file": "assets/bn-4XPSpXLE.svg",
+    "src": "resources/images/flags/bn.svg"
+  },
+  "resources/images/flags/bo.svg": {
+    "file": "assets/bo-BTFWTlxR.svg",
+    "src": "resources/images/flags/bo.svg"
+  },
+  "resources/images/flags/bq.svg": {
+    "file": "assets/bq-SWpsjb2t.svg",
+    "src": "resources/images/flags/bq.svg"
+  },
+  "resources/images/flags/br.svg": {
+    "file": "assets/br-BevDKjWV.svg",
+    "src": "resources/images/flags/br.svg"
+  },
+  "resources/images/flags/bs.svg": {
+    "file": "assets/bs-BgOo3iga.svg",
+    "src": "resources/images/flags/bs.svg"
+  },
+  "resources/images/flags/bt.svg": {
+    "file": "assets/bt-BMyVy5ha.svg",
+    "src": "resources/images/flags/bt.svg"
+  },
+  "resources/images/flags/bv.svg": {
+    "file": "assets/bv-DBWzRaf_.svg",
+    "src": "resources/images/flags/bv.svg"
+  },
+  "resources/images/flags/bw.svg": {
+    "file": "assets/bw-jLG8_gP0.svg",
+    "src": "resources/images/flags/bw.svg"
+  },
+  "resources/images/flags/by.svg": {
+    "file": "assets/by-CwdMuTEh.svg",
+    "src": "resources/images/flags/by.svg"
+  },
+  "resources/images/flags/bz.svg": {
+    "file": "assets/bz-DAlR05u-.svg",
+    "src": "resources/images/flags/bz.svg"
+  },
+  "resources/images/flags/ca.svg": {
+    "file": "assets/ca-kBTgXJhY.svg",
+    "src": "resources/images/flags/ca.svg"
+  },
+  "resources/images/flags/cc.svg": {
+    "file": "assets/cc-BoFpkC_Y.svg",
+    "src": "resources/images/flags/cc.svg"
+  },
+  "resources/images/flags/cd.svg": {
+    "file": "assets/cd-B0jl4T-h.svg",
+    "src": "resources/images/flags/cd.svg"
+  },
+  "resources/images/flags/cefta.svg": {
+    "file": "assets/cefta-DHVXp2yN.svg",
+    "src": "resources/images/flags/cefta.svg"
+  },
+  "resources/images/flags/cf.svg": {
+    "file": "assets/cf-BANLBjqx.svg",
+    "src": "resources/images/flags/cf.svg"
+  },
+  "resources/images/flags/cg.svg": {
+    "file": "assets/cg-CY-wjH_B.svg",
+    "src": "resources/images/flags/cg.svg"
+  },
+  "resources/images/flags/ch.svg": {
+    "file": "assets/ch-Do8WoVrp.svg",
+    "src": "resources/images/flags/ch.svg"
+  },
+  "resources/images/flags/china.svg": {
+    "file": "assets/china-CfxzUT3W.svg",
+    "src": "resources/images/flags/china.svg"
+  },
+  "resources/images/flags/ci.svg": {
+    "file": "assets/ci-Cn5asHD7.svg",
+    "src": "resources/images/flags/ci.svg"
+  },
+  "resources/images/flags/ck.svg": {
+    "file": "assets/ck-VjQ-vT4C.svg",
+    "src": "resources/images/flags/ck.svg"
+  },
+  "resources/images/flags/cl.svg": {
+    "file": "assets/cl-BBUJYbm0.svg",
+    "src": "resources/images/flags/cl.svg"
+  },
+  "resources/images/flags/cm.svg": {
+    "file": "assets/cm-bV3dLVvd.svg",
+    "src": "resources/images/flags/cm.svg"
+  },
+  "resources/images/flags/cn.svg": {
+    "file": "assets/cn-h7PJQWyb.svg",
+    "src": "resources/images/flags/cn.svg"
+  },
+  "resources/images/flags/co.svg": {
+    "file": "assets/co-BRjxMuCM.svg",
+    "src": "resources/images/flags/co.svg"
+  },
+  "resources/images/flags/cp.svg": {
+    "file": "assets/cp-B_BR0ZRs.svg",
+    "src": "resources/images/flags/cp.svg"
+  },
+  "resources/images/flags/cr.svg": {
+    "file": "assets/cr-CcuKkUIo.svg",
+    "src": "resources/images/flags/cr.svg"
+  },
+  "resources/images/flags/cu.svg": {
+    "file": "assets/cu-DIJP0Oen.svg",
+    "src": "resources/images/flags/cu.svg"
+  },
+  "resources/images/flags/cv.svg": {
+    "file": "assets/cv-Cs4q_s-7.svg",
+    "src": "resources/images/flags/cv.svg"
+  },
+  "resources/images/flags/cw.svg": {
+    "file": "assets/cw-HRo-y3zf.svg",
+    "src": "resources/images/flags/cw.svg"
+  },
+  "resources/images/flags/cx.svg": {
+    "file": "assets/cx-jda5tbm9.svg",
+    "src": "resources/images/flags/cx.svg"
+  },
+  "resources/images/flags/cy.svg": {
+    "file": "assets/cy-b_QUXiYZ.svg",
+    "src": "resources/images/flags/cy.svg"
+  },
+  "resources/images/flags/cz.svg": {
+    "file": "assets/cz-CgTuLLXv.svg",
+    "src": "resources/images/flags/cz.svg"
+  },
+  "resources/images/flags/de.svg": {
+    "file": "assets/de-BksKoY6L.svg",
+    "src": "resources/images/flags/de.svg"
+  },
+  "resources/images/flags/dg.svg": {
+    "file": "assets/dg-BY0wnCJB.svg",
+    "src": "resources/images/flags/dg.svg"
+  },
+  "resources/images/flags/dj.svg": {
+    "file": "assets/dj-O8f-LXCA.svg",
+    "src": "resources/images/flags/dj.svg"
+  },
+  "resources/images/flags/dk.svg": {
+    "file": "assets/dk-2cglAULc.svg",
+    "src": "resources/images/flags/dk.svg"
+  },
+  "resources/images/flags/dm.svg": {
+    "file": "assets/dm-BH40T9J5.svg",
+    "src": "resources/images/flags/dm.svg"
+  },
+  "resources/images/flags/do.svg": {
+    "file": "assets/do-De-QhrzZ.svg",
+    "src": "resources/images/flags/do.svg"
+  },
+  "resources/images/flags/dz.svg": {
+    "file": "assets/dz-EwXBYPv9.svg",
+    "src": "resources/images/flags/dz.svg"
+  },
+  "resources/images/flags/ea.svg": {
+    "file": "assets/ea-Do3OdSQn.svg",
+    "src": "resources/images/flags/ea.svg"
+  },
+  "resources/images/flags/ec.svg": {
+    "file": "assets/ec-4yhEjDNG.svg",
+    "src": "resources/images/flags/ec.svg"
+  },
+  "resources/images/flags/ee.svg": {
+    "file": "assets/ee-Cg_xYV4v.svg",
+    "src": "resources/images/flags/ee.svg"
+  },
+  "resources/images/flags/eg.svg": {
+    "file": "assets/eg-DDHs6Djq.svg",
+    "src": "resources/images/flags/eg.svg"
+  },
+  "resources/images/flags/eh.svg": {
+    "file": "assets/eh-CPVcpsdx.svg",
+    "src": "resources/images/flags/eh.svg"
+  },
+  "resources/images/flags/er.svg": {
+    "file": "assets/er-DM1IsQ_0.svg",
+    "src": "resources/images/flags/er.svg"
+  },
+  "resources/images/flags/es-ct.svg": {
+    "file": "assets/es-ct-DdzobtBd.svg",
+    "src": "resources/images/flags/es-ct.svg"
+  },
+  "resources/images/flags/es-ga.svg": {
+    "file": "assets/es-ga-CU_CA1R8.svg",
+    "src": "resources/images/flags/es-ga.svg"
+  },
+  "resources/images/flags/es.svg": {
+    "file": "assets/es--B7UgIMY.svg",
+    "src": "resources/images/flags/es.svg"
+  },
+  "resources/images/flags/et.svg": {
+    "file": "assets/et-rRm3cQB2.svg",
+    "src": "resources/images/flags/et.svg"
+  },
+  "resources/images/flags/eu.svg": {
+    "file": "assets/eu-Bbe-Wr3m.svg",
+    "src": "resources/images/flags/eu.svg"
+  },
+  "resources/images/flags/fi.svg": {
+    "file": "assets/fi-RTQrUSqw.svg",
+    "src": "resources/images/flags/fi.svg"
+  },
+  "resources/images/flags/fj.svg": {
+    "file": "assets/fj-BtT2JxDW.svg",
+    "src": "resources/images/flags/fj.svg"
+  },
+  "resources/images/flags/fk.svg": {
+    "file": "assets/fk-B5sf-drt.svg",
+    "src": "resources/images/flags/fk.svg"
+  },
+  "resources/images/flags/fm.svg": {
+    "file": "assets/fm-fzAkPW-D.svg",
+    "src": "resources/images/flags/fm.svg"
+  },
+  "resources/images/flags/fo.svg": {
+    "file": "assets/fo-qcRkq4yZ.svg",
+    "src": "resources/images/flags/fo.svg"
+  },
+  "resources/images/flags/fr.svg": {
+    "file": "assets/fr-CaPytDrd.svg",
+    "src": "resources/images/flags/fr.svg"
+  },
+  "resources/images/flags/french.svg": {
+    "file": "assets/french-DQlGhQN-.svg",
+    "src": "resources/images/flags/french.svg"
+  },
+  "resources/images/flags/ga.svg": {
+    "file": "assets/ga-CgNkrnfv.svg",
+    "src": "resources/images/flags/ga.svg"
+  },
+  "resources/images/flags/gb-eng.svg": {
+    "file": "assets/gb-eng-DTHmDHq3.svg",
+    "src": "resources/images/flags/gb-eng.svg"
+  },
+  "resources/images/flags/gb-nir.svg": {
+    "file": "assets/gb-nir-CXfsz-Vr.svg",
+    "src": "resources/images/flags/gb-nir.svg"
+  },
+  "resources/images/flags/gb-sct.svg": {
+    "file": "assets/gb-sct-D5L2FKKv.svg",
+    "src": "resources/images/flags/gb-sct.svg"
+  },
+  "resources/images/flags/gb-wls.svg": {
+    "file": "assets/gb-wls-lLp_JivI.svg",
+    "src": "resources/images/flags/gb-wls.svg"
+  },
+  "resources/images/flags/gb.svg": {
+    "file": "assets/gb-B7feHi7O.svg",
+    "src": "resources/images/flags/gb.svg"
+  },
+  "resources/images/flags/gd.svg": {
+    "file": "assets/gd-pSS-3osU.svg",
+    "src": "resources/images/flags/gd.svg"
+  },
+  "resources/images/flags/ge.svg": {
+    "file": "assets/ge-CkgMv3g1.svg",
+    "src": "resources/images/flags/ge.svg"
+  },
+  "resources/images/flags/germany.svg": {
+    "file": "assets/germany-DuTwLQZe.svg",
+    "src": "resources/images/flags/germany.svg"
+  },
+  "resources/images/flags/gf.svg": {
+    "file": "assets/gf-DmPBKJy6.svg",
+    "src": "resources/images/flags/gf.svg"
+  },
+  "resources/images/flags/gg.svg": {
+    "file": "assets/gg-C92b0skB.svg",
+    "src": "resources/images/flags/gg.svg"
+  },
+  "resources/images/flags/gh.svg": {
+    "file": "assets/gh-DtAqzRIB.svg",
+    "src": "resources/images/flags/gh.svg"
+  },
+  "resources/images/flags/gi.svg": {
+    "file": "assets/gi-DxULXcyh.svg",
+    "src": "resources/images/flags/gi.svg"
+  },
+  "resources/images/flags/gl.svg": {
+    "file": "assets/gl-D6qP-fnE.svg",
+    "src": "resources/images/flags/gl.svg"
+  },
+  "resources/images/flags/gm.svg": {
+    "file": "assets/gm-DI7EpeCC.svg",
+    "src": "resources/images/flags/gm.svg"
+  },
+  "resources/images/flags/gn.svg": {
+    "file": "assets/gn-kt7YA1XT.svg",
+    "src": "resources/images/flags/gn.svg"
+  },
+  "resources/images/flags/gp.svg": {
+    "file": "assets/gp-DfFO2Tto.svg",
+    "src": "resources/images/flags/gp.svg"
+  },
+  "resources/images/flags/gq.svg": {
+    "file": "assets/gq-7TPEDItK.svg",
+    "src": "resources/images/flags/gq.svg"
+  },
+  "resources/images/flags/gr.svg": {
+    "file": "assets/gr-CQ2eZRhu.svg",
+    "src": "resources/images/flags/gr.svg"
+  },
+  "resources/images/flags/gs.svg": {
+    "file": "assets/gs-PfxFHEJt.svg",
+    "src": "resources/images/flags/gs.svg"
+  },
+  "resources/images/flags/gt.svg": {
+    "file": "assets/gt-Dmwnvp_6.svg",
+    "src": "resources/images/flags/gt.svg"
+  },
+  "resources/images/flags/gu.svg": {
+    "file": "assets/gu-2lXXtQYh.svg",
+    "src": "resources/images/flags/gu.svg"
+  },
+  "resources/images/flags/gw.svg": {
+    "file": "assets/gw-C7WtB2Gz.svg",
+    "src": "resources/images/flags/gw.svg"
+  },
+  "resources/images/flags/gy.svg": {
+    "file": "assets/gy-DqVe45bs.svg",
+    "src": "resources/images/flags/gy.svg"
+  },
+  "resources/images/flags/hk.svg": {
+    "file": "assets/hk-DmlAlDm3.svg",
+    "src": "resources/images/flags/hk.svg"
+  },
+  "resources/images/flags/hm.svg": {
+    "file": "assets/hm-qv4alcAr.svg",
+    "src": "resources/images/flags/hm.svg"
+  },
+  "resources/images/flags/hn.svg": {
+    "file": "assets/hn-CGK2wPJs.svg",
+    "src": "resources/images/flags/hn.svg"
+  },
+  "resources/images/flags/hr.svg": {
+    "file": "assets/hr-DKOqx_KX.svg",
+    "src": "resources/images/flags/hr.svg"
+  },
+  "resources/images/flags/ht.svg": {
+    "file": "assets/ht-CJQ6cFWH.svg",
+    "src": "resources/images/flags/ht.svg"
+  },
+  "resources/images/flags/hu.svg": {
+    "file": "assets/hu-Bm8S5mAU.svg",
+    "src": "resources/images/flags/hu.svg"
+  },
+  "resources/images/flags/ic.svg": {
+    "file": "assets/ic-tiZZSA7Y.svg",
+    "src": "resources/images/flags/ic.svg"
+  },
   "resources/images/flags/id.svg": {
     "file": "assets/id-JCxZqgZB.svg",
     "src": "resources/images/flags/id.svg"
+  },
+  "resources/images/flags/ie.svg": {
+    "file": "assets/ie-DhxI4aJv.svg",
+    "src": "resources/images/flags/ie.svg"
+  },
+  "resources/images/flags/il.svg": {
+    "file": "assets/il-B8Gk93tR.svg",
+    "src": "resources/images/flags/il.svg"
+  },
+  "resources/images/flags/im.svg": {
+    "file": "assets/im-CvvgQOSS.svg",
+    "src": "resources/images/flags/im.svg"
+  },
+  "resources/images/flags/in.svg": {
+    "file": "assets/in-CEquytpT.svg",
+    "src": "resources/images/flags/in.svg"
+  },
+  "resources/images/flags/io.svg": {
+    "file": "assets/io-xmggvB2x.svg",
+    "src": "resources/images/flags/io.svg"
+  },
+  "resources/images/flags/iq.svg": {
+    "file": "assets/iq-Ci3fLikF.svg",
+    "src": "resources/images/flags/iq.svg"
+  },
+  "resources/images/flags/ir.svg": {
+    "file": "assets/ir-B-vhSQAr.svg",
+    "src": "resources/images/flags/ir.svg"
+  },
+  "resources/images/flags/is.svg": {
+    "file": "assets/is-Bcz4oQ9S.svg",
+    "src": "resources/images/flags/is.svg"
+  },
+  "resources/images/flags/it.svg": {
+    "file": "assets/it-lvp2tGC_.svg",
+    "src": "resources/images/flags/it.svg"
+  },
+  "resources/images/flags/italy.svg": {
+    "file": "assets/italy-CgLBnK95.svg",
+    "src": "resources/images/flags/italy.svg"
+  },
+  "resources/images/flags/je.svg": {
+    "file": "assets/je-DROji0q4.svg",
+    "src": "resources/images/flags/je.svg"
+  },
+  "resources/images/flags/jm.svg": {
+    "file": "assets/jm-DEJfu4RU.svg",
+    "src": "resources/images/flags/jm.svg"
+  },
+  "resources/images/flags/jo.svg": {
+    "file": "assets/jo-BRe7tnYX.svg",
+    "src": "resources/images/flags/jo.svg"
+  },
+  "resources/images/flags/jp.svg": {
+    "file": "assets/jp-DNMya8sE.svg",
+    "src": "resources/images/flags/jp.svg"
+  },
+  "resources/images/flags/ke.svg": {
+    "file": "assets/ke-Wodvgy_j.svg",
+    "src": "resources/images/flags/ke.svg"
+  },
+  "resources/images/flags/kg.svg": {
+    "file": "assets/kg-Dy6J6H2f.svg",
+    "src": "resources/images/flags/kg.svg"
+  },
+  "resources/images/flags/kh.svg": {
+    "file": "assets/kh-BVOcSw0F.svg",
+    "src": "resources/images/flags/kh.svg"
+  },
+  "resources/images/flags/ki.svg": {
+    "file": "assets/ki-C7IfIjhK.svg",
+    "src": "resources/images/flags/ki.svg"
+  },
+  "resources/images/flags/km.svg": {
+    "file": "assets/km-Cjvgn2KF.svg",
+    "src": "resources/images/flags/km.svg"
+  },
+  "resources/images/flags/kn.svg": {
+    "file": "assets/kn-C3Fp9e0_.svg",
+    "src": "resources/images/flags/kn.svg"
+  },
+  "resources/images/flags/kp.svg": {
+    "file": "assets/kp-BMteJhxq.svg",
+    "src": "resources/images/flags/kp.svg"
+  },
+  "resources/images/flags/kr.svg": {
+    "file": "assets/kr-CA3ljIEo.svg",
+    "src": "resources/images/flags/kr.svg"
+  },
+  "resources/images/flags/kw.svg": {
+    "file": "assets/kw-Csjhajr6.svg",
+    "src": "resources/images/flags/kw.svg"
+  },
+  "resources/images/flags/ky.svg": {
+    "file": "assets/ky-DZMQBKIs.svg",
+    "src": "resources/images/flags/ky.svg"
+  },
+  "resources/images/flags/kz.svg": {
+    "file": "assets/kz-B3eENQJu.svg",
+    "src": "resources/images/flags/kz.svg"
+  },
+  "resources/images/flags/la.svg": {
+    "file": "assets/la-a8NG4Y8T.svg",
+    "src": "resources/images/flags/la.svg"
+  },
+  "resources/images/flags/lb.svg": {
+    "file": "assets/lb-DV5L7avk.svg",
+    "src": "resources/images/flags/lb.svg"
+  },
+  "resources/images/flags/lc.svg": {
+    "file": "assets/lc-DKXV_NqL.svg",
+    "src": "resources/images/flags/lc.svg"
+  },
+  "resources/images/flags/li.svg": {
+    "file": "assets/li-ButdGxKa.svg",
+    "src": "resources/images/flags/li.svg"
+  },
+  "resources/images/flags/lk.svg": {
+    "file": "assets/lk-CqZzcQbX.svg",
+    "src": "resources/images/flags/lk.svg"
+  },
+  "resources/images/flags/lr.svg": {
+    "file": "assets/lr-njW_TzU3.svg",
+    "src": "resources/images/flags/lr.svg"
+  },
+  "resources/images/flags/ls.svg": {
+    "file": "assets/ls-CXnUmd8v.svg",
+    "src": "resources/images/flags/ls.svg"
+  },
+  "resources/images/flags/lt.svg": {
+    "file": "assets/lt-CU4QmtZ-.svg",
+    "src": "resources/images/flags/lt.svg"
+  },
+  "resources/images/flags/lu.svg": {
+    "file": "assets/lu-VEXvWBhh.svg",
+    "src": "resources/images/flags/lu.svg"
+  },
+  "resources/images/flags/lv.svg": {
+    "file": "assets/lv-DjyqV19Q.svg",
+    "src": "resources/images/flags/lv.svg"
+  },
+  "resources/images/flags/ly.svg": {
+    "file": "assets/ly-DCiZh9kE.svg",
+    "src": "resources/images/flags/ly.svg"
+  },
+  "resources/images/flags/ma.svg": {
+    "file": "assets/ma-BNn_BSaU.svg",
+    "src": "resources/images/flags/ma.svg"
+  },
+  "resources/images/flags/mc.svg": {
+    "file": "assets/mc-JhJMKfOk.svg",
+    "src": "resources/images/flags/mc.svg"
+  },
+  "resources/images/flags/md.svg": {
+    "file": "assets/md-Cz-vcLfl.svg",
+    "src": "resources/images/flags/md.svg"
+  },
+  "resources/images/flags/me.svg": {
+    "file": "assets/me-CRPx6jfh.svg",
+    "src": "resources/images/flags/me.svg"
+  },
+  "resources/images/flags/mf.svg": {
+    "file": "assets/mf-DAXQ_ZOW.svg",
+    "src": "resources/images/flags/mf.svg"
+  },
+  "resources/images/flags/mg.svg": {
+    "file": "assets/mg-DDrNyYWg.svg",
+    "src": "resources/images/flags/mg.svg"
+  },
+  "resources/images/flags/mh.svg": {
+    "file": "assets/mh-Ddrxsbqz.svg",
+    "src": "resources/images/flags/mh.svg"
+  },
+  "resources/images/flags/mk.svg": {
+    "file": "assets/mk-Cx9Yf_ZD.svg",
+    "src": "resources/images/flags/mk.svg"
+  },
+  "resources/images/flags/ml.svg": {
+    "file": "assets/ml-BBMGMlrT.svg",
+    "src": "resources/images/flags/ml.svg"
+  },
+  "resources/images/flags/mm.svg": {
+    "file": "assets/mm-DbZhPukv.svg",
+    "src": "resources/images/flags/mm.svg"
+  },
+  "resources/images/flags/mn.svg": {
+    "file": "assets/mn-BFXZsxAv.svg",
+    "src": "resources/images/flags/mn.svg"
+  },
+  "resources/images/flags/mo.svg": {
+    "file": "assets/mo-DIBS7EUb.svg",
+    "src": "resources/images/flags/mo.svg"
+  },
+  "resources/images/flags/mp.svg": {
+    "file": "assets/mp-DWCziwR1.svg",
+    "src": "resources/images/flags/mp.svg"
+  },
+  "resources/images/flags/mq.svg": {
+    "file": "assets/mq-d17zVMxj.svg",
+    "src": "resources/images/flags/mq.svg"
+  },
+  "resources/images/flags/mr.svg": {
+    "file": "assets/mr-CUTxDJBp.svg",
+    "src": "resources/images/flags/mr.svg"
+  },
+  "resources/images/flags/ms.svg": {
+    "file": "assets/ms-CCU60c2p.svg",
+    "src": "resources/images/flags/ms.svg"
+  },
+  "resources/images/flags/mt.svg": {
+    "file": "assets/mt-8i8lIqCl.svg",
+    "src": "resources/images/flags/mt.svg"
+  },
+  "resources/images/flags/mu.svg": {
+    "file": "assets/mu-B2mIIRce.svg",
+    "src": "resources/images/flags/mu.svg"
+  },
+  "resources/images/flags/mv.svg": {
+    "file": "assets/mv-BXI4x8em.svg",
+    "src": "resources/images/flags/mv.svg"
+  },
+  "resources/images/flags/mw.svg": {
+    "file": "assets/mw-81IepNBw.svg",
+    "src": "resources/images/flags/mw.svg"
+  },
+  "resources/images/flags/mx.svg": {
+    "file": "assets/mx-CQQIOxnH.svg",
+    "src": "resources/images/flags/mx.svg"
+  },
+  "resources/images/flags/my.svg": {
+    "file": "assets/my-BLFm8FK0.svg",
+    "src": "resources/images/flags/my.svg"
+  },
+  "resources/images/flags/mz.svg": {
+    "file": "assets/mz-b4CXFw8I.svg",
+    "src": "resources/images/flags/mz.svg"
+  },
+  "resources/images/flags/na.svg": {
+    "file": "assets/na-C9l4khdg.svg",
+    "src": "resources/images/flags/na.svg"
+  },
+  "resources/images/flags/nc.svg": {
+    "file": "assets/nc-DBcipKv1.svg",
+    "src": "resources/images/flags/nc.svg"
+  },
+  "resources/images/flags/ne.svg": {
+    "file": "assets/ne-Cium2f5G.svg",
+    "src": "resources/images/flags/ne.svg"
+  },
+  "resources/images/flags/nf.svg": {
+    "file": "assets/nf-CV85_wcL.svg",
+    "src": "resources/images/flags/nf.svg"
+  },
+  "resources/images/flags/ng.svg": {
+    "file": "assets/ng-CLL1nzMk.svg",
+    "src": "resources/images/flags/ng.svg"
+  },
+  "resources/images/flags/ni.svg": {
+    "file": "assets/ni-CpUnh1E3.svg",
+    "src": "resources/images/flags/ni.svg"
+  },
+  "resources/images/flags/nl.svg": {
+    "file": "assets/nl-BC8R4Z62.svg",
+    "src": "resources/images/flags/nl.svg"
+  },
+  "resources/images/flags/no.svg": {
+    "file": "assets/no-67wnnm5y.svg",
+    "src": "resources/images/flags/no.svg"
+  },
+  "resources/images/flags/np.svg": {
+    "file": "assets/np-lc_hXCRc.svg",
+    "src": "resources/images/flags/np.svg"
+  },
+  "resources/images/flags/nr.svg": {
+    "file": "assets/nr-BaWUququ.svg",
+    "src": "resources/images/flags/nr.svg"
+  },
+  "resources/images/flags/nu.svg": {
+    "file": "assets/nu-Dm-LLXct.svg",
+    "src": "resources/images/flags/nu.svg"
+  },
+  "resources/images/flags/nz.svg": {
+    "file": "assets/nz-CtGQ3bQb.svg",
+    "src": "resources/images/flags/nz.svg"
+  },
+  "resources/images/flags/om.svg": {
+    "file": "assets/om-gu3vKvLc.svg",
+    "src": "resources/images/flags/om.svg"
+  },
+  "resources/images/flags/pa.svg": {
+    "file": "assets/pa-CyG5_TF4.svg",
+    "src": "resources/images/flags/pa.svg"
+  },
+  "resources/images/flags/pe.svg": {
+    "file": "assets/pe-MCkS2C3O.svg",
+    "src": "resources/images/flags/pe.svg"
+  },
+  "resources/images/flags/pf.svg": {
+    "file": "assets/pf-pbIGO-zA.svg",
+    "src": "resources/images/flags/pf.svg"
+  },
+  "resources/images/flags/pg.svg": {
+    "file": "assets/pg-DMmkPxnM.svg",
+    "src": "resources/images/flags/pg.svg"
+  },
+  "resources/images/flags/ph.svg": {
+    "file": "assets/ph-tkdbn4OA.svg",
+    "src": "resources/images/flags/ph.svg"
+  },
+  "resources/images/flags/pk.svg": {
+    "file": "assets/pk-Dk1VtyQc.svg",
+    "src": "resources/images/flags/pk.svg"
+  },
+  "resources/images/flags/pl.svg": {
+    "file": "assets/pl-jl6riBSr.svg",
+    "src": "resources/images/flags/pl.svg"
+  },
+  "resources/images/flags/pm.svg": {
+    "file": "assets/pm-CzIfbOoc.svg",
+    "src": "resources/images/flags/pm.svg"
+  },
+  "resources/images/flags/pn.svg": {
+    "file": "assets/pn-zYWD89NL.svg",
+    "src": "resources/images/flags/pn.svg"
+  },
+  "resources/images/flags/pr.svg": {
+    "file": "assets/pr-Di972MN-.svg",
+    "src": "resources/images/flags/pr.svg"
+  },
+  "resources/images/flags/ps.svg": {
+    "file": "assets/ps-CvlEi3qU.svg",
+    "src": "resources/images/flags/ps.svg"
+  },
+  "resources/images/flags/pt.svg": {
+    "file": "assets/pt-B42nLpIC.svg",
+    "src": "resources/images/flags/pt.svg"
+  },
+  "resources/images/flags/pw.svg": {
+    "file": "assets/pw-CO-DAzMk.svg",
+    "src": "resources/images/flags/pw.svg"
+  },
+  "resources/images/flags/py.svg": {
+    "file": "assets/py-R1rCMiBw.svg",
+    "src": "resources/images/flags/py.svg"
+  },
+  "resources/images/flags/qa.svg": {
+    "file": "assets/qa-BNPyG8Oz.svg",
+    "src": "resources/images/flags/qa.svg"
+  },
+  "resources/images/flags/re.svg": {
+    "file": "assets/re-Bg1MZWMt.svg",
+    "src": "resources/images/flags/re.svg"
+  },
+  "resources/images/flags/ro.svg": {
+    "file": "assets/ro-C2av9jVe.svg",
+    "src": "resources/images/flags/ro.svg"
+  },
+  "resources/images/flags/rs.svg": {
+    "file": "assets/rs-CYGINAFO.svg",
+    "src": "resources/images/flags/rs.svg"
+  },
+  "resources/images/flags/ru.svg": {
+    "file": "assets/ru-BxWofXrV.svg",
+    "src": "resources/images/flags/ru.svg"
+  },
+  "resources/images/flags/russia.svg": {
+    "file": "assets/russia-DOIC_xbk.svg",
+    "src": "resources/images/flags/russia.svg"
+  },
+  "resources/images/flags/rw.svg": {
+    "file": "assets/rw-C8bwfGEc.svg",
+    "src": "resources/images/flags/rw.svg"
+  },
+  "resources/images/flags/sa.svg": {
+    "file": "assets/sa-dgfwY4lP.svg",
+    "src": "resources/images/flags/sa.svg"
+  },
+  "resources/images/flags/sb.svg": {
+    "file": "assets/sb-C0S13pjk.svg",
+    "src": "resources/images/flags/sb.svg"
+  },
+  "resources/images/flags/sc.svg": {
+    "file": "assets/sc-DFTNEfqs.svg",
+    "src": "resources/images/flags/sc.svg"
+  },
+  "resources/images/flags/sd.svg": {
+    "file": "assets/sd-C4QNIRG-.svg",
+    "src": "resources/images/flags/sd.svg"
+  },
+  "resources/images/flags/se.svg": {
+    "file": "assets/se-LJR7KPbG.svg",
+    "src": "resources/images/flags/se.svg"
+  },
+  "resources/images/flags/select2/ak.png": {
+    "file": "assets/ak-DFeqnZ8t.png",
+    "src": "resources/images/flags/select2/ak.png"
+  },
+  "resources/images/flags/select2/ca.png": {
+    "file": "assets/ca-B23j9gdW.png",
+    "src": "resources/images/flags/select2/ca.png"
+  },
+  "resources/images/flags/select2/hi.png": {
+    "file": "assets/hi-DqnA9hmp.png",
+    "src": "resources/images/flags/select2/hi.png"
+  },
+  "resources/images/flags/select2/nv.png": {
+    "file": "assets/nv-R4KQG1B9.png",
+    "src": "resources/images/flags/select2/nv.png"
+  },
+  "resources/images/flags/select2/or.png": {
+    "file": "assets/or-GH_VdW_q.png",
+    "src": "resources/images/flags/select2/or.png"
+  },
+  "resources/images/flags/select2/wa.png": {
+    "file": "assets/wa-DT_GPV8Z.png",
+    "src": "resources/images/flags/select2/wa.png"
+  },
+  "resources/images/flags/sg.svg": {
+    "file": "assets/sg-1StwqMyu.svg",
+    "src": "resources/images/flags/sg.svg"
+  },
+  "resources/images/flags/sh.svg": {
+    "file": "assets/sh-Du8unv9l.svg",
+    "src": "resources/images/flags/sh.svg"
+  },
+  "resources/images/flags/si.svg": {
+    "file": "assets/si-DFe7CBnO.svg",
+    "src": "resources/images/flags/si.svg"
+  },
+  "resources/images/flags/sj.svg": {
+    "file": "assets/sj-AM0BJ0qg.svg",
+    "src": "resources/images/flags/sj.svg"
+  },
+  "resources/images/flags/sk.svg": {
+    "file": "assets/sk-GNJEbusl.svg",
+    "src": "resources/images/flags/sk.svg"
+  },
+  "resources/images/flags/sl.svg": {
+    "file": "assets/sl-g6tI7b1i.svg",
+    "src": "resources/images/flags/sl.svg"
+  },
+  "resources/images/flags/sm.svg": {
+    "file": "assets/sm-ChSbRMAO.svg",
+    "src": "resources/images/flags/sm.svg"
+  },
+  "resources/images/flags/sn.svg": {
+    "file": "assets/sn-C4abx9Xn.svg",
+    "src": "resources/images/flags/sn.svg"
+  },
+  "resources/images/flags/so.svg": {
+    "file": "assets/so-4rzV2w1_.svg",
+    "src": "resources/images/flags/so.svg"
+  },
+  "resources/images/flags/spain.svg": {
+    "file": "assets/spain-CPPC24t_.svg",
+    "src": "resources/images/flags/spain.svg"
+  },
+  "resources/images/flags/sr.svg": {
+    "file": "assets/sr-CfMKAfua.svg",
+    "src": "resources/images/flags/sr.svg"
+  },
+  "resources/images/flags/ss.svg": {
+    "file": "assets/ss-BaOLQVHm.svg",
+    "src": "resources/images/flags/ss.svg"
+  },
+  "resources/images/flags/st.svg": {
+    "file": "assets/st-BPNWFo4C.svg",
+    "src": "resources/images/flags/st.svg"
+  },
+  "resources/images/flags/sv.svg": {
+    "file": "assets/sv-DY7qdIK2.svg",
+    "src": "resources/images/flags/sv.svg"
+  },
+  "resources/images/flags/sx.svg": {
+    "file": "assets/sx-Df7tElRn.svg",
+    "src": "resources/images/flags/sx.svg"
+  },
+  "resources/images/flags/sy.svg": {
+    "file": "assets/sy-C_k15Phj.svg",
+    "src": "resources/images/flags/sy.svg"
+  },
+  "resources/images/flags/sz.svg": {
+    "file": "assets/sz-xMHKiEik.svg",
+    "src": "resources/images/flags/sz.svg"
+  },
+  "resources/images/flags/ta.svg": {
+    "file": "assets/ta-DFc0l8q-.svg",
+    "src": "resources/images/flags/ta.svg"
+  },
+  "resources/images/flags/tc.svg": {
+    "file": "assets/tc-vHtBmY6O.svg",
+    "src": "resources/images/flags/tc.svg"
+  },
+  "resources/images/flags/td.svg": {
+    "file": "assets/td-DTceyj29.svg",
+    "src": "resources/images/flags/td.svg"
+  },
+  "resources/images/flags/tf.svg": {
+    "file": "assets/tf-Dg85Om7s.svg",
+    "src": "resources/images/flags/tf.svg"
+  },
+  "resources/images/flags/tg.svg": {
+    "file": "assets/tg-Df4DPBRc.svg",
+    "src": "resources/images/flags/tg.svg"
+  },
+  "resources/images/flags/th.svg": {
+    "file": "assets/th-DK2zZyMY.svg",
+    "src": "resources/images/flags/th.svg"
+  },
+  "resources/images/flags/tj.svg": {
+    "file": "assets/tj-GlTnph_a.svg",
+    "src": "resources/images/flags/tj.svg"
+  },
+  "resources/images/flags/tk.svg": {
+    "file": "assets/tk-DhSbuHz5.svg",
+    "src": "resources/images/flags/tk.svg"
+  },
+  "resources/images/flags/tl.svg": {
+    "file": "assets/tl-DIH0QZG7.svg",
+    "src": "resources/images/flags/tl.svg"
+  },
+  "resources/images/flags/tm.svg": {
+    "file": "assets/tm-CJpUsTgJ.svg",
+    "src": "resources/images/flags/tm.svg"
+  },
+  "resources/images/flags/tn.svg": {
+    "file": "assets/tn-CIMswNqq.svg",
+    "src": "resources/images/flags/tn.svg"
+  },
+  "resources/images/flags/to.svg": {
+    "file": "assets/to-6m55WaQo.svg",
+    "src": "resources/images/flags/to.svg"
+  },
+  "resources/images/flags/tr.svg": {
+    "file": "assets/tr-D_GaM_2-.svg",
+    "src": "resources/images/flags/tr.svg"
+  },
+  "resources/images/flags/tt.svg": {
+    "file": "assets/tt-BCeQWr4E.svg",
+    "src": "resources/images/flags/tt.svg"
+  },
+  "resources/images/flags/tv.svg": {
+    "file": "assets/tv-MqebyrVm.svg",
+    "src": "resources/images/flags/tv.svg"
+  },
+  "resources/images/flags/tw.svg": {
+    "file": "assets/tw-BxJA8BEN.svg",
+    "src": "resources/images/flags/tw.svg"
+  },
+  "resources/images/flags/tz.svg": {
+    "file": "assets/tz-C5bKAQPT.svg",
+    "src": "resources/images/flags/tz.svg"
+  },
+  "resources/images/flags/ua.svg": {
+    "file": "assets/ua-BquxXKta.svg",
+    "src": "resources/images/flags/ua.svg"
+  },
+  "resources/images/flags/ug.svg": {
+    "file": "assets/ug-DSgQ85kZ.svg",
+    "src": "resources/images/flags/ug.svg"
+  },
+  "resources/images/flags/um.svg": {
+    "file": "assets/um-WjBXcvVs.svg",
+    "src": "resources/images/flags/um.svg"
+  },
+  "resources/images/flags/un.svg": {
+    "file": "assets/un-A3rCgucu.svg",
+    "src": "resources/images/flags/un.svg"
   },
   "resources/images/flags/us.svg": {
     "file": "assets/us-C8Qg3PI3.svg",
     "src": "resources/images/flags/us.svg"
   },
+  "resources/images/flags/uy.svg": {
+    "file": "assets/uy-CIih_alT.svg",
+    "src": "resources/images/flags/uy.svg"
+  },
+  "resources/images/flags/uz.svg": {
+    "file": "assets/uz-B-s05ecB.svg",
+    "src": "resources/images/flags/uz.svg"
+  },
+  "resources/images/flags/va.svg": {
+    "file": "assets/va-DFO3k8dN.svg",
+    "src": "resources/images/flags/va.svg"
+  },
+  "resources/images/flags/vc.svg": {
+    "file": "assets/vc-CiOteOkC.svg",
+    "src": "resources/images/flags/vc.svg"
+  },
+  "resources/images/flags/ve.svg": {
+    "file": "assets/ve-CPylIGZw.svg",
+    "src": "resources/images/flags/ve.svg"
+  },
+  "resources/images/flags/vg.svg": {
+    "file": "assets/vg-DVRx0bys.svg",
+    "src": "resources/images/flags/vg.svg"
+  },
+  "resources/images/flags/vi.svg": {
+    "file": "assets/vi-5Sso8kL9.svg",
+    "src": "resources/images/flags/vi.svg"
+  },
+  "resources/images/flags/vn.svg": {
+    "file": "assets/vn-5s9EOkR8.svg",
+    "src": "resources/images/flags/vn.svg"
+  },
+  "resources/images/flags/vu.svg": {
+    "file": "assets/vu-DkK2ni09.svg",
+    "src": "resources/images/flags/vu.svg"
+  },
+  "resources/images/flags/wf.svg": {
+    "file": "assets/wf-D3C-PQYE.svg",
+    "src": "resources/images/flags/wf.svg"
+  },
+  "resources/images/flags/ws.svg": {
+    "file": "assets/ws-IVFNwTc1.svg",
+    "src": "resources/images/flags/ws.svg"
+  },
+  "resources/images/flags/xk.svg": {
+    "file": "assets/xk-BpdOTDmI.svg",
+    "src": "resources/images/flags/xk.svg"
+  },
+  "resources/images/flags/xx.svg": {
+    "file": "assets/xx-DVpK_Zin.svg",
+    "src": "resources/images/flags/xx.svg"
+  },
+  "resources/images/flags/ye.svg": {
+    "file": "assets/ye-B8FoKx7I.svg",
+    "src": "resources/images/flags/ye.svg"
+  },
+  "resources/images/flags/yt.svg": {
+    "file": "assets/yt-C3jbIdwD.svg",
+    "src": "resources/images/flags/yt.svg"
+  },
+  "resources/images/flags/za.svg": {
+    "file": "assets/za-CNoVUQUP.svg",
+    "src": "resources/images/flags/za.svg"
+  },
+  "resources/images/flags/zm.svg": {
+    "file": "assets/zm-CsHveeKK.svg",
+    "src": "resources/images/flags/zm.svg"
+  },
+  "resources/images/flags/zw.svg": {
+    "file": "assets/zw-CnQGIqfV.svg",
+    "src": "resources/images/flags/zw.svg"
+  },
+  "resources/images/giftbox.png": {
+    "file": "assets/giftbox-BJ-_8lA6.png",
+    "src": "resources/images/giftbox.png"
+  },
   "resources/images/illustrator-1.png": {
     "file": "assets/illustrator-1-CFK24sen.png",
     "src": "resources/images/illustrator-1.png"
+  },
+  "resources/images/job-profile2.png": {
+    "file": "assets/job-profile2-CwTPu81Q.png",
+    "src": "resources/images/job-profile2.png"
   },
   "resources/images/landing/bg-pattern.png": {
     "file": "assets/bg-pattern-C6uw14rj.png",
@@ -465,6 +1697,26 @@
     "file": "assets/process-arrow-img-B1Uw7jiV.png",
     "src": "resources/images/landing/process-arrow-img.png"
   },
+  "resources/images/logo-dark.png": {
+    "file": "assets/logo-dark-DEgjC4YH.png",
+    "src": "resources/images/logo-dark.png"
+  },
+  "resources/images/logo-light.png": {
+    "file": "assets/logo-light-ClrpaeKd.png",
+    "src": "resources/images/logo-light.png"
+  },
+  "resources/images/logo-sm-1.png": {
+    "file": "assets/logo-sm-1-DxMkU6sH.png",
+    "src": "resources/images/logo-sm-1.png"
+  },
+  "resources/images/logo-sm.png": {
+    "file": "assets/logo-sm-C_2SwDY3.png",
+    "src": "resources/images/logo-sm.png"
+  },
+  "resources/images/mac-img.png": {
+    "file": "assets/mac-img-DkjIjMNl.png",
+    "src": "resources/images/mac-img.png"
+  },
   "resources/images/maintenance.png": {
     "file": "assets/maintenance-BS_0L3QD.png",
     "src": "resources/images/maintenance.png"
@@ -473,9 +1725,17 @@
     "file": "assets/modal-bg-lSTJOrdl.png",
     "src": "resources/images/modal-bg.png"
   },
+  "resources/images/new.png": {
+    "file": "assets/new-C2VZ74KJ.png",
+    "src": "resources/images/new.png"
+  },
   "resources/images/profile-bg.jpg": {
     "file": "assets/profile-bg-Cei7pNuU.jpg",
     "src": "resources/images/profile-bg.jpg"
+  },
+  "resources/images/server-error.png": {
+    "file": "assets/server-error-CnuEkO4Z.png",
+    "src": "resources/images/server-error.png"
   },
   "resources/images/sidebar/img-1.jpg": {
     "file": "assets/img-1-C6VsSbnm.jpg",
@@ -492,6 +1752,26 @@
   "resources/images/sidebar/img-4.jpg": {
     "file": "assets/img-4-iSVl4_tu.jpg",
     "src": "resources/images/sidebar/img-4.jpg"
+  },
+  "resources/images/sorting.svg": {
+    "file": "assets/sorting-7GsqYL_r.svg",
+    "src": "resources/images/sorting.svg"
+  },
+  "resources/images/svg/bell.svg": {
+    "file": "assets/bell-Bihfq63I.svg",
+    "src": "resources/images/svg/bell.svg"
+  },
+  "resources/images/task.png": {
+    "file": "assets/task-C6yk4t4_.png",
+    "src": "resources/images/task.png"
+  },
+  "resources/images/user-illustarator-1.png": {
+    "file": "assets/user-illustarator-1-D-xxPsWU.png",
+    "src": "resources/images/user-illustarator-1.png"
+  },
+  "resources/images/user-illustarator-2.png": {
+    "file": "assets/user-illustarator-2-C31JR4kY.png",
+    "src": "resources/images/user-illustarator-2.png"
   },
   "resources/images/users/avatar-1.jpg": {
     "file": "assets/avatar-1-DHK6cCCz.jpg",
@@ -529,257 +1809,277 @@
     "file": "assets/avatar-8-bledUm3E.jpg",
     "src": "resources/images/users/avatar-8.jpg"
   },
+  "resources/images/users/avatar-9.jpg": {
+    "file": "assets/avatar-9-BkZrICEv.jpg",
+    "src": "resources/images/users/avatar-9.jpg"
+  },
+  "resources/images/users/multi-user.jpg": {
+    "file": "assets/multi-user-D52JL28v.jpg",
+    "src": "resources/images/users/multi-user.jpg"
+  },
+  "resources/images/users/user-dummy-img.jpg": {
+    "file": "assets/user-dummy-img-C09Pj9k0.jpg",
+    "src": "resources/images/users/user-dummy-img.jpg"
+  },
+  "resources/images/verification-img.png": {
+    "file": "assets/verification-img-CB5cRYsm.png",
+    "src": "resources/images/verification-img.png"
+  },
+  "resources/images/widget-img.png": {
+    "file": "assets/widget-img-BO2TynEq.png",
+    "src": "resources/images/widget-img.png"
+  },
   "resources/js/Pages/Admin/Dashboard.tsx": {
-    "file": "assets/Dashboard-CTLoRauH.js",
+    "file": "assets/Dashboard-CeRztlHu.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Admin/Dashboard.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_AppShellLayout-C2X8gwTl.js",
+      "_inertia-BF-sYduu.js",
+      "_AppShellLayout-Cn4C8hh5.js",
       "_index-BS2jDbke.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
       "_i18n-Bb1Pbb_g.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Admin/TenantSubscriptions.tsx": {
-    "file": "assets/TenantSubscriptions-Br02h9gW.js",
+    "file": "assets/TenantSubscriptions-CcTg3Bs0.js",
     "name": "TenantSubscriptions",
     "src": "resources/js/Pages/Admin/TenantSubscriptions.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
+      "_AppShellLayout-Cn4C8hh5.js",
       "_apiError-DOoV2Vc6.js",
       "_notify-BNYKgbNk.js",
       "_index-BS2jDbke.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Admin/Tenants.tsx": {
-    "file": "assets/Tenants-DUchsZab.js",
+    "file": "assets/Tenants-CtmSba_W.js",
     "name": "Tenants",
     "src": "resources/js/Pages/Admin/Tenants.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
+      "_AppShellLayout-Cn4C8hh5.js",
       "_apiError-DOoV2Vc6.js",
       "_notify-BNYKgbNk.js",
       "_index-BS2jDbke.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Auth/AcceptInvitation.tsx": {
-    "file": "assets/AcceptInvitation-DxXCXMyk.js",
+    "file": "assets/AcceptInvitation-JWfn8c_C.js",
     "name": "AcceptInvitation",
     "src": "resources/js/Pages/Auth/AcceptInvitation.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
-      "_GuestLayout-CxpL9DZK.js",
+      "_GuestLayout-BOy6WYHp.js",
       "_apiError-DOoV2Vc6.js",
       "_notify-BNYKgbNk.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Auth/ConfirmPassword.tsx": {
-    "file": "assets/ConfirmPassword-CKJ7rgfc.js",
+    "file": "assets/ConfirmPassword-DqvFWuI6.js",
     "name": "ConfirmPassword",
     "src": "resources/js/Pages/Auth/ConfirmPassword.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_inertia-BF-sYduu.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
-      "_GuestLayout-CxpL9DZK.js",
+      "_GuestLayout-BOy6WYHp.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Auth/ForgotPassword.tsx": {
-    "file": "assets/ForgotPassword-ekVP5JT3.js",
+    "file": "assets/ForgotPassword-BwRId3Pq.js",
     "name": "ForgotPassword",
     "src": "resources/js/Pages/Auth/ForgotPassword.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_inertia-BF-sYduu.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_TurnstileField-Ckbvt_wt.js",
-      "_GuestLayout-CxpL9DZK.js",
+      "_GuestLayout-BOy6WYHp.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Auth/Login.tsx": {
-    "file": "assets/Login-DAEusaAi.js",
+    "file": "assets/Login-lp9VwU2x.js",
     "name": "Login",
     "src": "resources/js/Pages/Auth/Login.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_inertia-BF-sYduu.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_TurnstileField-Ckbvt_wt.js",
-      "_GuestLayout-CxpL9DZK.js",
+      "_GuestLayout-BOy6WYHp.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Auth/Profile.tsx": {
-    "file": "assets/Profile-BqwpdQRG.js",
+    "file": "assets/Profile-RXgZ7GWT.js",
     "name": "Profile",
     "src": "resources/js/Pages/Auth/Profile.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_profile-bg-XcrrQZYY.js",
       "_avatar-1-PHP4S1R6.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
+      "_AppShellLayout-Cn4C8hh5.js",
       "_i18n-Bb1Pbb_g.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Auth/ProfileView.tsx": {
-    "file": "assets/ProfileView-C8f5OvsU.js",
+    "file": "assets/ProfileView-JzoiFAJD.js",
     "name": "ProfileView",
     "src": "resources/js/Pages/Auth/ProfileView.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_profile-bg-XcrrQZYY.js",
       "_avatar-1-PHP4S1R6.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
+      "_AppShellLayout-Cn4C8hh5.js",
       "_i18n-Bb1Pbb_g.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Auth/Register.tsx": {
-    "file": "assets/Register-7e-IIrPj.js",
+    "file": "assets/Register-DtPbtteC.js",
     "name": "Register",
     "src": "resources/js/Pages/Auth/Register.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_inertia-BF-sYduu.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_TurnstileField-Ckbvt_wt.js",
-      "_GuestLayout-CxpL9DZK.js",
+      "_GuestLayout-BOy6WYHp.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Auth/ResetPassword.tsx": {
-    "file": "assets/ResetPassword-DSJ6oEsR.js",
+    "file": "assets/ResetPassword-BxTkSpRL.js",
     "name": "ResetPassword",
     "src": "resources/js/Pages/Auth/ResetPassword.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_appsah-logo-light-CeJKZvI_.js",
-      "_GuestLayout-CxpL9DZK.js",
+      "_inertia-BF-sYduu.js",
+      "_appsah-logo-light-l2wwNDet.js",
+      "_GuestLayout-BOy6WYHp.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Auth/Security.tsx": {
-    "file": "assets/Security-BVGgPclv.js",
+    "file": "assets/Security-CtSbux9s.js",
     "name": "Security",
     "src": "resources/js/Pages/Auth/Security.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_notify-BNYKgbNk.js",
       "_index-BS2jDbke.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Auth/VerifyEmail.tsx": {
-    "file": "assets/VerifyEmail-BLB-VEtP.js",
+    "file": "assets/VerifyEmail-7d_0LTOX.js",
     "name": "VerifyEmail",
     "src": "resources/js/Pages/Auth/VerifyEmail.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_appsah-logo-light-CeJKZvI_.js",
-      "_GuestLayout-CxpL9DZK.js",
+      "_inertia-BF-sYduu.js",
+      "_appsah-logo-light-l2wwNDet.js",
+      "_GuestLayout-BOy6WYHp.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
@@ -825,13 +2125,13 @@
     ]
   },
   "resources/js/Pages/Landing/OnePage/cta.tsx": {
-    "file": "assets/cta-P5Asr7jy.js",
+    "file": "assets/cta-Li7zb93Z.js",
     "name": "cta",
     "src": "resources/js/Pages/Landing/OnePage/cta.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
       "_bootstrap-ClcOgKQg.js"
@@ -850,13 +2150,13 @@
     ]
   },
   "resources/js/Pages/Landing/OnePage/features.tsx": {
-    "file": "assets/features-Dn9oss1V.js",
+    "file": "assets/features-CITLzjEb.js",
     "name": "features",
     "src": "resources/js/Pages/Landing/OnePage/features.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
       "_bootstrap-ClcOgKQg.js"
@@ -868,27 +2168,27 @@
     ]
   },
   "resources/js/Pages/Landing/OnePage/footer.tsx": {
-    "file": "assets/footer-CktR0pTO.js",
+    "file": "assets/footer-CJk36b-G.js",
     "name": "footer",
     "src": "resources/js/Pages/Landing/OnePage/footer.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_inertia-BF-sYduu.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Landing/OnePage/home.tsx": {
-    "file": "assets/home-DHdN2-FI.js",
+    "file": "assets/home-Bz7TprA1.js",
     "name": "home",
     "src": "resources/js/Pages/Landing/OnePage/home.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_autoplay-DMpEfuxs.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
@@ -909,13 +2209,13 @@
     ]
   },
   "resources/js/Pages/Landing/OnePage/index.tsx": {
-    "file": "assets/index-BJVmHYnf.js",
+    "file": "assets/index-_a46PteZ.js",
     "name": "index",
     "src": "resources/js/Pages/Landing/OnePage/index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "resources/js/Pages/Landing/OnePage/client.tsx",
       "resources/js/Pages/Landing/OnePage/contact.tsx",
       "resources/js/Pages/Landing/OnePage/counter.tsx",
@@ -935,8 +2235,8 @@
       "_pagination-DrHD-t5b.js",
       "_ui-kit-Da4e3fbB.js",
       "_bootstrap-ClcOgKQg.js",
-      "_appsah-logo-light-CeJKZvI_.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
+      "_appsah-logo-light-l2wwNDet.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
       "_avatar-2-B-1-S_lh.js"
     ],
     "css": [
@@ -944,28 +2244,28 @@
     ]
   },
   "resources/js/Pages/Landing/OnePage/navbar.tsx": {
-    "file": "assets/navbar-Cyb4lZwL.js",
+    "file": "assets/navbar-CbyFNock.js",
     "name": "navbar",
     "src": "resources/js/Pages/Landing/OnePage/navbar.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_inertia-BF-sYduu.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Landing/OnePage/plans.tsx": {
-    "file": "assets/plans-xhYF47GW.js",
+    "file": "assets/plans-71kk0rby.js",
     "name": "plans",
     "src": "resources/js/Pages/Landing/OnePage/plans.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
       "_bootstrap-ClcOgKQg.js"
@@ -989,26 +2289,26 @@
     ]
   },
   "resources/js/Pages/Landing/OnePage/services.tsx": {
-    "file": "assets/services-BBezQtEx.js",
+    "file": "assets/services-DwNKsd0p.js",
     "name": "services",
     "src": "resources/js/Pages/Landing/OnePage/services.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Landing/OnePage/team.tsx": {
-    "file": "assets/team-e3k6VMEE.js",
+    "file": "assets/team-DInj9wsF.js",
     "name": "team",
     "src": "resources/js/Pages/Landing/OnePage/team.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_avatar-2-B-1-S_lh.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
@@ -1040,65 +2340,65 @@
     ]
   },
   "resources/js/Pages/Tenant/AccessRequired.tsx": {
-    "file": "assets/AccessRequired-CBJB076X.js",
+    "file": "assets/AccessRequired-CIdIXL02.js",
     "name": "AccessRequired",
     "src": "resources/js/Pages/Tenant/AccessRequired.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_maintenance-Dnc9IvGm.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Dashboard.tsx": {
-    "file": "assets/Dashboard-0CZxz6yt.js",
+    "file": "assets/Dashboard-CpD8ru6L.js",
     "name": "Dashboard",
     "src": "resources/js/Pages/Tenant/Dashboard.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_inertia-BF-sYduu.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_index-BS2jDbke.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Forbidden.tsx": {
-    "file": "assets/Forbidden-DmZ178sq.js",
+    "file": "assets/Forbidden-BiWxKJKp.js",
     "name": "Forbidden",
     "src": "resources/js/Pages/Tenant/Forbidden.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_TenantPageTitle-BuiA3T5G.js",
-      "_TenantLayout-CZLY6Kwk.js",
-      "_tenantRoute-BW2dtBGA.js",
+      "_inertia-BF-sYduu.js",
+      "_TenantPageTitle-CV73exWy.js",
+      "_TenantLayout-CS-QyS_3.js",
+      "_tenantRoute-LZmcInrE.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ],
@@ -1107,262 +2407,262 @@
     ]
   },
   "resources/js/Pages/Tenant/Home.tsx": {
-    "file": "assets/Home-5DXFeFMC.js",
+    "file": "assets/Home-B6gVfCK8.js",
     "name": "Home",
     "src": "resources/js/Pages/Tenant/Home.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_GuestLayout-CxpL9DZK.js",
+      "_inertia-BF-sYduu.js",
+      "_GuestLayout-BOy6WYHp.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Invitations/Index.tsx": {
-    "file": "assets/Index-j2LnWFPO.js",
+    "file": "assets/Index-D2mMsLEY.js",
     "name": "Index",
     "src": "resources/js/Pages/Tenant/Invitations/Index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
-      "_TenantPageTitle-BuiA3T5G.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_TenantPageTitle-CV73exWy.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_apiError-DOoV2Vc6.js",
       "_invitationError-_8qcwGly.js",
       "_notify-BNYKgbNk.js",
-      "_tenantRoute-BW2dtBGA.js",
+      "_tenantRoute-LZmcInrE.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Members/Edit.tsx": {
-    "file": "assets/Edit-Bc7t21Ot.js",
+    "file": "assets/Edit-CyyeYlCJ.js",
     "name": "Edit",
     "src": "resources/js/Pages/Tenant/Members/Edit.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
       "_profile-bg-XcrrQZYY.js",
       "_avatar-1-PHP4S1R6.js",
-      "_TenantPageTitle-BuiA3T5G.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_TenantPageTitle-CV73exWy.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_apiError-DOoV2Vc6.js",
       "_notify-BNYKgbNk.js",
-      "_tenantRoute-BW2dtBGA.js",
+      "_tenantRoute-LZmcInrE.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Members/Index.tsx": {
-    "file": "assets/Index-Be5sTeK1.js",
+    "file": "assets/Index-BI-CeiPa.js",
     "name": "Index",
     "src": "resources/js/Pages/Tenant/Members/Index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
       "_profile-bg-XcrrQZYY.js",
       "_avatar-2-B-1-S_lh.js",
-      "_TenantPageTitle-BuiA3T5G.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_TenantPageTitle-CV73exWy.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_apiError-DOoV2Vc6.js",
       "_invitationError-_8qcwGly.js",
       "_notify-BNYKgbNk.js",
-      "_tenantRoute-BW2dtBGA.js",
+      "_tenantRoute-LZmcInrE.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Members/View.tsx": {
-    "file": "assets/View-B2G_XN3D.js",
+    "file": "assets/View-QdUOu3hx.js",
     "name": "View",
     "src": "resources/js/Pages/Tenant/Members/View.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_profile-bg-XcrrQZYY.js",
       "_avatar-1-PHP4S1R6.js",
-      "_TenantPageTitle-BuiA3T5G.js",
-      "_TenantLayout-CZLY6Kwk.js",
-      "_tenantRoute-BW2dtBGA.js",
+      "_TenantPageTitle-CV73exWy.js",
+      "_TenantLayout-CS-QyS_3.js",
+      "_tenantRoute-LZmcInrE.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Roles/Index.tsx": {
-    "file": "assets/Index-CE-do2SI.js",
+    "file": "assets/Index-CXhGqSGI.js",
     "name": "Index",
     "src": "resources/js/Pages/Tenant/Roles/Index.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
-      "_TenantPageTitle-BuiA3T5G.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_TenantPageTitle-CV73exWy.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_apiError-DOoV2Vc6.js",
       "_notify-BNYKgbNk.js",
-      "_tenantRoute-BW2dtBGA.js",
+      "_tenantRoute-LZmcInrE.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Selector.tsx": {
-    "file": "assets/Selector-BSbVHbW5.js",
+    "file": "assets/Selector-BCTKYdXc.js",
     "name": "Selector",
     "src": "resources/js/Pages/Tenant/Selector.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_inertia-BF-sYduu.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
+      "_AppShellLayout-Cn4C8hh5.js",
       "_i18n-Bb1Pbb_g.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Settings/Billing.tsx": {
-    "file": "assets/Billing-Wvn2ghR0.js",
+    "file": "assets/Billing-pz_sJbuP.js",
     "name": "Billing",
     "src": "resources/js/Pages/Tenant/Settings/Billing.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_inertia-BF-sYduu.js",
+      "_TenantLayout-CS-QyS_3.js",
       "resources/js/Pages/Tenant/Settings/shared.tsx",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_index-BS2jDbke.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Settings/Branding.tsx": {
-    "file": "assets/Branding-Dpjry_qf.js",
+    "file": "assets/Branding-Dk8Iqh6t.js",
     "name": "Branding",
     "src": "resources/js/Pages/Tenant/Settings/Branding.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_inertia-BF-sYduu.js",
+      "_TenantLayout-CS-QyS_3.js",
       "resources/js/Pages/Tenant/Settings/shared.tsx",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_index-BS2jDbke.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Settings/Localization.tsx": {
-    "file": "assets/Localization-BziCUe13.js",
+    "file": "assets/Localization-D5DUv0DJ.js",
     "name": "Localization",
     "src": "resources/js/Pages/Tenant/Settings/Localization.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_inertia-BF-sYduu.js",
+      "_TenantLayout-CS-QyS_3.js",
       "resources/js/Pages/Tenant/Settings/shared.tsx",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_index-BS2jDbke.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Settings/Profile.tsx": {
-    "file": "assets/Profile-CW0W5w0z.js",
+    "file": "assets/Profile-hdxduVT4.js",
     "name": "Profile",
     "src": "resources/js/Pages/Tenant/Settings/Profile.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_inertia-BF-sYduu.js",
+      "_TenantLayout-CS-QyS_3.js",
       "resources/js/Pages/Tenant/Settings/shared.tsx",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_index-BS2jDbke.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/Settings/shared.tsx": {
-    "file": "assets/shared-CWU9RPGr.js",
+    "file": "assets/shared-BPi7FlBa.js",
     "name": "shared",
     "src": "resources/js/Pages/Tenant/Settings/shared.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_index-BS2jDbke.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
@@ -1371,47 +2671,47 @@
     ]
   },
   "resources/js/Pages/Tenant/UpgradeRequired.tsx": {
-    "file": "assets/UpgradeRequired-urdqoUKn.js",
+    "file": "assets/UpgradeRequired-E6RvbtqK.js",
     "name": "UpgradeRequired",
     "src": "resources/js/Pages/Tenant/UpgradeRequired.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_maintenance-Dnc9IvGm.js",
-      "_TenantPageTitle-BuiA3T5G.js",
-      "_TenantLayout-CZLY6Kwk.js",
-      "_tenantRoute-BW2dtBGA.js",
+      "_TenantPageTitle-CV73exWy.js",
+      "_TenantLayout-CS-QyS_3.js",
+      "_tenantRoute-LZmcInrE.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
       "_app-vendor-CD-HSM4U.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/Pages/Tenant/WhatsApp/Chats.tsx": {
-    "file": "assets/Chats-FajBJZqZ.js",
+    "file": "assets/Chats-3HKZC9mM.js",
     "name": "Chats",
     "src": "resources/js/Pages/Tenant/WhatsApp/Chats.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_apiError-DOoV2Vc6.js",
       "_notify-BNYKgbNk.js",
-      "_tenantRoute-BW2dtBGA.js",
+      "_tenantRoute-LZmcInrE.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ],
@@ -1420,31 +2720,31 @@
     ]
   },
   "resources/js/Pages/Tenant/WhatsApp/Settings.tsx": {
-    "file": "assets/Settings-D96HRqmE.js",
+    "file": "assets/Settings-DCXp7sr7.js",
     "name": "Settings",
     "src": "resources/js/Pages/Tenant/WhatsApp/Settings.tsx",
     "isDynamicEntry": true,
     "imports": [
       "_react-vendor-DXQcTQFn.js",
-      "_inertia--Wtx3N6k.js",
+      "_inertia-BF-sYduu.js",
       "_app-vendor-CD-HSM4U.js",
-      "_TenantPageTitle-BuiA3T5G.js",
-      "_TenantLayout-CZLY6Kwk.js",
+      "_TenantPageTitle-CV73exWy.js",
+      "_TenantLayout-CS-QyS_3.js",
       "_apiError-DOoV2Vc6.js",
       "_notify-BNYKgbNk.js",
-      "_tenantRoute-BW2dtBGA.js",
+      "_tenantRoute-LZmcInrE.js",
       "_i18n-Bb1Pbb_g.js",
       "_ui-kit-Da4e3fbB.js",
-      "_AppShellLayout-C2X8gwTl.js",
-      "_ApplicationLogo-CpxND3MK.js",
-      "_appsah-logo-dark-BgH3pkWm.js",
-      "_appsah-logo-light-CeJKZvI_.js",
+      "_AppShellLayout-Cn4C8hh5.js",
+      "_ApplicationLogo-i6QfSmcq.js",
+      "_appsah-logo-dark-Dh4DV6bR.js",
+      "_appsah-logo-light-l2wwNDet.js",
       "_avatar-1-PHP4S1R6.js",
       "_bootstrap-ClcOgKQg.js"
     ]
   },
   "resources/js/app.tsx": {
-    "file": "assets/app-CdvP_wVA.js",
+    "file": "assets/app-DTD7UOY7.js",
     "name": "app",
     "src": "resources/js/app.tsx",
     "isEntry": true,
@@ -1453,7 +2753,7 @@
       "_app-vendor-CD-HSM4U.js",
       "_i18n-Bb1Pbb_g.js",
       "_bootstrap-ClcOgKQg.js",
-      "_inertia--Wtx3N6k.js"
+      "_inertia-BF-sYduu.js"
     ],
     "dynamicImports": [
       "resources/js/Pages/Admin/Dashboard.tsx",

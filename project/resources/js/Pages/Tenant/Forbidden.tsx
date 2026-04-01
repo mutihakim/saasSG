@@ -20,8 +20,8 @@ export default function Forbidden({ message, messageKey }: Props) {
         ? 'layout.shell.nav.items.settings'
         : 'tenant.errors.forbidden.parent';
     const parentHref = messageKey?.startsWith('tenant.settings.')
-        ? tenantRoute.to('/settings')
-        : tenantRoute.to('/dashboard');
+        ? tenantRoute.to('/admin/settings/branding')
+        : tenantRoute.to('/admin/dashboard');
 
     return (
         <>
@@ -52,7 +52,7 @@ export default function Forbidden({ message, messageKey }: Props) {
                                 <Button variant="light" onClick={() => window.history.back()}>
                                     {t('Back')}
                                 </Button>
-                                <Button href={tenantRoute.to('/dashboard')}>
+                                <Button href={tenantRoute.to('/admin/dashboard')}>
                                     {t('tenant.errors.actions.back_to_dashboard')}
                                 </Button>
                             </div>

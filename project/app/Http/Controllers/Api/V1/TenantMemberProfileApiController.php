@@ -14,7 +14,7 @@ class TenantMemberProfileApiController extends Controller
 {
     use ApiResponder;
 
-    public function update(Request $request, int $member)
+    public function update(Request $request, string $tenant, int $member)
     {
         $tenant = $request->attributes->get('currentTenant');
         $actor = $request->attributes->get('currentTenantMember');

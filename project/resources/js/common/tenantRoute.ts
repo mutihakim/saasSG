@@ -1,9 +1,17 @@
 import { usePage } from '@inertiajs/react';
 
 function buildTenantPath(slug: string | undefined, isSuperadmin: boolean, path = ''): string {
-    if (!slug) return isSuperadmin ? '/tenants' : '/tenant-access-required';
+    if (!slug) return isSuperadmin ? '/admin/tenants' : '/tenant-access-required';
     const normalized = path.startsWith('/') ? path : `/${path}`;
-    return `//${slug}.appsah.my.id${normalized}`;
+
+    // Add /admin prefix for tenant management routes if not already present
+    // We keep '/' as is for the Landing/Profile page.
+    let finalPath = normalized;
+    if (normalized !== '/' && !normalized.startsWith('/admin')) {
+        finalPath = `/admin${normalized}`;
+    }
+
+    return `//${slug}.appsah.my.id${finalPath}`;
 }
 
 function tenantSlugFromPath(): string | undefined {

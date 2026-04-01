@@ -124,10 +124,10 @@ export function buildShellNavigation(props: SharedPageProps): ShellNavSection[] 
         lockedItem(
             'tenant-dashboard',
             'layout.shell.nav.items.dashboard',
-            entitlements.dashboard === false ? workspaceUpgradeHref('dashboard') : `${workspaceBase}/dashboard`,
+            entitlements.dashboard === false ? workspaceUpgradeHref('dashboard') : `${workspaceBase}/admin/dashboard`,
             'ri-dashboard-line',
             entitlements.dashboard === false,
-            startsWith(`${workspaceBase}/dashboard`)
+            startsWith(`${workspaceBase}/admin/dashboard`)
         ),
     ];
 
@@ -140,10 +140,10 @@ export function buildShellNavigation(props: SharedPageProps): ShellNavSection[] 
                 lockedItem(
                     'tenant-members',
                     'layout.shell.nav.items.members',
-                    entitlements['team.members'] === false ? workspaceUpgradeHref('team.members') : `${workspaceBase}/members`,
+                    entitlements['team.members'] === false ? workspaceUpgradeHref('team.members') : `${workspaceBase}/admin/members`,
                     'ri-team-line',
                     entitlements['team.members'] === false,
-                    startsWith(`${workspaceBase}/members`)
+                    startsWith(`${workspaceBase}/admin/members`)
                 ),
                 {
                     id: 'tenant-access',
@@ -153,18 +153,18 @@ export function buildShellNavigation(props: SharedPageProps): ShellNavSection[] 
                         lockedItem(
                             'tenant-roles',
                             'layout.shell.nav.items.roles',
-                            entitlements['team.roles'] === false ? workspaceUpgradeHref('team.roles') : `${workspaceBase}/roles`,
+                            entitlements['team.roles'] === false ? workspaceUpgradeHref('team.roles') : `${workspaceBase}/admin/roles`,
                             'ri-shield-user-line',
                             entitlements['team.roles'] === false,
-                            startsWith(`${workspaceBase}/roles`)
+                            startsWith(`${workspaceBase}/admin/roles`)
                         ),
                         lockedItem(
                             'tenant-invitations',
                             'layout.shell.nav.items.invitations',
-                            entitlements['team.invitations'] === false ? workspaceUpgradeHref('team.invitations') : `${workspaceBase}/invitations`,
+                            entitlements['team.invitations'] === false ? workspaceUpgradeHref('team.invitations') : `${workspaceBase}/admin/invitations`,
                             'ri-mail-open-line',
                             entitlements['team.invitations'] === false,
-                            startsWith(`${workspaceBase}/invitations`)
+                            startsWith(`${workspaceBase}/admin/invitations`)
                         ),
                     ],
                 },
@@ -181,18 +181,18 @@ export function buildShellNavigation(props: SharedPageProps): ShellNavSection[] 
                     lockedItem(
                         'tenant-whatsapp-settings',
                         'layout.shell.nav.items.settings',
-                        entitlements['whatsapp.settings'] === false ? workspaceUpgradeHref('whatsapp.settings') : `${workspaceBase}/whatsapp/settings`,
+                        entitlements['whatsapp.settings'] === false ? workspaceUpgradeHref('whatsapp.settings') : `${workspaceBase}/admin/whatsapp/settings`,
                         'ri-settings-3-line',
                         entitlements['whatsapp.settings'] === false,
-                        startsWith(`${workspaceBase}/whatsapp/settings`)
+                        startsWith(`${workspaceBase}/admin/whatsapp/settings`)
                     ),
                     lockedItem(
                         'tenant-whatsapp-chats',
                         'layout.shell.nav.items.chats',
-                        entitlements['whatsapp.chats'] === false ? workspaceUpgradeHref('whatsapp.chats') : `${workspaceBase}/whatsapp/chats`,
+                        entitlements['whatsapp.chats'] === false ? workspaceUpgradeHref('whatsapp.chats') : `${workspaceBase}/admin/whatsapp/chats`,
                         'ri-message-3-line',
                         entitlements['whatsapp.chats'] === false,
-                        startsWith(`${workspaceBase}/whatsapp/chats`)
+                        startsWith(`${workspaceBase}/admin/whatsapp/chats`)
                     ),
                 ],
             });
@@ -202,8 +202,8 @@ export function buildShellNavigation(props: SharedPageProps): ShellNavSection[] 
             id: 'tenant-settings',
             labelKey: 'layout.shell.nav.items.settings',
             icon: 'ri-settings-4-line',
-            href: `${workspaceBase}/settings`,
-            match: startsWith(`${workspaceBase}/settings`),
+            href: `${workspaceBase}/admin/settings`,
+            match: startsWith(`${workspaceBase}/admin/settings`),
         });
     }
 

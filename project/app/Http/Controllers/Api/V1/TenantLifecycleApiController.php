@@ -47,7 +47,7 @@ class TenantLifecycleApiController extends Controller
         ], 201);
     }
 
-    public function invitationsIndex(Request $request)
+    public function invitationsIndex(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         $this->ensureTenantInvitationView($request);
@@ -75,7 +75,7 @@ class TenantLifecycleApiController extends Controller
         return $this->ok(['invitations' => $invitations]);
     }
 
-    public function invitationsStore(Request $request)
+    public function invitationsStore(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         $actor = $request->attributes->get('currentTenantMember');
@@ -190,7 +190,7 @@ class TenantLifecycleApiController extends Controller
         ], 201);
     }
 
-    public function invitationsRevoke(Request $request, int $invitation)
+    public function invitationsRevoke(Request $request, string $tenant, int $invitation)
     {
         $tenant = $request->attributes->get('currentTenant');
         $actor = $request->attributes->get('currentTenantMember');
@@ -227,7 +227,7 @@ class TenantLifecycleApiController extends Controller
         return $this->ok(['revoked' => true]);
     }
 
-    public function invitationsResend(Request $request, int $invitation)
+    public function invitationsResend(Request $request, string $tenant, int $invitation)
     {
         $tenant = $request->attributes->get('currentTenant');
         $actor = $request->attributes->get('currentTenantMember');
@@ -448,7 +448,7 @@ class TenantLifecycleApiController extends Controller
         return $this->ok(['accepted' => true, 'tenant_slug' => $tenant->slug]);
     }
 
-    public function suspendTenant(Request $request)
+    public function suspendTenant(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         $this->ensureSuperadmin($request);
@@ -458,7 +458,7 @@ class TenantLifecycleApiController extends Controller
         return $this->ok(['status' => 'suspended']);
     }
 
-    public function restoreTenant(Request $request)
+    public function restoreTenant(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         $this->ensureSuperadmin($request);

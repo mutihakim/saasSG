@@ -14,14 +14,11 @@ class TenantHomeController extends Controller
     public function index(Request $request): Response
     {
         $tenant = tenant();
-        
+
         return Inertia::render('Tenant/Home', [
             'tenantName' => $tenant->name ?? $tenant->id,
             'membersCount' => $tenant->members()->count(),
             // You can add more data here like family description, etc.
         ]);
     }
-
-
-
 }

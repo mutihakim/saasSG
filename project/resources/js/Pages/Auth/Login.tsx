@@ -1,4 +1,4 @@
-import { Head, Link, useForm } from '@inertiajs/react';
+import { Head, Link, router, useForm } from '@inertiajs/react';
 import React, { useEffect, useState } from 'react';
 import { Container, Row, Col, Card, Form, Button } from 'react-bootstrap';
 
@@ -9,7 +9,7 @@ import GuestLayout from '../../Layouts/GuestLayout';
 export default function Login({ status, canResetPassword, turnstileEnabled, turnstileSiteKey, invitationToken }: any) {
 
     const [passwordShow, setPasswordShow] = useState<boolean>(false);
-    const { data, setData, post, processing, errors, reset } = useForm({
+    const { data, setData, processing, errors, reset } = useForm({
         email: '',
         password: '',
         otp_code: '',
@@ -27,7 +27,9 @@ export default function Login({ status, canResetPassword, turnstileEnabled, turn
     const submit = (e: any) => {
         e.preventDefault();
 
-        post(route('login'));
+        router.post(route('login'), data, {
+            preserveState: false,
+        });
     };
 
     return (

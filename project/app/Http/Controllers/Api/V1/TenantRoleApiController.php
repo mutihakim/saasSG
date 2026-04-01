@@ -15,7 +15,7 @@ class TenantRoleApiController extends Controller
 {
     use ApiResponder;
 
-    public function index(Request $request)
+    public function index(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         $this->authorize('viewAny', Role::class);
@@ -79,7 +79,7 @@ class TenantRoleApiController extends Controller
         ]);
     }
 
-    public function store(Request $request)
+    public function store(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         $this->authorize('create', Role::class);
@@ -139,7 +139,7 @@ class TenantRoleApiController extends Controller
         ], 201);
     }
 
-    public function update(Request $request, int $role)
+    public function update(Request $request, string $tenant, int $role)
     {
         $tenant = $request->attributes->get('currentTenant');
         $target = Role::query()->where('tenant_id', $tenant->id)->findOrFail($role);
@@ -185,7 +185,7 @@ class TenantRoleApiController extends Controller
         ]);
     }
 
-    public function updatePermissions(Request $request, int $role)
+    public function updatePermissions(Request $request, string $tenant, int $role)
     {
         $tenant = $request->attributes->get('currentTenant');
         $actor = $request->attributes->get('currentTenantMember');
@@ -262,7 +262,7 @@ class TenantRoleApiController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, int $role)
+    public function destroy(Request $request, string $tenant, int $role)
     {
         $tenant = $request->attributes->get('currentTenant');
         $target = Role::query()->where('tenant_id', $tenant->id)->findOrFail($role);

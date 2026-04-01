@@ -26,7 +26,7 @@ class TenantWorkspaceController extends Controller
         return Inertia::render('Tenant/AccessRequired');
     }
 
-    public function dashboard(Request $request): Response
+    public function dashboard(Request $request, string $tenant): Response
     {
         $tenant = $request->attributes->get('currentTenant');
 
@@ -42,7 +42,7 @@ class TenantWorkspaceController extends Controller
         ]);
     }
 
-    public function members(Request $request): Response|HttpResponse
+    public function members(Request $request, string $tenant): Response|HttpResponse
     {
         $tenant = $request->attributes->get('currentTenant');
         if (!$this->canViewMembers($request)) {
@@ -86,7 +86,7 @@ class TenantWorkspaceController extends Controller
         ]);
     }
 
-    public function memberEdit(Request $request, int $member): Response|HttpResponse
+    public function memberEdit(Request $request, string $tenant, int $member): Response|HttpResponse
     {
         $tenant = $request->attributes->get('currentTenant');
         if (!$this->canUpdateMembers($request)) {
@@ -132,7 +132,7 @@ class TenantWorkspaceController extends Controller
         ]);
     }
 
-    public function memberView(Request $request, int $member): Response|HttpResponse
+    public function memberView(Request $request, string $tenant, int $member): Response|HttpResponse
     {
         $tenant = $request->attributes->get('currentTenant');
         if (!$this->canViewMembers($request)) {
@@ -171,73 +171,87 @@ class TenantWorkspaceController extends Controller
         ]);
     }
 
-    public function roles(Request $request): Response|HttpResponse
+    public function roles(Request $request, string $tenant): Response|HttpResponse
     {
         $tenant = $request->attributes->get('currentTenant');
         if (!$this->canViewRoles($request)) {
             return $this->forbiddenPage($request, 'Roles access denied.');
         }
 
+        // 1. Get all roles for the tenant
         $roles = Role::query()
-            ->with('permissions:id,name')
+            ->with(['permissions' => function ($query) {
+                $query->select('permissions.id', 'permissions.name');
+            }])
             ->where('tenant_id', $tenant->id)
             ->orderBy('is_system', 'desc')
             ->orderBy('name')
-            ->get()
-            ->map(function (Role $role) use ($tenant) {
-                $visiblePermissionSet = array_flip(PermissionCatalog::matrixPermissions());
-                $memberUsers = DB::table('model_has_roles')
-                    ->join('users', 'users.id', '=', 'model_has_roles.model_id')
-                    ->join('tenant_members', function ($join) use ($tenant) {
-                        $join->on('tenant_members.user_id', '=', 'users.id')
-                            ->where('tenant_members.tenant_id', '=', $tenant->id)
-                            ->whereNull('tenant_members.deleted_at')
-                            ->where('tenant_members.profile_status', '=', 'active');
-                    })
-                    ->where('model_has_roles.role_id', $role->id)
-                    ->where('model_has_roles.model_type', 'App\\Models\\User')
-                    ->where('model_has_roles.tenant_id', $tenant->id)
-                    ->select('users.id', 'users.name', 'users.avatar_url')
-                    ->limit(5)
-                    ->get();
+            ->get();
 
-                $memberCount = DB::table('model_has_roles')
-                    ->join('tenant_members', function ($join) use ($tenant) {
-                        $join->on('tenant_members.user_id', '=', 'model_has_roles.model_id')
-                            ->where('tenant_members.tenant_id', '=', $tenant->id)
-                            ->whereNull('tenant_members.deleted_at')
-                            ->where('tenant_members.profile_status', '=', 'active');
-                    })
-                    ->where('model_has_roles.role_id', $role->id)
-                    ->where('model_has_roles.model_type', 'App\\Models\\User')
-                    ->where('model_has_roles.tenant_id', $tenant->id)
-                    ->distinct('model_has_roles.model_id')
-                    ->count('model_has_roles.model_id');
+        $roleIds = $roles->pluck('id')->all();
+        $visiblePermissions = PermissionCatalog::matrixPermissions();
+        $visiblePermissionSet = array_flip($visiblePermissions);
 
-                return [
-                    'id' => $role->id,
-                    'name' => $role->name,
-                    'display_name' => $role->display_name ?: $role->name,
-                    'is_system' => (bool) $role->is_system,
-                    'row_version' => (int) $role->row_version,
-                    'permissions' => $role->permissions
-                        ->pluck('name')
-                        ->filter(fn (string $permission) => isset($visiblePermissionSet[$permission]))
-                        ->values()
-                        ->all(),
-                    'members_count' => $memberCount,
-                    'members_preview' => $memberUsers,
-                ];
+        // 2. Fetch member counts for all roles in one query
+        $memberCounts = DB::table('model_has_roles')
+            ->join('tenant_members', function ($join) use ($tenant) {
+                $join->on('tenant_members.user_id', '=', 'model_has_roles.model_id')
+                    ->where('tenant_members.tenant_id', '=', $tenant->id)
+                    ->whereNull('tenant_members.deleted_at')
+                    ->where('tenant_members.profile_status', '=', 'active');
             })
-            ->values();
+            ->whereIn('model_has_roles.role_id', $roleIds)
+            ->where('model_has_roles.model_type', 'App\\Models\\User')
+            ->where('model_has_roles.tenant_id', $tenant->id)
+            ->groupBy('model_has_roles.role_id')
+            ->select('model_has_roles.role_id', DB::raw('COUNT(DISTINCT model_has_roles.model_id) as count'))
+            ->pluck('count', 'role_id')
+            ->all();
+
+        // 3. Fetch member previews (avatars) for all roles
+        // Since we only need 5 per role, we can do this with a slightly more complex query or a few targeted ones.
+        $previews = [];
+        foreach ($roles as $role) {
+            $previews[$role->id] = DB::table('model_has_roles')
+                ->join('users', 'users.id', '=', 'model_has_roles.model_id')
+                ->join('tenant_members', function ($join) use ($tenant) {
+                    $join->on('tenant_members.user_id', '=', 'users.id')
+                        ->where('tenant_members.tenant_id', $tenant->id)
+                        ->whereNull('tenant_members.deleted_at')
+                        ->where('tenant_members.profile_status', '=', 'active');
+                })
+                ->where('model_has_roles.role_id', $role->id)
+                ->where('model_has_roles.model_type', 'App\\Models\\User')
+                ->where('model_has_roles.tenant_id', $tenant->id)
+                ->select('users.id', 'users.name', 'users.avatar_url')
+                ->limit(5)
+                ->get();
+        }
+
+        $rolesPayload = $roles->map(function (Role $role) use ($visiblePermissionSet, $memberCounts, $previews) {
+            return [
+                'id' => $role->id,
+                'name' => $role->name,
+                'display_name' => $role->display_name ?: $role->name,
+                'is_system' => (bool) $role->is_system,
+                'row_version' => (int) $role->row_version,
+                'permissions' => $role->permissions
+                    ->pluck('name')
+                    ->filter(fn (string $permission) => isset($visiblePermissionSet[$permission]))
+                    ->values()
+                    ->all(),
+                'members_count' => $memberCounts[$role->id] ?? 0,
+                'members_preview' => $previews[$role->id] ?? [],
+            ];
+        })->values();
 
         return Inertia::render('Tenant/Roles/Index', [
-            'roles' => $roles,
+            'roles' => $rolesPayload,
             'permissionModules' => PermissionCatalog::matrixModules(),
         ]);
     }
 
-    public function invitations(Request $request): Response|HttpResponse
+    public function invitations(Request $request, string $tenant): Response|HttpResponse
     {
         $tenant = $request->attributes->get('currentTenant');
         if (!$this->canViewInvitations($request)) {
@@ -256,7 +270,7 @@ class TenantWorkspaceController extends Controller
         ]);
     }
 
-    public function whatsappSettings(Request $request): Response|HttpResponse
+    public function whatsappSettings(Request $request, string $tenant): Response|HttpResponse
     {
         if (!(bool) config('whatsapp.enabled', false)) {
             return $this->forbiddenPage($request, 'WhatsApp module is disabled.');
@@ -269,7 +283,7 @@ class TenantWorkspaceController extends Controller
         return Inertia::render('Tenant/WhatsApp/Settings');
     }
 
-    public function whatsappChats(Request $request): Response|HttpResponse
+    public function whatsappChats(Request $request, string $tenant): Response|HttpResponse
     {
         if (!(bool) config('whatsapp.enabled', false)) {
             return $this->forbiddenPage($request, 'WhatsApp module is disabled.');

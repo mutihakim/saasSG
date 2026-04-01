@@ -21,23 +21,35 @@ class TenantMemberApiController extends Controller
 {
     use ApiResponder;
 
-    public function index(Request $request)
+    public function index(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         $actor = $request->attributes->get('currentTenantMember');
         $this->authorize('viewAny', [TenantMember::class, $actor]);
+
+        $perPage = min((int) $request->get('per_page', 50), 100);
+        $page = (int) $request->get('page', 1);
 
         $members = TenantMember::query()
             ->with(['user:id,email,email_verified_at'])
             ->where('tenant_id', $tenant->id)
             ->whereNull('deleted_at')
             ->orderBy('id')
-            ->get(['id', 'user_id', 'full_name', 'role_code', 'profile_status', 'onboarding_status', 'whatsapp_jid', 'row_version']);
+            ->paginate($perPage, ['id', 'user_id', 'full_name', 'role_code', 'profile_status', 'onboarding_status', 'whatsapp_jid', 'row_version'], 'page', $page);
 
-        return $this->ok(['members' => $members->map(fn (TenantMember $member) => $this->mapMemberPayload($member))->values()]);
+        return $this->ok([
+            'members' => collect($members->items())->map(fn (TenantMember $member) => $this->mapMemberPayload($member))->values(),
+            'pagination' => [
+                'current_page' => $members->currentPage(),
+                'per_page' => $members->perPage(),
+                'total' => $members->total(),
+                'last_page' => $members->lastPage(),
+                'has_more' => $members->hasMorePages(),
+            ],
+        ]);
     }
 
-    public function store(StoreTenantMemberRequest $request)
+    public function store(StoreTenantMemberRequest $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         $actor = $request->attributes->get('currentTenantMember');
@@ -170,7 +182,7 @@ class TenantMemberApiController extends Controller
         return response()->json($response, 201);
     }
 
-    public function update(UpdateTenantMemberRequest $request, int $member)
+    public function update(UpdateTenantMemberRequest $request, string $tenant, int $member)
     {
         $currentTenant = $request->attributes->get('currentTenant');
         $actor = $request->attributes->get('currentTenantMember');
@@ -249,7 +261,7 @@ class TenantMemberApiController extends Controller
         ]);
     }
 
-    public function updateWhatsappJid(Request $request, int $member)
+    public function updateWhatsappJid(Request $request, string $tenant, int $member)
     {
         $currentTenant = $request->attributes->get('currentTenant');
         $actor = $request->attributes->get('currentTenantMember');
@@ -282,7 +294,7 @@ class TenantMemberApiController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, int $member)
+    public function destroy(Request $request, string $tenant, int $member)
     {
         $request->validate([
             'row_version' => ['required', 'integer', 'min:1'],

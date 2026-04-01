@@ -79,7 +79,10 @@ Route::middleware([
     // Defined BEFORE Super Admin to ensure subdomains match here first
     Route::domain('{tenant}.appsah.my.id')->middleware(['auth', 'verified'])->prefix('admin')->group(function () {
         Route::get('/dashboard', [TenantWorkspaceController::class, 'dashboard'])->name('tenant.dashboard');
-        
+
+        // Settings redirect (index)
+        Route::get('/settings', fn() => redirect()->route('tenant.settings.branding'));
+
         // Members Management
         Route::get('/members', [TenantWorkspaceController::class, 'members'])->name('tenant.members.index');
         Route::get('/members/{member}', [TenantWorkspaceController::class, 'memberView'])->name('tenant.members.view');
@@ -92,6 +95,8 @@ Route::middleware([
         Route::get('/whatsapp/chats', [TenantWorkspaceController::class, 'whatsappChats'])->name('tenant.whatsapp.chats');
 
         // Workspace Settings
+        Route::get('/settings/profile', [TenantSettingsController::class, 'profile'])->name('tenant.settings.profile');
+        Route::patch('/settings/profile', [TenantSettingsController::class, 'updateProfile'])->name('tenant.settings.profile.update');
         Route::get('/settings/branding', [TenantSettingsController::class, 'branding'])->name('tenant.settings.branding');
         Route::patch('/settings/branding', [TenantSettingsController::class, 'updateBranding'])->name('tenant.settings.branding.update');
         Route::delete('/settings/branding/{slot}', [TenantSettingsController::class, 'removeBranding'])->name('tenant.settings.branding.remove');

@@ -25,7 +25,7 @@ class TenantWhatsappApiController extends Controller
     ) {
     }
 
-    public function session(Request $request)
+    public function session(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         if ($error = $this->ensureSettingsAuthorized($request)) {
@@ -46,7 +46,7 @@ class TenantWhatsappApiController extends Controller
         ]);
     }
 
-    public function connect(Request $request)
+    public function connect(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         if ($error = $this->ensureSettingsAuthorized($request)) {
@@ -105,7 +105,7 @@ class TenantWhatsappApiController extends Controller
         ], 202);
     }
 
-    public function disconnect(Request $request)
+    public function disconnect(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         if ($error = $this->ensureSettingsAuthorized($request)) {
@@ -149,7 +149,7 @@ class TenantWhatsappApiController extends Controller
         ]);
     }
 
-    public function removeSession(Request $request)
+    public function removeSession(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         if ($error = $this->ensureSettingsAuthorized($request)) {
@@ -195,7 +195,7 @@ class TenantWhatsappApiController extends Controller
         ]);
     }
 
-    public function chats(Request $request)
+    public function chats(Request $request, string $tenant)
     {
         $tenant = $request->attributes->get('currentTenant');
         if ($error = $this->ensureChatsAuthorized($request)) {
@@ -276,7 +276,7 @@ class TenantWhatsappApiController extends Controller
         ]);
     }
 
-    public function chatMessages(Request $request, string $jid)
+    public function chatMessages(Request $request, string $tenant, string $jid)
     {
         $tenant = $request->attributes->get('currentTenant');
         if ($error = $this->ensureChatsAuthorized($request)) {
@@ -320,7 +320,7 @@ class TenantWhatsappApiController extends Controller
         ]);
     }
 
-    public function sendToChat(Request $request, string $jid)
+    public function sendToChat(Request $request, string $tenant, string $jid)
     {
         $tenant = $request->attributes->get('currentTenant');
         if ($error = $this->ensureChatsAuthorized($request)) {
@@ -405,7 +405,7 @@ class TenantWhatsappApiController extends Controller
         ]);
     }
 
-    public function markChatRead(Request $request, string $jid)
+    public function markChatRead(Request $request, string $tenant, string $jid)
     {
         $tenant = $request->attributes->get('currentTenant');
         if ($error = $this->ensureChatsAuthorized($request)) {

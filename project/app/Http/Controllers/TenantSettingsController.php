@@ -17,7 +17,7 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class TenantSettingsController extends Controller
 {
-    public function profile(Request $request): Response|HttpResponse
+    public function profile(Request $request, string $tenant): Response|HttpResponse
     {
         if ($response = $this->ensureViewAccess($request, 'tenant.settings.errors.access_denied')) {
             return $response;
@@ -31,7 +31,7 @@ class TenantSettingsController extends Controller
         ]);
     }
 
-    public function updateProfile(TenantProfileUpdateRequest $request): RedirectResponse|HttpResponse
+    public function updateProfile(TenantProfileUpdateRequest $request, string $tenant): RedirectResponse|HttpResponse
     {
         if ($response = $this->ensureManageAccess($request, 'tenant.settings.errors.profile_manage_denied')) {
             return $response;
@@ -45,7 +45,7 @@ class TenantSettingsController extends Controller
         return Redirect::route('tenant.settings.profile', ['tenant' => $tenant->slug])->with('statusKey', 'tenant.settings.status.profile_updated');
     }
 
-    public function branding(Request $request): Response|HttpResponse
+    public function branding(Request $request, string $tenant): Response|HttpResponse
     {
         if ($response = $this->ensureViewAccess($request, 'tenant.settings.errors.access_denied')) {
             return $response;
@@ -65,7 +65,7 @@ class TenantSettingsController extends Controller
         ]);
     }
 
-    public function updateBranding(TenantBrandingUpdateRequest $request): RedirectResponse|HttpResponse
+    public function updateBranding(TenantBrandingUpdateRequest $request, string $tenant): RedirectResponse|HttpResponse
     {
         if ($response = $this->ensureManageAccess($request, 'tenant.settings.errors.branding_manage_denied')) {
             return $response;
@@ -88,7 +88,7 @@ class TenantSettingsController extends Controller
         return Redirect::route('tenant.settings.branding', ['tenant' => $tenant->slug])->with('statusKey', 'tenant.settings.status.branding_updated');
     }
 
-    public function removeBranding(Request $request, string $slot): RedirectResponse|HttpResponse
+    public function removeBranding(Request $request, string $tenant, string $slot): RedirectResponse|HttpResponse
     {
         if ($response = $this->ensureManageAccess($request, 'tenant.settings.errors.branding_manage_denied')) {
             return $response;
@@ -107,7 +107,7 @@ class TenantSettingsController extends Controller
         return Redirect::route('tenant.settings.branding', ['tenant' => $tenant->slug])->with('statusKey', "tenant.settings.status.reset.{$slot}");
     }
 
-    public function localization(Request $request): Response|HttpResponse
+    public function localization(Request $request, string $tenant): Response|HttpResponse
     {
         if ($response = $this->ensureViewAccess($request, 'tenant.settings.errors.access_denied')) {
             return $response;
@@ -147,7 +147,7 @@ class TenantSettingsController extends Controller
         ]);
     }
 
-    public function updateLocalization(TenantLocalizationUpdateRequest $request): RedirectResponse|HttpResponse
+    public function updateLocalization(TenantLocalizationUpdateRequest $request, string $tenant): RedirectResponse|HttpResponse
     {
         if ($response = $this->ensureManageAccess($request, 'tenant.settings.errors.localization_manage_denied')) {
             return $response;
@@ -161,7 +161,7 @@ class TenantSettingsController extends Controller
         return Redirect::route('tenant.settings.localization', ['tenant' => $tenant->slug])->with('statusKey', 'tenant.settings.status.localization_updated');
     }
 
-    public function billing(Request $request): Response|HttpResponse
+    public function billing(Request $request, string $tenant): Response|HttpResponse
     {
         if ($response = $this->ensureViewAccess($request, 'tenant.settings.errors.access_denied')) {
             return $response;
@@ -175,7 +175,7 @@ class TenantSettingsController extends Controller
         ]);
     }
 
-    public function updateBilling(TenantBillingUpdateRequest $request): RedirectResponse|HttpResponse
+    public function updateBilling(TenantBillingUpdateRequest $request, string $tenant): RedirectResponse|HttpResponse
     {
         if ($response = $this->ensureManageAccess($request, 'tenant.settings.errors.billing_manage_denied')) {
             return $response;

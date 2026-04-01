@@ -11,31 +11,34 @@ type Props = {
 };
 
 function labelsFromPath(pathname: string): { title: string; parentLabel: string } {
-    if (/^\/t\/[^/]+\/members\/\d+\/edit$/.test(pathname)) {
+    if (/^\/t\/[^/]+\/admin\/members\/\d+\/edit$/.test(pathname)) {
         return { title: 'tenant.members.edit.title', parentLabel: 'tenant.members.parent' };
     }
-    if (/^\/t\/[^/]+\/members$/.test(pathname)) {
+    if (/^\/t\/[^/]+\/admin\/members$/.test(pathname)) {
         return { title: 'tenant.members.title', parentLabel: 'tenant.members.parent' };
     }
-    if (/^\/t\/[^/]+\/roles$/.test(pathname)) {
+    if (/^\/t\/[^/]+\/admin\/members\/\d+$/.test(pathname)) {
+        return { title: 'tenant.members.view.title', parentLabel: 'tenant.members.parent' };
+    }
+    if (/^\/t\/[^/]+\/admin\/roles$/.test(pathname)) {
         return { title: 'tenant.roles.title', parentLabel: 'tenant.roles.parent' };
     }
-    if (/^\/t\/[^/]+\/whatsapp\/settings$/.test(pathname)) {
+    if (/^\/t\/[^/]+\/admin\/invitations$/.test(pathname)) {
+        return { title: 'tenant.invitations.title', parentLabel: 'tenant.invitations.parent' };
+    }
+    if (/^\/t\/[^/]+\/admin\/whatsapp\/settings$/.test(pathname)) {
         return { title: 'tenant.whatsapp.settings.title', parentLabel: 'tenant.whatsapp.settings.parent' };
     }
-    if (/^\/t\/[^/]+\/whatsapp\/chats$/.test(pathname)) {
+    if (/^\/t\/[^/]+\/admin\/whatsapp\/chats$/.test(pathname)) {
         return { title: 'tenant.whatsapp.chats.title', parentLabel: 'tenant.whatsapp.chats.parent' };
     }
-    if (/^\/t\/[^/]+\/settings\/profile$/.test(pathname)) {
-        return { title: 'tenant.settings.tabs.profile', parentLabel: 'layout.shell.nav.items.settings' };
-    }
-    if (/^\/t\/[^/]+\/settings\/branding$/.test(pathname)) {
+    if (/^\/t\/[^/]+\/admin\/settings\/branding$/.test(pathname)) {
         return { title: 'tenant.settings.tabs.branding', parentLabel: 'layout.shell.nav.items.settings' };
     }
-    if (/^\/t\/[^/]+\/settings\/localization$/.test(pathname)) {
+    if (/^\/t\/[^/]+\/admin\/settings\/localization$/.test(pathname)) {
         return { title: 'tenant.settings.tabs.localization', parentLabel: 'layout.shell.nav.items.settings' };
     }
-    if (/^\/t\/[^/]+\/settings\/billing$/.test(pathname)) {
+    if (/^\/t\/[^/]+\/admin\/settings\/billing$/.test(pathname)) {
         return { title: 'tenant.settings.tabs.billing', parentLabel: 'layout.shell.nav.items.settings' };
     }
     if (/^\/profile\/settings$/.test(pathname)) {
@@ -44,7 +47,7 @@ function labelsFromPath(pathname: string): { title: string; parentLabel: string 
     if (/^\/profile$/.test(pathname)) {
         return { title: 'Profile', parentLabel: 'layout.shell.nav.sections.account' };
     }
-    if (/^\/t\/[^/]+\/dashboard$/.test(pathname)) {
+    if (/^\/t\/[^/]+\/admin\/dashboard$/.test(pathname)) {
         return { title: 'Dashboard', parentLabel: 'Workspace' };
     }
 
@@ -59,8 +62,8 @@ export default function TenantPageTitle({ title, parentLabel, parentHref }: Prop
     const finalParentLabel = parentLabel ?? derived.parentLabel;
     const resolvedParentHref = parentHref
         ?? (finalParentLabel === 'layout.shell.nav.items.settings'
-            ? tenantRoute.to('/settings')
-            : (finalParentLabel === 'layout.shell.nav.sections.account' ? '/profile' : tenantRoute.to('/dashboard')));
+            ? tenantRoute.to('/admin/settings/branding')
+            : (finalParentLabel === 'layout.shell.nav.sections.account' ? '/profile' : tenantRoute.to('/admin/dashboard')));
 
     return (
         <div className="page-title-box d-sm-flex align-items-center justify-content-between">
