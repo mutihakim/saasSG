@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Collapse, Container, NavbarToggle } from 'react-bootstrap';
+
 import { SharedPageProps } from '../../../../types/page';
 
 const sectionLinks = [
@@ -91,8 +92,8 @@ const Navbar = () => {
                         <i className="ri-menu-line"></i>
                     </NavbarToggle>
 
-                    <Collapse in={isOpenMenu} className="navbar-collapse" id="navbarSupportedContent">
-                        <div className="navbar-collapse-wrapper d-lg-flex w-100 align-items-center">
+                    <Collapse in={isOpenMenu} className="navbar-collapse">
+                        <div id="navbarSupportedContent" className="navbar-collapse-wrapper d-lg-flex w-100 align-items-center">
                             <ul className="navbar-nav mx-auto mt-2 mt-lg-0" id="navbar-example">
                                 {sectionLinks.map((link) => (
                                     <li className="nav-item" key={link.id}>

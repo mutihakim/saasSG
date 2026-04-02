@@ -1,14 +1,14 @@
 import { Link, usePage } from '@inertiajs/react';
 import React from 'react';
 import { Col, Container, Row } from 'react-bootstrap';
-import { SharedPageProps } from '../../../../types/page';
 
-import imgpattern from "../../../../../images/landing/img-pattern.png";
 import creativeDemo from "../../../../../images/demos/creative.png";
+import imgpattern from "../../../../../images/landing/img-pattern.png";
+
 
 const Home = () => {
-    const { props } = usePage<SharedPageProps>();
-    const tenant = props.currentTenant;
+    const { props } = usePage<any>();
+    const tenant = props.tenant;
 
     return (
         <React.Fragment>
@@ -18,11 +18,17 @@ const Home = () => {
                     <Row className="justify-content-center">
                         <Col lg={8} sm={10}>
                             <div className="text-center mt-lg-5 pt-5 text-white">
-                                <h1 className="display-6 fw-bold mb-3 lh-base">Rayakan Setiap Momen Bersama <span className="text-success">{tenant?.presentable_name || 'Keluarga Anda'}</span></h1>
-                                <p className="lead text-muted lh-base">Platform manajemen aktivitas keluarga yang didesain khusus untuk mengorganisir agenda, berbagi galeri momen indah, dan pengumuman penting keluarga dalam satu wadah privat yang eksklusif.</p>
+                                <h1 className="display-6 fw-bold mb-3 lh-base">
+                                    {tenant?.name}
+                                </h1>
+                                <p className="lead text-white-50 lh-base mb-4">
+                                    Selamat datang di portal resmi <strong>{tenant?.display_name || tenant?.name}</strong>.
+                                    Tempat di mana setiap impian direncanakan, setiap proyek dikelola, dan setiap anggota dihargai.
+                                </p>
 
                                 <div className="d-flex gap-2 justify-content-center mt-4">
-                                    <Link href="/login" className="btn btn-primary px-4 rounded-pill">Mulai Sekarang <i className="ri-arrow-right-line align-middle ms-1"></i></Link>
+                                    <Link href="/login" className="btn btn-success px-4 rounded-pill">Masuk ke Dashboard <i className="ri-lock-password-line align-middle ms-1"></i></Link>
+                                    <Link href="#family-wall" className="btn btn-soft-light px-4 rounded-pill">Lihat Pencapaian <i className="ri-eye-line align-middle ms-1"></i></Link>
                                 </div>
                             </div>
 

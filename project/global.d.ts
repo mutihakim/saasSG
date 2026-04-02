@@ -13,5 +13,4 @@ declare module 'react-rating';
 declare module 'cleave.js/react';
 declare module 'moment';
 declare module 'react-apexcharts';
-declare module 'react-scrollspy';
 declare module 'react-dragula';

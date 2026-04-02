@@ -41,14 +41,14 @@ class DatabaseSeeder extends Seeder
         );
 
         $tenantSeeds = [
-            ['name' => 'Tenant One', 'slug' => 'tenant-one', 'plan_code' => 'free'],
-            ['name' => 'Tenant Two', 'slug' => 'tenant-two', 'plan_code' => 'free'],
-            ['name' => 'Tenant Three', 'slug' => 'tenant-three', 'plan_code' => 'pro'],
-            ['name' => 'Tenant Four', 'slug' => 'tenant-four', 'plan_code' => 'pro'],
-            ['name' => 'Tenant Five', 'slug' => 'tenant-five', 'plan_code' => 'business'],
-            ['name' => 'Tenant Six', 'slug' => 'tenant-six', 'plan_code' => 'business'],
-            ['name' => 'Tenant Seven', 'slug' => 'tenant-seven', 'plan_code' => 'enterprise'],
-            ['name' => 'Tenant Eight', 'slug' => 'tenant-eight', 'plan_code' => 'enterprise'],
+            ['name' => 'Keluarga Cemara', 'slug' => 'keluarga-cemara', 'plan_code' => 'pro'],
+            ['name' => 'Yayasan Kasih Bunda', 'slug' => 'kasih-bunda', 'plan_code' => 'free'],
+            ['name' => 'Childcare Pelangi Serpong', 'slug' => 'pelangi-serpong', 'plan_code' => 'pro'],
+            ['name' => 'Kelompok Bermain Bintang', 'slug' => 'kb-bintang', 'plan_code' => 'pro'],
+            ['name' => 'TK Permata Hati', 'slug' => 'tk-permata-hati', 'plan_code' => 'free'],
+            ['name' => 'SD Harapan Mulia', 'slug' => 'sd-harapan-mulia', 'plan_code' => 'business'],
+            ['name' => 'Panti Asuhan Al-Ikhlas', 'slug' => 'al-ikhlas', 'plan_code' => 'business'],
+            ['name' => 'Keluarga Besar Wijaya', 'slug' => 'keluarga-wijaya', 'plan_code' => 'enterprise'],
         ];
 
         $permissions = PermissionCatalog::all();

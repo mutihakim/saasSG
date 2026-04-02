@@ -6,6 +6,8 @@ import { useTranslation } from 'react-i18next';
 import avatar1 from '../../../images/users/avatar-1.jpg';
 import { SharedPageProps } from '../../types/page';
 
+declare const route: any;
+
 export default function ProfileDropdown() {
     const { t } = useTranslation();
     const { props } = usePage<SharedPageProps>();
@@ -78,6 +80,11 @@ export default function ProfileDropdown() {
                         <span className="align-middle">{t('My Workspace')}</span>
                     </Dropdown.Item>
                 )}
+
+                <Link href="/" className="dropdown-item">
+                    <i className="ri-home-heart-line text-muted fs-16 align-middle me-1"></i>
+                    <span className="align-middle">{t('Family Hub')}</span>
+                </Link>
 
                 <Link className="dropdown-item" as="button" method="post" href={route('logout')}>
                     <i className="mdi mdi-logout text-muted fs-16 align-middle me-1"></i>

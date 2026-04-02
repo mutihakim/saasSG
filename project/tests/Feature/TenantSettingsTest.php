@@ -114,7 +114,7 @@ class TenantSettingsTest extends TestCase
         [$owner, $tenant] = $this->provisionTenant();
 
         $this->actingAs($owner)
-            ->post(route('tenant.settings.branding', $tenant->slug), [
+            ->patch(route('tenant.settings.branding', $tenant->slug), [
                 'logo_light' => UploadedFile::fake()->image('tenant-light.png', 320, 100),
             ])
             ->assertRedirect(route('tenant.settings.branding', $tenant->slug));
@@ -126,7 +126,7 @@ class TenantSettingsTest extends TestCase
         $oldPath = $tenant->logo_light_path;
 
         $this->actingAs($owner)
-            ->post(route('tenant.settings.branding', $tenant->slug), [
+            ->patch(route('tenant.settings.branding', $tenant->slug), [
                 'logo_light' => UploadedFile::fake()->image('tenant-light.jpg', 320, 100),
             ])
             ->assertRedirect(route('tenant.settings.branding', $tenant->slug));
@@ -143,7 +143,7 @@ class TenantSettingsTest extends TestCase
         [$owner, $tenant] = $this->provisionTenant();
 
         $this->actingAs($owner)
-            ->post(route('tenant.settings.branding', $tenant->slug), [
+            ->patch(route('tenant.settings.branding', $tenant->slug), [
                 'logo_icon' => UploadedFile::fake()->image('logo-icon.png', 128, 128),
             ])
             ->assertRedirect(route('tenant.settings.branding', $tenant->slug));
@@ -167,7 +167,7 @@ class TenantSettingsTest extends TestCase
 
         $this->actingAs($owner)
             ->from(route('tenant.settings.branding', $tenant->slug))
-            ->post(route('tenant.settings.branding', $tenant->slug), [
+            ->patch(route('tenant.settings.branding', $tenant->slug), [
                 'favicon' => UploadedFile::fake()->create('favicon.txt', 10, 'text/plain'),
             ])
             ->assertSessionHasErrors('favicon')
@@ -180,7 +180,7 @@ class TenantSettingsTest extends TestCase
         [$owner, $tenant] = $this->provisionTenant();
 
         $this->actingAs($owner)
-            ->post(route('tenant.settings.branding', $tenant->slug), [
+            ->patch(route('tenant.settings.branding', $tenant->slug), [
                 'logo_dark' => UploadedFile::fake()->image('logo-dark.png', 320, 100),
                 'favicon' => UploadedFile::fake()->image('favicon.png', 32, 32),
             ])

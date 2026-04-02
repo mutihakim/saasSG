@@ -23,8 +23,12 @@ class RedirectIfAuthenticated
             if (Auth::guard($guard)->check()) {
                 $user = Auth::guard($guard)->user();
 
+                $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'appsah.my.id';
+                $protocol = parse_url(config('app.url'), PHP_URL_SCHEME) ?: 'https';
+
                 if ($user?->is_superadmin) {
-                    return redirect('/tenants');
+                    // Force Superadmin to central dashboard
+                    return redirect()->away(config('app.url') . '/admin/dashboard');
                 }
 
                 $membership = TenantMember::query()
@@ -35,22 +39,26 @@ class RedirectIfAuthenticated
                     ->first();
 
                 if ($membership?->tenant?->slug) {
-                    $centralDomain = 'appsah.my.id'; // Default central domain
                     $host = $request->getHost();
                     $centralDomains = config('tenancy.central_domains', []);
+                    $matchedDomain = $centralDomain;
                     
-                    // Identify which central domain we are on
                     foreach ($centralDomains as $cd) {
-                        if (str_contains($host, $cd)) {
-                            $centralDomain = $cd;
+                        if (str_contains($host, $cd) && $cd !== 'localhost' && $cd !== '127.0.0.1') {
+                            $matchedDomain = $cd;
                             break;
                         }
                     }
                     
-                    return redirect()->away("https://{$membership->tenant->slug}.{$centralDomain}/admin/dashboard");
+                    if (str_ends_with($host, ".{$matchedDomain}") && $host !== "www.{$matchedDomain}") {
+                        // Already on a tenant subdomain, if hitting login, go to admin dashboard
+                        return redirect('/admin/dashboard');
+                    }
+
+                    return redirect()->away("{$protocol}://{$membership->tenant->slug}.{$matchedDomain}/admin/dashboard");
                 }
 
-                return redirect('/tenant-access-required');
+                return redirect()->away(config('app.url') . '/tenant-access-required');
             }
         }
 

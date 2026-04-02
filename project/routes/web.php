@@ -12,6 +12,7 @@ use App\Http\Controllers\TenantSettingsController;
 use App\Http\Controllers\ThemePreferenceController;
 use App\Http\Controllers\TenantWorkspaceController;
 use App\Http\Controllers\TenantHomeController;
+use App\Http\Controllers\TenantHubController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -39,6 +40,40 @@ Route::middleware([
         return Inertia::render('Landing/OnePage/index');
     })->name('landing');
 
+    // --- TENANT FAMILY HUB MEMBER PAGES (PRD Modules A-I) ---
+    Route::domain('{tenant}.appsah.my.id')
+        ->middleware(['auth', 'verified', 'tenant.resolve'])
+        ->group(function () {
+            Route::get('/hub',       [TenantHubController::class, 'index'])->name('tenant.hub');
+            Route::get('/calendar',  [TenantHubController::class, 'calendar'])->name('tenant.calendar');
+            Route::get('/projects',  [TenantHubController::class, 'projects'])->name('tenant.projects');
+            Route::get('/tasks',     [TenantHubController::class, 'tasks'])->name('tenant.tasks');
+            Route::get('/rewards',   [TenantHubController::class, 'rewards'])->name('tenant.rewards');
+            Route::get('/wallet',    [TenantHubController::class, 'wallet'])->name('tenant.wallet');
+            Route::get('/finance',   [TenantHubController::class, 'finance'])->name('tenant.finance');
+            Route::get('/kitchen',   [TenantHubController::class, 'kitchen'])->name('tenant.kitchen');
+            Route::get('/shopping',  [TenantHubController::class, 'kitchen'])->name('tenant.shopping');
+            Route::get('/health',    [TenantHubController::class, 'health'])->name('tenant.health');
+            Route::get('/medical',   [TenantHubController::class, 'health'])->name('tenant.medical');
+            Route::get('/records',   [TenantHubController::class, 'health'])->name('tenant.records');
+            Route::get('/assets',    [TenantHubController::class, 'assets'])->name('tenant.assets');
+            Route::get('/inventory', [TenantHubController::class, 'assets'])->name('tenant.inventory');
+            Route::get('/dimensions',[TenantHubController::class, 'assets'])->name('tenant.dimensions');
+            Route::get('/leisure',   [TenantHubController::class, 'leisure'])->name('tenant.leisure');
+            Route::get('/vacation',  [TenantHubController::class, 'leisure'])->name('tenant.vacation');
+            Route::get('/games',     [TenantHubController::class, 'games'])->name('tenant.games');
+            Route::get('/whatsapp',  [TenantHubController::class, 'wa'])->name('tenant.wa');
+            Route::get('/gallery',   [TenantHubController::class, 'gallery'])->name('tenant.gallery');
+            Route::get('/blog',      [TenantHubController::class, 'blog'])->name('tenant.blog');
+            Route::get('/files',     [TenantHubController::class, 'files'])->name('tenant.files');
+
+            // Member-context Profile & Settings (rendered in MemberLayout, not AdminShell)
+            Route::get('/me',          [TenantHubController::class, 'memberProfile'])->name('tenant.me');
+            Route::get('/me/settings', [TenantHubController::class, 'memberSettings'])->name('tenant.me.settings');
+            Route::get('/me/security', [TenantHubController::class, 'memberSettings'])->name('tenant.me.security');
+        });
+
+
     Route::get('/health', fn () => response()->json(['ok' => true]));
 
     Route::get('/test-broadcast', function() {
@@ -64,7 +99,7 @@ Route::middleware([
 
     // Authenticated Shared Routes (Profile)
     Route::middleware('auth')->group(function () {
-        Route::get('/tenants/selector', [TenantDirectoryController::class, 'selector'])->name('tenant.selector');
+        Route::get('/tenants', [TenantWorkspaceController::class, 'selector'])->name('tenant.selector');
         Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
         Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
         Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
@@ -74,6 +109,8 @@ Route::middleware([
         Route::post('/profile/security/mfa/verify', [ProfileSecurityController::class, 'verify'])->name('profile.security.mfa.verify');
         Route::delete('/profile/security/mfa', [ProfileSecurityController::class, 'disable'])->name('profile.security.mfa.disable');
         Route::post('/profile/security/passkeys', [ProfileSecurityController::class, 'passkeys'])->name('profile.security.passkeys');
+
+        Route::put('/settings/theme', ThemePreferenceController::class)->name('settings.theme.update');
     });
 
     // --- TENANT MANAGEMENT AREA (Tenant Subdomains Only) ---
@@ -88,14 +125,16 @@ Route::middleware([
         Route::get('/dashboard', [TenantWorkspaceController::class, 'dashboard'])->name('tenant.dashboard');
 
         // Settings redirect (index)
-        Route::get('/settings', fn() => redirect()->route('tenant.settings.branding'));
+        Route::get('/settings', fn() => redirect()->route('tenant.settings.profile', ['tenant' => request()->route('tenant')]))->name('tenant.settings');
 
         // Members Management
         Route::get('/members', [TenantWorkspaceController::class, 'members'])->name('tenant.members.index');
         Route::get('/members/{member}', [TenantWorkspaceController::class, 'memberView'])->name('tenant.members.view');
         Route::get('/members/{member}/edit', [TenantWorkspaceController::class, 'memberEdit'])->name('tenant.members.edit');
         Route::get('/roles', [TenantWorkspaceController::class, 'roles'])->name('tenant.roles');
-        Route::get('/invitations', [TenantWorkspaceController::class, 'invitations'])->name('tenant.invitations');
+        Route::get('/invitations', [TenantWorkspaceController::class, 'invitations'])
+            ->name('tenant.invitations')
+            ->middleware('tenant.feature:team.invitations,view');
 
         // WhatsApp Management
         Route::get('/whatsapp/settings', [TenantWorkspaceController::class, 'whatsappSettings'])->name('tenant.whatsapp.settings');

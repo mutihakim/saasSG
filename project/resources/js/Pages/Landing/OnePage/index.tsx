@@ -40,10 +40,10 @@ const Index = () => {
     };
     return (
         <React.Fragment>
-            <Head title='appsah SaaS Boilerplate'>
-                <meta name="description" content="appsah adalah boilerplate SaaS multi-tenant berbasis Laravel, Inertia, dan React." />
-                <meta property="og:title" content="appsah SaaS Boilerplate" />
-                <meta property="og:description" content="Fondasi SaaS core dengan tenant isolation, OCC, API envelope, dan audit log." />
+            <Head title='saasfamz - All-in-One Family Hub'>
+                <meta name="description" content="saasfamz adalah platform manajemen keluarga menyeluruh yang menyatukan perencanaan waktu, keuangan, kesehatan, dan gamifikasi anak dengan integrasi WhatsApp." />
+                <meta property="og:title" content="saasfamz - All-in-One Family Hub" />
+                <meta property="og:description" content="Satu Pusat Kendali untuk keluarga modern. Bebaskan diri dari kelelahan digital dengan satu ekosistem terpadu." />
                 <meta property="og:type" content="website" />
                 <meta property="og:url" content={window.location.origin} />
                 <meta name="twitter:card" content="summary_large_image" />
@@ -51,7 +51,7 @@ const Index = () => {
                     {JSON.stringify({
                         '@context': 'https://schema.org',
                         '@type': 'WebSite',
-                        name: 'appsah SaaS Boilerplate',
+                        name: 'saasfamz',
                         url: window.location.origin,
                     })}
                 </script>

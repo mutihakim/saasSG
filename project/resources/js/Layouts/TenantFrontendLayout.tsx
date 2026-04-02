@@ -2,8 +2,9 @@ import { Link, usePage } from '@inertiajs/react';
 import React from 'react';
 import { Container, Nav, Navbar, NavDropdown, Row, Col } from 'react-bootstrap';
 import { useTranslation } from 'react-i18next';
+
+// removed unused import
 import { SharedPageProps } from '../types/page';
-import ApplicationLogo from '../Components/ApplicationLogo';
 
 type Props = {
     children: React.ReactNode;

@@ -4,7 +4,7 @@ import { Col, Container, Row } from 'react-bootstrap';
 
 import img1 from "../../../../../images/landing/features/img-1.png";
 import img2 from "../../../../../images/landing/features/img-2.png";
-import img3 from "../../../../../images/landing/features/img-3.png";
+// removed unused img3
 
 const Features = () => {
     return (

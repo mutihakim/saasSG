@@ -1,8 +1,9 @@
-import React from 'react';
 import { Head, Link } from '@inertiajs/react';
+import React from 'react';
 import { Container, Row, Col, Card, Button } from 'react-bootstrap';
+
 import GuestLayout from '../../Layouts/GuestLayout';
-import { Users, ShieldCheck, Heart, ArrowRight } from 'lucide-react';
+
 
 interface Props {
     tenantName: string;

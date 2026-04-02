@@ -2,9 +2,7 @@ import { Link } from '@inertiajs/react';
 import React, { useEffect, useMemo, useState } from 'react';
 import { Collapse, Container, NavbarToggle } from 'react-bootstrap';
 
-// Import Images
-import logodark from '../../../../images/appsah-logo-dark.png';
-import logolight from '../../../../images/appsah-logo-light.png';
+// Removed unused Logo imports
 
 const sectionLinks = [
     { id: 'hero', label: 'Home' },
@@ -79,8 +77,7 @@ const Navbar = () => {
             <nav className={`navbar navbar-expand-lg navbar-landing fixed-top ${navClass}`.trim()} id="navbar">
                 <Container>
                     <Link className="navbar-brand" href="/landing">
-                        <img src={logodark} className="card-logo card-logo-dark" alt="logo dark" height="17" />
-                        <img src={logolight} className="card-logo card-logo-light" alt="logo light" height="17" />
+                        <h3 className="m-0 text-primary fw-bold">saasfamz</h3>
                     </Link>
 
                     <NavbarToggle
@@ -94,7 +91,7 @@ const Navbar = () => {
                         <i className="ri-menu-line"></i>
                     </NavbarToggle>
 
-                    <Collapse in={isOpenMenu} className="navbar-collapse" id="navbarSupportedContent">
+                    <Collapse in={isOpenMenu} className="navbar-collapse">
                         <div className="navbar-collapse-wrapper d-lg-flex w-100 align-items-center">
                             <ul className="navbar-nav mx-auto mt-2 mt-lg-0" id="navbar-example">
                                 {sectionLinks.map((link) => (

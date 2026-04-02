@@ -18,7 +18,7 @@ const Reviews = () => {
                                 <div>
                                     <i className="ri-double-quotes-l text-success display-3"></i>
                                 </div>
-                                <h4 className="text-white mb-5"><span className="text-success">19k</span>+ Satisfied clients</h4>
+                                <h4 className="text-white mb-5"><span className="text-success">2,500</span>+ Keluarga Bahagia</h4>
 
                                 <Swiper modules={[Navigation, Pagination, Autoplay]} pagination={{ clickable: true }} navigation={true} loop={true} autoplay={{ delay: 2500, disableOnInteraction: false }} className="mySwiper swiper client-review-swiper rounded">
                                     <div className="swiper-wrapper">
@@ -26,11 +26,10 @@ const Reviews = () => {
                                             <div className="row justify-content-center">
                                                 <div className="col-10">
                                                     <div className="text-white-50">
-                                                        <p className="fs-20 ff-secondary mb-4">" Kami bisa launching tenant baru jauh lebih cepat karena fondasi autentikasi, billing, dan workspace sudah rapi dari awal. "</p>
-
+                                                        <p className="fs-20 ff-secondary mb-4">" Akhirnya ada satu tempat untuk mengatur jadwal les anak, pengeluaran dapur, dan daftar belanjaan. Integrasi WhatsApp-nya sangat membantu saat saya sedang sibuk. "</p>
                                                         <div>
-                                                            <h5 className="text-white">Raka Pratama</h5>
-                                                            <p>- Founder, Opslane</p>
+                                                            <h5 className="text-white">Ibu Sarah</h5>
+                                                            <p>- Ibu Rumah Tangga & Arsitek</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -40,11 +39,10 @@ const Reviews = () => {
                                             <div className="row justify-content-center">
                                                 <div className="col-10">
                                                     <div className="text-white-50">
-                                                        <p className="fs-20 ff-secondary mb-4">" Tim kami tidak lagi merakit ulang dashboard setiap proyek. Boilerplate ini cukup modular untuk ditambah fitur tanpa mengganggu workflow yang sudah ada. "</p>
-
+                                                        <p className="fs-20 ff-secondary mb-4">" Anak-anak jadi lebih semangat mengerjakan tugas rumah karena ada fitur gamifikasinya. Saasfamz benar-benar mengubah cara kami mengelola rumah tangga. "</p>
                                                         <div>
-                                                            <h5 className="text-white">Nadia Lestari</h5>
-                                                            <p>- Product Lead, Karyanet</p>
+                                                            <h5 className="text-white">Bapak Budi</h5>
+                                                            <p>- Ayah 2 Anak</p>
                                                         </div>
                                                     </div>
                                                 </div>
@@ -54,11 +52,10 @@ const Reviews = () => {
                                             <div className="row justify-content-center">
                                                 <div className="col-10">
                                                     <div className="text-white-50">
-                                                        <p className="fs-20 ff-secondary mb-4">" Dokumentasinya jelas, area tenant dan admin terpisah dengan baik, dan proses porting modul baru jadi lebih aman karena shell inti sudah bersih. "</p>
-
+                                                        <p className="fs-20 ff-secondary mb-4">" Sangat membantu untuk memantau kesehatan keluarga dan jadwal imunisasi. Semua data tersentralisasi dan aman dalam satu aplikasi. "</p>
                                                         <div>
-                                                            <h5 className="text-white">Faris Mahendra</h5>
-                                                            <p>- Engineering Manager, Boxify</p>
+                                                            <h5 className="text-white">dr. Amelia</h5>
+                                                            <p>- Ibu & Praktisi Kesehatan</p>
                                                         </div>
                                                     </div>
                                                 </div>

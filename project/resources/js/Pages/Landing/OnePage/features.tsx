@@ -26,26 +26,26 @@ const Features = () => {
                                         <i className="ri-collage-line fs-36"></i>
                                     </div>
                                 </div>
-                                <h3 className="mb-3 fs-20">Focused starter modules</h3>
-                                <p className="mb-4 fs-16">appsah ships only the building blocks that matter for a SaaS core: auth, tenant workspace, subscription controls, onboarding, and an admin control plane.</p>
+                                <h3 className="mb-3 fs-20">Satu Pusat Kendali (All-in-One)</h3>
+                                <p className="mb-4 fs-16">Menghilangkan kebutuhan aplikasi pihak ketiga untuk urusan keluarga. Segalanya tersaji rapi, dari kalender, tugas, hingga fitur hiburan edukatif.</p>
 
                                 <Row className="pt-3">
-                                    <Col className="col-3">
+                                    <Col className="col-4">
                                         <div className="text-center">
-                                            <h4>2</h4>
-                                            <p>Core shells</p>
-                                        </div>
-                                    </Col>
-                                    <Col className="col-3">
-                                        <div className="text-center">
-                                            <h4>4</h4>
-                                            <p>Page domains</p>
+                                            <h4>9+</h4>
+                                            <p>Modul Cerdas</p>
                                         </div>
                                     </Col>
                                     <Col className="col-4">
                                         <div className="text-center">
                                             <h4>1</h4>
-                                            <p>Compat boundary</p>
+                                            <p>Aplikasi Terpadu</p>
+                                        </div>
+                                    </Col>
+                                    <Col className="col-4">
+                                        <div className="text-center">
+                                            <h4>∞</h4>
+                                            <p>Kemudahan</p>
                                         </div>
                                     </Col>
                                 </Row>
@@ -61,12 +61,12 @@ const Features = () => {
                     <Row className="align-items-center gy-4">
                         <Col className="col-sm">
                             <div>
-                                <h4 className="text-white mb-0 fw-semibold">Build your SaaS product faster with appsah</h4>
+                                <h4 className="text-white mb-0 fw-semibold">Mulai Kelola Keluarga Anda Lebih Baik dengan saasfamz</h4>
                             </div>
                         </Col>
                         <Col className="col-sm-auto">
                             <div>
-                                <Link href="/register" className="btn bg-gradient btn-danger"><i className="ri-rocket-line align-middle me-1"></i> Get Started</Link>
+                                <Link href="/register" className="btn bg-gradient btn-danger"><i className="ri-rocket-line align-middle me-1"></i> Mulai Sekarang</Link>
                             </div>
                         </Col>
                     </Row>
@@ -79,9 +79,9 @@ const Features = () => {
                     <Row className="align-items-center gy-4">
                         <Col lg={6} className="order-2 order-lg-1">
                             <div className="text-muted">
-                                <h5 className="fs-12 text-uppercase text-success">Shell</h5>
-                                <h4 className="mb-3">Clean tenant and admin workspaces</h4>
-                                <p className="mb-4">The core shell is intentionally minimal, typed, and brandable, so new product modules can land without dragging legacy theme state back into the app.</p>
+                                <h5 className="fs-12 text-uppercase text-success">Gamifikasi</h5>
+                                <h4 className="mb-3">Tugas Harian Kini Lebih Seru</h4>
+                                <p className="mb-4">Ubah rutinitas menjadi sistem penghargaan interaktif. Setiap penyelesaian tugas otomatis menghasilkan poin bagi anak, di mana mereka dapat menukarkannya dengan hadiah dan durasi bermain (Screen Time).</p>
 
                                 <Row>
                                     <Col sm={5}>
@@ -96,7 +96,7 @@ const Features = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex-grow-1">
-                                                    <h5 className="fs-14 mb-0">Tenant workspace</h5>
+                                                    <h5 className="fs-14 mb-0">Rutinitas Harian</h5>
                                                 </div>
                                             </div>
                                             <div className="d-flex align-items-center">
@@ -109,7 +109,7 @@ const Features = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex-grow-1">
-                                                    <h5 className="fs-14 mb-0">Admin console</h5>
+                                                    <h5 className="fs-14 mb-0">Sistem Poin</h5>
                                                 </div>
                                             </div>
                                             <div className="d-flex align-items-center">
@@ -122,7 +122,7 @@ const Features = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex-grow-1">
-                                                    <h5 className="fs-14 mb-0">Account settings</h5>
+                                                    <h5 className="fs-14 mb-0">Toko Hadiah Pribadi</h5>
                                                 </div>
                                             </div>
                                         </div>
@@ -139,7 +139,7 @@ const Features = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex-grow-1">
-                                                    <h5 className="fs-14 mb-0">Feature gating</h5>
+                                                    <h5 className="fs-14 mb-0">Manajemen Waktu Layar</h5>
                                                 </div>
                                             </div>
                                             <div className="d-flex align-items-center">
@@ -152,7 +152,7 @@ const Features = () => {
                                                     </div>
                                                 </div>
                                                 <div className="flex-grow-1">
-                                                    <h5 className="fs-14 mb-0">Compat adapters</h5>
+                                                    <h5 className="fs-14 mb-0">Hadiah Khusus</h5>
                                                 </div>
                                             </div>
                                         </div>
@@ -160,7 +160,7 @@ const Features = () => {
                                 </Row>
 
                                 <div className="mt-4">
-                                    <Link href="/register" className="btn btn-primary">Launch Your Workspace <i className="ri-arrow-right-line align-middle ms-1"></i></Link>
+                                    <Link href="/register" className="btn btn-primary">Coba Gamifikasi <i className="ri-arrow-right-line align-middle ms-1"></i></Link>
                                 </div>
                             </div>
                         </Col>
@@ -180,9 +180,9 @@ const Features = () => {
                         </Col>
                         <Col lg={6}>
                             <div className="text-muted ps-lg-5">
-                                <h5 className="fs-12 text-uppercase text-success">Workflow</h5>
-                                <h4 className="mb-3">Documented for extension</h4>
-                                <p className="mb-4">The project docs map routes, middleware, feature flags, and test expectations so future modules can be ported in without reopening the shell architecture.</p>
+                                <h5 className="fs-12 text-uppercase text-success">Interaktivitas</h5>
+                                <h4 className="mb-3">Aksesibilitas Cepat via WhatsApp</h4>
+                                <p className="mb-4">Input dan output data secara instan melalui asisten cerdas WhatsApp. Tak perlu membuka aplikasi untuk sekadar mencatatkan pengeluaran atau menyelesaikan tugas.</p>
 
                                 <div className="vstack gap-2">
                                     <div className="d-flex align-items-center">
@@ -194,7 +194,7 @@ const Features = () => {
                                             </div>
                                         </div>
                                         <div className="flex-grow-1">
-                                            <p className="mb-0">Architecture map</p>
+                                            <p className="mb-0">Pencatatan Keuangan via Chat</p>
                                         </div>
                                     </div>
                                     <div className="d-flex align-items-center">
@@ -206,7 +206,7 @@ const Features = () => {
                                             </div>
                                         </div>
                                         <div className="flex-grow-1">
-                                            <p className="mb-0">Quality gate checklist</p>
+                                            <p className="mb-0">Tautan Pintar (Deep Linking) Form</p>
                                         </div>
                                     </div>
                                     <div className="d-flex align-items-center">
@@ -218,7 +218,7 @@ const Features = () => {
                                             </div>
                                         </div>
                                         <div className="flex-grow-1">
-                                            <p className="mb-0">Compat import contract</p>
+                                            <p className="mb-0">Laporan Jadwal dan Rekap Harian</p>
                                         </div>
                                     </div>
                                 </div>

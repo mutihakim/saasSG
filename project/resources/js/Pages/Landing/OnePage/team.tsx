@@ -21,8 +21,10 @@ const Team = () => {
                     <Row className="justify-content-center">
                         <Col lg={8}>
                             <div className="text-center mb-5">
-                                <h3 className="mb-3 fw-semibold">Built by a <span className="text-danger">product-minded team</span></h3>
-                                <p className="text-muted mb-4 ff-secondary">appsah is shaped for teams who care about maintainability, tenant safety, and shipping new modules without reworking the foundation.</p>
+                                <div className="text-center mb-5">
+                                    <h3 className="mb-3 fw-semibold">Dibuat oleh Tim yang <span className="text-danger">Peduli Kedekatan Keluarga</span></h3>
+                                    <p className="text-muted mb-4 ff-secondary">saasfamz dirancang oleh para ahli yang memahami tantangan manajemen rumah tangga modern, berfokus pada kemudahan akses untuk seluruh anggota keluarga.</p>
+                                </div>
                             </div>
                         </Col>
                     </Row>
@@ -32,7 +34,7 @@ const Team = () => {
                                 <Card.Body className="text-center p-4">
                                     <div className="avatar-xl mx-auto mb-4 position-relative">
                                         <img src={avatar2} alt="" className="img-fluid rounded-circle" />
-                                        <a href="mailto:hello@appsah.com"
+                                        <a href="mailto:hello@saasfamz.com"
                                             className="btn btn-success btn-sm position-absolute bottom-0 end-0 rounded-circle avatar-xs">
                                             <div className="avatar-title bg-transparent">
                                                 <i className="ri-mail-fill align-bottom"></i>
@@ -222,7 +224,7 @@ const Team = () => {
                     <Row>
                         <div className="col-lg-12">
                             <div className="text-center mt-2">
-                                <Link href="/register" className="btn btn-primary">Start Building <i
+                                <Link href="/register" className="btn btn-primary">Bergabung Sekarang <i
                                     className="ri-arrow-right-line ms-1 align-bottom"></i></Link>
                             </div>
                         </div>

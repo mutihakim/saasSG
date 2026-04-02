@@ -12,10 +12,8 @@ const WorkProcess = () => {
                     <Row className="justify-content-center">
                         <Col lg={8}>
                             <div className="text-center mb-5">
-                                <h3 className="mb-3 fw-semibold">Our Work Process</h3>
-                                <p className="text-muted mb-4 ff-secondary">In an ideal world this website wouldn’t exist, a client would
-                                    acknowledge the importance of having web copy before the Proin vitae ipsum vel ex
-                                    finibus semper design starts.</p>
+                                <h3 className="mb-3 fw-semibold">Cara Kerja saasfamz</h3>
+                                <p className="text-muted mb-4 ff-secondary">Membangun ekosistem keluarga yang teratur semudah tiga langkah sederhana berikut.</p>
                             </div>
                         </Col>
                     </Row>
@@ -33,8 +31,8 @@ const WorkProcess = () => {
                                     </div>
                                 </div>
 
-                                <h5>Tell us what you need</h5>
-                                <p className="text-muted ff-secondary">The profession and the employer and your desire to make your mark.</p>
+                                <h5>Daftar & Undang Keluarga</h5>
+                                <p className="text-muted ff-secondary">Buat akun keluarga dan undang pasangan serta anggota keluarga lainnya ke dalam satu ruang kendali.</p>
                             </div>
                         </Col>
 
@@ -49,8 +47,8 @@ const WorkProcess = () => {
                                     </div>
                                 </div>
 
-                                <h5>Get free quotes</h5>
-                                <p className="text-muted ff-secondary">The most important aspect of beauty was, therefore, an inherent part.</p>
+                                <h5>Personalisasi Modul</h5>
+                                <p className="text-muted ff-secondary">Pilih modul yang paling dibutuhkan keluarga Anda, mulai dari Kalender, Keuangan, hingga Modul Kesehatan.</p>
                             </div>
                         </Col>
 
@@ -62,8 +60,8 @@ const WorkProcess = () => {
                                     </div>
                                 </div>
 
-                                <h5>Deliver high quality product</h5>
-                                <p className="text-muted ff-secondary">We quickly learn to fear and thus automatically avoid potentially.</p>
+                                <h5>Hubungkan WhatsApp</h5>
+                                <p className="text-muted ff-secondary">Aktifkan asisten WhatsApp untuk interaksi instan tanpa perlu membuka aplikasi setiap saat.</p>
                             </div>
                         </Col>
 

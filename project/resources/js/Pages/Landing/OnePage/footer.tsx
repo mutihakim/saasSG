@@ -2,8 +2,7 @@ import { Link } from '@inertiajs/react';
 import React from 'react';
 import { Col, Container, Row } from 'react-bootstrap';
 
-// Import Images
-import logolight from "../../../../images/appsah-logo-light.png";
+// Logo images removed for text branding
 
 
 const Footer = () => {
@@ -15,11 +14,11 @@ const Footer = () => {
                         <Col lg={4} className="mt-4">
                             <div>
                                 <div>
-                                    <img src={logolight} alt="logo light" height="17" />
+                                    <h4 className="text-white fw-bold">saas<span className="text-primary">famz</span></h4>
                                 </div>
                                 <div className="mt-4 fs-13">
-                                    <p>Production-ready SaaS starter kit</p>
-                                    <p className="ff-secondary">appsah helps product teams ship multi-tenant SaaS modules with a clean shell, predictable workflow, and an isolated compat path for future page ports.</p>
+                                    <p>Pusat Ekosistem Keluarga Terpadu</p>
+                                    <p className="ff-secondary">saasfamz membantu keluarga modern mengelola seluruh aspek kehidupan rumah tangga dalam satu platform cerdas dengan integrasi WhatsApp yang instan.</p>
                                 </div>
                             </div>
                         </Col>
@@ -49,12 +48,12 @@ const Footer = () => {
                                     </div>
                                 </Col>
                                 <Col sm={4} className="mt-4">
-                                    <h5 className="text-white mb-0">Support</h5>
+                                    <h5 className="text-white mb-0">Dukungan</h5>
                                     <div className="text-muted mt-3">
                                         <ul className="list-unstyled ff-secondary footer-list">
-                                            <li><Link href="/landing#contact">FAQ</Link></li>
-                                            <li><Link href="/landing#contact">Contact</Link></li>
-                                            <li><a href="mailto:hello@appsah.com">hello@appsah.com</a></li>
+                                            <li><Link href="/landing#faq">FAQ</Link></li>
+                                            <li><Link href="/landing#contact">Kontak</Link></li>
+                                            <li><a href="mailto:hello@saasfamz.com">hello@saasfamz.com</a></li>
                                         </ul>
                                     </div>
                                 </Col>
@@ -68,7 +67,7 @@ const Footer = () => {
 
                             <div>
                                 <p className="copy-rights mb-0">
-                                    {new Date().getFullYear()} (c) appsah
+                                    {new Date().getFullYear()} (c) saasfamz
                                 </p>
                             </div>
                         </Col>
@@ -97,7 +96,7 @@ const Footer = () => {
                                         </a>
                                     </li>
                                     <li className="list-inline-item">
-                                        <a href="mailto:hello@appsah.com" className="avatar-xs d-block">
+                                        <a href="mailto:hello@saasfamz.com" className="avatar-xs d-block">
                                             <div className="avatar-title rounded-circle">
                                                 <i className="ri-mail-send-line"></i>
                                             </div>

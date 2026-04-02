@@ -3,10 +3,8 @@ import './bootstrap';
 import './i18n';
 import 'bootstrap';
 import 'react-toastify/dist/ReactToastify.css';
-import.meta.glob([
-    '../images/**',
-    '../fonts/**',
-]);
+import.meta.glob('../images/**');
+import.meta.glob('../fonts/**');
 
 import { createInertiaApp } from '@inertiajs/react';
 import { configureEcho } from '@laravel/echo-react';

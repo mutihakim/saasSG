@@ -17,7 +17,7 @@ const Client = () => {
                         <Col lg={12}>
 
                             <div className="text-center mt-5">
-                                <h5 className="fs-20">Trusted <span className="text-primary text-decoration-underline">by</span> the world's best</h5>
+                                <h5 className="fs-20">Visi kami <span className="text-primary text-decoration-underline">didukung</span> oleh kepercayaan keluarga</h5>
                                 <Swiper
                                     slidesPerView={4}
                                     spaceBetween={30}

@@ -49,9 +49,12 @@ class AuthenticatedSessionController extends Controller
 
         $target = '/tenant-access-required';
         $user = $request->user();
+        $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'appsah.my.id';
+        $protocol = parse_url(config('app.url'), PHP_URL_SCHEME) ?: 'https';
 
         if ($user?->is_superadmin) {
-            $target = '/admin/dashboard';
+            // Force Superadmin to central dashboard regardless of where they log in
+            $target = config('app.url') . '/admin/dashboard';
         } else {
             $membership = TenantMember::query()
                 ->with('tenant:id,slug')
@@ -61,24 +64,27 @@ class AuthenticatedSessionController extends Controller
                 ->first();
 
             if ($membership?->tenant?->slug) {
-                $centralDomain = 'appsah.my.id';
                 $host = $request->getHost();
                 $centralDomains = config('tenancy.central_domains', []);
+                $matchedDomain = $centralDomain;
+                
                 foreach ($centralDomains as $cd) {
-                    if (str_contains($host, $cd)) {
-                        $centralDomain = $cd;
+                    if (str_contains($host, $cd) && $cd !== 'localhost' && $cd !== '127.0.0.1') {
+                        $matchedDomain = $cd;
                         break;
                     }
                 }
-                if (str_ends_with($host, ".{$centralDomain}") && $host !== "www.{$centralDomain}") {
-                    // Check if they used the admin login route (GET or POST)
+
+                if (str_ends_with($host, ".{$matchedDomain}") && $host !== "www.{$matchedDomain}") {
+                    // Already on a tenant subdomain
                     if ($request->routeIs('tenant.admin.login') || $request->routeIs('tenant.admin.login.store')) {
                         $target = "/admin/dashboard";
                     } else {
                         $target = "/";
                     }
                 } else {
-                    $target = "https://{$membership->tenant->slug}.{$centralDomain}/admin/dashboard";
+                    // On central domain, redirect to their tenant's subdomain
+                    $target = "{$protocol}://{$membership->tenant->slug}.{$matchedDomain}/admin/dashboard";
                 }
             }
         }
@@ -92,12 +98,28 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): \Symfony\Component\HttpFoundation\Response
     {
+        $host = $request->getHost();
+        $referer = $request->headers->get('referer');
+        
+        $centralDomains = config('tenancy.central_domains', []);
+        $isCentral = in_array($host, $centralDomains);
+
         Auth::guard('web')->logout();
 
         $request->session()->invalidate();
-
         $request->session()->regenerateToken();
 
-        return Inertia::location(config('app.url'));
+        if ($isCentral) {
+            return Inertia::location(config('app.url'));
+        }
+
+        // On tenant subdomain
+        if ($referer && str_contains(parse_url($referer, PHP_URL_PATH) ?? '', '/admin')) {
+            // Logout from tenant admin dashboard -> back to tenant admin login
+            return Inertia::location(url('/admin/login'));
+        }
+
+        // Logout from tenant hub/landing -> stay on tenant home
+        return Inertia::location(url('/'));
     }
 }

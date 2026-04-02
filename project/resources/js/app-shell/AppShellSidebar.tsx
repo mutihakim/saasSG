@@ -119,7 +119,9 @@ export default function AppShellSidebar({ sections, preferences, onCloseMobileSi
 
     useEffect(() => {
         const verticalOverlay = document.getElementsByClassName('vertical-overlay');
-        if (!verticalOverlay[0]) {
+        const element = verticalOverlay[0];
+        
+        if (!element) {
             return undefined;
         }
 
@@ -128,10 +130,10 @@ export default function AppShellSidebar({ sections, preferences, onCloseMobileSi
             onCloseMobileSidebar();
         };
 
-        verticalOverlay[0].addEventListener('click', handleOverlay);
+        element.addEventListener('click', handleOverlay);
 
         return () => {
-            verticalOverlay[0].removeEventListener('click', handleOverlay);
+            element.removeEventListener('click', handleOverlay);
         };
     }, [onCloseMobileSidebar]);
 

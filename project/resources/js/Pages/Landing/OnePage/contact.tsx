@@ -9,10 +9,8 @@ const Contact = () => {
                     <Row className="justify-content-center">
                         <Col lg={8}>
                             <div className="text-center mb-5">
-                                <h3 className="mb-3 fw-semibold">Get In Touch</h3>
-                                <p className="text-muted mb-4 ff-secondary">We thrive when coming up with innovative ideas but also
-                                    understand that a smart concept should be supported with faucibus sapien odio measurable
-                                    results.</p>
+                                <h3 className="mb-3 fw-semibold">Hubungi Kami</h3>
+                                <p className="text-muted mb-4 ff-secondary">Punya pertanyaan tentang bagaimana saasfamz bisa membantu keluarga Anda? Tim kami siap mendengarkan dan memberikan solusi terbaik.</p>
                             </div>
                         </Col>
                     </Row>
@@ -21,16 +19,12 @@ const Contact = () => {
                         <Col lg={4}>
                             <div>
                                 <div className="mt-4">
-                                    <h5 className="fs-13 text-muted text-uppercase">Office Address 1:</h5>
-                                    <div className="fw-semibold">4461 Cedar Street Moro, <br />AR 72368</div>
+                                    <h5 className="fs-13 text-muted text-uppercase">Email Dukungan:</h5>
+                                    <div className="fw-semibold">hello@saasfamz.com</div>
                                 </div>
                                 <div className="mt-4">
-                                    <h5 className="fs-13 text-muted text-uppercase">Office Address 2:</h5>
-                                    <div className="fw-semibold">2467 Swick Hill Street <br />New Orleans, LA</div>
-                                </div>
-                                <div className="mt-4">
-                                    <h5 className="fs-13 text-muted text-uppercase">Working Hours:</h5>
-                                    <div className="fw-semibold">9:00am to 6:00pm</div>
+                                    <h5 className="fs-13 text-muted text-uppercase">Waktu Operasional:</h5>
+                                    <div className="fw-semibold">Senin - Jumat | 09:00 - 18:00 WIB</div>
                                 </div>
                             </div>
                         </Col>
@@ -41,42 +35,42 @@ const Contact = () => {
                                     <Row>
                                         <Col lg={6}>
                                             <div className="mb-4">
-                                                <label htmlFor="name" className="form-label fs-13">Name</label>
+                                                <label htmlFor="name" className="form-label fs-13">Nama</label>
                                                 <input name="name" id="name" type="text"
-                                                    className="form-control bg-light border-light" placeholder="Your name*" />
+                                                    className="form-control bg-light border-light" placeholder="Nama Anda*" />
                                             </div>
                                         </Col>
                                         <Col lg={6}>
                                             <div className="mb-4">
                                                 <label htmlFor="email" className="form-label fs-13">Email</label>
                                                 <input name="email" id="email" type="email"
-                                                    className="form-control bg-light border-light" placeholder="Your email*" />
+                                                    className="form-control bg-light border-light" placeholder="Alamat Email*" />
                                             </div>
                                         </Col>
                                     </Row>
                                     <Row>
                                         <Col lg={12}>
                                             <div className="mb-4">
-                                                <label htmlFor="subject" className="form-label fs-13">Subject</label>
+                                                <label htmlFor="subject" className="form-label fs-13">Subjek</label>
                                                 <input type="text" className="form-control bg-light border-light" id="subject"
-                                                    name="subject" placeholder="Your Subject.." />
+                                                    name="subject" placeholder="Subjek Pesan.." />
                                             </div>
                                         </Col>
                                     </Row>
                                     <Row>
                                         <Col lg={12}>
                                             <div className="mb-3">
-                                                <label htmlFor="comments" className="form-label fs-13">Message</label>
+                                                <label htmlFor="comments" className="form-label fs-13">Pesan</label>
                                                 <textarea name="comments" id="comments" rows={3}
                                                     className="form-control bg-light border-light"
-                                                    placeholder="Your message..."></textarea>
+                                                    placeholder="Bagaimana kami bisa membantu?"></textarea>
                                             </div>
                                         </Col>
                                     </Row>
                                     <Row>
                                         <Col lg={12} className="text-end">
                                             <input type="submit" id="submit" name="send" className="submitBnt btn btn-primary"
-                                                value="Send Message" />
+                                                value="Kirim Pesan" />
                                         </Col>
                                     </Row>
                                 </Form>

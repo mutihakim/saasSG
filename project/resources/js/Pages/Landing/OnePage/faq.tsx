@@ -83,12 +83,12 @@ const Faqs = () => {
                     <Row className="justify-content-center">
                         <Col lg={8}>
                             <div className="text-center mb-5">
-                                <h3 className="mb-3 fw-bold">Frequently Asked Questions</h3>
-                                <p className="text-muted mb-4">Need more detail before adopting appsah for your product? These are the questions teams usually ask before they start porting modules.</p>
+                                <h3 className="mb-3 fw-bold">Pertanyaan yang Sering Diajukan</h3>
+                                <p className="text-muted mb-4">Masih ragu untuk mulai menyatukan aplikasi keluarga Anda? Berikut jawaban atas pertanyaan umum sebelum Anda bergabung.</p>
 
                                 <div>
-                                    <a href="mailto:hello@appsah.com" className="btn btn-primary btn-label rounded-pill me-1"><i className="ri-mail-line label-icon align-middle rounded-pill fs-16 me-2"></i> Email Us</a>
-                                    <a href="/register" className="btn btn-info btn-label rounded-pill"><i className="ri-rocket-line label-icon align-middle rounded-pill fs-16 me-2"></i> Start Trial</a>
+                                    <a href="mailto:hello@saasfamz.com" className="btn btn-primary btn-label rounded-pill me-1"><i className="ri-mail-line label-icon align-middle rounded-pill fs-16 me-2"></i> Hubungi Kami</a>
+                                    <a href="/register" className="btn btn-info btn-label rounded-pill"><i className="ri-rocket-line label-icon align-middle rounded-pill fs-16 me-2"></i> Mulai Percobaan</a>
                                 </div>
                             </div>
                         </Col>
@@ -101,7 +101,7 @@ const Faqs = () => {
                                     <i className="ri-question-line fs-24 align-middle text-success me-1"></i>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="mb-0 fw-bold">General Questions</h5>
+                                    <h5 className="mb-0 fw-bold">Pertanyaan Umum</h5>
                                 </div>
                             </div>
                             <div className="accordion custom-accordionwithicon custom-accordion-border accordion-border-box"
@@ -118,12 +118,12 @@ const Faqs = () => {
                                             onClick={t_col1}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            What makes appsah different from a raw admin template?
+                                            Apa yang membedakan saasfamz dari aplikasi produktivitas lain?
                                         </button>
                                     </h2>
                                     <Collapse in={col1} className="accordion-collapse">
                                         <div className="accordion-body ff-secondary">
-                                            appsah is structured as a product-ready SaaS core. The shell, navigation, permissions, and subscription guards are already normalized so your team extends features instead of rebuilding fundamentals.
+                                            saasfamz merangkum seluruh aspek keluarga—mulai dari kalender, tugas, belanja, hingga keuangan dan gamifikasi anak—dalam SATU tempat. Anda tidak perlu mengunduh 5 aplikasi berbeda untuk 5 kebutuhan.
                                         </div>
                                     </Collapse>
                                 </div>
@@ -139,12 +139,12 @@ const Faqs = () => {
                                             onClick={t_col2}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            Can we still use pages from the reference library later?
+                                            Bagaimana cara kerja fitur Gamifikasi untuk anak?
                                         </button>
                                     </h2>
                                     <Collapse in={col2} className="accordion-collapse">
                                         <div className="accordion-body ff-secondary">
-                                            Yes. New references should be ported through the compatibility boundary. That keeps the core shell clean while preserving a predictable path for future module imports.
+                                            Anda mengatur tugas harian/rutinitas (misal: "sikat gigi", "bereskan mainan") di Mesin Tugas Inti. Setiap tugas yang diselesaikan memberi anak poin. Poin tersebut lalu bisa ditukarkan anak dengan waktu main ekstra atau hadiah di Toko Hadiah Pribadi.
                                         </div>
                                     </Collapse>
                                 </div>
@@ -160,12 +160,12 @@ const Faqs = () => {
                                             onClick={t_col3}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            How do you keep the core app clean over time?
+                                            Bagaimana Asisten WhatsApp bekerja?
                                         </button>
                                     </h2>
                                     <Collapse in={col3} className="accordion-collapse">
                                         <div className="accordion-body ff-secondary">
-                                            The project now enforces route namespace policy, banned legacy imports, banned legacy packages, and a single navigation source through the cleanliness check and CI pipeline.
+                                            Anda cukup mengirim pesan ke nomor bot kami seperti "Beli galon 20.000", dan sistem akan membalas dengan tautan sekali klik untuk memverifikasi pencatatan tersebut langsung ke modul Keuangan Anda tanpa perlu repot membuka menu aplikasi.
                                         </div>
                                     </Collapse>
                                 </div>
@@ -181,12 +181,12 @@ const Faqs = () => {
                                             onClick={t_col4}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            Which parts of the app are considered active product surface?
+                                            Bisakah seluruh keluarga menggunakan satu paket langganan?
                                         </button>
                                     </h2>
                                     <Collapse in={col4} className="accordion-collapse">
                                         <div className="accordion-body ff-secondary">
-                                            Only `Auth`, `Tenant`, `Admin`, and `Landing` remain in the shipped page tree. Legacy demo namespaces and template-only shells have been removed from the active app surface.
+                                            Ya! Setiap paket mencakup ruang keluarga untuk semua anggota. Anda cukup mengundang pasangan, anak usia sekolah, kakek, hingga nenek dalam satu dompet ruang keluarga.
                                         </div>
                                     </Collapse>
                                 </div>
@@ -199,7 +199,7 @@ const Faqs = () => {
                                     <i className="ri-shield-keyhole-line fs-24 align-middle text-success me-1"></i>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="mb-0 fw-bold">Privacy &amp; Security</h5>
+                                    <h5 className="mb-0 fw-bold">Privasi &amp; Keamanan Data Keluarga</h5>
                                 </div>
                             </div>
 
@@ -217,12 +217,12 @@ const Faqs = () => {
                                             onClick={t_col5}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            Does the shell support dark mode and saved preferences?
+                                            Apakah data medis dan informasi rahasia saya aman di Brankas Keluarga?
                                         </button>
                                     </h2>
                                     <Collapse in={col9} className="accordion-collapse">
                                         <div className="accordion-body ff-secondary">
-                                            Yes. The core shell persists a small preference contract for color mode, sidebar state, and content width, with backward-compatible mapping for any older stored layout keys.
+                                            Tentu. Kami mengenkripsi seluruh penyimpanan password Wi-Fi, rekaman medis, dan PIN rumah di dalam Brankas Informasi dengan standar keamanan end-to-end khusus setiap ruang tenant keluarga.
                                         </div>
                                     </Collapse>
                                 </div>
@@ -238,12 +238,12 @@ const Faqs = () => {
                                             onClick={t_col6}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            How are tenant access and permissions enforced?
+                                            Apakah anak saya memiliki akses ke keuangan orang tua?
                                         </button>
                                     </h2>
                                     <Collapse in={col10} className="accordion-collapse">
                                         <div className="accordion-body ff-secondary">
-                                            Tenant routes pass through tenant initialization, access checks, team permission context, and feature entitlement middleware before the page or API handler executes.
+                                            Sama sekali tidak. saasfamz memiliki proteksi peran berlapis. Akun anak hanya dapat melihat tugas mereka, poin hadiah, dan game edukatif. Manajemen uang dan rumah hanya tersedia bagi pengguna dengan peran Orang Tua/Pengelola.
                                         </div>
                                     </Collapse>
                                 </div>
@@ -259,12 +259,12 @@ const Faqs = () => {
                                             onClick={t_col7}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            What quality checks should we trust before merging a new module?
+                                            Bagaimana jika nomor WhatsApp saya hilang?
                                         </button>
                                     </h2>
                                     <Collapse in={col11} className="accordion-collapse">
                                         <div className="accordion-body ff-secondary">
-                                            At minimum: cleanliness check, lint, typecheck, build, docs build, and backend tests. Workspace smoke tests are also available for environments that provide seeded credentials.
+                                            Identitas aplikasi tidak terikat mutlak pada WhatsApp. Anda selalu bisa mengelola aplikasi langsung menggunakan Email dan Password utama, kemudian mengatur ulang penautan nomor bot WA dari dalam dashboard.
                                         </div>
                                     </Collapse>
                                 </div>
@@ -280,12 +280,12 @@ const Faqs = () => {
                                             onClick={t_col8}
                                             style={{ cursor: "pointer" }}
                                         >
-                                            Can this boilerplate grow without another shell refactor?
+                                            Apakah fitur permainan (Game Center) aman dan bebas iklan?
                                         </button>
                                     </h2>
                                     <Collapse in={col12} className="accordion-collapse">
                                         <div className="accordion-body ff-secondary">
-                                            That is the goal. The shell has been reduced to stable core concerns, while the compat layer isolates optional styling helpers for future reference imports.
+                                            Ya! Seluruh Pusat Permainan Edukatif (Trivia, Tantangan Matematika, Catur) tersedia murni tanpa iklan eksternal apa pun untuk menjamin ruang aman yang terkendali dari layar gawai berlebih.
                                         </div>
                                     </Collapse>
                                 </div>

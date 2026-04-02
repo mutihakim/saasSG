@@ -19,7 +19,7 @@ const Counter = () => {
                                 </span>
                                     +
                                 </h2>
-                                <div className="text-muted">Projects Completed</div>
+                                <div className="text-muted">Keluarga Terbantu</div>
                             </div>
                         </Col>
 
@@ -33,7 +33,7 @@ const Counter = () => {
                                     />
                                 </span>
                                 </h2>
-                                <div className="text-muted">Win Awards</div>
+                                <div className="text-muted">Modul Pintar</div>
                             </div>
                         </Col>
 
@@ -44,12 +44,12 @@ const Counter = () => {
                                         start={0}
                                         end={20.3}
                                         duration={3}
-                                        // decimal={1}
+                                    // decimal={1}
                                     />
                                 </span>
                                     k
                                 </h2>
-                                <div className="text-muted">Satisfied Clients</div>
+                                <div className="text-muted">Pengguna Aktif</div>
                             </div>
                         </Col>
 
@@ -63,7 +63,7 @@ const Counter = () => {
                                     />
                                 </span>
                                 </h2>
-                                <div className="text-muted">Employees</div>
+                                <div className="text-muted">Kota Terjangkau</div>
                             </div>
                         </Col>
                     </Row>

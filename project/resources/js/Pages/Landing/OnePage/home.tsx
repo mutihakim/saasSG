@@ -25,15 +25,16 @@ const Home = () => {
                     <Row className="justify-content-center">
                         <Col lg={8} sm={10}>
                             <div className="text-center mt-lg-5 pt-5">
-                                <h1 className="display-6 fw-bold mb-3 lh-base">Build multi-tenant products faster with <span className="text-success">appsah</span></h1>
-                                <p className="lead text-muted lh-base">A production-oriented SaaS boilerplate for teams that need clean architecture, tenant isolation, and an extendable admin workspace from day one.</p>
+                                <h1 className="display-6 fw-bold mb-3 lh-base">Satu Pusat Kendali untuk Keluarga dengan <span className="text-success">saasfamz</span></h1>
+                                <p className="lead text-muted lh-base">Aplikasi Ekosistem Keluarga Terpadu. Satukan perencanaan jadwal, keuangan rumah tangga, kesehatan, hingga gamifikasi anak dalam satu platform yang terintegrasi dengan WhatsApp.</p>
 
                                 <div className="d-flex gap-2 justify-content-center mt-4">
-                                    <Link href="/register" className="btn btn-primary">Get Started <i className="ri-arrow-right-line align-middle ms-1"></i></Link>
-                                    <Link href="/landing#plans" className="btn btn-danger">View Plans <i className="ri-eye-line align-middle ms-1"></i></Link>
+                                    <Link href="/register" className="btn btn-primary">Mulai Gratis <i className="ri-arrow-right-line align-middle ms-1"></i></Link>
+                                    <Link href="/landing#plans" className="btn btn-danger">Lihat Paket <i className="ri-eye-line align-middle ms-1"></i></Link>
                                 </div>
                             </div>
 
+                            {/* Optional: we can keep demo carousel or replace it later with family hub UI mockups, for now let's keep it to not break the layout */}
                             <div className='mt-4 mt-sm-5 pt-sm-5 mb-sm-n5 demo-carousel'>
                                 <div className="demo-img-patten-top d-none d-sm-block">
                                     <img src={imgpattern} className="d-block img-fluid" alt="..." />

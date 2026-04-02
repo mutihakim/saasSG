@@ -13,20 +13,19 @@ const Plans = () => {
                     <Row className="justify-content-center">
                         <Col lg={8}>
                             <div className="text-center mb-5">
-                                <h3 className="mb-3 fw-bold">Choose the plan that's right for you</h3>
-                                <p className="text-muted mb-4">Simple pricing. No hidden fees. Advanced features for you
-                                    business.</p>
+                                <h3 className="mb-3 fw-bold">Pilih Paket Sesuai Kebutuhan Keluarga Anda</h3>
+                                <p className="text-muted mb-4">Investasi kecil untuk keharmonisan dan efisiensi waktu keluarga selamanya.</p>
 
                                 <div className="d-flex justify-content-center align-items-center">
                                     <div>
-                                        <h5 className="fs-14 mb-0">Month</h5>
+                                        <h5 className="fs-14 mb-0">Bulanan</h5>
                                     </div>
                                     <div className="form-check form-switch fs-20 ms-3 " onClick={toggle} >
                                         <input className="form-check-input" type="checkbox" id="plan-switch" />
                                         <label className="form-check-label" htmlFor="plan-switch"></label>
                                     </div>
                                     <div>
-                                        <h5 className="fs-14 mb-0">Annual <span className="badge bg-danger-subtle text-danger">Save 20%</span></h5>
+                                        <h5 className="fs-14 mb-0">Tahunan <span className="badge bg-danger-subtle text-danger">Hemat 20%</span></h5>
                                     </div>
                                 </div>
                             </div>
@@ -39,20 +38,20 @@ const Plans = () => {
                                 <Card.Body className="p-4 m-2">
                                     <div className="d-flex align-items-center">
                                         <div className="flex-grow-1">
-                                            <h5 className="mb-1 fw-bold">Basic Plan</h5>
-                                            <p className="text-muted mb-0">For Startup</p>
+                                            <h5 className="mb-1 fw-bold">Keluarga Pemula</h5>
+                                            <p className="text-muted mb-0">Dasar & Integrasi WA</p>
                                         </div>
                                         <div className="avatar-sm">
                                             <div className="avatar-title bg-light rounded-circle text-primary">
-                                                <i className="ri-book-mark-line fs-20"></i>
+                                                <i className="ri-home-heart-line fs-20"></i>
                                             </div>
                                         </div>
                                     </div>
                                     <div className="py-4 text-center">
-                                        {plan ? <h1 className="month"><sup><small>$</small></sup><span className="ff-secondary fw-bold">19</span> <span
-                                            className="fs-13 text-muted">/Month</span></h1> :
-                                            <h1 className="annual"><sup><small>$</small></sup><span className="ff-secondary fw-bold">171</span> <span
-                                                className="fs-13 text-muted">/Year</span></h1>}
+                                        {plan ? <h2 className="month"><sup><small>Rp</small></sup><span className="ff-secondary fw-bold">29k</span> <span
+                                            className="fs-13 text-muted">/Bulan</span></h2> :
+                                            <h2 className="annual"><sup><small>Rp</small></sup><span className="ff-secondary fw-bold">290k</span> <span
+                                                className="fs-13 text-muted">/Tahun</span></h2>}
                                     </div>
 
                                     <div>
@@ -63,7 +62,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        Upto <b>3</b> Projects
+                                                        Kalender Bersama
                                                     </div>
                                                 </div>
                                             </li>
@@ -73,7 +72,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        Upto <b>299</b> Customers
+                                                        Mesin Tugas Dasar & Belanja
                                                     </div>
                                                 </div>
                                             </li>
@@ -83,7 +82,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        Scalable Bandwidth
+                                                        Pelacak Keuangan & Anggaran
                                                     </div>
                                                 </div>
                                             </li>
@@ -93,7 +92,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>5</b> FTP Login
+                                                        <b>Dasar</b> Integrasi WhatsApp
                                                     </div>
                                                 </div>
                                             </li>
@@ -103,7 +102,7 @@ const Plans = () => {
                                                         <i className="ri-close-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>24/7</b> Support
+                                                        Modul Kesehatan Anak
                                                     </div>
                                                 </div>
                                             </li>
@@ -113,23 +112,13 @@ const Plans = () => {
                                                         <i className="ri-close-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>Unlimited</b> Storage
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div className="d-flex">
-                                                    <div className="flex-shrink-0 text-danger me-1">
-                                                        <i className="ri-close-circle-fill fs-15 align-middle"></i>
-                                                    </div>
-                                                    <div className="flex-grow-1">
-                                                        Domain
+                                                        Gamifikasi & Toko Hadiah
                                                     </div>
                                                 </div>
                                             </li>
                                         </ul>
                                         <div className="mt-4">
-                                            <Link href="/register" className="btn btn-soft-success w-100">Get Started</Link>
+                                            <Link href="/register" className="btn btn-soft-success w-100">Pilih Paket</Link>
                                         </div>
                                     </div>
                                 </Card.Body>
@@ -143,8 +132,8 @@ const Plans = () => {
                                     <div className="ribbon-two ribbon-two-danger"><span>Popular</span></div>
                                     <div className="d-flex align-items-center">
                                         <div className="flex-grow-1">
-                                            <h5 className="mb-1 fw-bold">Pro Business</h5>
-                                            <p className="text-muted mb-0">Professional plans</p>
+                                            <h5 className="mb-1 fw-bold">Keluarga Aktif</h5>
+                                            <p className="text-muted mb-0">Manajemen Rumah & Kesehatan</p>
                                         </div>
                                         <div className="avatar-sm">
                                             <div className="avatar-title bg-light rounded-circle text-primary">
@@ -153,10 +142,10 @@ const Plans = () => {
                                         </div>
                                     </div>
                                     <div className="py-4 text-center">
-                                        {plan ? <h1 className="month"><sup><small>$</small></sup><span className="ff-secondary fw-bold">29</span> <span
-                                            className="fs-13 text-muted">/Month</span></h1> :
-                                            <h1 className="annual"><sup><small>$</small></sup><span className="ff-secondary fw-bold">261</span> <span
-                                                className="fs-13 text-muted">/Year</span></h1>}
+                                        {plan ? <h2 className="month"><sup><small>Rp</small></sup><span className="ff-secondary fw-bold">49k</span> <span
+                                            className="fs-13 text-muted">/Bulan</span></h2> :
+                                            <h2 className="annual"><sup><small>Rp</small></sup><span className="ff-secondary fw-bold">490k</span> <span
+                                                className="fs-13 text-muted">/Tahun</span></h2>}
                                     </div>
 
                                     <div>
@@ -167,7 +156,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        Upto <b>15</b> Projects
+                                                        Semua Fitur <b>Keluarga Pemula</b>
                                                     </div>
                                                 </div>
                                             </li>
@@ -177,7 +166,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>Unlimited</b> Customers
+                                                        Meal Planner & Resep Dapur
                                                     </div>
                                                 </div>
                                             </li>
@@ -187,7 +176,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        Scalable Bandwidth
+                                                        Kesehatan & Tumbuh Kembang Anak
                                                     </div>
                                                 </div>
                                             </li>
@@ -197,7 +186,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>12</b> FTP Login
+                                                        Papan Proyek Keluarga
                                                     </div>
                                                 </div>
                                             </li>
@@ -207,7 +196,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>24/7</b> Support
+                                                        Brankas Dimensi & Data Penting
                                                     </div>
                                                 </div>
                                             </li>
@@ -217,23 +206,13 @@ const Plans = () => {
                                                         <i className="ri-close-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>Unlimited</b> Storage
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div className="d-flex">
-                                                    <div className="flex-shrink-0 text-danger me-1">
-                                                        <i className="ri-close-circle-fill fs-15 align-middle"></i>
-                                                    </div>
-                                                    <div className="flex-grow-1">
-                                                        Domain
+                                                        Gamifikasi & Toko Hadiah
                                                     </div>
                                                 </div>
                                             </li>
                                         </ul>
                                         <div className="mt-4">
-                                            <Link href="/register" className="btn btn-soft-success w-100">Get Started</Link>
+                                            <Link href="/register" className="btn btn-soft-success w-100">Pilih Paket</Link>
                                         </div>
                                     </div>
                                 </Card.Body>
@@ -245,20 +224,20 @@ const Plans = () => {
                                 <Card.Body className="p-4 m-2">
                                     <div className="d-flex align-items-center">
                                         <div className="flex-grow-1">
-                                            <h5 className="mb-1 fw-bold">Platinum Plan</h5>
-                                            <p className="text-muted mb-0">Enterprise Businesses</p>
+                                            <h5 className="mb-1 fw-bold">Keluarga Ultimate</h5>
+                                            <p className="text-muted mb-0">Gamifikasi Anak & Liburan</p>
                                         </div>
                                         <div className="avatar-sm">
                                             <div className="avatar-title bg-light rounded-circle text-primary">
-                                                <i className="ri-stack-fill fs-20"></i>
+                                                <i className="ri-vip-diamond-line fs-20"></i>
                                             </div>
                                         </div>
                                     </div>
                                     <div className="py-4 text-center">
-                                        {plan ? <h1 className="month"><sup><small>$</small></sup><span className="ff-secondary fw-bold">39</span> <span
-                                            className="fs-13 text-muted">/Month</span></h1> :
-                                            <h1 className="annual"><sup><small>$</small></sup><span className="ff-secondary fw-bold">351</span> <span
-                                                className="fs-13 text-muted">/Year</span></h1>}
+                                        {plan ? <h2 className="month"><sup><small>Rp</small></sup><span className="ff-secondary fw-bold">99k</span> <span
+                                            className="fs-13 text-muted">/Bulan</span></h2> :
+                                            <h2 className="annual"><sup><small>Rp</small></sup><span className="ff-secondary fw-bold">990k</span> <span
+                                                className="fs-13 text-muted">/Tahun</span></h2>}
                                     </div>
 
                                     <div>
@@ -269,7 +248,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>Unlimited</b> Projects
+                                                        Semua Fitur <b>Keluarga Aktif</b>
                                                     </div>
                                                 </div>
                                             </li>
@@ -279,7 +258,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>Unlimited</b> Customers
+                                                        Sistem Poin Gamifikasi Penuh
                                                     </div>
                                                 </div>
                                             </li>
@@ -289,7 +268,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        Scalable Bandwidth
+                                                        Toko Hadiah & Dompet Anak
                                                     </div>
                                                 </div>
                                             </li>
@@ -299,7 +278,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>Unlimited</b> FTP Login
+                                                        Perencana Liburan (Vacation Planner)
                                                     </div>
                                                 </div>
                                             </li>
@@ -309,7 +288,7 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>24/7</b> Support
+                                                        Katalog Pakaian & Mainan
                                                     </div>
                                                 </div>
                                             </li>
@@ -319,23 +298,13 @@ const Plans = () => {
                                                         <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
                                                     </div>
                                                     <div className="flex-grow-1">
-                                                        <b>Unlimited</b> Storage
-                                                    </div>
-                                                </div>
-                                            </li>
-                                            <li>
-                                                <div className="d-flex">
-                                                    <div className="flex-shrink-0 text-success me-1">
-                                                        <i className="ri-checkbox-circle-fill fs-15 align-middle"></i>
-                                                    </div>
-                                                    <div className="flex-grow-1">
-                                                        Domain
+                                                        Pusat Permainan Edukatif (Game Center)
                                                     </div>
                                                 </div>
                                             </li>
                                         </ul>
                                         <div className="mt-4">
-                                            <Link href="/register" className="btn btn-soft-success w-100">Get Started</Link>
+                                            <Link href="/register" className="btn btn-soft-success w-100">Pilih Paket</Link>
                                         </div>
                                     </div>
                                 </Card.Body>

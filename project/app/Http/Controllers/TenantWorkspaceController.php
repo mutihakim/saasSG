@@ -18,7 +18,25 @@ class TenantWorkspaceController extends Controller
 {
     public function selector(Request $request)
     {
-        return redirect()->route('admin.tenants.index');
+        $user = $request->user();
+
+        if ($user?->is_superadmin) {
+            return redirect('/admin/tenants');
+        }
+
+        $membership = TenantMember::query()
+            ->where('user_id', $user?->id)
+            ->where('profile_status', 'active')
+            ->first();
+
+        if ($membership) {
+            $tenant = Tenant::find($membership->tenant_id);
+            if ($tenant) {
+                return redirect()->route('tenant.dashboard', $tenant->slug);
+            }
+        }
+
+        return redirect()->route('home');
     }
 
     public function accessRequired(): Response

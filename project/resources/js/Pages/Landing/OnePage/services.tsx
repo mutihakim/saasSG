@@ -10,8 +10,8 @@ const Services = () => {
                     <Row className="justify-content-center">
                         <Col lg={8}>
                             <div className="text-center mb-5">
-                                <h1 className="mb-3 ff-secondary fw-bold lh-base">Core capabilities for a serious SaaS foundation</h1>
-                                <p className="text-muted">Everything in appsah is optimized for shipping real product workflows, not maintaining demo chrome that never reaches production.</p>
+                                <h1 className="mb-3 ff-secondary fw-bold lh-base">Modul Ekosistem Keluarga Terpadu</h1>
+                                <p className="text-muted">saasfamz menyatukan seluruh aspek kehidupan rumah tangga ke dalam satu platform, menghilangkan kebutuhan aplikasi terpisah yang membingungkan.</p>
                             </div>
                         </Col>
                     </Row>
@@ -22,15 +22,15 @@ const Services = () => {
                                 <div className="flex-shrink-0 me-3">
                                     <div className="avatar-sm icon-effect">
                                         <div className="avatar-title bg-transparent text-success rounded-circle">
-                                            <i className="ri-pencil-ruler-2-line fs-36"></i>
+                                            <i className="ri-calendar-event-line fs-36"></i>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="fs-18">Creative Design</h5>
-                                    <p className="text-muted my-3">The creative design includes designs that are unique, effective and memorable.</p>
+                                    <h5 className="fs-18">Kalender & Waktu</h5>
+                                    <p className="text-muted my-3">Tampilan jadwal terpadu dengan warna khusus anggota keluarga dan papan proyek visual.</p>
                                     <div>
-                                        <Link href="/landing#contact" className="fs-13 fw-medium">Talk to Us <i className="ri-arrow-right-s-line align-bottom"></i></Link>
+                                        <Link href="/landing#features" className="fs-13 fw-medium">Pelajari Lengkap <i className="ri-arrow-right-s-line align-bottom"></i></Link>
                                     </div>
                                 </div>
                             </div>
@@ -41,15 +41,15 @@ const Services = () => {
                                 <div className="flex-shrink-0 me-3">
                                     <div className="avatar-sm icon-effect">
                                         <div className="avatar-title bg-transparent text-success rounded-circle">
-                                            <i className="ri-palette-line fs-36"></i>
+                                            <i className="ri-task-line fs-36"></i>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="fs-18">Unlimited Colors</h5>
-                                    <p className="text-muted my-3">The collection of rules and guidelines which designers use to communicate with users through appealing.</p>
+                                    <h5 className="fs-18">Tugas & Gamifikasi</h5>
+                                    <p className="text-muted my-3">Mesin tugas cerdas yang memberi poin atas penyelesaian rutinitas (khususnya anak) untuk ditukar hadiah.</p>
                                     <div>
-                                        <Link href="/landing#contact" className="fs-13 fw-medium">Talk to Us <i className="ri-arrow-right-s-line align-bottom"></i></Link>
+                                        <Link href="/landing#features" className="fs-13 fw-medium">Pelajari Lengkap <i className="ri-arrow-right-s-line align-bottom"></i></Link>
                                     </div>
                                 </div>
                             </div>
@@ -60,15 +60,15 @@ const Services = () => {
                                 <div className="flex-shrink-0 me-3">
                                     <div className="avatar-sm icon-effect">
                                         <div className="avatar-title bg-transparent text-success rounded-circle">
-                                            <i className="ri-lightbulb-flash-line fs-36"></i>
+                                            <i className="ri-wallet-3-line fs-36"></i>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="fs-18">Strategy Solutions</h5>
-                                    <p className="text-muted my-3">Business development firm that provides strategic planning, market research services and project.</p>
+                                    <h5 className="fs-18">Keuangan Keluarga</h5>
+                                    <p className="text-muted my-3">Pelacak pemasukan, batas anggaran bulanan, dan kalkulator patungan untuk mengelola arus kas.</p>
                                     <div>
-                                        <Link href="/landing#contact" className="fs-13 fw-medium">Talk to Us <i className="ri-arrow-right-s-line align-bottom"></i></Link>
+                                        <Link href="/landing#features" className="fs-13 fw-medium">Pelajari Lengkap <i className="ri-arrow-right-s-line align-bottom"></i></Link>
                                     </div>
                                 </div>
                             </div>
@@ -79,15 +79,15 @@ const Services = () => {
                                 <div className="flex-shrink-0 me-3">
                                     <div className="avatar-sm icon-effect">
                                         <div className="avatar-title bg-transparent text-success rounded-circle">
-                                            <i className="ri-customer-service-line fs-36"></i>
+                                            <i className="ri-restaurant-line fs-36"></i>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="fs-18">Awesome Support</h5>
-                                    <p className="text-muted my-3">Awesome Support is the most versatile and feature-rich support plugin for all version.</p>
+                                    <h5 className="fs-18">Dapur & Belanja</h5>
+                                    <p className="text-muted my-3">Rencana menu mingguan yang otomatis mengekstrak bahan ke daftar belanja sinkron waktu nyata.</p>
                                     <div>
-                                        <Link href="/landing#contact" className="fs-13 fw-medium">Talk to Us <i className="ri-arrow-right-s-line align-bottom"></i></Link>
+                                        <Link href="/landing#features" className="fs-13 fw-medium">Pelajari Lengkap <i className="ri-arrow-right-s-line align-bottom"></i></Link>
                                     </div>
                                 </div>
                             </div>
@@ -98,15 +98,15 @@ const Services = () => {
                                 <div className="flex-shrink-0 me-3">
                                     <div className="avatar-sm icon-effect">
                                         <div className="avatar-title bg-transparent text-success rounded-circle">
-                                            <i className="ri-stack-line fs-36"></i>
+                                            <i className="ri-heart-pulse-line fs-36"></i>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="fs-18">Truly Multipurpose</h5>
-                                    <p className="text-muted my-3">One clean shell can support multiple product modules without duplicating menu, layout, or permission logic.</p>
+                                    <h5 className="fs-18">Kesehatan Terpadu</h5>
+                                    <p className="text-muted my-3">Pantau tinggi & berat anak, kalender imunisasi, serta brankas penyimpanan rekam medis.</p>
                                     <div>
-                                        <Link href="/landing#contact" className="fs-13 fw-medium">Talk to Us <i className="ri-arrow-right-s-line align-bottom"></i></Link>
+                                        <Link href="/landing#features" className="fs-13 fw-medium">Pelajari Lengkap <i className="ri-arrow-right-s-line align-bottom"></i></Link>
                                     </div>
                                 </div>
                             </div>
@@ -117,15 +117,15 @@ const Services = () => {
                                 <div className="flex-shrink-0 me-3">
                                     <div className="avatar-sm icon-effect">
                                         <div className="avatar-title bg-transparent text-success rounded-circle">
-                                            <i className="ri-settings-2-line fs-36"></i>
+                                            <i className="ri-safe-2-line fs-36"></i>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="fs-18">Easy to customize</h5>
-                                    <p className="text-muted my-3">Adapt the shell to your product identity while keeping the compat layer isolated for future page imports.</p>
+                                    <h5 className="fs-18">Aset & Inventaris</h5>
+                                    <p className="text-muted my-3">Simpan password Wi-Fi, kelola stok pakaian anak, hingga pencatatan dimensi area rumah.</p>
                                     <div>
-                                        <Link href="/landing#contact" className="fs-13 fw-medium">Talk to Us <i className="ri-arrow-right-s-line align-bottom"></i></Link>
+                                        <Link href="/landing#features" className="fs-13 fw-medium">Pelajari Lengkap <i className="ri-arrow-right-s-line align-bottom"></i></Link>
                                     </div>
                                 </div>
                             </div>
@@ -136,15 +136,15 @@ const Services = () => {
                                 <div className="flex-shrink-0 me-3">
                                     <div className="avatar-sm icon-effect">
                                         <div className="avatar-title bg-transparent text-success rounded-circle">
-                                            <i className="ri-slideshow-line fs-36"></i>
+                                            <i className="ri-flight-takeoff-line fs-36"></i>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="fs-18">Responsive & Clean Design</h5>
-                                    <p className="text-muted my-3">Responsive design is a graphic user interface (GUI) design approach used to create content.</p>
+                                    <h5 className="fs-18">Liburan & Rekreasi</h5>
+                                    <p className="text-muted my-3">Susun rencana perjalanan, buat daftar destinasi bersama, dan kelola anggaran liburan keluarga.</p>
                                     <div>
-                                        <Link href="/landing#contact" className="fs-13 fw-medium">Talk to Us <i className="ri-arrow-right-s-line align-bottom"></i></Link>
+                                        <Link href="/landing#features" className="fs-13 fw-medium">Pelajari Lengkap <i className="ri-arrow-right-s-line align-bottom"></i></Link>
                                     </div>
                                 </div>
                             </div>
@@ -155,15 +155,15 @@ const Services = () => {
                                 <div className="flex-shrink-0 me-3">
                                     <div className="avatar-sm icon-effect">
                                         <div className="avatar-title bg-transparent text-success rounded-circle">
-                                            <i className="ri-google-fill fs-36"></i>
+                                            <i className="ri-gamepad-line fs-36"></i>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="fs-18">Google Font Collection</h5>
-                                    <p className="text-muted my-3">Google Fonts is a collection of 915 fonts, all available to use for free on your website.</p>
+                                    <h5 className="fs-18">Permainan Edukatif</h5>
+                                    <p className="text-muted my-3">Pusat permainan asah otak yang aman untuk anak, lengkap dengan Papan Peringkat Keluarga.</p>
                                     <div>
-                                        <Link href="/landing#contact" className="fs-13 fw-medium">Talk to Us <i className="ri-arrow-right-s-line align-bottom"></i></Link>
+                                        <Link href="/landing#features" className="fs-13 fw-medium">Pelajari Lengkap <i className="ri-arrow-right-s-line align-bottom"></i></Link>
                                     </div>
                                 </div>
                             </div>
@@ -174,15 +174,15 @@ const Services = () => {
                                 <div className="flex-shrink-0 me-3">
                                     <div className="avatar-sm icon-effect">
                                         <div className="avatar-title bg-transparent text-success rounded-circle">
-                                            <i className="ri-briefcase-5-line fs-36"></i>
+                                            <i className="ri-whatsapp-line fs-36"></i>
                                         </div>
                                     </div>
                                 </div>
                                 <div className="flex-grow-1">
-                                    <h5 className="fs-18">Top Industry Specialists</h5>
-                                    <p className="text-muted my-3">An industrial specialist works with industrial operations to ensure that manufacturing facilities work.</p>
+                                    <h5 className="fs-18">Integrasi WhatsApp</h5>
+                                    <p className="text-muted my-3">Bot asisten cerdas yang membalas pesan instan Anda ke formulir aplikasi tanpa pindah layar.</p>
                                     <div>
-                                        <Link href="/landing#contact" className="fs-13 fw-medium">Talk to Us <i className="ri-arrow-right-s-line align-bottom"></i></Link>
+                                        <Link href="/landing#features" className="fs-13 fw-medium">Pelajari Lengkap <i className="ri-arrow-right-s-line align-bottom"></i></Link>
                                     </div>
                                 </div>
                             </div>
