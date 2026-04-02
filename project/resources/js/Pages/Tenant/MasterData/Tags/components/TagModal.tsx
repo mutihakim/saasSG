@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { notify } from "../../../../../common/notify";
 import { useTenantRoute } from "../../../../../common/tenantRoute";
+import { parseApiError } from "../../../../../common/apiError";
 
 interface TagModalProps {
   show: boolean;
@@ -19,7 +20,7 @@ const TagModal = ({
   onSuccess,
   tag
 }: TagModalProps) => {
-  const { t } = useTranslation("master");
+  const { t } = useTranslation();
   const tenantRoute = useTenantRoute();
   const isEdit = !!tag;
 
@@ -54,8 +55,8 @@ const TagModal = ({
     setError(null);
 
     const url = isEdit
-      ? tenantRoute.apiTo(`/finance/tags/${tag.id}`)
-      : tenantRoute.apiTo("/finance/tags");
+      ? tenantRoute.apiTo(`/master/tags/${tag.id}`)
+      : tenantRoute.apiTo("/master/tags");
 
     try {
       await axios({
@@ -63,11 +64,16 @@ const TagModal = ({
         url,
         data: formData
       });
-      notify.success(t(isEdit ? "messages.success_update" : "messages.success_add"));
+      notify.success(t(isEdit ? "master.tags.messages.success_update" : "master.tags.messages.success_add"));
       onSuccess();
       onClose();
-    } catch {
-      setError("Something went wrong");
+    } catch (_err: any) {
+      const parsed = parseApiError(_err, t("master.uom.messages.error"));
+      setError(parsed.detail || parsed.title);
+      notify.error({
+        title: parsed.title,
+        detail: parsed.detail
+      });
     } finally {
       setLoading(false);
     }
@@ -76,13 +82,13 @@ const TagModal = ({
   return (
     <Modal show={show} onHide={onClose} centered size="sm">
       <Modal.Header closeButton>
-        <Modal.Title>{isEdit ? "Ubah Tagar" : "Tambah Tagar Baru"}</Modal.Title>
+        <Modal.Title>{isEdit ? t("master.tags.modals.edit_title") : t("master.tags.modals.add_title")}</Modal.Title>
       </Modal.Header>
       <Form onSubmit={handleSubmit}>
         <Modal.Body>
           {error && <Alert variant="danger">{error}</Alert>}
           <Form.Group className="mb-3">
-            <Form.Label>Nama Tagar</Form.Label>
+            <Form.Label>{t("master.tags.fields.name")}</Form.Label>
             <Form.Control
               required
               value={formData.name}
@@ -92,7 +98,7 @@ const TagModal = ({
           </Form.Group>
 
           <Form.Group className="mb-3">
-            <Form.Label>Warna</Form.Label>
+            <Form.Label>{t("master.tags.fields.color")}</Form.Label>
             <Form.Control
               type="color"
               value={formData.color}
@@ -102,9 +108,9 @@ const TagModal = ({
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="light" onClick={onClose} className="w-100">Batal</Button>
+          <Button variant="light" onClick={onClose} className="w-100">{t("master.tags.buttons.cancel")}</Button>
           <Button variant="primary" type="submit" disabled={loading} className="w-100">
-            {loading ? "Menyimpan..." : "Simpan"}
+            {loading ? t("master.tags.buttons.saving") : t("master.tags.buttons.save")}
           </Button>
         </Modal.Footer>
       </Form>

@@ -22,12 +22,17 @@ class UpdateFinanceTransactionRequest extends FormRequest
             'type'               => ['required', 'in:pemasukan,pengeluaran'],
             'transaction_date'   => ['required', 'date', 'before_or_equal:today'],
             'amount'             => ['required', 'numeric', 'min:0.01', 'max:999999999.99'],
-            'currency_code'      => ['required', 'exists:master_currencies,code'],
+            'currency_code'      => [
+                'required',
+                \Illuminate\Validation\Rule::exists('tenant_currencies', 'code')
+                    ->where('tenant_id', $tenantId)
+                    ->where('is_active', true),
+            ],
             'exchange_rate'      => ['required', 'numeric', 'min:0.000001'],
             'category_id'        => [
                 'required',
-                'string',
-                \Illuminate\Validation\Rule::exists('shared_categories', 'id')
+                'integer',
+                \Illuminate\Validation\Rule::exists('tenant_categories', 'id')
                     ->where('tenant_id', $tenantId)
                     ->where('module', 'finance'),
             ],

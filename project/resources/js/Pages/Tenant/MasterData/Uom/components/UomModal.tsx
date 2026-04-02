@@ -6,6 +6,7 @@ import Select from "react-select";
 
 import { notify } from "../../../../../common/notify";
 import { useTenantRoute } from "../../../../../common/tenantRoute";
+import { parseApiError } from "../../../../../common/apiError";
 
 interface UomModalProps {
   show: boolean;
@@ -77,7 +78,7 @@ const UomModal = ({
     setError(null);
 
     const url = isEdit
-      ? tenantRoute.apiTo(`/master/uom/${unit.code}`)
+      ? tenantRoute.apiTo(`/master/uom/${unit.id}`)
       : tenantRoute.apiTo("/master/uom");
 
     try {
@@ -95,9 +96,12 @@ const UomModal = ({
       onSuccess();
       onClose();
     } catch (_err: any) {
-      const msg = _err.response?.data?.message || t("master.uom.messages.error");
-      setError(msg);
-      notify.error(msg);
+      const parsed = parseApiError(_err, t("master.uom.messages.error"));
+      setError(parsed.detail || parsed.title);
+      notify.error({
+        title: parsed.title,
+        detail: parsed.detail
+      });
     } finally {
       setLoading(false);
     }

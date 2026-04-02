@@ -88,12 +88,21 @@ flowchart LR
 
 - Tenant context:
   - `app/Http/Middleware/ResolveTenant.php`
-  - `app/Http/Middleware/EnsureTenantAccess.php`
+  - `app/Http/Middleware/EnsureTenantAccess.php` (respects `X-Locale` header; tenant default locale hanya aktif jika user tidak memilih bahasa manual)
 - Team permission context:
   - `app/Http/Middleware/SetPermissionTeamContext.php`
 - Feature entitlements:
   - `app/Support/SubscriptionEntitlements.php`
   - `app/Http/Middleware/EnsureTenantFeatureEnabled.php`
+- Locale synchronization:
+  - `app/Http/Middleware/SetRequestLocale.php` (Global Middleware — priority: `X-Locale` header > `Accept-Language` > `config/app.locale`)
+  - `lang/en/validation.php` + `lang/id/validation.php` (Backend validation messages)
+  - `resources/js/common/apiError.ts` (Frontend: translates API error codes via i18next)
+- Master Data API:
+  - `app/Http/Controllers/Api/MasterUomApiController.php`
+  - `app/Http/Controllers/Api/MasterCurrencyApiController.php`
+  - `app/Http/Controllers/Api/MasterTagApiController.php`
+  - `app/Http/Controllers/Api/MasterCategoryApiController.php`
 - Shared frontend context:
   - `app/Http/Middleware/HandleInertiaRequests.php`
 
@@ -112,8 +121,16 @@ flowchart LR
 
 ## Batasan Arsitektur Saat Ini
 
-- i18n backend belum di-set per tenant (`tenant.locale` belum dipakai untuk `App::setLocale` per request).
 - Guard subscription dilakukan di middleware + beberapa controller quota checks, jadi perubahan plan matrix tetap harus diuji end-to-end.
 - Compat layer belum memuat komponen porting tingkat lanjut; setiap import referensi baru tetap perlu adapter tipis per modul.
 - Shared app shell sekarang mendukung mode `vertical`, `horizontal`, `twocolumn`, dan `semibox` dari preset Velzon `Saas`, tetapi semuanya tetap dikendalikan dari boundary tunggal `resources/js/app-shell/*`.
 - Favicon tenant diinjeksikan dari root blade dan disinkronkan kembali di runtime shell agar perpindahan workspace tetap konsisten pada navigasi Inertia.
+
+## Locale Priority Chain (Backend)
+
+Urutan prioritas penentuan bahasa di setiap request:
+
+1. **`X-Locale` header** (dikirim Axios Frontend) — prioritas tertinggi, tidak bisa ditimpa.
+2. **`Accept-Language` header** (fallback bahasa browser).
+3. **`tenant.locale`** dari database Tenant — hanya aktif jika tidak ada `X-Locale` header.
+4. **`config/app.locale`** (`en`) — default global aplikasi.

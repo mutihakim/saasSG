@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { notify } from "../../../../../common/notify";
 import { useTenantRoute } from "../../../../../common/tenantRoute";
+import { parseApiError } from "../../../../../common/apiError";
 
 interface CurrencyModalProps {
   show: boolean;
@@ -69,7 +70,7 @@ const CurrencyModal = ({
     setError(null);
 
     const url = isEdit
-      ? tenantRoute.apiTo(`/master/currencies/${currency.code}`)
+      ? tenantRoute.apiTo(`/master/currencies/${currency.id}`)
       : tenantRoute.apiTo("/master/currencies");
 
     try {
@@ -87,9 +88,12 @@ const CurrencyModal = ({
       onSuccess();
       onClose();
     } catch (_err: any) {
-      const msg = _err.response?.data?.message || t("master.currencies.messages.error");
-      setError(msg);
-      notify.error(msg);
+      const parsed = parseApiError(_err, t("master.currencies.messages.error"));
+      setError(parsed.detail || parsed.title);
+      notify.error({
+        title: parsed.title,
+        detail: parsed.detail
+      });
     } finally {
       setLoading(false);
     }

@@ -9,11 +9,24 @@ use App\Http\Controllers\Admin\TenantSubscriptionController;
 use App\Http\Controllers\InvitationAcceptanceController;
 use App\Http\Controllers\Api\V1\InternalWhatsappCallbackController;
 use App\Http\Controllers\TenantSettingsController;
-use App\Http\Controllers\ThemePreferenceController;
 use App\Http\Controllers\TenantWorkspaceController;
+use App\Http\Controllers\ThemePreferenceController;
 use App\Http\Controllers\TenantHomeController;
 use App\Http\Controllers\TenantHubController;
 use App\Http\Controllers\Auth\AuthenticatedSessionController;
+// ── Tenant Controllers ──────────────────────────────────────────────────────
+use App\Http\Controllers\Tenant\TenantDashboardController;
+use App\Http\Controllers\Tenant\TenantFinanceController;
+use App\Http\Controllers\Tenant\TenantMemberController;
+use App\Http\Controllers\Tenant\TenantRoleController;
+use App\Http\Controllers\Tenant\TenantInvitationController;
+use App\Http\Controllers\Tenant\TenantWhatsappSettingController;
+use App\Http\Controllers\Tenant\TenantWhatsappChatController;
+// ── Master Data Controllers ─────────────────────────────────────────────────
+use App\Http\Controllers\Tenant\Master\TenantMasterCategoryController;
+use App\Http\Controllers\Tenant\Master\TenantMasterTagController;
+use App\Http\Controllers\Tenant\Master\TenantMasterCurrencyController;
+use App\Http\Controllers\Tenant\Master\TenantMasterUomController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
 
@@ -50,7 +63,7 @@ Route::middleware([
             Route::get('/tasks',     [TenantHubController::class, 'tasks'])->name('tenant.tasks');
             Route::get('/rewards',   [TenantHubController::class, 'rewards'])->name('tenant.rewards');
             Route::get('/wallet',    [TenantHubController::class, 'wallet'])->name('tenant.wallet');
-            Route::get('/finance',   [TenantWorkspaceController::class, 'finance'])
+            Route::get('/finance',   [TenantFinanceController::class, 'index'])
                 ->name('tenant.finance')
                 ->middleware('tenant.feature:finance,view');
             Route::get('/kitchen',   [TenantHubController::class, 'kitchen'])->name('tenant.kitchen');
@@ -118,54 +131,54 @@ Route::middleware([
     // --- TENANT MANAGEMENT AREA (Tenant Subdomains Only) ---
     Route::domain('{tenant}.appsah.my.id')->group(function () {
         Route::middleware('guest')->prefix('admin')->group(function () {
-            Route::get('login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'create'])->name('tenant.admin.login');
-            Route::post('login', [\App\Http\Controllers\Auth\AuthenticatedSessionController::class, 'store'])->name('tenant.admin.login.store');
+            Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('tenant.admin.login');
+            Route::post('login', [AuthenticatedSessionController::class, 'store'])->name('tenant.admin.login.store');
         });
     });
 
     Route::domain('{tenant}.appsah.my.id')->middleware(['auth', 'verified'])->group(function () {
         Route::prefix('admin')->group(function () {
-            Route::get('/dashboard', [TenantWorkspaceController::class, 'dashboard'])->name('tenant.dashboard');
+            Route::get('/dashboard', [TenantDashboardController::class, 'index'])->name('tenant.dashboard');
 
-        // Settings redirect (index)
-        Route::get('/settings', fn() => redirect()->route('tenant.settings.profile', ['tenant' => request()->route('tenant')]))->name('tenant.settings');
+            // Settings redirect (index)
+            Route::get('/settings', fn() => redirect()->route('tenant.settings.profile', ['tenant' => request()->route('tenant')]))->name('tenant.settings');
 
-        // Members Management
-        Route::get('/members', [TenantWorkspaceController::class, 'members'])->name('tenant.members.index');
-        Route::get('/members/{member}', [TenantWorkspaceController::class, 'memberView'])->name('tenant.members.view');
-        Route::get('/members/{member}/edit', [TenantWorkspaceController::class, 'memberEdit'])->name('tenant.members.edit');
-        Route::get('/roles', [TenantWorkspaceController::class, 'roles'])->name('tenant.roles');
-        Route::get('/invitations', [TenantWorkspaceController::class, 'invitations'])
-            ->name('tenant.invitations')
-            ->middleware('tenant.feature:team.invitations,view');
+            // Members Management
+            Route::get('/members', [TenantMemberController::class, 'index'])->name('tenant.members.index');
+            Route::get('/members/{member}', [TenantMemberController::class, 'show'])->name('tenant.members.view');
+            Route::get('/members/{member}/edit', [TenantMemberController::class, 'edit'])->name('tenant.members.edit');
 
-        // WhatsApp Management
-        Route::get('/whatsapp/settings', [TenantWorkspaceController::class, 'whatsappSettings'])->name('tenant.whatsapp.settings');
-        Route::get('/whatsapp/chats', [TenantWorkspaceController::class, 'whatsappChats'])->name('tenant.whatsapp.chats');
+            // Roles
+            Route::get('/roles', [TenantRoleController::class, 'index'])->name('tenant.roles');
 
-        // Workspace Settings
-        Route::get('/settings/profile', [TenantSettingsController::class, 'profile'])->name('tenant.settings.profile');
-        Route::patch('/settings/profile', [TenantSettingsController::class, 'updateProfile'])->name('tenant.settings.profile.update');
-        Route::get('/settings/branding', [TenantSettingsController::class, 'branding'])->name('tenant.settings.branding');
-        Route::patch('/settings/branding', [TenantSettingsController::class, 'updateBranding'])->name('tenant.settings.branding.update');
-        Route::delete('/settings/branding/{slot}', [TenantSettingsController::class, 'removeBranding'])->name('tenant.settings.branding.remove');
-        Route::get('/settings/localization', [TenantSettingsController::class, 'localization'])->name('tenant.settings.localization');
-        Route::patch('/settings/localization', [TenantSettingsController::class, 'updateLocalization'])->name('tenant.settings.localization.update');
-        Route::get('/settings/billing', [TenantSettingsController::class, 'billing'])->name('tenant.settings.billing');
-        Route::patch('/settings/billing', [TenantSettingsController::class, 'updateBilling'])->name('tenant.settings.billing.update');
-        Route::get('/upgrade-required', [TenantWorkspaceController::class, 'upgradeRequired'])->name('tenant.upgrade.required');
+            // Invitations
+            Route::get('/invitations', [TenantInvitationController::class, 'index'])
+                ->name('tenant.invitations')
+                ->middleware('tenant.feature:team.invitations,view');
 
-        // ── Master Data ────────────────────────────────────────────────────────
-        Route::prefix('master')->name('tenant.master.')->group(function () {
-            Route::get('/categories', [TenantWorkspaceController::class, 'masterCategories'])
-                ->name('categories');
-            Route::get('/tags', [TenantWorkspaceController::class, 'masterTags'])
-                ->name('tags');
-            Route::get('/currencies', [TenantWorkspaceController::class, 'masterCurrencies'])
-                ->name('currencies');
-            Route::get('/uom', [TenantWorkspaceController::class, 'masterUom'])
-                ->name('uom');
-        });
+            // WhatsApp Management
+            Route::get('/whatsapp/settings', [TenantWhatsappSettingController::class, 'index'])->name('tenant.whatsapp.settings');
+            Route::get('/whatsapp/chats', [TenantWhatsappChatController::class, 'index'])->name('tenant.whatsapp.chats');
+
+            // Workspace Settings
+            Route::get('/settings/profile', [TenantSettingsController::class, 'profile'])->name('tenant.settings.profile');
+            Route::patch('/settings/profile', [TenantSettingsController::class, 'updateProfile'])->name('tenant.settings.profile.update');
+            Route::get('/settings/branding', [TenantSettingsController::class, 'branding'])->name('tenant.settings.branding');
+            Route::patch('/settings/branding', [TenantSettingsController::class, 'updateBranding'])->name('tenant.settings.branding.update');
+            Route::delete('/settings/branding/{slot}', [TenantSettingsController::class, 'removeBranding'])->name('tenant.settings.branding.remove');
+            Route::get('/settings/localization', [TenantSettingsController::class, 'localization'])->name('tenant.settings.localization');
+            Route::patch('/settings/localization', [TenantSettingsController::class, 'updateLocalization'])->name('tenant.settings.localization.update');
+            Route::get('/settings/billing', [TenantSettingsController::class, 'billing'])->name('tenant.settings.billing');
+            Route::patch('/settings/billing', [TenantSettingsController::class, 'updateBilling'])->name('tenant.settings.billing.update');
+            Route::get('/upgrade-required', [TenantWorkspaceController::class, 'upgradeRequired'])->name('tenant.upgrade.required');
+
+            // ── Master Data ────────────────────────────────────────────────────────
+            Route::prefix('master')->name('tenant.master.')->group(function () {
+                Route::get('/categories', [TenantMasterCategoryController::class, 'index'])->name('categories');
+                Route::get('/tags',       [TenantMasterTagController::class, 'index'])->name('tags');
+                Route::get('/currencies', [TenantMasterCurrencyController::class, 'index'])->name('currencies');
+                Route::get('/uom',        [TenantMasterUomController::class, 'index'])->name('uom');
+            });
         }); // End prefix('admin')
     });
 

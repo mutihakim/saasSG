@@ -14,8 +14,8 @@ const TagsInput = ({ value, onChange }: TagsInputProps) => {
 
   const loadOptions = async (inputValue: string) => {
     try {
-      const response = await axios.get(tenantRoute.apiTo("/finance/tags"), {
-        params: { search: inputValue }
+      const response = await axios.get(tenantRoute.apiTo("/master/tags/suggest"), {
+        params: { q: inputValue }
       });
       return (response.data.data || []).map((tag: any) => ({
         label: tag.name,

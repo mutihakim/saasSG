@@ -1,4 +1,4 @@
-import i18next from 'i18next';
+import i18n from '../i18n';
 
 type ApiErrorEnvelope = {
     code?: string;
@@ -15,31 +15,56 @@ export type ParsedApiError = {
 };
 
 export function parseApiError(err: any, fallback: string): ParsedApiError {
-    const t = i18next.t.bind(i18next);
+    const t = i18n.t.bind(i18n);
     const status = err?.response?.status as number | undefined;
-    const envelope = err?.response?.data?.error as ApiErrorEnvelope | undefined;
-    const message = envelope?.message ?? fallback;
-    const hint = envelope?.details?.hint;
-    const fields = envelope?.details?.fields;
+    const data = err?.response?.data;
+    const code = data?.error?.code ?? data?.code;
+    
+    // 1. Try to find message in various formats
+    let message = data?.error?.message ?? data?.message ?? fallback;
 
-    const firstFieldEntry = fields ? Object.entries(fields)[0] : null;
-    const firstFieldName = firstFieldEntry?.[0];
-    const firstFieldMessage = firstFieldEntry?.[1]?.[0];
+    // 2. Try to find detailed field errors
+    const fields = data?.error?.details?.fields ?? data?.errors;
+    const hint = data?.error?.details?.hint;
 
-    if (firstFieldMessage && firstFieldName) {
+    let title = message;
+    let detail = hint;
+
+    // Use translation keys if available for the code
+    if (code) {
+        const translatedTitle = t(`api.error.${code}.title`, { defaultValue: '' });
+        if (translatedTitle) {
+            title = translatedTitle;
+        }
+
+        const translatedDetail = t(`api.error.${code}.detail`, { defaultValue: '' });
+        if (translatedDetail) {
+            detail = translatedDetail;
+        }
+    }
+
+    if (fields && typeof fields === 'object') {
+        const firstFieldEntry = Object.entries(fields)[0];
+        const firstFieldMessage = Array.isArray(firstFieldEntry[1]) 
+            ? firstFieldEntry[1][0] 
+            : firstFieldEntry[1];
+
+        if (firstFieldMessage) {
+            return {
+                title: title,
+                detail: String(firstFieldMessage),
+            };
+        }
+    }
+
+    if (detail) {
         return {
-            title: message,
-            detail: firstFieldMessage,
+            title: title,
+            detail: detail,
         };
     }
 
-    if (hint) {
-        return {
-            title: message,
-            detail: hint,
-        };
-    }
-
+    // Status-based fallbacks (if no code-based translation found)
     if (status === 401) {
         return {
             title: t('api.error.unauthenticated.title', { defaultValue: 'Authentication required' }),
@@ -54,15 +79,15 @@ export function parseApiError(err: any, fallback: string): ParsedApiError {
         };
     }
 
-    if (status === 419) {
+    if (status === 409) {
         return {
-            title: t('api.error.csrf.title', { defaultValue: 'Session expired' }),
-            detail: t('api.error.csrf.detail', { defaultValue: 'Refresh the page and try again.' }),
+            title: t('api.error.conflict.title', { defaultValue: 'Conflict detected' }),
+            detail: message || t('api.error.conflict.detail', { defaultValue: 'The data was modified by another user. Please refresh and try again.' }),
         };
     }
 
     return {
-        title: message,
+        title: title,
         detail: t('api.error.generic.detail', { defaultValue: 'Please try again in a few moments.' }),
     };
 }

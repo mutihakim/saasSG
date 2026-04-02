@@ -12,25 +12,21 @@ class TenantCategoryPolicy
 
     public function viewAny(User $user): bool
     {
-        return $user->hasPermissionTo('finance.view') || 
-               $user->hasPermissionTo('grocery.view') || 
-               $user->hasPermissionTo('task.view');
+        return $user->hasPermissionTo('master.categories.view');
     }
 
     public function create(User $user): bool
     {
-        return $user->hasPermissionTo('finance.create') || 
-               $user->hasPermissionTo('grocery.create') || 
-               $user->hasPermissionTo('task.create');
+        return $user->hasPermissionTo('master.categories.create');
     }
 
     public function update(User $user, TenantCategory $category): bool
     {
-        return $user->hasPermissionTo($category->module . '.update');
+        return $user->hasPermissionTo('master.categories.update');
     }
 
     public function delete(User $user, TenantCategory $category): bool
     {
-        return $user->hasPermissionTo($category->module . '.delete');
+        return $user->hasPermissionTo('master.categories.delete');
     }
 }

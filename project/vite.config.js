@@ -14,36 +14,16 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks(id) {
-                    if (id.includes('/resources/js/i18n.ts') || id.includes('/resources/js/locales/')) {
-                        return 'i18n';
+                    if (id.includes('apexcharts') || id.includes('react-apexcharts')) {
+                        return 'charts-vendor';
                     }
 
-                    if (!id.includes('node_modules')) {
-                        return undefined;
+                    if (id.includes('fullcalendar') || id.includes('@fullcalendar')) {
+                        return 'calendar-vendor';
                     }
 
-                    if (id.includes('@inertiajs') || id.includes('ziggy-js')) {
-                        return 'inertia';
-                    }
-
-                    if (id.includes('react-bootstrap') || id.includes('@restart') || id.includes('react-overlays')) {
-                        return 'ui-kit';
-                    }
-
-                    if (id.includes('i18next') || id.includes('react-i18next')) {
-                        return 'i18n';
-                    }
-
-                    if (id.includes('bootstrap')) {
-                        return 'bootstrap';
-                    }
-
-                    if (id.includes('axios') || id.includes('laravel-echo') || id.includes('pusher-js')) {
-                        return 'app-vendor';
-                    }
-
-                    if (id.includes('react') || id.includes('scheduler')) {
-                        return 'react-vendor';
+                    if (id.includes('resources/js/locales/')) {
+                        return 'i18n-locales';
                     }
 
                     return undefined;

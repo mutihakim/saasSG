@@ -25,7 +25,7 @@ class EnsureTenantAccess
         $request->attributes->set('currentTenant', $tenant);
         app()->instance('currentTenant', $tenant);
 
-        if (!empty($tenant->locale)) {
+        if (!empty($tenant->locale) && !$request->hasHeader('X-Locale')) {
             \Illuminate\Support\Facades\App::setLocale($tenant->locale);
         }
 

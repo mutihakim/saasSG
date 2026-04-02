@@ -15,8 +15,8 @@ return [
                 'finance'           => ['view', 'create', 'update', 'delete'],
                 'master.categories' => ['view', 'create', 'update', 'delete'],
                 'master.tags'       => ['view', 'create', 'update', 'delete'],
-                'master.currencies' => ['view'],
-                'master.uom'        => ['view'],
+                'master.currencies' => ['view', 'create', 'update', 'delete'],
+                'master.uom'        => ['view', 'create', 'update', 'delete'],
             ],
             'limits' => [
                 'team.members.max'             => 5,
@@ -38,8 +38,8 @@ return [
                 'finance'           => ['view', 'create', 'update', 'delete'],
                 'master.categories' => ['view', 'create', 'update', 'delete'],
                 'master.tags'       => ['view', 'create', 'update', 'delete'],
-                'master.currencies' => ['view'],
-                'master.uom'        => ['view'],
+                'master.currencies' => ['view', 'create', 'update', 'delete'],
+                'master.uom'        => ['view', 'create', 'update', 'delete'],
             ],
             'limits' => [
                 'team.members.max'             => 50,
@@ -61,8 +61,8 @@ return [
                 'finance'           => ['view', 'create', 'update', 'delete'],
                 'master.categories' => ['view', 'create', 'update', 'delete'],
                 'master.tags'       => ['view', 'create', 'update', 'delete'],
-                'master.currencies' => ['view'],
-                'master.uom'        => ['view'],
+                'master.currencies' => ['view', 'create', 'update', 'delete'],
+                'master.uom'        => ['view', 'create', 'update', 'delete'],
             ],
             'limits' => [
                 'team.members.max'             => 50,
@@ -84,8 +84,8 @@ return [
                 'finance'           => ['view', 'create', 'update', 'delete'],
                 'master.categories' => ['view', 'create', 'update', 'delete'],
                 'master.tags'       => ['view', 'create', 'update', 'delete'],
-                'master.currencies' => ['view'],
-                'master.uom'        => ['view'],
+                'master.currencies' => ['view', 'create', 'update', 'delete'],
+                'master.uom'        => ['view', 'create', 'update', 'delete'],
             ],
             'limits' => [
                 'team.members.max'             => -1,

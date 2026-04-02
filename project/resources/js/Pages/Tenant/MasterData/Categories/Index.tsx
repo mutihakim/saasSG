@@ -51,7 +51,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
 
     const fetchCategories = async () => {
         try {
-            const res = await axios.get(tenantRoute.apiTo("/finance/categories"), {
+            const res = await axios.get(tenantRoute.apiTo("/master/categories"), {
                 params: { module: activeTab }
             });
             const data = res.data.data;
@@ -121,7 +121,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
         if (!selectedCategory) return;
         setIsDeleting(true);
         try {
-            await axios.delete(tenantRoute.apiTo(`/finance/categories/${selectedCategory.id}`), {
+            await axios.delete(tenantRoute.apiTo(`/master/categories/${selectedCategory.id}`), {
                 data: { row_version: selectedCategory.row_version }
             });
             notify.success("Category deleted successfully");
@@ -143,7 +143,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
         if (!window.confirm(`Are you sure you want to delete ${selectedRows.length} items?`)) return;
 
         try {
-            await axios.delete(tenantRoute.apiTo("/finance/categories"), {
+            await axios.delete(tenantRoute.apiTo("/master/categories"), {
                 data: { ids: selectedRows }
             });
             notify.success("Bulk delete successful");

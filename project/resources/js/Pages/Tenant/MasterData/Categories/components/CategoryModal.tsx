@@ -150,8 +150,8 @@ const CategoryModal = ({
 
     try {
       const url = isEdit 
-        ? tenantRoute.apiTo(`/finance/categories/${category.id}`)
-        : tenantRoute.apiTo("/finance/categories");
+        ? tenantRoute.apiTo(`/master/categories/${category.id}`)
+        : tenantRoute.apiTo("/master/categories");
       
       const method = isEdit ? "patch" : "post";
       
@@ -160,7 +160,7 @@ const CategoryModal = ({
         parent_id: formData.parent_id || null,
       });
 
-      notify.success(isEdit ? "Category updated" : "Category created");
+      notify.success(t(isEdit ? "master.categories.messages.success_update" : "master.categories.messages.success_add"));
       onSuccess();
       onClose();
     } catch (err: any) {
@@ -184,17 +184,17 @@ const CategoryModal = ({
   return (
     <Modal show={show} onHide={onClose} centered size="lg">
       <Modal.Header closeButton className="bg-light p-3">
-        <Modal.Title>{isEdit ? "Edit Category" : "Add Category"}</Modal.Title>
+        <Modal.Title>{isEdit ? t("master.categories.modals.edit_title") : t("master.categories.modals.add_title")}</Modal.Title>
       </Modal.Header>
       <Form onSubmit={handleSubmit}>
         <Modal.Body>
           <Row>
             <Col lg={12}>
               <Form.Group className="mb-3">
-                <Form.Label>Category Name</Form.Label>
+                <Form.Label>{t("master.categories.fields.name")}</Form.Label>
                 <Form.Control
                   type="text"
-                  placeholder="Enter category name"
+                  placeholder={t("master.common.search_placeholder")}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
@@ -204,7 +204,7 @@ const CategoryModal = ({
             
             <Col lg={6}>
               <Form.Group className="mb-3">
-                <Form.Label>Module</Form.Label>
+                <Form.Label>{t("master.categories.fields.module")}</Form.Label>
                 <Form.Control
                   type="text"
                   value={formData.module ? formData.module.toUpperCase() : ""}
@@ -274,7 +274,7 @@ const CategoryModal = ({
                     <Form.Check 
                         type="switch"
                         id="category-active-switch"
-                        label="Is Active"
+                        label={t("master.common.status.active")}
                         checked={formData.is_active}
                         onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     />
@@ -283,9 +283,9 @@ const CategoryModal = ({
           </Row>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="light" onClick={onClose} disabled={loading}>Cancel</Button>
+          <Button variant="light" onClick={onClose} disabled={loading}>{t("master.uom.buttons.cancel")}</Button>
           <Button variant="primary" type="submit" disabled={loading}>
-            {loading ? "Saving..." : (isEdit ? "Update Category" : "Save Category")}
+            {loading ? t("master.uom.buttons.saving") : (isEdit ? t("master.categories.modals.edit_title") : t("master.categories.modals.add_title"))}
           </Button>
         </Modal.Footer>
       </Form>

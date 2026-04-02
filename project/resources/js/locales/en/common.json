@@ -19,5 +19,14 @@
   "api.error.forbidden.detail": "You do not have permission to perform this action in the active tenant.",
   "api.error.csrf.title": "Session expired",
   "api.error.csrf.detail": "Refresh the page and try again.",
-  "api.error.generic.detail": "Please try again in a few moments."
+  "api.error.generic.detail": "Please try again in a few moments.",
+  "api.error.VALIDATION_ERROR.title": "Validation failed",
+  "api.error.VALIDATION_ERROR.detail": "Please check the submitted fields and try again.",
+  "api.error.FORBIDDEN.title": "Access denied",
+  "api.error.FORBIDDEN.detail": "You do not have permission to perform this action.",
+  "api.error.UNAUTHENTICATED.title": "Authentication required",
+  "api.error.UNAUTHENTICATED.detail": "Your session has expired. Please sign in again and retry.",
+  "api.error.NOT_FOUND.title": "Resource not found",
+  "api.error.PLAN_QUOTA_EXCEEDED.title": "Plan quota exceeded",
+  "api.error.VERSION_CONFLICT.title": "Data Conflict"
 }

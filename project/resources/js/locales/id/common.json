@@ -19,5 +19,16 @@
   "api.error.forbidden.detail": "Anda tidak memiliki izin untuk melakukan aksi ini di tenant aktif.",
   "api.error.csrf.title": "Sesi kedaluwarsa",
   "api.error.csrf.detail": "Muat ulang halaman lalu coba lagi.",
-  "api.error.generic.detail": "Silakan coba lagi beberapa saat lagi."
+  "api.error.conflict.title": "Konflik Data",
+  "api.error.conflict.detail": "Data ini telah diubah oleh pengguna lain. Silakan muat ulang halaman.",
+  "api.error.generic.detail": "Silakan coba lagi beberapa saat lagi.",
+  "api.error.VALIDATION_ERROR.title": "Validasi gagal",
+  "api.error.VALIDATION_ERROR.detail": "Periksa kembali field yang dikirim lalu coba lagi.",
+  "api.error.FORBIDDEN.title": "Akses ditolak",
+  "api.error.FORBIDDEN.detail": "Anda tidak memiliki izin untuk melakukan aksi ini.",
+  "api.error.UNAUTHENTICATED.title": "Autentikasi dibutuhkan",
+  "api.error.UNAUTHENTICATED.detail": "Sesi Anda berakhir. Silakan login ulang lalu coba lagi.",
+  "api.error.NOT_FOUND.title": "Resource tidak ditemukan",
+  "api.error.PLAN_QUOTA_EXCEEDED.title": "Kuota paket penuh",
+  "api.error.VERSION_CONFLICT.title": "Konflik Data"
 }

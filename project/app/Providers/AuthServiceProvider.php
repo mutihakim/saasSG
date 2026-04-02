@@ -2,15 +2,19 @@
 
 namespace App\Providers;
 
-use App\Models\TenantMember;
 use App\Models\FinanceTransaction;
-use App\Models\MasterCurrency;
-use App\Models\MasterUom;
+use App\Models\TenantCategory;
+use App\Models\TenantMember;
+use App\Models\TenantTag;
+use App\Models\TenantCurrency;
+use App\Models\TenantUom;
+use App\Policies\FinanceTransactionPolicy;
+use App\Policies\TenantCategoryPolicy;
 use App\Policies\TenantMemberPolicy;
 use App\Policies\TenantRolePolicy;
-use App\Policies\FinanceTransactionPolicy;
-use App\Policies\MasterCurrencyPolicy;
-use App\Policies\MasterUomPolicy;
+use App\Policies\TenantTagPolicy;
+use App\Policies\TenantCurrencyPolicy;
+use App\Policies\TenantUomPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
 use Spatie\Permission\Models\Role;
 
@@ -22,11 +26,13 @@ class AuthServiceProvider extends ServiceProvider
      * @var array<class-string, class-string>
      */
     protected $policies = [
-        TenantMember::class => TenantMemberPolicy::class,
-        Role::class => TenantRolePolicy::class,
+        TenantMember::class      => TenantMemberPolicy::class,
+        Role::class              => TenantRolePolicy::class,
         FinanceTransaction::class => FinanceTransactionPolicy::class,
-        MasterCurrency::class => MasterCurrencyPolicy::class,
-        MasterUom::class => MasterUomPolicy::class,
+        TenantCategory::class    => TenantCategoryPolicy::class,
+        TenantTag::class         => TenantTagPolicy::class,
+        TenantCurrency::class    => TenantCurrencyPolicy::class,
+        TenantUom::class         => TenantUomPolicy::class,
     ];
 
     /**

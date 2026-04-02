@@ -3,19 +3,20 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
-use App\Models\MasterCurrency;
+use App\Models\TenantCurrency;
 use App\Models\Tenant;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class MasterCurrencyApiController extends Controller
 {
     // GET /master/currencies
     public function index(Request $request, Tenant $tenant): JsonResponse
     {
-        $this->authorize('viewAny', MasterCurrency::class);
+        $this->authorize('viewAny', TenantCurrency::class);
 
-        $query = MasterCurrency::query()
+        $query = TenantCurrency::forTenant($tenant->id)
             ->ordered();
 
         if ($request->filled('search')) {
@@ -36,10 +37,15 @@ class MasterCurrencyApiController extends Controller
     // POST /master/currencies
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
-        $this->authorize('create', MasterCurrency::class);
+        $this->authorize('create', TenantCurrency::class);
 
         $validated = $request->validate([
-            'code' => 'required|string|max:3|unique:master_currencies,code',
+            'code' => [
+                'required',
+                'string',
+                'max:3',
+                Rule::unique('tenant_currencies')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->whereNull('deleted_at')),
+            ],
             'name' => 'required|string|max:255',
             'symbol' => 'required|string|max:10',
             'symbol_position' => 'required|in:before,after',
@@ -49,12 +55,14 @@ class MasterCurrencyApiController extends Controller
         ]);
 
         try {
-            $currency = MasterCurrency::create([
+            $currency = TenantCurrency::create([
+                'tenant_id' => $tenant->id,
                 'code' => strtoupper($validated['code']),
                 'name' => $validated['name'],
                 'symbol' => $validated['symbol'],
                 'symbol_position' => $validated['symbol_position'],
                 'decimal_places' => $validated['decimal_places'],
+                'exchange_rate' => 1.0, // Default for new currency
                 'is_active' => $validated['is_active'] ?? true,
                 'sort_order' => $validated['sort_order'] ?? 0,
             ]);
@@ -71,15 +79,20 @@ class MasterCurrencyApiController extends Controller
         }
     }
 
-    // PATCH /master/currencies/{code}
-    public function update(Request $request, Tenant $tenant, string $code): JsonResponse
+    // PATCH /master/currencies/{currency}
+    public function update(Request $request, Tenant $tenant, TenantCurrency $currency): JsonResponse
     {
-        $this->authorize('update', MasterCurrency::class);
-
-        $currency = MasterCurrency::where('code', strtoupper($code))->firstOrFail();
+        $this->authorize('update', $currency);
+        abort_if((int) $currency->tenant_id !== (int) $tenant->id, 404);
 
         $validated = $request->validate([
-            'code' => 'sometimes|required|string|max:3|unique:master_currencies,code,' . $currency->code . ',code',
+            'code' => [
+                'sometimes',
+                'required',
+                'string',
+                'max:3',
+                Rule::unique('tenant_currencies')->where(fn ($q) => $q->where('tenant_id', $tenant->id)->whereNull('deleted_at'))->ignore($currency->id),
+            ],
             'name' => 'sometimes|required|string|max:255',
             'symbol' => 'sometimes|required|string|max:10',
             'symbol_position' => 'sometimes|required|in:before,after',
@@ -90,7 +103,7 @@ class MasterCurrencyApiController extends Controller
         ]);
 
         // Optimistic locking
-        if (isset($validated['row_version']) && $currency->row_version !== $validated['row_version']) {
+        if (isset($validated['row_version']) && (int)$currency->row_version !== (int)$validated['row_version']) {
             return response()->json([
                 'ok' => false,
                 'message' => 'The currency was modified by another user. Please refresh and try again.',
@@ -99,13 +112,14 @@ class MasterCurrencyApiController extends Controller
 
         try {
             $currency->update([
-                'code' => strtoupper($validated['code'] ?? $currency->code),
+                'code' => isset($validated['code']) ? strtoupper($validated['code']) : $currency->code,
                 'name' => $validated['name'] ?? $currency->name,
                 'symbol' => $validated['symbol'] ?? $currency->symbol,
                 'symbol_position' => $validated['symbol_position'] ?? $currency->symbol_position,
                 'decimal_places' => $validated['decimal_places'] ?? $currency->decimal_places,
                 'is_active' => $validated['is_active'] ?? $currency->is_active,
                 'sort_order' => $validated['sort_order'] ?? $currency->sort_order,
+                'row_version' => $currency->row_version + 1,
             ]);
 
             return response()->json([
@@ -120,15 +134,14 @@ class MasterCurrencyApiController extends Controller
         }
     }
 
-    // DELETE /master/currencies/{code}
-    public function destroy(Request $request, Tenant $tenant, string $code): JsonResponse
+    // DELETE /master/currencies/{currency}
+    public function destroy(Request $request, Tenant $tenant, TenantCurrency $currency): JsonResponse
     {
-        $this->authorize('delete', MasterCurrency::class);
-
-        $currency = MasterCurrency::where('code', strtoupper($code))->firstOrFail();
+        $this->authorize('delete', $currency);
+        abort_if((int) $currency->tenant_id !== (int) $tenant->id, 404);
 
         // Check if currency is being used
-        $isUsed = $currency->transactions()->exists();
+        $isUsed = \App\Models\FinanceTransaction::where('currency_id', $currency->id)->exists();
         if ($isUsed) {
             return response()->json([
                 'ok' => false,

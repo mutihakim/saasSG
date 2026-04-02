@@ -92,8 +92,49 @@ JID accepted:
 
 ## Error Contract (Yang Sering Muncul)
 
-- `FEATURE_NOT_AVAILABLE` (403)
-- `PLAN_QUOTA_EXCEEDED` (422)
-- `VALIDATION_ERROR` (422)
-- `VERSION_CONFLICT` (409)
-- `IMMUTABLE_SYSTEM_ROLE` (422)
+| Code | Status | Keterangan |
+|---|---|---|
+| `FEATURE_NOT_AVAILABLE` | 403 | Plan tidak mengizinkan module/action |
+| `PLAN_QUOTA_EXCEEDED` | 422 | Limit quota plan terlewati |
+| `VALIDATION_ERROR` | 422 | Field tidak valid (ikut locale aktif) |
+| `VERSION_CONFLICT` | 409 | Row version mismatch (OCC) |
+| `IMMUTABLE_SYSTEM_ROLE` | 422 | Edit/hapus role sistem dilarang |
+| `IDEMPOTENCY_KEY_REUSED` | 409 | Idempotency key dipakai ulang dengan payload berbeda |
+
+### Master Data
+
+Semua endpoint master data ada di bawah `/api/v1/tenants/{tenant}/master/`
+
+**UOM (Unit of Measure):**
+- `GET /master/uom` — `tenant.feature:master.uom,view`
+- `POST /master/uom` — `tenant.feature:master.uom,create`
+- `PATCH /master/uom/{uom}` — `tenant.feature:master.uom,update`
+- `DELETE /master/uom/{uom}` — `tenant.feature:master.uom,delete`
+
+**Currencies:**
+- `GET /master/currencies` — `tenant.feature:master.currencies,view`
+- `POST /master/currencies` — `tenant.feature:master.currencies,create`
+- `PATCH /master/currencies/{currency}` — `tenant.feature:master.currencies,update`
+- `DELETE /master/currencies/{currency}` — `tenant.feature:master.currencies,delete`
+
+**Tags:**
+- `GET /master/tags` — `tenant.feature:master.tags,view`
+- `GET /master/tags/suggest` — `tenant.feature:master.tags,view`
+- `POST /master/tags` — `tenant.feature:master.tags,create`
+- `PATCH /master/tags/{tag}` — `tenant.feature:master.tags,update`
+- `DELETE /master/tags/{tag}` — `tenant.feature:master.tags,delete`
+
+**Categories:**
+- `GET /master/categories` — `tenant.feature:master.categories,view`
+- `POST /master/categories` — `tenant.feature:master.categories,create`
+- `PATCH /master/categories/{category}` — `tenant.feature:master.categories,update`
+- `PATCH /master/categories/bulk-parent` — `tenant.feature:master.categories,update`
+- `DELETE /master/categories/{category}` — `tenant.feature:master.categories,delete`
+- `DELETE /master/categories` (bulk) — `tenant.feature:master.categories,delete`
+
+### Finance
+
+- `GET /api/v1/tenants/{tenant}/finance/transactions`
+- `POST /api/v1/tenants/{tenant}/finance/transactions`
+- `PATCH /api/v1/tenants/{tenant}/finance/transactions/{transaction}`
+- `DELETE /api/v1/tenants/{tenant}/finance/transactions/{transaction}`

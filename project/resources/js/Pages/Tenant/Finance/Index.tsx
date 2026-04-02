@@ -3,10 +3,10 @@ import { Card, Col, Form, Modal, Row, Dropdown, Button, Spinner } from 'react-bo
 import { useTranslation } from 'react-i18next';
 import axios from 'axios';
 
-import TableContainer from '@/Components/Common/TableContainer';
-import DeleteModal from '@/Components/Common/DeleteModal';
-import { notify } from '@/common/notify';
-import { useTenantRoute } from '@/common/tenantRoute';
+import TableContainer from '../../../Components/Common/TableContainer';
+import DeleteModal from '../../../Components/Common/DeleteModal';
+import { notify } from '../../../common/notify';
+import { useTenantRoute } from '../../../common/tenantRoute';
 import { TransactionDate, Category, Description, Amount, PaymentMethod, Tags, Actions } from './components/FinanceCol';
 import TransactionModal from './components/TransactionModal';
 
@@ -153,7 +153,7 @@ const FinanceIndex = ({
                 />
             ),
         },
-    ], [t]);
+    ], []);
 
     return (
         <React.Fragment>

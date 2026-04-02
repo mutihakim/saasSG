@@ -1,0 +1,71 @@
+<?php
+
+return [
+    'accepted' => ':attribute harus diterima.',
+    'active_url' => ':attribute bukan URL yang valid.',
+    'after' => ':attribute harus berisi tanggal setelah :date.',
+    'alpha' => ':attribute hanya boleh berisi huruf.',
+    'alpha_dash' => ':attribute hanya boleh berisi huruf, angka, strip, dan garis bawah.',
+    'alpha_num' => ':attribute hanya boleh berisi huruf dan angka.',
+    'array' => ':attribute harus berupa sebuah array.',
+    'before' => ':attribute harus berisi tanggal sebelum :date.',
+    'between' => [
+        'numeric' => ':attribute harus bernilai antara :min dan :max.',
+        'file' => ':attribute harus berukuran antara :min dan :max kilobita.',
+        'string' => ':attribute harus berisi antara :min dan :max karakter.',
+        'array' => ':attribute harus memiliki :min sampai :max anggota.',
+    ],
+    'boolean' => 'Isian :attribute harus bernilai true atau false.',
+    'confirmed' => 'Konfirmasi :attribute tidak cocok.',
+    'date' => ':attribute bukan tanggal yang valid.',
+    'date_format' => ':attribute tidak cocok dengan format :format.',
+    'different' => ':attribute dan :other harus berbeda.',
+    'digits' => ':attribute harus terdiri dari :digits angka.',
+    'digits_between' => ':attribute harus bernilai antara :min dan :max angka.',
+    'email' => ':attribute harus berupa alamat surel yang valid.',
+    'exists' => ':attribute yang dipilih tidak valid.',
+    'filled' => 'Isian :attribute wajib diisi.',
+    'image' => ':attribute harus berupa gambar.',
+    'in' => ':attribute yang dipilih tidak valid.',
+    'integer' => ':attribute harus berupa bilangan bulat.',
+    'ip' => ':attribute harus berupa alamat IP yang valid.',
+    'max' => [
+        'numeric' => ':attribute seharusnya tidak lebih dari :max.',
+        'file' => ':attribute seharusnya tidak lebih dari :max kilobita.',
+        'string' => ':attribute seharusnya tidak lebih dari :max karakter.',
+        'array' => ':attribute seharusnya tidak lebih dari :max anggota.',
+    ],
+    'mimes' => ':attribute harus dokumen berjenis : :values.',
+    'min' => [
+        'numeric' => ':attribute harus minimal :min.',
+        'file' => ':attribute harus minimal :min kilobita.',
+        'string' => ':attribute harus minimal :min karakter.',
+        'array' => ':attribute harus memiliki minimal :min anggota.',
+    ],
+    'not_in' => ':attribute yang dipilih tidak valid.',
+    'numeric' => ':attribute harus berupa angka.',
+    'required' => 'Isian :attribute wajib diisi.',
+    'same' => ':attribute dan :other harus sama.',
+    'size' => [
+        'numeric' => ':attribute harus berukuran :size.',
+        'file' => ':attribute harus berukuran :size kilobita.',
+        'string' => ':attribute harus berukuran :size karakter.',
+        'array' => ':attribute harus mengandung :size anggota.',
+    ],
+    'string' => ':attribute harus berupa string.',
+    'unique' => ':attribute sudah ada sebelumnya.',
+    'url' => 'Format :attribute tidak valid.',
+
+    'custom' => [
+        'attribute-name' => [
+            'rule-name' => 'custom-message',
+        ],
+    ],
+
+    'attributes' => [
+        'code' => 'Kode',
+        'name' => 'Nama',
+        'email' => 'Alamat Surel',
+        'password' => 'Kata Sandi',
+    ],
+];

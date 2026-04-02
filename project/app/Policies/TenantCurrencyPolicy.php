@@ -2,20 +2,15 @@
 
 namespace App\Policies;
 
-use App\Models\MasterCurrency;
+use App\Models\TenantCurrency;
 use App\Models\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
-class MasterCurrencyPolicy
+class TenantCurrencyPolicy
 {
     use HandlesAuthorization;
 
     public function viewAny(User $user): bool
-    {
-        return $user->hasPermissionTo('master.currencies.view');
-    }
-
-    public function view(User $user, MasterCurrency $currency): bool
     {
         return $user->hasPermissionTo('master.currencies.view');
     }
@@ -25,12 +20,12 @@ class MasterCurrencyPolicy
         return $user->hasPermissionTo('master.currencies.create');
     }
 
-    public function update(User $user, MasterCurrency $currency): bool
+    public function update(User $user, TenantCurrency $currency): bool
     {
         return $user->hasPermissionTo('master.currencies.update');
     }
 
-    public function delete(User $user, MasterCurrency $currency): bool
+    public function delete(User $user, TenantCurrency $currency): bool
     {
         return $user->hasPermissionTo('master.currencies.delete');
     }

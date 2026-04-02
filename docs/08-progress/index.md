@@ -1,6 +1,6 @@
 # 08 - Progress Dashboard
 
-Last updated: `2026-03-31`
+Last updated: `2026-04-02`
 
 Progress dashboard ini dipakai untuk memantau execution health lintas modul. Detail teknis tetap ada di `03-features/*`.
 
@@ -8,16 +8,26 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 
 | Modul | Status | Progress | Owner | Last Updated | Detail |
 |---|---|---:|---|---|---|
-| RBAC | In Progress | 85% | Platform Team | 2026-03-30 | [RBAC Progress](./modules/rbac.md) |
-| i18n | In Progress | 80% | Frontend Team | 2026-03-30 | [i18n Progress](./modules/i18n.md) |
-| Subscription | In Progress | 85% | Platform Team | 2026-03-30 | [Subscription Progress](./modules/subscription.md) |
-| Tenant Settings | In Progress | 90% | Platform Team | 2026-03-30 | Tenant profile, billing, localization, dan branding upload per tenant sudah aktif; tersisa verifikasi browser/E2E visual. |
-| WhatsApp | Done | 100% | Integration Team | 2026-03-31 | [WhatsApp Progress](./modules/whatsapp.md) (cursor pagination 15/batch, 401 recovery, PM2 Reverb profile, auto-command ping/help, settings command guide, guard 1 connected_jid lintas tenant) |
-| Routing & Websocket | Done | 100% | Platform Team | 2026-03-31 | Migrasi dari path-based (/t/{tenant}) ke subdomain-based ({tenant}.appsah.my.id), perbaikan CORS Inertia, dan dynamisasi Reverb WSS. |
+| RBAC | Done | 100% | Platform Team | 2026-04-02 | Policy per-entitas (`TenantUomPolicy`, `TenantCurrencyPolicy`, dll) sudah modular. [RBAC Progress](./modules/rbac.md) |
+| i18n | Done | 100% | Frontend Team | 2026-04-02 | Locale end-to-end selesai: `X-Locale` header → `SetRequestLocale` → `EnsureTenantAccess` respects header → `lang/en+id/validation.php` → `parseApiError` frontend reactive. [i18n Progress](./modules/i18n.md) |
+| Subscription | Done | 95% | Platform Team | 2026-04-02 | Guard + quota tersedia di semua modul Master Data. Tersisa E2E test upgrade flow. [Subscription Progress](./modules/subscription.md) |
+| Master Data CRUD | Done | 100% | Platform Team | 2026-04-02 | UoM, Currency, Tag, Category: full CRUD + Policy + Soft-Delete Aware Unique Index + i18n + Toast standardized. |
+| Finance | Done | 90% | Finance Team | 2026-04-02 | Transaction CRUD aktif. Tersisa laporan/export. |
+| Tenant Settings | Done | 90% | Platform Team | 2026-03-30 | Tenant profile, billing, localization, dan branding upload per tenant sudah aktif; tersisa verifikasi browser/E2E visual. |
+| WhatsApp | Done | 100% | Integration Team | 2026-03-31 | [WhatsApp Progress](./modules/whatsapp.md) |
+| Routing & Websocket | Done | 100% | Platform Team | 2026-03-31 | Subdomain-based routing, CORS Inertia, dynamisasi Reverb WSS. |
 
 ## Top Global Blocker
 
 - *Belum ada blocker sistemik yang menghalangi rilis ke staging.*
+
+## Perubahan Arsitektural Besar (2026-04-02)
+
+1. **Modularisasi Controller**: `TenantWorkspaceController` dipecah menjadi controller terpisah per entitas Master Data (`MasterUomApiController`, `MasterCurrencyApiController`, `MasterTagApiController`, `MasterCategoryApiController`).
+2. **Policy Per-Entitas**: Menghapus policy monolitik, setiap entitas punya policy modular dengan permission `master.<entity>.view|create|update|delete`.
+3. **Soft-Delete Aware Unique Index**: Implementasi Partial Unique Index PostgreSQL (`WHERE deleted_at IS NULL`) untuk semua tabel Master Data — mencegah konflik saat re-create setelah soft-delete.
+4. **i18n Full Stack Selesai**: Pesan validasi backend sekarang sepenuhnya reaktif mengikuti pilihan bahasa user (EN/ID) via `X-Locale` header + `SetRequestLocale` global middleware + perbaikan `EnsureTenantAccess` untuk tidak menimpa piilhan user.
+5. **Standardized Error Notification**: `parseApiError` di Frontend sekarang translate error code via i18next, sehingga toast notifikasi reaktif bersamaan dengan perubahan bahasa di Topbar.
 
 ## Konvensi Update (Per PR/Merge)
 
