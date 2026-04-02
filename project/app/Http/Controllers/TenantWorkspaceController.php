@@ -428,4 +428,95 @@ class TenantWorkspaceController extends Controller
 
         return in_array($member?->role_code, ['owner', 'admin', 'tenant_owner', 'tenant_admin'], true);
     }
+
+    // ── Finance / Keuangan ─────────────────────────────────────────────────────
+
+    public function finance(Request $request, string $tenant): Response|HttpResponse
+    {
+        $tenantModel = $request->attributes->get('currentTenant');
+
+        return Inertia::render('Tenant/Finance/Page', [
+            'categories'     => \App\Models\SharedCategory::forTenant($tenantModel->id)
+                ->forModule('finance')
+                ->active()
+                ->ordered()
+                ->get(['id', 'name', 'sub_type', 'icon', 'color', 'is_default']),
+            'currencies'     => \Illuminate\Support\Facades\Cache::remember('master_currencies_active', 3600,
+                fn () => \App\Models\MasterCurrency::active()->ordered()
+                    ->get(['code', 'name', 'symbol', 'symbol_position', 'decimal_places'])
+            ),
+            'defaultCurrency' => $tenantModel->currency_code ?? 'IDR',
+            'paymentMethods' => collect(\App\Enums\PaymentMethod::cases())
+                ->map(fn ($m) => ['value' => $m->value, 'label' => $m->label(), 'icon' => $m->icon()])
+                ->values(),
+            'permissions' => [
+                'create' => $request->user()?->can('finance.create') ?? false,
+                'update' => $request->user()?->can('finance.update') ?? false,
+                'delete' => $request->user()?->can('finance.delete') ?? false,
+            ],
+        ]);
+    }
+
+    // ── Master Data ────────────────────────────────────────────────────────────
+
+    public function masterCategories(Request $request, string $tenant): Response
+    {
+        $tenantModel = $request->attributes->get('currentTenant');
+
+        return Inertia::render('Tenant/MasterData/Categories/Index', [
+            'categories' => \App\Models\SharedCategory::forTenant($tenantModel->id)
+                ->with('children')
+                ->roots()
+                ->ordered()
+                ->get(),
+            'modules' => ['finance', 'grocery', 'inventory', 'task', 'medical', 'wishlist'],
+            'permissions' => [
+                'create' => $request->user()?->can('master.categories.create') ?? false,
+                'update' => $request->user()?->can('master.categories.update') ?? false,
+                'delete' => $request->user()?->can('master.categories.delete') ?? false,
+            ],
+        ]);
+    }
+
+    public function masterTags(Request $request, string $tenant): Response
+    {
+        $tenantModel = $request->attributes->get('currentTenant');
+
+        return Inertia::render('Tenant/MasterData/Tags/Index', [
+            'tags' => \App\Models\SharedTag::forTenant($tenantModel->id)
+                ->popular()
+                ->get(['id', 'name', 'color', 'usage_count', 'created_at']),
+            'permissions' => [
+                'create' => $request->user()?->can('master.tags.create') ?? false,
+                'update' => $request->user()?->can('master.tags.update') ?? false,
+                'delete' => $request->user()?->can('master.tags.delete') ?? false,
+            ],
+        ]);
+    }
+
+    public function masterCurrencies(Request $request, string $tenant): Response
+    {
+        return Inertia::render('Tenant/MasterData/Currencies/Index', [
+            'currencies' => \App\Models\MasterCurrency::ordered()->get(),
+            'permissions' => [
+                'create' => $request->user()?->can('master.currencies.create') ?? false,
+                'update' => $request->user()?->can('master.currencies.update') ?? false,
+                'delete' => $request->user()?->can('master.currencies.delete') ?? false,
+            ],
+        ]);
+    }
+
+    public function masterUom(Request $request, string $tenant): Response
+    {
+        return Inertia::render('Tenant/MasterData/Uom/Index', [
+            'units' => \App\Models\MasterUom::active()->ordered()
+                ->get(['id', 'code', 'name', 'abbreviation', 'dimension_type', 'base_unit_code', 'base_factor', 'sort_order']),
+            'dimensionTypes' => ['berat', 'volume', 'jumlah', 'panjang', 'luas', 'waktu', 'lainnya'],
+            'permissions' => [
+                'create' => $request->user()?->can('master.uom.create') ?? false,
+                'update' => $request->user()?->can('master.uom.update') ?? false,
+                'delete' => $request->user()?->can('master.uom.delete') ?? false,
+            ],
+        ]);
+    }
 }

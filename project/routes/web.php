@@ -50,7 +50,9 @@ Route::middleware([
             Route::get('/tasks',     [TenantHubController::class, 'tasks'])->name('tenant.tasks');
             Route::get('/rewards',   [TenantHubController::class, 'rewards'])->name('tenant.rewards');
             Route::get('/wallet',    [TenantHubController::class, 'wallet'])->name('tenant.wallet');
-            Route::get('/finance',   [TenantHubController::class, 'finance'])->name('tenant.finance');
+            Route::get('/finance',   [TenantWorkspaceController::class, 'finance'])
+                ->name('tenant.finance')
+                ->middleware('tenant.feature:finance,view');
             Route::get('/kitchen',   [TenantHubController::class, 'kitchen'])->name('tenant.kitchen');
             Route::get('/shopping',  [TenantHubController::class, 'kitchen'])->name('tenant.shopping');
             Route::get('/health',    [TenantHubController::class, 'health'])->name('tenant.health');
@@ -121,8 +123,9 @@ Route::middleware([
         });
     });
 
-    Route::domain('{tenant}.appsah.my.id')->middleware(['auth', 'verified'])->prefix('admin')->group(function () {
-        Route::get('/dashboard', [TenantWorkspaceController::class, 'dashboard'])->name('tenant.dashboard');
+    Route::domain('{tenant}.appsah.my.id')->middleware(['auth', 'verified'])->group(function () {
+        Route::prefix('admin')->group(function () {
+            Route::get('/dashboard', [TenantWorkspaceController::class, 'dashboard'])->name('tenant.dashboard');
 
         // Settings redirect (index)
         Route::get('/settings', fn() => redirect()->route('tenant.settings.profile', ['tenant' => request()->route('tenant')]))->name('tenant.settings');
@@ -151,6 +154,19 @@ Route::middleware([
         Route::get('/settings/billing', [TenantSettingsController::class, 'billing'])->name('tenant.settings.billing');
         Route::patch('/settings/billing', [TenantSettingsController::class, 'updateBilling'])->name('tenant.settings.billing.update');
         Route::get('/upgrade-required', [TenantWorkspaceController::class, 'upgradeRequired'])->name('tenant.upgrade.required');
+
+        // ── Master Data ────────────────────────────────────────────────────────
+        Route::prefix('master')->name('tenant.master.')->group(function () {
+            Route::get('/categories', [TenantWorkspaceController::class, 'masterCategories'])
+                ->name('categories');
+            Route::get('/tags', [TenantWorkspaceController::class, 'masterTags'])
+                ->name('tags');
+            Route::get('/currencies', [TenantWorkspaceController::class, 'masterCurrencies'])
+                ->name('currencies');
+            Route::get('/uom', [TenantWorkspaceController::class, 'masterUom'])
+                ->name('uom');
+        });
+        }); // End prefix('admin')
     });
 
     // --- SUPER ADMIN AREA (Central Domains Only) ---

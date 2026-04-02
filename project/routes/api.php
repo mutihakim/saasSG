@@ -49,6 +49,36 @@ Route::prefix('v1')
 
                 Route::post('/suspend', [TenantLifecycleApiController::class, 'suspendTenant'])->middleware(['superadmin.impersonation', 'throttle:tenant.mutation']);
                 Route::post('/restore', [TenantLifecycleApiController::class, 'restoreTenant'])->middleware(['superadmin.impersonation', 'throttle:tenant.mutation']);
+
+                // ── Finance ────────────────────────────────────────────────────────
+                Route::prefix('finance')->group(function () {
+                    Route::get('/summary', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'summary']);
+                    Route::get('/categories', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'categories']);
+                    Route::post('/categories', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'storeCategory'])->middleware('throttle:tenant.mutation');
+                    Route::patch('/categories/{category}', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'updateCategory'])->middleware('throttle:tenant.mutation');
+                    Route::delete('/categories/{category}', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'destroyCategory'])->middleware('throttle:tenant.mutation');
+                    Route::get('/tags/suggest', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'suggestTags']);
+                    Route::get('/transactions/export', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'export']);
+                    Route::get('/transactions', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'index']);
+                    Route::post('/transactions', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'store'])->middleware('throttle:tenant.mutation');
+                    Route::get('/transactions/{transaction}', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'show']);
+                    Route::patch('/transactions/{transaction}', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'update'])->middleware('throttle:tenant.mutation');
+                    Route::delete('/transactions', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'bulkDestroy'])->middleware('throttle:tenant.mutation');
+                    Route::delete('/transactions/{transaction}', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'destroy'])->middleware('throttle:tenant.mutation');
+                });
+
+                // ── Master Data ────────────────────────────────────────────────────
+                Route::prefix('master')->group(function () {
+                    Route::get('/currencies', [\App\Http\Controllers\Api\MasterCurrencyApiController::class, 'index']);
+                    Route::post('/currencies', [\App\Http\Controllers\Api\MasterCurrencyApiController::class, 'store'])->middleware('throttle:tenant.mutation');
+                    Route::patch('/currencies/{currency}', [\App\Http\Controllers\Api\MasterCurrencyApiController::class, 'update'])->middleware('throttle:tenant.mutation');
+                    Route::delete('/currencies/{currency}', [\App\Http\Controllers\Api\MasterCurrencyApiController::class, 'destroy'])->middleware('throttle:tenant.mutation');
+
+                    Route::get('/uom', [\App\Http\Controllers\Api\MasterUomApiController::class, 'index']);
+                    Route::post('/uom', [\App\Http\Controllers\Api\MasterUomApiController::class, 'store'])->middleware('throttle:tenant.mutation');
+                    Route::patch('/uom/{uom}', [\App\Http\Controllers\Api\MasterUomApiController::class, 'update'])->middleware('throttle:tenant.mutation');
+                    Route::delete('/uom/{uom}', [\App\Http\Controllers\Api\MasterUomApiController::class, 'destroy'])->middleware('throttle:tenant.mutation');
+                });
             });
 
     });

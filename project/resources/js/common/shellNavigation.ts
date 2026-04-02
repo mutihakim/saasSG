@@ -330,6 +330,43 @@ export function buildShellNavigation(props: SharedPageProps): ShellNavSection[] 
             });
         }
 
+        // ── Master Data ─────────────────────────────────────────────────────
+        workspaceItems.push({
+            id: 'tenant-master-data',
+            labelKey: 'layout.shell.nav.items.master_data',
+            icon: 'ri-database-2-line',
+            children: [
+                {
+                    id: 'tenant-master-categories',
+                    labelKey: 'layout.shell.nav.items.master_categories',
+                    href: `${workspaceBase}/admin/master/categories`,
+                    icon: 'ri-price-tag-3-line',
+                    match: startsWith(`${workspaceBase}/admin/master/categories`),
+                },
+                {
+                    id: 'tenant-master-tags',
+                    labelKey: 'layout.shell.nav.items.master_tags',
+                    href: `${workspaceBase}/admin/master/tags`,
+                    icon: 'ri-hashtag',
+                    match: startsWith(`${workspaceBase}/admin/master/tags`),
+                },
+                {
+                    id: 'tenant-master-currencies',
+                    labelKey: 'layout.shell.nav.items.master_currencies',
+                    href: `${workspaceBase}/admin/master/currencies`,
+                    icon: 'ri-exchange-dollar-line',
+                    match: startsWith(`${workspaceBase}/admin/master/currencies`),
+                },
+                {
+                    id: 'tenant-master-uom',
+                    labelKey: 'layout.shell.nav.items.master_uom',
+                    href: `${workspaceBase}/admin/master/uom`,
+                    icon: 'ri-ruler-2-line',
+                    match: startsWith(`${workspaceBase}/admin/master/uom`),
+                },
+            ],
+        });
+
         workspaceItems.push({
             id: 'tenant-settings',
             labelKey: 'layout.shell.nav.items.settings',

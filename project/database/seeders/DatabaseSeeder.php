@@ -16,6 +16,15 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
+        // Master data (global, tidak tenant-specific)
+        $this->call([
+            MasterCurrencySeeder::class,
+            MasterUomSeeder::class,
+            SharedTagSeeder::class,
+            SharedCategorySeeder::class,
+            FinanceTransactionSeeder::class,
+        ]);
+
         $superadmin = User::query()->updateOrCreate(
             ['email' => 'superadmin@test.com'],
             [
@@ -116,7 +125,7 @@ class DatabaseSeeder extends Seeder
             $this->upsertMembership($tenant, $admin, 'admin', $permissionRegistrar, $this->makeSeedWhatsappJid($seed['slug'], 'admin'));
             $this->upsertMembership($tenant, $member, 'member', $permissionRegistrar, $this->makeSeedWhatsappJid($seed['slug'], 'member'));
 
-            if ($seed['slug'] === 'tenant-one') {
+            if ($seed['slug'] === 'keluarga-cemara') {
                 $this->upsertMembership($tenant, $e2eUser, 'owner', $permissionRegistrar, '628000000000@c.us');
             }
 

@@ -70,6 +70,8 @@
     "@fullcalendar/daygrid": "^6.1.20",
     "@fullcalendar/interaction": "^6.1.20",
     "@fullcalendar/react": "^6.1.20",
+    "@tanstack/match-sorter-utils": "^8.19.4",
+    "@tanstack/react-table": "^8.21.3",
     "apexcharts": "^5.10.4",
     "bootstrap": "^5.3.8",
     "classnames": "^2.5.1",

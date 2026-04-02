@@ -1,0 +1,40 @@
+
+> lint
+> eslint "resources/js/**/*.{ts,tsx}" "tests/e2e/**/*.ts" "playwright.config.ts" --ignore-pattern "resources/js/compat/**"
+
+
+/var/www/html/apps/family2/project/resources/js/Components/Common/DeleteModal.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+  2:1  warning  Unused eslint-disable directive (no problems were reported from 'react/jsx-no-undef')
+
+/var/www/html/apps/family2/project/resources/js/Components/Common/TableContainer.tsx
+   3:3   error    'Column' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   4:12  error    'ReactTable' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+  14:27  error    'useMemo' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  15:18  error    'Card' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    @typescript-eslint/no-unused-vars
+  40:6   warning  React Hook useEffect has a missing dependency: 'onChange'. Either include it or remove the dependency array. If 'onChange' changes too often, find the parent component that defines it and wrap that definition in useCallback                                                                                                                                                                                                                                                                                                                                                                                                                                                     react-hooks/exhaustive-deps
+  85:17  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+/var/www/html/apps/family2/project/resources/js/Components/Common/TableContainer.tsx:85:17
+  83 |   };
+  84 |
+> 85 |   const table = useReactTable({
+     |                 ^^^^^^^^^^^^^ TanStack Table's `useReactTable()` API returns functions that cannot be memoized safely
+  86 |     columns,
+  87 |     data,
+  88 |     filterFns: {  react-hooks/incompatible-library
+
+/var/www/html/apps/family2/project/resources/js/Components/Finance/SummaryCard.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+/var/www/html/apps/family2/project/resources/js/Components/Finance/TagsInput.tsx
+  1:1  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/Finance/Index.tsx
+  118:9  warning  Unused eslint-disable directive (no problems were reported from '@typescript-eslint/no-unused-vars')
+
+✖ 11 problems (4 errors, 7 warnings)
+  0 errors and 5 warnings potentially fixable with the `--fix` option.
+

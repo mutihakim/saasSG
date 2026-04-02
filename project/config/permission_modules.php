@@ -9,4 +9,9 @@ return [
     'team.role_permissions' => ['assign'],
     'whatsapp.settings' => ['view', 'update'],
     'whatsapp.chats' => ['view', 'update'],
+    'finance' => ['view', 'create', 'update', 'delete'],
+    'master.categories' => ['view', 'create', 'update', 'delete'],
+    'master.tags' => ['view', 'create', 'update', 'delete'],
+    'master.currencies' => ['view', 'create', 'update', 'delete'],
+    'master.uom' => ['view', 'create', 'update', 'delete'],
 ];

@@ -11,34 +11,61 @@ type Props = {
 };
 
 function labelsFromPath(pathname: string): { title: string; parentLabel: string } {
-    if (/^\/t\/[^/]+\/admin\/members\/\d+\/edit$/.test(pathname)) {
+    if (/^\/admin\/members\/\d+\/edit$/.test(pathname)) {
         return { title: 'tenant.members.edit.title', parentLabel: 'tenant.members.parent' };
     }
-    if (/^\/t\/[^/]+\/admin\/members$/.test(pathname)) {
+    if (/^\/admin\/members$/.test(pathname)) {
         return { title: 'tenant.members.title', parentLabel: 'tenant.members.parent' };
     }
-    if (/^\/t\/[^/]+\/admin\/members\/\d+$/.test(pathname)) {
+    if (/^\/admin\/members\/\d+$/.test(pathname)) {
         return { title: 'tenant.members.view.title', parentLabel: 'tenant.members.parent' };
     }
-    if (/^\/t\/[^/]+\/admin\/roles$/.test(pathname)) {
+    if (/^\/admin\/roles$/.test(pathname)) {
         return { title: 'tenant.roles.title', parentLabel: 'tenant.roles.parent' };
     }
-    if (/^\/t\/[^/]+\/admin\/invitations$/.test(pathname)) {
+    if (/^\/admin\/invitations$/.test(pathname)) {
         return { title: 'tenant.invitations.title', parentLabel: 'tenant.invitations.parent' };
     }
-    if (/^\/t\/[^/]+\/admin\/whatsapp\/settings$/.test(pathname)) {
+    if (/^\/admin\/finance$/.test(pathname)) {
+        return { title: 'layout.shell.nav.items.finance', parentLabel: 'layout.shell.nav.sections.workspace' };
+    }
+    if (/^\/admin\/master\/categories$/.test(pathname)) {
+        return { title: 'layout.shell.nav.items.master_categories', parentLabel: 'layout.shell.nav.items.master_data' };
+    }
+    if (/^\/admin\/master\/tags$/.test(pathname)) {
+        return { title: 'layout.shell.nav.items.master_tags', parentLabel: 'layout.shell.nav.items.master_data' };
+    }
+    if (/^\/admin\/master\/currencies$/.test(pathname)) {
+        return { title: 'layout.shell.nav.items.master_currencies', parentLabel: 'layout.shell.nav.items.master_data' };
+    }
+    if (/^\/admin\/master\/uom$/.test(pathname)) {
+        return { title: 'layout.shell.nav.items.master_uom', parentLabel: 'layout.shell.nav.items.master_data' };
+    }
+    if (/^\/admin\/master\/tags$/.test(pathname)) {
+        return { title: 'layout.shell.nav.items.master_tags', parentLabel: 'layout.shell.nav.items.master_data' };
+    }
+    if (/^\/admin\/master\/currencies$/.test(pathname)) {
+        return { title: 'layout.shell.nav.items.master_currencies', parentLabel: 'layout.shell.nav.items.master_data' };
+    }
+    if (/^\/admin\/master\/uom$/.test(pathname)) {
+        return { title: 'layout.shell.nav.items.master_uom', parentLabel: 'layout.shell.nav.items.master_data' };
+    }
+    if (/^\/admin\/whatsapp\/settings$/.test(pathname)) {
         return { title: 'tenant.whatsapp.settings.title', parentLabel: 'tenant.whatsapp.settings.parent' };
     }
-    if (/^\/t\/[^/]+\/admin\/whatsapp\/chats$/.test(pathname)) {
+    if (/^\/admin\/whatsapp\/chats$/.test(pathname)) {
         return { title: 'tenant.whatsapp.chats.title', parentLabel: 'tenant.whatsapp.chats.parent' };
     }
-    if (/^\/t\/[^/]+\/admin\/settings\/branding$/.test(pathname)) {
+    if (/^\/admin\/settings\/profile$/.test(pathname)) {
+        return { title: 'tenant.settings.tabs.profile', parentLabel: 'layout.shell.nav.items.settings' };
+    }
+    if (/^\/admin\/settings\/branding$/.test(pathname)) {
         return { title: 'tenant.settings.tabs.branding', parentLabel: 'layout.shell.nav.items.settings' };
     }
-    if (/^\/t\/[^/]+\/admin\/settings\/localization$/.test(pathname)) {
+    if (/^\/admin\/settings\/localization$/.test(pathname)) {
         return { title: 'tenant.settings.tabs.localization', parentLabel: 'layout.shell.nav.items.settings' };
     }
-    if (/^\/t\/[^/]+\/admin\/settings\/billing$/.test(pathname)) {
+    if (/^\/admin\/settings\/billing$/.test(pathname)) {
         return { title: 'tenant.settings.tabs.billing', parentLabel: 'layout.shell.nav.items.settings' };
     }
     if (/^\/profile\/settings$/.test(pathname)) {
@@ -47,7 +74,7 @@ function labelsFromPath(pathname: string): { title: string; parentLabel: string 
     if (/^\/profile$/.test(pathname)) {
         return { title: 'Profile', parentLabel: 'layout.shell.nav.sections.account' };
     }
-    if (/^\/t\/[^/]+\/admin\/dashboard$/.test(pathname)) {
+    if (/^\/admin\/dashboard$/.test(pathname)) {
         return { title: 'Dashboard', parentLabel: 'Workspace' };
     }
 

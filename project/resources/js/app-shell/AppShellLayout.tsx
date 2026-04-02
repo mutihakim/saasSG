@@ -210,8 +210,8 @@ function AppShellLayoutInner({
         const windowSize = document.documentElement.clientWidth;
         const hamburgerIcon = document.querySelector('.hamburger-icon');
 
-        if (windowSize > 767) {
-            hamburgerIcon?.classList.toggle('open');
+        if (windowSize > 767 && hamburgerIcon) {
+            hamburgerIcon.classList.toggle('open');
         }
 
         if (preferences.layoutType === 'horizontal') {
@@ -281,7 +281,7 @@ function AppShellLayoutInner({
                     sections={sections}
                     preferences={preferences}
                     onCloseMobileSidebar={() => {
-                        document.body.classList.remove('vertical-sidebar-enable');
+                        document.body?.classList.remove('vertical-sidebar-enable');
                     }}
                 />
 

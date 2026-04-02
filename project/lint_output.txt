@@ -1,0 +1,270 @@
+
+> lint
+> eslint "resources/js/**/*.{ts,tsx}" "tests/e2e/**/*.ts" "playwright.config.ts" --ignore-pattern "resources/js/compat/**"
+
+
+/var/www/html/apps/family2/project/resources/js/Components/Common/TableContainer.tsx
+  83:17  warning  Compilation Skipped: Use of incompatible library
+
+This API returns functions which cannot be memoized without leading to stale UI. To prevent this, by default React Compiler will skip memoizing this component/hook. However, you may see issues if values from this API are passed to other components/hooks that are memoized.
+
+/var/www/html/apps/family2/project/resources/js/Components/Common/TableContainer.tsx:83:17
+  81 |   };
+  82 |
+> 83 |   const table = useReactTable({
+     |                 ^^^^^^^^^^^^^ TanStack Table's `useReactTable()` API returns functions that cannot be memoized safely
+  84 |     columns,
+  85 |     data,
+  86 |     filterFns: {  react-hooks/incompatible-library
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Categories/Index.tsx
+    1:10  error    'Head' is defined but never used                                                                    @typescript-eslint/no-unused-vars
+  134:6   warning  React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Currencies/Index.tsx
+  17:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Currencies/Index.tsx:17:27
+  15 |   const { t } = useTranslation();
+  16 |
+> 17 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 18 |     {
+     | ^^^^^
+> 19 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 44 |     }
+     | ^^^^^
+> 45 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  46 |
+  47 |   return (
+  48 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  17:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Currencies/Index.tsx:17:27
+  15 |   const { t } = useTranslation();
+  16 |
+> 17 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 18 |     {
+     | ^^^^^
+> 19 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 44 |     }
+     | ^^^^^
+> 45 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  46 |
+  47 |   return (
+  48 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  17:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Currencies/Index.tsx:17:27
+  15 |   const { t } = useTranslation();
+  16 |
+> 17 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 18 |     {
+     | ^^^^^
+> 19 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 44 |     }
+     | ^^^^^
+> 45 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  46 |
+  47 |   return (
+  48 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  17:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Currencies/Index.tsx:17:27
+  15 |   const { t } = useTranslation();
+  16 |
+> 17 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 18 |     {
+     | ^^^^^
+> 19 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 44 |     }
+     | ^^^^^
+> 45 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  46 |
+  47 |   return (
+  48 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  17:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Currencies/Index.tsx:17:27
+  15 |   const { t } = useTranslation();
+  16 |
+> 17 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 18 |     {
+     | ^^^^^
+> 19 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 44 |     }
+     | ^^^^^
+> 45 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  46 |
+  47 |   return (
+  48 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  17:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Currencies/Index.tsx:17:27
+  15 |   const { t } = useTranslation();
+  16 |
+> 17 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 18 |     {
+     | ^^^^^
+> 19 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 44 |     }
+     | ^^^^^
+> 45 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  46 |
+  47 |   return (
+  48 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  45:6   warning  React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                    react-hooks/exhaustive-deps
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Tags/Index.tsx
+  117:6  warning  React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array  react-hooks/exhaustive-deps
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Uom/Index.tsx
+  18:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Uom/Index.tsx:18:27
+  16 |   const { t } = useTranslation();
+  17 |
+> 18 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 19 |     {
+     | ^^^^^
+> 20 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 41 |     }
+     | ^^^^^
+> 42 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  43 |
+  44 |   return (
+  45 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  18:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Uom/Index.tsx:18:27
+  16 |   const { t } = useTranslation();
+  17 |
+> 18 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 19 |     {
+     | ^^^^^
+> 20 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 41 |     }
+     | ^^^^^
+> 42 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  43 |
+  44 |   return (
+  45 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  18:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Uom/Index.tsx:18:27
+  16 |   const { t } = useTranslation();
+  17 |
+> 18 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 19 |     {
+     | ^^^^^
+> 20 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 41 |     }
+     | ^^^^^
+> 42 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  43 |
+  44 |   return (
+  45 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  18:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Uom/Index.tsx:18:27
+  16 |   const { t } = useTranslation();
+  17 |
+> 18 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 19 |     {
+     | ^^^^^
+> 20 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 41 |     }
+     | ^^^^^
+> 42 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  43 |
+  44 |   return (
+  45 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  18:27  error    Compilation Skipped: Existing memoization could not be preserved
+
+React Compiler has skipped optimizing this component because the existing manual memoization could not be preserved. The inferred dependencies did not match the manually specified dependencies, which could cause the value to change more or less frequently than expected. The inferred dependency was `t`, but the source dependencies were []. Inferred dependency not present in source.
+
+/var/www/html/apps/family2/project/resources/js/Pages/Tenant/MasterData/Uom/Index.tsx:18:27
+  16 |   const { t } = useTranslation();
+  17 |
+> 18 |   const columns = useMemo(() => [
+     |                           ^^^^^^^
+> 19 |     {
+     | ^^^^^
+> 20 |       header: t("master.common.headers.code"),
+     …
+     | ^^^^^
+> 41 |     }
+     | ^^^^^
+> 42 |   ], []);
+     | ^^^^ Could not preserve existing manual memoization
+  43 |
+  44 |   return (
+  45 |     <TenantLayout>  react-hooks/preserve-manual-memoization
+  42:6   warning  React Hook useMemo has a missing dependency: 't'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             react-hooks/exhaustive-deps
+
+/var/www/html/apps/family2/project/resources/js/i18n.ts
+  13:1  warning  `./locales/en/tenant/invitations.json` import should occur before import of `./locales/en/tenant/master.json`  import/order
+  27:1  warning  `./locales/id/tenant/invitations.json` import should occur before import of `./locales/id/tenant/master.json`  import/order
+
+✖ 19 problems (12 errors, 7 warnings)
+  0 errors and 2 warnings potentially fixable with the `--fix` option.
+
