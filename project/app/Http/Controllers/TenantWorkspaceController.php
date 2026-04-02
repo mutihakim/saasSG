@@ -5,6 +5,10 @@ namespace App\Http\Controllers;
 use App\Models\TenantInvitation;
 use App\Models\TenantMember;
 use App\Models\Tenant;
+use App\Models\TenantCategory;
+use App\Models\TenantCurrency;
+use App\Models\TenantUom;
+use App\Models\TenantTag;
 use App\Support\PermissionCatalog;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Support\Facades\DB;
@@ -436,15 +440,15 @@ class TenantWorkspaceController extends Controller
         $tenantModel = $request->attributes->get('currentTenant');
 
         return Inertia::render('Tenant/Finance/Page', [
-            'categories'     => \App\Models\SharedCategory::forTenant($tenantModel->id)
+            'categories'     => TenantCategory::forTenant($tenantModel->id)
                 ->forModule('finance')
                 ->active()
                 ->ordered()
                 ->get(['id', 'name', 'sub_type', 'icon', 'color', 'is_default']),
-            'currencies'     => \Illuminate\Support\Facades\Cache::remember('master_currencies_active', 3600,
-                fn () => \App\Models\MasterCurrency::active()->ordered()
-                    ->get(['code', 'name', 'symbol', 'symbol_position', 'decimal_places'])
-            ),
+            'currencies'     => TenantCurrency::forTenant($tenantModel->id)
+                ->active()
+                ->ordered()
+                ->get(['id', 'code', 'name', 'symbol', 'symbol_position', 'decimal_places']),
             'defaultCurrency' => $tenantModel->currency_code ?? 'IDR',
             'paymentMethods' => collect(\App\Enums\PaymentMethod::cases())
                 ->map(fn ($m) => ['value' => $m->value, 'label' => $m->label(), 'icon' => $m->icon()])
@@ -464,7 +468,7 @@ class TenantWorkspaceController extends Controller
         $tenantModel = $request->attributes->get('currentTenant');
 
         return Inertia::render('Tenant/MasterData/Categories/Index', [
-            'categories' => \App\Models\SharedCategory::forTenant($tenantModel->id)
+            'categories' => TenantCategory::forTenant($tenantModel->id)
                 ->with('children')
                 ->roots()
                 ->ordered()
@@ -483,7 +487,7 @@ class TenantWorkspaceController extends Controller
         $tenantModel = $request->attributes->get('currentTenant');
 
         return Inertia::render('Tenant/MasterData/Tags/Index', [
-            'tags' => \App\Models\SharedTag::forTenant($tenantModel->id)
+            'tags' => TenantTag::forTenant($tenantModel->id)
                 ->popular()
                 ->get(['id', 'name', 'color', 'usage_count', 'created_at']),
             'permissions' => [
@@ -496,8 +500,10 @@ class TenantWorkspaceController extends Controller
 
     public function masterCurrencies(Request $request, string $tenant): Response
     {
+        $tenantModel = $request->attributes->get('currentTenant');
+        
         return Inertia::render('Tenant/MasterData/Currencies/Index', [
-            'currencies' => \App\Models\MasterCurrency::ordered()->get(),
+            'currencies' => TenantCurrency::forTenant($tenantModel->id)->ordered()->get(),
             'permissions' => [
                 'create' => $request->user()?->can('master.currencies.create') ?? false,
                 'update' => $request->user()?->can('master.currencies.update') ?? false,
@@ -508,8 +514,10 @@ class TenantWorkspaceController extends Controller
 
     public function masterUom(Request $request, string $tenant): Response
     {
+        $tenantModel = $request->attributes->get('currentTenant');
+        
         return Inertia::render('Tenant/MasterData/Uom/Index', [
-            'units' => \App\Models\MasterUom::active()->ordered()
+            'units' => TenantUom::forTenant($tenantModel->id)->active()->ordered()
                 ->get(['id', 'code', 'name', 'abbreviation', 'dimension_type', 'base_unit_code', 'base_factor', 'sort_order']),
             'dimensionTypes' => ['berat', 'volume', 'jumlah', 'panjang', 'luas', 'waktu', 'lainnya'],
             'permissions' => [

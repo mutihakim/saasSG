@@ -9,10 +9,11 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('finance_transactions', function (Blueprint $table) {
-            $table->ulid('id')->primary();
+            $table->id(); // Following tenant_members (BIGINT)
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
-            $table->ulid('category_id')->nullable();
-            $table->char('currency_code', 3)->default('IDR');
+            
+            $table->unsignedBigInteger('category_id')->nullable();
+            $table->unsignedBigInteger('currency_id');
             $table->unsignedBigInteger('created_by')->nullable();
 
             // Core fields
@@ -23,7 +24,7 @@ return new class extends Migration
 
             // Multi-currency fields
             $table->decimal('exchange_rate', 18, 6)->default('1.000000');
-            $table->char('base_currency', 3)->default('IDR');
+            $table->char('base_currency_code', 3)->default('IDR');
             $table->decimal('amount_base', 15, 2)->default(0);
 
             // Detail fields
@@ -37,21 +38,20 @@ return new class extends Migration
             $table->string('location', 200)->nullable();
             $table->enum('status', ['terverifikasi', 'pending', 'ditandai'])->default('terverifikasi');
 
-            // OCC
-            $table->unsignedInteger('row_version')->default(1);
-
+            // Audit
+            $table->unsignedBigInteger('row_version')->default(1);
             $table->timestamps();
             $table->softDeletes();
 
             // Foreign keys
             $table->foreign('category_id')
                   ->references('id')
-                  ->on('shared_categories')
+                  ->on('tenant_categories')
                   ->nullOnDelete();
 
-            $table->foreign('currency_code')
-                  ->references('code')
-                  ->on('master_currencies');
+            $table->foreign('currency_id')
+                  ->references('id')
+                  ->on('tenant_currencies');
 
             $table->foreign('created_by')
                   ->references('id')
@@ -62,10 +62,9 @@ return new class extends Migration
             $table->index(['tenant_id', 'transaction_date']);
             $table->index(['tenant_id', 'type', 'transaction_date']);
             $table->index(['tenant_id', 'category_id']);
-            $table->index(['tenant_id', 'currency_code']);
+            $table->index(['tenant_id', 'currency_id']);
             $table->index(['tenant_id', 'amount_base']);
             $table->index(['tenant_id', 'deleted_at']);
-            // $table->fullText(['description', 'merchant_name']);
         });
     }
 

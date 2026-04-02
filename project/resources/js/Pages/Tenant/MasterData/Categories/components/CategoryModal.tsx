@@ -1,11 +1,12 @@
 import axios from "axios";
 import React, { useState, useEffect } from "react";
-import { Modal, Button, Form, Row, Col, Alert } from "react-bootstrap";
+import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
-import Select from "react-select";
+import Select, { components, OptionProps, SingleValueProps } from "react-select";
 
 import { notify } from "../../../../../common/notify";
 import { useTenantRoute } from "../../../../../common/tenantRoute";
+import { parseApiError } from "../../../../../common/apiError";
 
 interface CategoryModalProps {
   show: boolean;
@@ -16,6 +17,82 @@ interface CategoryModalProps {
   parents: any[];
 }
 
+const ICON_OPTIONS = [
+    { label: "Default (Tag)", value: "ri-price-tag-3-line" },
+    { label: "Wallet", value: "ri-wallet-line" },
+    { label: "Bank Card", value: "ri-bank-card-line" },
+    { label: "Money Dollar", value: "ri-money-dollar-circle-line" },
+    { label: "Money Euro", value: "ri-money-euro-circle-line" },
+    { label: "Shopping Bag", value: "ri-shopping-bag-line" },
+    { label: "Shopping Cart", value: "ri-shopping-cart-line" },
+    { label: "Restaurant", value: "ri-restaurant-line" },
+    { label: "Cup", value: "ri-cup-line" },
+    { label: "Home", value: "ri-home-4-line" },
+    { label: "Car", value: "ri-car-line" },
+    { label: "Truck", value: "ri-truck-line" },
+    { label: "Plane", value: "ri-plane-line" },
+    { label: "Medal", value: "ri-medal-line" },
+    { label: "Heart Pulse", value: "ri-heart-pulse-line" },
+    { label: "Medicine", value: "ri-capsule-line" },
+    { label: "Book", value: "ri-book-line" },
+    { label: "Gamepad", value: "ri-gamepad-line" },
+    { label: "Gift", value: "ri-gift-line" },
+    { label: "Tools", value: "ri-tools-line" },
+    { label: "Lightbulb", value: "ri-lightbulb-line" },
+    { label: "Seedling", value: "ri-seedling-line" },
+    { label: "Cloud", value: "ri-cloud-line" },
+    { label: "Flash", value: "ri-flashlight-line" },
+    { label: "Umbrella", value: "ri-umbrella-line" },
+];
+
+const COLOR_OPTIONS = [
+    { label: "Primary (Blue)", value: "primary" },
+    { label: "Secondary (Grey)", value: "secondary" },
+    { label: "Success (Green)", value: "success" },
+    { label: "Danger (Red)", value: "danger" },
+    { label: "Warning (Yellow)", value: "warning" },
+    { label: "Info (Cyan)", value: "info" },
+    { label: "Dark (Black)", value: "dark" },
+];
+
+// Custom components for Icon Select
+const IconOption = (props: OptionProps<any>) => (
+    <components.Option {...props}>
+        <div className="d-flex align-items-center">
+            <i className={`${props.data.value} me-2 fs-18`}></i>
+            {props.data.label}
+        </div>
+    </components.Option>
+);
+
+const IconSingleValue = (props: SingleValueProps<any>) => (
+    <components.SingleValue {...props}>
+        <div className="d-flex align-items-center">
+            <i className={`${props.data.value} me-2 fs-18 text-primary`}></i>
+            {props.data.label}
+        </div>
+    </components.SingleValue>
+);
+
+// Custom components for Color Select
+const ColorOption = (props: OptionProps<any>) => (
+    <components.Option {...props}>
+        <div className="d-flex align-items-center">
+            <span className={`badge bg-${props.data.value} me-2`} style={{ width: '20px', height: '20px', display: 'inline-block' }}>&nbsp;</span>
+            {props.data.label}
+        </div>
+    </components.Option>
+);
+
+const ColorSingleValue = (props: SingleValueProps<any>) => (
+    <components.SingleValue {...props}>
+        <div className="d-flex align-items-center">
+            <span className={`badge bg-${props.data.value} me-2`} style={{ width: '16px', height: '16px', display: 'inline-block' }}>&nbsp;</span>
+            {props.data.label}
+        </div>
+    </components.SingleValue>
+);
+
 const CategoryModal = ({
   show,
   onClose,
@@ -24,168 +101,191 @@ const CategoryModal = ({
   module,
   parents
 }: CategoryModalProps) => {
-  const { t } = useTranslation("master");
+  const { t } = useTranslation();
   const tenantRoute = useTenantRoute();
   const isEdit = !!category;
 
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
   const [formData, setFormData] = useState({
     name: "",
+    module: module,
     sub_type: "pengeluaran",
-    parent_id: "",
-    icon: "ri-apps-2-line",
+    parent_id: "" as string | number,
+    icon: "ri-wallet-line",
     color: "primary",
-    is_active: true
+    is_active: true,
+    row_version: 0,
   });
 
+  const [loading, setLoading] = useState(false);
+
   useEffect(() => {
-    if (show) {
-      if (category) {
-        setFormData({
-          name: category.name,
-          sub_type: category.sub_type || "pengeluaran",
-          parent_id: category.parent_id || "",
-          icon: category.icon || "ri-apps-2-line",
-          color: category.color || "primary",
-          is_active: category.is_active ?? true
-        });
-      } else {
-        setFormData({
-          name: "",
-          sub_type: "pengeluaran",
-          parent_id: "",
-          icon: "ri-apps-2-line",
-          color: "primary",
-          is_active: true
-        });
-      }
-      setError(null);
+    if (category) {
+      setFormData({
+        name: category.name || "",
+        module: category.module || module,
+        sub_type: category.sub_type || "pengeluaran",
+        parent_id: category.parent_id || "",
+        icon: category.icon || "ri-wallet-line",
+        color: category.color || "primary",
+        is_active: category.is_active ?? true,
+        row_version: category.row_version || 0,
+      });
+    } else {
+      setFormData({
+        name: "",
+        module,
+        sub_type: module === 'finance' ? 'pengeluaran' : '',
+        parent_id: "",
+        icon: "ri-wallet-line",
+        color: "primary",
+        is_active: true,
+        row_version: 0,
+      });
     }
-  }, [show, category]);
+  }, [category, show, module]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-
-    const url = isEdit
-      ? tenantRoute.apiTo(`/finance/categories/${category.id}`)
-      : tenantRoute.apiTo("/finance/categories");
 
     try {
-      await axios({
-        method: isEdit ? "patch" : "post",
-        url,
-        data: {
-          ...formData,
-          module,
-          parent_id: formData.parent_id || null
-        }
+      const url = isEdit 
+        ? tenantRoute.apiTo(`/finance/categories/${category.id}`)
+        : tenantRoute.apiTo("/finance/categories");
+      
+      const method = isEdit ? "patch" : "post";
+      
+      await axios[method](url, {
+        ...formData,
+        parent_id: formData.parent_id || null,
       });
-      notify.success(t("master.categories.messages.success_update"));
+
+      notify.success(isEdit ? "Category updated" : "Category created");
       onSuccess();
       onClose();
-    } catch (_err: any) {
-        setError(_err.response?.data?.message || "Something went wrong");
+    } catch (err: any) {
+      const parsed = parseApiError(err, isEdit ? "Failed to update category" : "Failed to create category");
+      notify.error({
+        title: parsed.title,
+        detail: parsed.detail
+      });
     } finally {
       setLoading(false);
     }
   };
 
   const parentOptions = parents
-    .filter(p => !category || p.id !== category.id)
-    .map(p => ({ label: p.name, value: p.id }));
-
-  const colorOptions = [
-    { label: "Primary", value: "primary" },
-    { label: "Success", value: "success" },
-    { label: "Danger", value: "danger" },
-    { label: "Warning", value: "warning" },
-    { label: "Info", value: "info" },
-    { label: "Secondary", value: "secondary" },
-    { label: "Dark", value: "dark" },
-  ];
+    .filter(p => !p.parent_id && (!category || p.id !== category.id)) 
+    .map(p => ({ 
+        label: p.name, 
+        value: p.id 
+    }));
 
   return (
-    <Modal show={show} onHide={onClose} centered>
-      <Modal.Header closeButton>
-        <Modal.Title>{isEdit ? t("master.categories.modals.edit_title") : t("master.categories.modals.add_title")}</Modal.Title>
+    <Modal show={show} onHide={onClose} centered size="lg">
+      <Modal.Header closeButton className="bg-light p-3">
+        <Modal.Title>{isEdit ? "Edit Category" : "Add Category"}</Modal.Title>
       </Modal.Header>
       <Form onSubmit={handleSubmit}>
         <Modal.Body>
-          {error && <Alert variant="danger">{error}</Alert>}
-          <Form.Group className="mb-3">
-            <Form.Label>{t("master.categories.fields.name")}</Form.Label>
-            <Form.Control
-              required
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            />
-          </Form.Group>
-
-          {module === 'finance' && (
-            <Form.Group className="mb-3">
-              <Form.Label>{t("master.categories.fields.type")}</Form.Label>
-              <div className="d-flex gap-3">
-                {['pemasukan', 'pengeluaran'].map(type => (
-                  <Form.Check
-                    key={type}
-                    type="radio"
-                    id={`modal-type-${type}`}
-                    label={type === 'pemasukan' ? "Pemasukan" : "Pengeluaran"}
-                    name="modal-type"
-                    checked={formData.sub_type === type}
-                    onChange={() => setFormData({ ...formData, sub_type: type })}
-                  />
-                ))}
-              </div>
-            </Form.Group>
-          )}
-
-          <Form.Group className="mb-3">
-            <Form.Label>{t("master.categories.fields.parent")}</Form.Label>
-            <Select
-              options={parentOptions}
-              value={parentOptions.find(o => o.value === formData.parent_id)}
-              onChange={(opt: any) => setFormData({ ...formData, parent_id: opt?.value || "" })}
-              isClearable
-              classNamePrefix="react-select"
-            />
-          </Form.Group>
-
           <Row>
-            <Col md={6}>
+            <Col lg={12}>
               <Form.Group className="mb-3">
-                <Form.Label>{t("master.categories.fields.icon")}</Form.Label>
-                <div className="input-group">
-                  <span className="input-group-text"><i className={formData.icon}></i></span>
-                  <Form.Control
-                    value={formData.icon}
-                    onChange={(e) => setFormData({ ...formData, icon: e.target.value })}
-                    placeholder="ri-apps-2-line"
-                  />
-                </div>
-              </Form.Group>
-            </Col>
-            <Col md={6}>
-              <Form.Group className="mb-3">
-                <Form.Label>{t("master.categories.fields.color")}</Form.Label>
-                <Select
-                  options={colorOptions}
-                  value={colorOptions.find(o => o.value === formData.color)}
-                  onChange={(opt: any) => setFormData({ ...formData, color: opt.value })}
-                  classNamePrefix="react-select"
+                <Form.Label>Category Name</Form.Label>
+                <Form.Control
+                  type="text"
+                  placeholder="Enter category name"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  required
                 />
               </Form.Group>
+            </Col>
+            
+            <Col lg={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Module</Form.Label>
+                <Form.Control
+                  type="text"
+                  value={formData.module ? formData.module.toUpperCase() : ""}
+                  disabled
+                />
+              </Form.Group>
+            </Col>
+
+            {module === 'finance' && (
+              <Col lg={6}>
+                <Form.Group className="mb-3">
+                  <Form.Label>Type</Form.Label>
+                  <Form.Select
+                    value={formData.sub_type}
+                    onChange={(e) => setFormData({ ...formData, sub_type: e.target.value })}
+                  >
+                    <option value="pemasukan">Income (Pemasukan)</option>
+                    <option value="pengeluaran">Expense (Pengeluaran)</option>
+                  </Form.Select>
+                </Form.Group>
+              </Col>
+            )}
+
+            <Col lg={12}>
+              <Form.Group className="mb-3">
+                <Form.Label>Parent Category (Optional)</Form.Label>
+                <Select
+                  options={parentOptions}
+                  value={parentOptions.find(o => String(o.value) === String(formData.parent_id)) || null}
+                  onChange={(opt: any) => setFormData({ ...formData, parent_id: opt ? opt.value : "" })}
+                  isClearable
+                  placeholder="Select Parent (Root only)"
+                  classNamePrefix="react-select"
+                />
+                <Form.Text className="text-muted">Max 1 level nesting (Root to Child)</Form.Text>
+              </Form.Group>
+            </Col>
+
+            <Col lg={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Icon</Form.Label>
+                <Select
+                    options={ICON_OPTIONS}
+                    components={{ Option: IconOption, SingleValue: IconSingleValue }}
+                    value={ICON_OPTIONS.find(o => o.value === formData.icon) || null}
+                    onChange={(opt: any) => setFormData({ ...formData, icon: opt ? opt.value : "ri-wallet-line" })}
+                    classNamePrefix="react-select"
+                />
+              </Form.Group>
+            </Col>
+
+            <Col lg={6}>
+              <Form.Group className="mb-3">
+                <Form.Label>Theme Color</Form.Label>
+                <Select
+                    options={COLOR_OPTIONS}
+                    components={{ Option: ColorOption, SingleValue: ColorSingleValue }}
+                    value={COLOR_OPTIONS.find(o => o.value === formData.color) || null}
+                    onChange={(opt: any) => setFormData({ ...formData, color: opt ? opt.value : "primary" })}
+                    classNamePrefix="react-select"
+                />
+              </Form.Group>
+            </Col>
+
+            <Col lg={6}>
+                <Form.Group className="mb-3">
+                    <Form.Check 
+                        type="switch"
+                        id="category-active-switch"
+                        label="Is Active"
+                        checked={formData.is_active}
+                        onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                    />
+                </Form.Group>
             </Col>
           </Row>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="light" onClick={onClose}>Batal</Button>
+          <Button variant="light" onClick={onClose} disabled={loading}>Cancel</Button>
           <Button variant="primary" type="submit" disabled={loading}>
-            {loading ? "Menyimpan..." : "Simpan"}
+            {loading ? "Saving..." : (isEdit ? "Update Category" : "Save Category")}
           </Button>
         </Modal.Footer>
       </Form>

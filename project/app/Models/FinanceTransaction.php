@@ -4,7 +4,6 @@ namespace App\Models;
 
 use App\Enums\PaymentMethod;
 use App\Enums\TransactionType;
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
@@ -16,14 +15,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FinanceTransaction extends Model
 {
-    use HasFactory;
-    use HasUlids;
-    use SoftDeletes;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id', 'category_id', 'currency_code', 'created_by',
+        'tenant_id', 'category_id', 'currency_id', 'created_by',
         'type', 'transaction_date', 'amount', 'description',
-        'exchange_rate', 'base_currency', 'amount_base',
+        'exchange_rate', 'base_currency_code', 'amount_base',
         'notes', 'payment_method', 'reference_number',
         'merchant_name', 'location', 'row_version',
     ];
@@ -63,14 +60,14 @@ class FinanceTransaction extends Model
         return $query->where('type', $type);
     }
 
-    public function scopeByCategory(Builder $query, string $categoryId): Builder
+    public function scopeByCategory(Builder $query, int $categoryId): Builder
     {
         return $query->where('category_id', $categoryId);
     }
 
-    public function scopeByCurrency(Builder $query, string $code): Builder
+    public function scopeByCurrency(Builder $query, int $currencyId): Builder
     {
-        return $query->where('currency_code', $code);
+        return $query->where('currency_id', $currencyId);
     }
 
     public function scopeByDateRange(Builder $query, ?string $from, ?string $to): Builder
@@ -104,12 +101,12 @@ class FinanceTransaction extends Model
 
     public function category(): BelongsTo
     {
-        return $this->belongsTo(SharedCategory::class, 'category_id');
+        return $this->belongsTo(TenantCategory::class, 'category_id');
     }
 
     public function currency(): BelongsTo
     {
-        return $this->belongsTo(MasterCurrency::class, 'currency_code', 'code');
+        return $this->belongsTo(TenantCurrency::class, 'currency_id');
     }
 
     public function createdBy(): BelongsTo
@@ -119,19 +116,19 @@ class FinanceTransaction extends Model
 
     public function attachments(): MorphMany
     {
-        return $this->morphMany(SharedAttachment::class, 'attachable')
+        return $this->morphMany(TenantAttachment::class, 'attachable')
                     ->orderBy('sort_order');
     }
 
     public function tags(): MorphToMany
     {
-        return $this->morphToMany(SharedTag::class, 'taggable', 'shared_taggables', 'taggable_id', 'tag_id')
+        return $this->morphToMany(TenantTag::class, 'taggable', 'tenant_taggables', 'taggable_id', 'tenant_tag_id')
                     ->withPivot('created_at');
     }
 
     public function recurringRule(): MorphOne
     {
-        return $this->morphOne(RecurringRule::class, 'ruleable');
+        return $this->morphOne(TenantRecurringRule::class, 'ruleable');
     }
 
     // Accessors
@@ -139,7 +136,7 @@ class FinanceTransaction extends Model
     {
         $currency = $this->currency;
         if (! $currency) {
-            return number_format((float) $this->amount, 2) . ' ' . $this->currency_code;
+            return number_format((float) $this->amount, 2);
         }
         return $currency->formatAmount((float) $this->amount);
     }

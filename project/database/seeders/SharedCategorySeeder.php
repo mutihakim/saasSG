@@ -63,7 +63,7 @@ class SharedCategorySeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => now(),
                 ])
-            ], ['tenant_id', 'module', 'sub_type', 'parent_id', 'name'], [
+            ], ['tenant_id', 'module', 'sub_type', 'name'], [
                 'icon', 'color', 'sort_order', 'updated_at',
             ]);
         }
@@ -81,7 +81,7 @@ class SharedCategorySeeder extends Seeder
                     'created_at' => now(),
                     'updated_at' => now(),
                 ])
-            ], ['tenant_id', 'module', 'sub_type', 'parent_id', 'name'], [
+            ], ['tenant_id', 'module', 'sub_type', 'name'], [
                 'icon', 'color', 'sort_order', 'updated_at',
             ]);
         }

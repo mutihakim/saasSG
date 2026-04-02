@@ -32,6 +32,10 @@ const UomIndex = ({ units: initialUnits, dimensionTypes, permissions }: UomProps
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [selectedUnit, setSelectedUnit] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [dimensionFilter, setDimensionFilter] = useState("all");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(10);
 
   const fetchUnits = async () => {
     try {
@@ -66,6 +70,21 @@ const UomIndex = ({ units: initialUnits, dimensionTypes, permissions }: UomProps
       setIsDeleting(false);
     }
   };
+
+  const filteredUnits = useMemo(() => {
+    return units.filter(u => {
+      const matchesSearch = !searchTerm || 
+        u.code.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        u.name.toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesDimension = dimensionFilter === "all" || u.dimension_type === dimensionFilter;
+      return matchesSearch && matchesDimension;
+    });
+  }, [units, searchTerm, dimensionFilter]);
+
+  const paginatedUnits = useMemo(() => {
+    const startIndex = (currentPage - 1) * pageSize;
+    return filteredUnits.slice(startIndex, startIndex + pageSize);
+  }, [filteredUnits, currentPage, pageSize]);
 
   const columns = useMemo(() => [
     {
@@ -132,39 +151,145 @@ const UomIndex = ({ units: initialUnits, dimensionTypes, permissions }: UomProps
 
       <Row>
         <Col lg={12}>
-          <Card>
-              <Card.Header className="d-flex align-items-center border-0 pt-4 px-4 bg-transparent">
-                <h5 className="card-title mb-0 flex-grow-1">{t("master.uom.subtitle")}</h5>
-                {permissions.create && (
-                  <div className="flex-shrink-0">
-                    <Button
-                      variant="primary"
-                      className="btn-sm"
-                      onClick={() => {
-                        setSelectedUnit(null);
-                        setShowModal(true);
+          <Card id="uomList">
+            <Card.Header className="border-0 align-items-center d-flex">
+              <h4 className="card-title mb-0 flex-grow-1">{t("master.uom.title")}</h4>
+              {permissions.create && (
+                <div className="flex-shrink-0">
+                  <Button
+                    variant="danger"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedUnit(null);
+                      setShowModal(true);
+                    }}
+                  >
+                    <i className="ri-add-line align-bottom me-1"></i> {t("master.uom.add_new")}
+                  </Button>
+                </div>
+              )}
+            </Card.Header>
+
+            <Card.Body className="border border-dashed border-start-0 border-end-0">
+              <Row className="g-3">
+                <Col md={8}>
+                  <div className="search-box">
+                    <input
+                      type="text"
+                      className="form-control"
+                      placeholder={t("master.uom.search_placeholder")}
+                      value={searchTerm}
+                      onChange={(e) => {
+                        setSearchTerm(e.target.value);
+                        setCurrentPage(1);
                       }}
-                    >
-                      <i className="ri-add-line align-bottom me-1"></i> {t("master.uom.add_new")}
-                    </Button>
+                    />
+                    <i className="ri-search-line search-icon"></i>
                   </div>
-                )}
-              </Card.Header>
-              <Card.Body className="p-4">
-                <TableContainer
-                  columns={columns}
-                  data={units}
-                  isGlobalFilter={true}
-                  SearchPlaceholder={t("master.uom.search_placeholder")}
-                  customPageSize={20}
-                  divClass="table-responsive"
-                  tableClass="align-middle table-nowrap"
-                  theadClass="table-light"
-                />
-              </Card.Body>
-            </Card>
-          </Col>
-        </Row>
+                </Col>
+                <Col md={2}>
+                  <select
+                    className="form-select"
+                    value={dimensionFilter}
+                    onChange={(e) => {
+                      setDimensionFilter(e.target.value);
+                      setCurrentPage(1);
+                    }}
+                  >
+                    <option value="all">All Dimensions</option>
+                    {dimensionTypes.map(type => (
+                      <option key={type} value={type}>{type.charAt(0).toUpperCase() + type.slice(1)}</option>
+                    ))}
+                  </select>
+                </Col>
+                <Col md={2}>
+                  <Button variant="primary" className="w-100">
+                    <i className="ri-equalizer-fill me-1 align-bottom"></i> Filters
+                  </Button>
+                </Col>
+              </Row>
+            </Card.Body>
+
+            <Card.Body>
+              <div className="table-responsive table-card mb-3">
+                <table className="table align-middle table-nowrap table-striped table-hover" id="uomTable">
+                  <thead className="table-light text-muted text-uppercase">
+                    <tr>
+                      <th className="sort">{t("master.common.headers.code")}</th>
+                      <th className="sort">{t("master.common.headers.name")}</th>
+                      <th className="sort">{t("master.uom.headers.symbol")}</th>
+                      <th className="sort">{t("master.uom.headers.dimension")}</th>
+                      <th className="sort">{t("master.uom.headers.factor")}</th>
+                      <th className="sort">{t("master.common.headers.status")}</th>
+                      <th className="sort">{t("master.common.headers.action")}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="list">
+                    {paginatedUnits.map((unit, idx) => (
+                      <tr key={idx}>
+                        <td className="fw-bold">{unit.code}</td>
+                        <td>{unit.name}</td>
+                        <td><Badge bg="light" className="text-body">{unit.abbreviation}</Badge></td>
+                        <td className="text-capitalize">{unit.dimension_type}</td>
+                        <td>{unit.base_factor}</td>
+                        <td>
+                          <span className={`badge bg-${unit.is_active ? 'success' : 'danger'}`}>
+                            {unit.is_active ? t("master.common.status.active") : t("master.common.status.inactive")}
+                          </span>
+                        </td>
+                        <td>
+                          <Dropdown>
+                            <Dropdown.Toggle variant="link" className="btn btn-soft-secondary btn-sm dropdown arrow-none p-0">
+                              <i className="ri-more-fill align-middle"></i>
+                            </Dropdown.Toggle>
+                            <Dropdown.Menu className="dropdown-menu-end">
+                              <Dropdown.Item onClick={() => handleEdit(unit)}>
+                                <i className="ri-pencil-fill align-bottom me-2 text-muted"></i> Edit
+                              </Dropdown.Item>
+                              <Dropdown.Divider />
+                              <Dropdown.Item className="text-danger" onClick={() => handleDelete(unit)}>
+                                <i className="ri-delete-bin-fill align-bottom me-2 text-danger"></i> Delete
+                              </Dropdown.Item>
+                            </Dropdown.Menu>
+                          </Dropdown>
+                        </td>
+                      </tr>
+                    ))}
+                    {paginatedUnits.length === 0 && (
+                      <tr>
+                        <td colSpan={7} className="text-center py-4">No results found</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+
+              <Row className="align-items-center mt-2 g-3 text-center text-sm-start">
+                <Col sm>
+                  <div className="text-muted">
+                    Showing <span className="fw-semibold">{paginatedUnits.length}</span> of <span className="fw-semibold">{filteredUnits.length}</span> Results
+                  </div>
+                </Col>
+                <Col sm="auto">
+                  <ul className="pagination pagination-separated pagination-sm justify-content-center justify-content-sm-start mb-0">
+                    <li className={currentPage <= 1 ? "page-item disabled" : "page-item"}>
+                      <Button variant="link" className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>Previous</Button>
+                    </li>
+                    {Array.from({ length: Math.ceil(filteredUnits.length / pageSize) }).map((_, idx) => (
+                      <li key={idx} className={currentPage === idx + 1 ? "page-item active" : "page-item"}>
+                        <Button variant="link" className="page-link" onClick={() => setCurrentPage(idx + 1)}>{idx + 1}</Button>
+                      </li>
+                    ))}
+                    <li className={currentPage >= Math.ceil(filteredUnits.length / pageSize) ? "page-item disabled" : "page-item"}>
+                      <Button variant="link" className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>Next</Button>
+                    </li>
+                  </ul>
+                </Col>
+              </Row>
+            </Card.Body>
+          </Card>
+        </Col>
+      </Row>
 
         <UomModal
           show={showModal}

@@ -10,8 +10,8 @@ use App\Http\Requests\UpdateFinanceTransactionRequest;
 use App\Models\FinanceTransaction;
 use App\Models\MasterCurrency;
 use App\Models\RecurringRule;
-use App\Models\SharedCategory;
-use App\Models\SharedTag;
+use App\Models\TenantCategory;
+use App\Models\TenantTag;
 use App\Models\Tenant;
 use App\Services\FinanceSummaryService;
 use App\Services\TagService;
@@ -37,7 +37,7 @@ class FinanceTransactionApiController extends Controller
 
         $query = FinanceTransaction::query()
             ->forTenant($tenant->id)
-            ->with(['category:id,name,icon,color', 'currency:code,symbol,decimal_places', 'createdBy:id,full_name', 'tags:id,name,color'])
+            ->with(['category:id,name,icon,color', 'currency:id,code,symbol,decimal_places', 'createdBy:id,full_name', 'tags:id,name,color'])
             ->when($request->search, fn ($q) => $q->search($request->search))
             ->when($request->type, fn ($q) => $q->byType($request->type))
             ->when($request->category_id, fn ($q) => $q->byCategory($request->category_id))
@@ -297,8 +297,13 @@ class FinanceTransactionApiController extends Controller
     // ─── GET /finance/categories ──────────────────────────────────────────────
     public function categories(Request $request, Tenant $tenant): JsonResponse
     {
-        $query = SharedCategory::forTenant($tenant->id)
-            ->forModule('finance')
+         $module = $request->get('module', 'finance');
+         $query = TenantCategory::forTenant($tenant->id)
+            ->forModule($module)
+            ->roots()
+            ->with(['children' => function($q) {
+                $q->active()->ordered();
+            }])
             ->active()
             ->ordered();
 
@@ -308,20 +313,20 @@ class FinanceTransactionApiController extends Controller
 
         return response()->json([
             'ok'   => true,
-            'data' => ['categories' => $query->get(['id', 'name', 'sub_type', 'icon', 'color', 'is_default'])],
+            'data' => ['categories' => $query->get(['id', 'name', 'sub_type', 'icon', 'color', 'is_default', 'module', 'parent_id', 'row_version'])],
         ]);
     }
 
     // ─── POST /finance/categories ─────────────────────────────────────────────
     public function storeCategory(Request $request, Tenant $tenant): JsonResponse
     {
-        $this->authorize('create', FinanceTransaction::class);
+        $this->authorize('create', TenantCategory::class);
 
         // Custom category quota check
         $limit = $this->entitlements->limit($tenant, 'finance.custom_cat.max');
         if ($limit === null) $limit = -1;
         if ($limit !== -1) {
-            $customCount = SharedCategory::forTenant($tenant->id)
+            $customCount = TenantCategory::forTenant($tenant->id)
                 ->forModule('finance')
                 ->where('is_default', false)
                 ->count();
@@ -335,17 +340,30 @@ class FinanceTransactionApiController extends Controller
         }
 
         $data = $request->validate([
-            'name'       => ['required', 'string', 'max:100'],
-            'sub_type'   => ['required', 'in:pemasukan,pengeluaran'],
+            'name'       => [
+                'required',
+                'string',
+                'max:100',
+                \Illuminate\Validation\Rule::unique('tenant_categories')
+                    ->where(function ($query) use ($tenant, $request) {
+                        return $query->where('tenant_id', $tenant->id)
+                            ->where('module', $request->get('module', 'finance'))
+                            ->where('sub_type', $request->get('sub_type'));
+                    }),
+            ],
+            'module'     => ['nullable', 'string'],
+            'parent_id'  => ['nullable', 'integer'],
+            'sub_type'   => ['required_if:module,finance', 'nullable', 'in:pemasukan,pengeluaran'],
             'icon'       => ['nullable', 'string', 'max:60'],
-            'color'      => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
+            'color'      => ['nullable', 'string', 'max:30'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
         ]);
 
-        $category = SharedCategory::create([
+        $category = TenantCategory::create([
             'tenant_id'  => $tenant->id,
-            'module'     => 'finance',
-            'sub_type'   => $data['sub_type'],
+            'module'     => $data['module'] ?? 'finance',
+            'sub_type'   => $data['sub_type'] ?? null,
+            'parent_id'  => $data['parent_id'] ?? null,
             'name'       => $data['name'],
             'icon'       => $data['icon'] ?? 'ri-price-tag-3-line',
             'color'      => $data['color'] ?? '#95A5A6',
@@ -355,6 +373,114 @@ class FinanceTransactionApiController extends Controller
         ]);
 
         return response()->json(['ok' => true, 'data' => ['category' => $category]], 201);
+    }
+
+    // ─── PATCH /finance/categories/{category} ─────────────────────────────────
+    public function updateCategory(Request $request, Tenant $tenant, TenantCategory $category): JsonResponse
+    {
+        $this->authorize('update', $category);
+        abort_if((int) $category->tenant_id !== (int) $tenant->id, 404);
+
+        // Cannot edit default system categories
+        if ($category->is_default) {
+            return response()->json([
+                'ok'         => false,
+                'error_code' => 'FORBIDDEN',
+                'message'    => 'Kategori default tidak dapat diubah.',
+            ], 403);
+        }
+
+        $data = $request->validate([
+            'name'       => [
+                'required',
+                'string',
+                'max:100',
+                \Illuminate\Validation\Rule::unique('tenant_categories')
+                    ->ignore($category->id)
+                    ->where(fn ($query) => $query->where('tenant_id', $tenant->id)->where('module', $category->module)->where('sub_type', $data['sub_type'] ?? null)),
+            ],
+            'parent_id'  => ['nullable', 'integer'],
+            'sub_type'   => ['nullable', 'in:pemasukan,pengeluaran'],
+            'icon'        => ['nullable', 'string', 'max:60'],
+            'color'       => ['nullable', 'string', 'max:30'],
+            'sort_order'  => ['nullable', 'integer', 'min:0'],
+            'is_active'   => ['nullable', 'boolean'],
+            'row_version' => ['required', 'integer'],
+        ]);
+
+        $category->update([
+            'name'       => $data['name'],
+            'sub_type'   => $data['sub_type'] ?? $category->sub_type,
+            'parent_id'  => array_key_exists('parent_id', $data) ? $data['parent_id'] : $category->parent_id,
+            'icon'       => $data['icon'] ?? $category->icon,
+            'color'      => $data['color'] ?? $category->color,
+            'sort_order' => $data['sort_order'] ?? $category->sort_order,
+            'is_active'  => $data['is_active'] ?? $category->is_active,
+        ]);
+
+        return response()->json(['ok' => true, 'data' => ['category' => $category]]);
+    }
+
+    // ─── DELETE /finance/categories/{category} ────────────────────────────────
+    public function destroyCategory(Request $request, Tenant $tenant, TenantCategory $category): JsonResponse
+    {
+        $request->validate(['row_version' => 'required|integer']);
+        $this->authorize('delete', $category);
+        abort_if((int) $category->tenant_id !== (int) $tenant->id, 404);
+
+        // Cannot delete default system categories
+        if ($category->is_default) {
+            return response()->json([
+                'ok'         => false,
+                'error_code' => 'FORBIDDEN',
+                'message'    => 'Kategori default tidak dapat dihapus.',
+            ], 403);
+        }
+
+        // Check if category is being used by transactions
+        $txCount = $category->financeTransactions()->count();
+        if ($txCount > 0) {
+            return response()->json([
+                'ok'         => false,
+                'error_code' => 'CATEGORY_IN_USE',
+                'message'    => "Kategori tidak dapat dihapus karena masih digunakan oleh {$txCount} transaksi.",
+            ], 422);
+        }
+
+        $category->delete();
+
+        return response()->json(['ok' => true]);
+    }
+
+    // ─── DELETE /finance/categories (bulk) ───────────────────────────────────
+    public function bulkDestroyCategory(Request $request, Tenant $tenant): JsonResponse
+    {
+        $this->authorize('delete', TenantCategory::class);
+        $ids = $request->validate(['ids' => 'required|array|min:1'])['ids'];
+
+        $count = TenantCategory::forTenant($tenant->id)
+            ->whereIn('id', $ids)
+            ->where('is_default', false)
+            ->delete();
+
+        return response()->json(['ok' => true, 'deleted' => $count]);
+    }
+
+    // ─── PATCH /finance/categories/bulk-parent ──────────────────────────────
+    public function bulkSetParentCategory(Request $request, Tenant $tenant): JsonResponse
+    {
+        $this->authorize('update', FinanceTransaction::class);
+        $data = $request->validate([
+            'ids'       => 'required|array|min:1',
+            'parent_id' => 'nullable|integer',
+        ]);
+
+        $count = TenantCategory::forTenant($tenant->id)
+            ->whereIn('id', $data['ids'])
+            ->where('is_default', false)
+            ->update(['parent_id' => $data['parent_id']]);
+
+        return response()->json(['ok' => true, 'updated' => $count]);
     }
 
     // ─── GET /finance/tags/suggest ────────────────────────────────────────────

@@ -2,27 +2,30 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Concerns\HasUlids;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Builder;
 
-class SharedCategory extends Model
+class TenantCategory extends Model
 {
-    use HasUlids;
+    use HasFactory, SoftDeletes;
 
     protected $fillable = [
         'tenant_id', 'module', 'sub_type', 'parent_id',
         'name', 'icon', 'color', 'is_default', 'is_active', 'sort_order',
+        'row_version',
     ];
 
     protected function casts(): array
     {
         return [
-            'is_default' => 'boolean',
-            'is_active'  => 'boolean',
-            'sort_order' => 'integer',
+            'is_default'  => 'boolean',
+            'is_active'   => 'boolean',
+            'sort_order'  => 'integer',
+            'row_version' => 'integer',
         ];
     }
 
@@ -57,11 +60,6 @@ class SharedCategory extends Model
         return $query->whereNull('parent_id');
     }
 
-    public function scopeUniqueName(Builder $query, string $name): Builder
-    {
-        return $query->where('name', $name);
-    }
-
     // Relations
     public function tenant(): BelongsTo
     {
@@ -70,12 +68,12 @@ class SharedCategory extends Model
 
     public function parent(): BelongsTo
     {
-        return $this->belongsTo(SharedCategory::class, 'parent_id');
+        return $this->belongsTo(TenantCategory::class, 'parent_id');
     }
 
     public function children(): HasMany
     {
-        return $this->hasMany(SharedCategory::class, 'parent_id')->orderBy('sort_order');
+        return $this->hasMany(TenantCategory::class, 'parent_id')->orderBy('sort_order');
     }
 
     public function financeTransactions(): HasMany

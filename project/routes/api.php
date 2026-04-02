@@ -53,9 +53,11 @@ Route::prefix('v1')
                 // ── Finance ────────────────────────────────────────────────────────
                 Route::prefix('finance')->group(function () {
                     Route::get('/summary', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'summary']);
-                    Route::get('/categories', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'categories']);
+                     Route::get('/categories', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'categories']);
                     Route::post('/categories', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'storeCategory'])->middleware('throttle:tenant.mutation');
+                    Route::patch('/categories/bulk-parent', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'bulkSetParentCategory'])->middleware('throttle:tenant.mutation');
                     Route::patch('/categories/{category}', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'updateCategory'])->middleware('throttle:tenant.mutation');
+                    Route::delete('/categories', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'bulkDestroyCategory'])->middleware('throttle:tenant.mutation');
                     Route::delete('/categories/{category}', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'destroyCategory'])->middleware('throttle:tenant.mutation');
                     Route::get('/tags/suggest', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'suggestTags']);
                     Route::get('/transactions/export', [\App\Http\Controllers\Api\FinanceTransactionApiController::class, 'export']);
