@@ -17,7 +17,7 @@ class TenantMasterTagController extends Controller
         return Inertia::render('Tenant/MasterData/Tags/Index', [
             'tags'        => TenantTag::forTenant($tenantModel->id)
                 ->popular()
-                ->get(['id', 'name', 'color', 'usage_count', 'is_active', 'created_at']),
+                ->get(['id', 'name', 'color', 'usage_count', 'is_active', 'row_version', 'created_at']),
             'permissions' => [
                 'create' => $request->user()?->can('master.tags.create') ?? false,
                 'update' => $request->user()?->can('master.tags.update') ?? false,

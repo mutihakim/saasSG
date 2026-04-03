@@ -17,12 +17,29 @@ class FinanceTransaction extends Model
 {
     use HasFactory, SoftDeletes;
 
+    /**
+     * The "type" of the primary key ID.
+     * 
+     * Using 'string' for polymorphic relation compatibility with PostgreSQL.
+     * This is required because tenant_taggables.taggable_id uses string type
+     * to support multiple model types (BIGINT, ULID, UUID).
+     * 
+     * @see docs/extension-guide.md#polymorphic-relations-id-type
+     */
+    protected $keyType = 'string';
+
+    /**
+     * Indicates if the IDs are auto-incrementing.
+     * Note: Must remain true for BIGINT auto-increment primary key.
+     */
+    public $incrementing = true;
+
     protected $fillable = [
         'tenant_id', 'category_id', 'currency_id', 'created_by',
         'type', 'transaction_date', 'amount', 'description',
         'exchange_rate', 'base_currency_code', 'amount_base',
         'notes', 'payment_method', 'reference_number',
-        'merchant_name', 'location', 'row_version',
+        'merchant_name', 'location', 'status', 'row_version',
     ];
 
     protected function casts(): array
@@ -65,9 +82,12 @@ class FinanceTransaction extends Model
         return $query->where('category_id', $categoryId);
     }
 
-    public function scopeByCurrency(Builder $query, int $currencyId): Builder
+    public function scopeByCurrency(Builder $query, $currency): Builder
     {
-        return $query->where('currency_id', $currencyId);
+        if (is_numeric($currency)) {
+            return $query->where('currency_id', $currency);
+        }
+        return $query->whereHas('currency', fn($q) => $q->where('code', $currency));
     }
 
     public function scopeByDateRange(Builder $query, ?string $from, ?string $to): Builder
@@ -123,7 +143,7 @@ class FinanceTransaction extends Model
     public function tags(): MorphToMany
     {
         return $this->morphToMany(TenantTag::class, 'taggable', 'tenant_taggables', 'taggable_id', 'tenant_tag_id')
-                    ->withPivot('created_at');
+            ->withPivot('created_at');
     }
 
     public function recurringRule(): MorphOne

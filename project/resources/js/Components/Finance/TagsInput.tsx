@@ -7,9 +7,10 @@ import { useTenantRoute } from "../../common/tenantRoute";
 interface TagsInputProps {
   value: string[];
   onChange: (value: string[]) => void;
+  placeholder?: string;
 }
 
-const TagsInput = ({ value, onChange }: TagsInputProps) => {
+const TagsInput = ({ value, onChange, placeholder = "Type tags..." }: TagsInputProps) => {
   const tenantRoute = useTenantRoute();
 
   const loadOptions = async (inputValue: string) => {
@@ -62,7 +63,7 @@ const TagsInput = ({ value, onChange }: TagsInputProps) => {
       loadOptions={loadOptions}
       value={selectValue}
       onChange={handleChange}
-      placeholder="Type tags..."
+      placeholder={placeholder}
       styles={customStyles}
       classNamePrefix="react-select"
     />

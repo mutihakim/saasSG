@@ -29,7 +29,8 @@ const TagModal = ({
 
   const [formData, setFormData] = useState({
     name: "",
-    color: "#677abd"
+    color: "#677abd",
+    row_version: 1
   });
 
   useEffect(() => {
@@ -37,12 +38,14 @@ const TagModal = ({
       if (tag) {
         setFormData({
           name: tag.name,
-          color: tag.color || "#677abd"
+          color: tag.color || "#677abd",
+          row_version: tag.row_version || 1
         });
       } else {
         setFormData({
           name: "",
-          color: "#677abd"
+          color: "#677abd",
+          row_version: 1
         });
       }
       setError(null);

@@ -24,7 +24,7 @@ class MasterTagApiController extends Controller
 
         return response()->json([
             'ok'   => true,
-            'data' => ['tags' => $query->get(['id', 'name', 'color', 'usage_count', 'is_active', 'created_at'])],
+            'data' => ['tags' => $query->get(['id', 'name', 'color', 'usage_count', 'is_active', 'row_version', 'created_at'])],
         ]);
     }
 

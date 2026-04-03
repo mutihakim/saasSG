@@ -14,13 +14,14 @@ class TenantTag extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id', 'name', 'color', 'usage_count', 'row_version',
+        'tenant_id', 'name', 'color', 'usage_count', 'is_active', 'row_version',
     ];
 
     protected function casts(): array
     {
         return [
             'usage_count' => 'integer',
+            'is_active'   => 'boolean',
             'row_version' => 'integer',
         ];
     }

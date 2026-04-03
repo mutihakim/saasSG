@@ -91,6 +91,214 @@ DB::statement("
 
 ---
 
+#### Polymorphic Relations ID Type
+
+Untuk tabel polymorphic (seperti `tenant_taggables`, `tenant_attachments`):
+
+**WAJIB gunakan `string()` untuk kolom polymorphic ID:**
+
+```php
+Schema::create('tenant_taggables', function (Blueprint $table) {
+    $table->unsignedBigInteger('tenant_tag_id');
+    $table->string('taggable_type', 100);
+    $table->string('taggable_id', 100); // ✅ BENAR: string untuk kompatibilitas polymorphic
+    $table->timestamp('created_at')->useCurrent();
+    
+    $table->primary(['tenant_tag_id', 'taggable_type', 'taggable_id']);
+    $table->index(['taggable_type', 'taggable_id']);
+});
+```
+
+**JANGAN gunakan `ulid()` atau `bigInteger()`:**
+
+```php
+$table->ulid('taggable_id');         // ❌ SALAH: tidak kompatibel dengan BIGINT models
+$table->bigInteger('taggable_id');   // ❌ SALAH: tidak kompatibel dengan ULID/UUID models
+```
+
+> [!IMPORTANT]
+> **Alasan:** Polymorphic relation harus bisa menangani berbagai tipe primary key dari model yang berbeda:
+> - `FinanceTransaction` menggunakan `BIGINT` (id)
+> - Model lain mungkin menggunakan `ULID` atau `UUID`
+> 
+> Menggunakan `string(100)` adalah **best practice Laravel** untuk menghindari type mismatch error di database (PostgreSQL error: `operator does not exist: character varying = bigint`).
+
+#### Workaround vs Solusi yang Benar
+
+> [!WARNING]
+> `$keyType = 'string'` adalah **workaround**, bukan best practice. Gunakan hanya untuk model BIGINT yang **sudah ada** (legacy). Untuk model baru, gunakan ULID dari awal.
+
+**Workaround (untuk model BIGINT legacy yang sudah ada):**
+
+Jika model menggunakan `BIGINT` primary key dan harus berpartisipasi dalam polymorphic relation dengan pivot bertipe `string`, tambahkan:
+
+```php
+class FinanceTransaction extends Model
+{
+    // Workaround: memaksa Laravel mengirim PK sebagai string
+    // agar PostgreSQL bisa mencocokkan dengan kolom taggable_id bertipe varchar
+    // Diperlukan karena kita tidak bisa mengubah tabel legacy tanpa migrasi besar.
+    protected $keyType = 'string';   // ← workaround
+    public $incrementing = true;     // tetap true, auto-increment tetap berjalan
+}
+```
+
+**Kapan workaround ini acceptable:**
+- Model sudah ada di production dan menggunakan `id()` (BIGINT auto-increment)
+- Mengubah tipe PK membutuhkan migrasi besar yang berisiko
+- Tidak ada model lain yang bergantung pada tipe integer-nya
+
+**Solusi yang benar untuk Modul Baru:**
+
+Gunakan `HasUlids` sejak awal agar primary key kompatibel secara native dengan kolom polymorphic bertipe `string`:
+
+```php
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
+
+class NewTransaction extends Model
+{
+    use HasUlids; // PK = ULID (string), kompatibel langsung dengan taggable_id string
+    // Tidak perlu $keyType atau workaround apapun
+}
+```
+
+**Ringkasan pola yang harus diikuti:**
+
+| Situasi | Yang Harus Dilakukan |
+|---|---|
+| Model baru + akan pakai polymorphic | Gunakan `HasUlids` |
+| Model lama BIGINT + harus pakai polymorphic | Tambahkan `$keyType = 'string'` + dokumentasikan alasannya di kode |
+| Tabel pivot polymorphic | Selalu `string(100)` untuk kolom `*_type` dan `*_id` |
+| Jangan pernah | Pakai `bigInteger` atau `ulid()` untuk kolom polymorphic pivot |
+
+
+---
+
+#### Row Version untuk Optimistic Concurrency Control
+
+Untuk semua entitas yang mendukung update concurrent, WAJIB tambahkan `row_version`:
+
+```php
+Schema::create('tenant_warehouses', function (Blueprint $table) {
+    // ... kolom lainnya ...
+    $table->unsignedInteger('row_version')->default(1);
+});
+```
+
+**Di Model:**
+```php
+protected $fillable = [..., 'row_version'];
+
+protected function casts(): array
+{
+    return [
+        'row_version' => 'integer',
+    ];
+}
+```
+
+**Di API Controller (update method):**
+```php
+public function update(Request $request, Tenant $tenant, TenantWarehouse $warehouse): JsonResponse
+{
+    $this->authorize('update', $warehouse);
+    
+    $validated = $request->validate([
+        // ... field lainnya ...
+        'row_version' => ['required', 'integer'],
+    ]);
+
+    // Optimistic Concurrency Control check
+    if ((int) $warehouse->row_version !== (int) $data['row_version']) {
+        return response()->json([
+            'ok'         => false,
+            'error_code' => 'VERSION_CONFLICT',
+            'message'    => 'Data diubah oleh pengguna lain. Silakan muat ulang.',
+        ], 409);
+    }
+
+    $warehouse->update([
+        // ... field lainnya ...
+        'row_version' => $warehouse->row_version + 1,
+    ]);
+    
+    return response()->json(['ok' => true, 'data' => $warehouse->fresh()]);
+}
+```
+
+**Di Frontend (Modal Component):**
+```tsx
+// 1. Simpan row_version di formData state
+const [formData, setFormData] = useState({
+  name: "",
+  row_version: 1
+});
+
+// 2. Copy row_version dari data yang diedit
+useEffect(() => {
+  if (show && tag) {
+    setFormData({
+      name: tag.name,
+      row_version: tag.row_version || 1  // WAJIB!
+    });
+  }
+}, [show, tag]);
+
+// 3. Kirim row_version saat submit
+await axios({
+  method: "patch",
+  url: `/api/tags/${tag.id}`,
+  data: formData  // row_version akan terkirim otomatis
+});
+```
+
+> [!IMPORTANT]
+> **Checklist Row Version:**
+> - [ ] Kolom `row_version` ada di migration dengan `default(1)`
+> - [ ] Model memiliki `row_version` di `$fillable` dan `casts`
+> - [ ] API `index` mengirim `row_version` ke frontend
+> - [ ] Frontend menyimpan `row_version` di state
+> - [ ] Frontend mengirim `row_version` saat update
+> - [ ] API `update` validasi `row_version` dan increment setelah update
+
+---
+
+#### Enum Handling di Model dan Service
+
+Untuk kolom enum di database (seperti `type`, `payment_method`):
+
+**Di Model - Gunakan Enum Cast:**
+```php
+protected function casts(): array
+{
+    return [
+        'type' => TransactionType::class,
+        'payment_method' => PaymentMethod::class,
+    ];
+}
+```
+
+**Di Service - Access Enum Value dengan Benar:**
+```php
+// BENAR: Gunakan ->value untuk akses nilai string enum
+$totals = FinanceTransaction::query()
+    ->groupBy('type')
+    ->get()
+    ->mapWithKeys(fn ($item) => [$item->type->value => $item->total]);
+
+$totalIncome = $totals['pemasukan'] ?? 0;
+
+// SALAH: Jangan akses enum sebagai array key langsung
+$totals = $query->get()->pluck('total', 'type'); // type adalah enum, bukan string!
+```
+
+**Best Practice:**
+- Selalu gunakan `mapWithKeys()` dengan `->value` saat membuat lookup array dari enum
+- Hindari `pluck('value', 'enum_column')` karena akan menghasilkan enum sebagai key
+- Saat query dengan enum, gunakan string value: `where('type', 'pemasukan')` atau `where('type', TransactionType::PEMASUKAN->value)`
+
+---
+
 ### Step 4 — Buat Model Eloquent
 
 **File:** `app/Models/TenantWarehouse.php`
@@ -333,6 +541,13 @@ class TenantWarehouseSeeder extends Seeder
             ['code' => 'WH-MAIN', 'name' => 'Gudang Utama', 'sort_order' => 1],
             ['code' => 'WH-TRANSIT', 'name' => 'Gudang Transit', 'sort_order' => 2],
         ];
+
+        static::saving(function (self $transaction) {
+            $transaction->amount_base = round(
+                (float) $transaction->amount * (float) $transaction->exchange_rate,
+                2
+            );
+        });
 
         foreach ($warehouses as $data) {
             TenantWarehouse::firstOrCreate(
@@ -580,6 +795,275 @@ Dokumentasi:
 
 ---
 
+## E. Running Migration dan Seeder di Production
+
+> [!IMPORTANT]
+> Meskipun aplikasi running di production, jika masih dalam tahap development aktif, gunakan flag `--force` untuk bypass confirmation prompt.
+
+### Migration
+
+```bash
+# Development/Production (masih development mode)
+php artisan migrate --force
+
+# JANGAN gunakan tanpa --force di production karena akan muncul prompt:
+# "Are you sure you want to run this command?" (akan timeout di CI/CD)
+```
+
+### Seeder
+
+```bash
+# Seed specific seeder
+php artisan db:seed --class=FinanceTransactionSeeder --force
+
+# Seed all (termasuk TenantMasterDataSeeder)
+php artisan db:seed --force
+```
+
+### Combined (Migration + Seed)
+
+```bash
+# Migration + Seed dalam satu command
+php artisan migrate --seed --force
+
+# Atau migration + specific seeder
+php artisan migrate --force && php artisan db:seed --class=FinanceTransactionSeeder --force
+```
+
+> [!WARNING]
+> **Data Loss Warning:** Beberapa migration mungkin melakukan `DROP TABLE` atau `truncate`. Selalu:
+> 1. Backup database sebelum migration besar
+> 2. Test migration di staging environment terlebih dahulu
+> 3. Pastikan seeder menggunakan `firstOrCreate()` atau `updateOrCreate()` untuk menghindari duplicate
+
+---
+
+## F. Standar Komunikasi Frontend-Backend untuk Enum/Type
+
+### Prinsip: Backend adalah Source of Truth
+
+**Backend enum value = Frontend form value = Database value**
+
+Jangan pernah melakukan mapping di business logic. Mapping hanya terjadi di UI layer untuk display label.
+
+### ✅ Pattern yang Benar
+
+**Backend (PHP Enum):**
+```php
+enum TransactionType: string
+{
+    case PEMASUKAN = 'pemasukan';
+    case PENGELUARAN = 'pengeluaran';
+}
+```
+
+**API Response:**
+```json
+{
+  "type": "pemasukan"  // ← Same as enum value
+}
+```
+
+**Frontend Form:**
+```tsx
+// ✅ BENAR: Form value SAMA dengan backend
+const [formData, setFormData] = useState({
+  type: "pemasukan"  // ← Same as backend!
+});
+
+// Radio buttons menggunakan value yang sama
+<input type="radio" value="pemasukan" />
+<input type="radio" value="pengeluaran" />
+```
+
+**Translation (Hanya untuk Display):**
+```json
+// en/tenant/finance.json
+{
+  "finance.types.pemasukan": "Income",
+  "finance.types.pengeluaran": "Expense"
+}
+
+// id/tenant/finance.json
+{
+  "finance.types.pemasukan": "Pemasukan",
+  "finance.types.pengeluaran": "Pengeluaran"
+}
+```
+
+**UI Display:**
+```tsx
+// ✅ BENAR: Translation hanya untuk label display
+<label>{t(`finance.types.${formData.type}`)}</label>
+// EN: "Income"
+// ID: "Pemasukan"
+```
+
+### ❌ Pattern yang SALAH
+
+**JANGAN lakukan mapping di business logic:**
+```tsx
+// ❌ SALAH: Mapping di form state
+const typeMap = {
+  'pemasukan': 'income',  // Jangan lakukan ini!
+  'pengeluaran': 'expense'
+};
+
+setFormData({ type: typeMap[transaction.type] });
+```
+
+**JANGAN gunakan English value di form:**
+```tsx
+// ❌ SALAH: Form value berbeda dari backend
+const [formData, setFormData] = useState({
+  type: "income"  // Backend expects "pemasukan"!
+});
+```
+
+### Checklist Implementasi Enum
+
+Backend:
+- [ ] Enum PHP menggunakan value yang sama dengan database
+- [ ] Enum memiliki method `label()` untuk display (optional)
+- [ ] API mengirim enum value apa adanya (tidak di-map)
+
+Frontend:
+- [ ] Form state menggunakan enum value yang sama dengan backend
+- [ ] Translation keys mengikuti enum value backend
+- [ ] Radio/Select options menggunakan value yang sama dengan backend
+- [ ] Translation hanya untuk display label, bukan untuk form values
+- [ ] Tidak ada mapping layer di business logic
+
+### Contoh Lengkap
+
+**Backend Migration:**
+```php
+$table->enum('type', ['pemasukan', 'pengeluaran']);
+```
+
+**Backend PHP Enum:**
+```php
+enum TransactionType: string
+{
+    case PEMASUKAN = 'pemasukan';
+    case PENGELUARAN = 'pengeluaran';
+    
+    public function label(): string {
+        return match ($this) {
+            self::PEMASUKAN => 'Pemasukan',
+            self::PENGELUARAN => 'Pengeluaran',
+        };
+    }
+}
+```
+
+**Backend Model Cast:**
+```php
+protected function casts(): array
+{
+    return [
+        'type' => TransactionType::class,
+    ];
+}
+```
+
+**Frontend Translation Keys:**
+```json
+{
+  "finance.types.pemasukan": "Income",
+  "finance.types.pengeluaran": "Expense"
+}
+```
+
+**Frontend Form:**
+```tsx
+const [formData, setFormData] = useState({
+  type: "pemasukan"  // ← Same as backend enum value!
+});
+
+// Radio buttons
+{['pemasukan', 'pengeluaran'].map((type) => (
+  <Form.Check
+    key={type}
+    value={type}
+    label={t(`finance.types.${type}`)}
+    checked={formData.type === type}
+    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+  />
+))}
+```
+
+**Frontend API Submit:**
+```tsx
+// API receives: { type: "pemasukan" }
+await axios.post('/api/transactions', formData);
+```
+
+### Manfaat Pattern Ini
+
+1. **Konsistensi**: Tidak ada kebingungan tentang value mana yang digunakan
+2. **Maintainability**: Menambah enum baru hanya di 1 tempat (backend)
+3. **Type Safety**: TypeScript bisa infer enum values dari backend
+4. **i18n Ready**: Label bisa berbeda per bahasa tanpa mengubah logic
+5. **No Mapping Bugs**: Tidak ada bug akibat mapping yang tidak sinkron
+
+---
+
+#### Tag is_active Management
+
+Untuk modul Tags yang mendukung aktivasi/nonaktivasi:
+
+**Migration:**
+```php
+Schema::table('tenant_tags', function (Blueprint $table) {
+    $table->boolean('is_active')->default(true)->after('usage_count');
+    $table->index(['tenant_id', 'is_active']);
+});
+```
+
+**Model:**
+```php
+protected $fillable = [
+    'tenant_id', 'name', 'color', 'usage_count', 'is_active', 'row_version',
+];
+
+protected function casts(): array
+{
+    return [
+        'usage_count' => 'integer',
+        'is_active'   => 'boolean',
+        'row_version' => 'integer',
+    ];
+}
+
+public function scopeActive(Builder $query): Builder
+{
+    return $query->where('is_active', true);
+}
+```
+
+**Frontend (Index.tsx):**
+```tsx
+// Badge status untuk tag aktif/nonaktif
+<Badge bg={tag.is_active ? 'success' : 'secondary'}>
+  {tag.is_active ? t('master.tags.status.active') : t('master.tags.status.inactive')}
+</Badge>
+
+// Toggle is_active di modal
+<Form.Check
+  type="switch"
+  id="is-active-switch"
+  label={t('master.tags.fields.is_active')}
+  checked={formData.is_active}
+  onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+/>
+```
+
+> [!IMPORTANT]
+> **Best Practice:** Tags yang sudah tidak digunakan sebaiknya di-nonaktifkan (`is_active = false`) daripada di-hard-delete. Ini menjaga history data tetap ada dan memungkinkan reaktivasi di masa depan.
+
+---
+
 ## Do / Don't
 
 **Do:**
@@ -591,6 +1075,8 @@ Dokumentasi:
 - Gunakan **Partial Unique Index** (`WHERE deleted_at IS NULL`) untuk kolom unique pada tabel soft-delete.
 - Selalu update key locale EN dan ID bersamaan.
 - Gunakan `Rule::unique(...)->where(fn($q) => $q->whereNull('deleted_at'))` di validator, sesuai Partial Index.
+- Gunakan `--force` flag untuk migrate/seed di production development environment.
+- **Gunakan enum value backend sebagai form value frontend (Backend-First Enum Strategy).**
 
 **Don't:**
 
@@ -600,3 +1086,6 @@ Dokumentasi:
 - Jangan menampilkan `error.code` mentah ke end-user sebagai pesan toast utama.
 - Jangan pakai `$table->unique()` biasa pada tabel soft-delete (akan merusak fitur re-create-after-delete).
 - Jangan merge fitur baru tanpa update locale EN **dan** ID bersamaan.
+- Jangan lupa `--force` flag saat migrate/seed di production (akan timeout).
+- **Jangan lakukan mapping enum di business logic (hanya di UI layer untuk display).**
+- **Jangan gunakan English form values jika backend menggunakan Indonesia.**

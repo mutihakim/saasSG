@@ -5,6 +5,7 @@ import axios from 'axios';
 
 import TableContainer from '../../../Components/Common/TableContainer';
 import DeleteModal from '../../../Components/Common/DeleteModal';
+import { parseApiError } from '../../../common/apiError';
 import { notify } from '../../../common/notify';
 import { useTenantRoute } from '../../../common/tenantRoute';
 import { TransactionDate, Category, Description, Amount, PaymentMethod, Tags, Actions } from './components/FinanceCol';
@@ -61,12 +62,16 @@ const FinanceIndex = ({
         } catch (error: any) {
             if (error.response?.status !== 429) {
                 console.error("Error fetching finance data:", error);
-                notify.error("Failed to load finance data");
+                const parsed = parseApiError(error, t("finance.notifications.transaction_load_failed"));
+                notify.error({
+                    title: parsed.title,
+                    detail: parsed.detail
+                });
             }
         } finally {
             setLoading(false);
         }
-    }, [tenantRoute]);
+    }, [tenantRoute, t]);
 
     useEffect(() => {
         fetchFinanceData();
@@ -87,7 +92,11 @@ const FinanceIndex = ({
             fetchFinanceData();
             setDeleteModal(false);
         } catch (error: any) {
-            notify.error(error.response?.data?.message || "Failed to delete transaction");
+            const parsed = parseApiError(error, t("finance.notifications.transaction_delete_failed"));
+            notify.error({
+                title: parsed.title,
+                detail: parsed.detail
+            });
         } finally {
             setIsDeleting(false);
         }
@@ -132,7 +141,7 @@ const FinanceIndex = ({
             cell: (cellProps: any) => <Amount {...cellProps} />,
         },
         {
-            header: t("finance.transactions.table.status"),
+            header: t("finance.transactions.table.payment_method"),
             accessorKey: "payment_method",
             enableColumnFilter: false,
             cell: (cellProps: any) => <PaymentMethod {...cellProps} />,
@@ -153,7 +162,7 @@ const FinanceIndex = ({
                 />
             ),
         },
-    ], []);
+    ], [t]);
 
     return (
         <React.Fragment>
@@ -195,7 +204,7 @@ const FinanceIndex = ({
                                     tableClass="align-middle table-nowrap mb-0"
                                     theadClass=""
                                     thClass=""
-                                    SearchPlaceholder="Search transactions..."
+                                    SearchPlaceholder={t("finance.transactions.search_placeholder")}
                                 />
                             )}
                         </Card.Body>

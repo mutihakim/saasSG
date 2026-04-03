@@ -36,7 +36,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
     const { t } = useTranslation();
     const tenantRoute = useTenantRoute();
     
-    const [activeTab, setActiveTab] = useState(modules[0] || "finance");
+    const [activeTab, setActiveTab] = useState("all"); // Changed from modules[0] to "all"
     const [categories, setCategories] = useState(initialCategories);
     const [searchTerm, setSearchTerm] = useState("");
     
@@ -51,9 +51,12 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
 
     const fetchCategories = async () => {
         try {
-            const res = await axios.get(tenantRoute.apiTo("/master/categories"), {
-                params: { module: activeTab }
-            });
+            const params: any = {};
+            // Only send module param if not "all"
+            if (activeTab !== "all") {
+                params.module = activeTab;
+            }
+            const res = await axios.get(tenantRoute.apiTo("/master/categories"), { params });
             const data = res.data.data;
             if (data && data.categories) {
                 setCategories(data.categories);
@@ -62,6 +65,11 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
             console.error("Failed to refresh categories", err);
         }
     };
+
+    // Fetch categories when activeTab changes
+    useEffect(() => {
+        fetchCategories();
+    }, [activeTab]);
 
     // Flattening logic for nested display
     const flattenCategories = (items: any[], depth = 0): any[] => {
@@ -124,11 +132,11 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
             await axios.delete(tenantRoute.apiTo(`/master/categories/${selectedCategory.id}`), {
                 data: { row_version: selectedCategory.row_version }
             });
-            notify.success("Category deleted successfully");
+            notify.success(t("master.categories.messages.delete_success"));
             fetchCategories();
             setShowDeleteModal(false);
         } catch (err: any) {
-            const parsed = parseApiError(err, "Failed to delete category");
+            const parsed = parseApiError(err, t("master.categories.messages.delete_failed"));
             notify.error({
                 title: parsed.title,
                 detail: parsed.detail
@@ -140,17 +148,17 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
 
     const handleBulkDelete = async () => {
         if (selectedRows.length === 0) return;
-        if (!window.confirm(`Are you sure you want to delete ${selectedRows.length} items?`)) return;
+        if (!window.confirm(t("master.categories.messages.confirm_bulk_delete", { count: selectedRows.length }))) return;
 
         try {
             await axios.delete(tenantRoute.apiTo("/master/categories"), {
                 data: { ids: selectedRows }
             });
-            notify.success("Bulk delete successful");
+            notify.success(t("master.categories.messages.bulk_delete_success"));
             setSelectedRows([]);
             fetchCategories();
         } catch {
-            notify.error("Bulk delete failed");
+            notify.error(t("master.categories.messages.bulk_delete_failed"));
         }
     };
 
@@ -172,8 +180,8 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
 
     return (
         <React.Fragment>
-            <Head title="Master Data Categories" />
-            <TenantPageTitle title="Categories" parentLabel="Master Data" />
+            <Head title={t("master.categories.title")} />
+            <TenantPageTitle title={t("master.categories.title")} parentLabel={t("layout.shell.nav.items.master_data")} />
 
                     <CategoriesWidgets {...stats} />
 
@@ -181,11 +189,11 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                         <Col lg={12}>
                             <Card id="categoryList">
                         <Card.Header className="border-0 align-items-center d-flex">
-                            <h4 className="card-title mb-0 flex-grow-1">Categories</h4>
+                            <h4 className="card-title mb-0 flex-grow-1">{t("master.categories.title")}</h4>
                             {permissions.create && (
                                 <div className="flex-shrink-0">
-                                    <Button 
-                                        variant="danger" 
+                                    <Button
+                                        variant="danger"
                                         className="add-btn"
                                         size="sm"
                                         onClick={() => {
@@ -193,12 +201,12 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                             setShowModal(true);
                                         }}
                                     >
-                                        <i className="ri-add-line align-bottom me-1"></i> Create Category
+                                        <i className="ri-add-line align-bottom me-1"></i> {t("master.categories.actions.create")}
                                     </Button>
                                 </div>
                             )}
                         </Card.Header>
-                        
+
                         <Card.Body className="border border-dashed border-start-0 border-end-0">
                             <Row className="g-3">
                                 <Col md={6}>
@@ -206,7 +214,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                         <Form.Control
                                             type="text"
                                             className="form-control"
-                                            placeholder="Search for category or something..."
+                                            placeholder={t("master.categories.search_placeholder")}
                                             value={searchTerm}
                                             onChange={(e) => {
                                                 setSearchTerm(e.target.value);
@@ -217,26 +225,27 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                     </div>
                                 </Col>
                                 <Col md={4}>
-                                    <Form.Select 
-                                        value={activeTab} 
+                                    <Form.Select
+                                        value={activeTab}
                                         onChange={(e) => {
                                             setActiveTab(e.target.value);
                                             setCurrentPage(1);
                                         }}
                                     >
+                                        <option value="all">{t("master.categories.filter.show_all")}</option>
                                         {modules.map(mod => (
-                                            <option key={mod} value={mod}>{mod.toUpperCase()}</option>
+                                            <option key={mod} value={mod}>{t(`master.categories.modules.${mod}`)}</option>
                                         ))}
                                     </Form.Select>
                                 </Col>
                                 <Col md={2}>
                                     <Button variant="primary" className="w-100">
-                                        <i className="ri-equalizer-fill me-1 align-bottom"></i> Filters
+                                        <i className="ri-equalizer-fill me-1 align-bottom"></i> {t("master.common.buttons.filters")}
                                     </Button>
                                 </Col>
                             </Row>
                         </Card.Body>
-                                
+
                         <Card.Body>
                              <div className="table-responsive table-card">
                                 <table className="table align-middle table-nowrap table-striped table-hover" id="categoryTable">
@@ -244,20 +253,20 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                         <tr>
                                             <th scope="col" style={{ width: "40px" }}>
                                                 <div className="form-check">
-                                                    <input 
-                                                        className="form-check-input" 
-                                                        type="checkbox" 
-                                                        id="checkAll" 
+                                                    <input
+                                                        className="form-check-input"
+                                                        type="checkbox"
+                                                        id="checkAll"
                                                         onChange={handleSelectAll}
                                                         checked={selectedRows.length === paginatedCategories.length && paginatedCategories.length > 0}
                                                     />
                                                 </div>
                                             </th>
-                                            <th className="sort" data-sort="name">Category Name</th>
-                                            <th className="sort" data-sort="module">Module</th>
-                                            <th className="sort" data-sort="type">Type</th>
-                                            <th className="sort" data-sort="status">Status</th>
-                                            <th className="sort" data-sort="action">Action</th>
+                                            <th className="sort" data-sort="name">{t("master.categories.headers.name")}</th>
+                                            <th className="sort" data-sort="module">{t("master.categories.headers.module")}</th>
+                                            <th className="sort" data-sort="type">{t("master.categories.headers.type")}</th>
+                                            <th className="sort" data-sort="status">{t("master.categories.headers.status")}</th>
+                                            <th className="sort" data-sort="action">{t("master.common.headers.action")}</th>
                                         </tr>
                                     </thead>
                                     <tbody className="list form-check-all">
@@ -265,11 +274,11 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                                     <tr key={category.id}>
                                                         <th scope="row">
                                                             <div className="form-check">
-                                                                <input 
-                                                                    className="form-check-input" 
-                                                                    type="checkbox" 
-                                                                    name="checkAll" 
-                                                                    value={category.id} 
+                                                                <input
+                                                                    className="form-check-input"
+                                                                    type="checkbox"
+                                                                    name="checkAll"
+                                                                    value={category.id}
                                                                     checked={selectedRows.includes(category.id)}
                                                                     onChange={() => handleSelectRow(category.id)}
                                                                 />
@@ -286,7 +295,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                                                         <span className="text-reset fw-medium">{category.name}</span>
                                                                     </h5>
                                                                 </div>
-                                                                {category.is_default && <Badge bg="light" className="text-muted ms-2 px-1">System</Badge>}
+                                                                {category.is_default && <Badge bg="light" className="text-muted ms-2 px-1">{t("master.categories.badges.system")}</Badge>}
                                                             </div>
                                                         </td>
                                                         <td className="module">{category.module}</td>
@@ -295,18 +304,18 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                                         </td>
                                                         <td className="status">
                                                             <Badge bg={category.is_active ? "success" : "danger"} className={category.is_active ? "badge-soft-success" : "badge-soft-danger"}>
-                                                                {category.is_active ? "Active" : "Inactive"}
+                                                                {category.is_active ? t("master.categories.status.active") : t("master.categories.status.inactive")}
                                                             </Badge>
                                                         </td>
                                                         <td>
                                                             <ul className="list-inline hstack gap-2 mb-0">
-                                                                <li className="list-inline-item edit" title="Edit">
+                                                                <li className="list-inline-item edit" title={t("master.categories.actions.edit")}>
                                                                     <button className="btn btn-sm btn-soft-primary" onClick={() => handleEdit(category)}>
                                                                         <i className="ri-pencil-fill align-bottom"></i>
                                                                     </button>
                                                                 </li>
                                                                 {!category.is_default && (
-                                                                    <li className="list-inline-item" title="Remove">
+                                                                    <li className="list-inline-item" title={t("master.categories.actions.delete")}>
                                                                         <button className="btn btn-sm btn-soft-danger" onClick={() => handleDelete(category)}>
                                                                             <i className="ri-delete-bin-fill align-bottom"></i>
                                                                         </button>
@@ -322,8 +331,8 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                             <div className="noresult" style={{ display: "block" }}>
                                                 <div className="text-center py-4">
                                                     <i className="ri-search-line display-4 text-muted"></i>
-                                                    <h5 className="mt-2">Sorry! No Result Found</h5>
-                                                    <p className="text-muted mb-0">We've searched all categories but did not find any matching your search.</p>
+                                                    <h5 className="mt-2">{t("master.categories.messages.no_result")}</h5>
+                                                    <p className="text-muted mb-0">{t("master.categories.messages.no_result_detail")}</p>
                                                 </div>
                                             </div>
                                         )}
@@ -333,13 +342,13 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                     <Row className="align-items-center mt-2 g-3 text-center text-sm-start">
                                         <Col sm>
                                             <div className="text-muted">
-                                                Showing <span className="fw-semibold">{paginatedCategories.length}</span> of <span className="fw-semibold">{filteredCategories.length}</span> Results
+                                                {t("master.common.pagination.showing")} <span className="fw-semibold">{paginatedCategories.length}</span> {t("master.common.pagination.of")} <span className="fw-semibold">{filteredCategories.length}</span> {t("master.common.pagination.results")}
                                             </div>
                                         </Col>
                                         <Col sm="auto">
                                             <ul className="pagination pagination-separated pagination-sm justify-content-center justify-content-sm-start mb-0">
                                                 <li className={currentPage <= 1 ? "page-item disabled" : "page-item"}>
-                                                    <Button variant="link" className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>Previous</Button>
+                                                    <Button variant="link" className="page-link" onClick={() => setCurrentPage(currentPage - 1)}>{t("master.common.pagination.previous")}</Button>
                                                 </li>
                                                 {/* Logic for direct page numbers if needed, for now just 1...N */}
                                                 {Array.from({ length: Math.ceil(filteredCategories.length / pageSize) }).map((_, idx) => (
@@ -348,7 +357,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                                     </li>
                                                 ))}
                                                 <li className={currentPage >= Math.ceil(filteredCategories.length / pageSize) ? "page-item disabled" : "page-item"}>
-                                                    <Button variant="link" className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>Next</Button>
+                                                    <Button variant="link" className="page-link" onClick={() => setCurrentPage(currentPage + 1)}>{t("master.common.pagination.next")}</Button>
                                                 </li>
                                             </ul>
                                         </Col>

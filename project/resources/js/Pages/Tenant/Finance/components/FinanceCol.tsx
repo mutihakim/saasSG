@@ -1,6 +1,7 @@
 import moment from "moment";
 import React from "react";
 import { Badge, Dropdown } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 export const TransactionDate = ({ cell }: any) => (
     <div className="d-flex align-items-center">
@@ -38,8 +39,8 @@ export const Description = ({ cell }: any) => (
 
 export const Amount = ({ cell, row }: any) => {
     const type = row.original.type;
-    const color = type === 'income' ? 'success' : (type === 'expense' ? 'danger' : 'warning');
-    const symbol = type === 'income' ? '+' : (type === 'expense' ? '-' : '');
+    const color = type === 'pemasukan' ? 'success' : (type === 'pengeluaran' ? 'danger' : 'warning');
+    const symbol = type === 'pemasukan' ? '+' : (type === 'pengeluaran' ? '-' : '');
     const currencyCode = row.original.currency_code;
 
     return (
@@ -49,11 +50,18 @@ export const Amount = ({ cell, row }: any) => {
     );
 };
 
-export const PaymentMethod = ({ cell }: any) => (
-    <Badge bg="light" className="text-body text-uppercase">
-        {cell.getValue()}
-    </Badge>
-);
+export const PaymentMethod = ({ cell }: any) => {
+    const { t } = useTranslation();
+    const value = cell.getValue();
+    // Use translation key for display (backend enum value -> translated label)
+    const label = t(`finance.transactions.payment_methods.${value}`, { defaultValue: value });
+    
+    return (
+        <Badge bg="light" className="text-body text-uppercase">
+            {label}
+        </Badge>
+    );
+};
 
 export const Tags = ({ cell }: any) => (
     <div className="d-flex flex-wrap gap-1">
@@ -62,6 +70,9 @@ export const Tags = ({ cell }: any) => (
                 #{tag.name}
             </Badge>
         ))}
+        {(!cell.getValue() || cell.getValue().length === 0) && (
+            <span className="text-muted">-</span>
+        )}
     </div>
 );
 

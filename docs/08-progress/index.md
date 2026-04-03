@@ -1,6 +1,6 @@
 # 08 - Progress Dashboard
 
-Last updated: `2026-04-02`
+Last updated: `2026-04-03`
 
 Progress dashboard ini dipakai untuk memantau execution health lintas modul. Detail teknis tetap ada di `03-features/*`.
 
@@ -9,10 +9,10 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 | Modul | Status | Progress | Owner | Last Updated | Detail |
 |---|---|---:|---|---|---|
 | RBAC | Done | 100% | Platform Team | 2026-04-02 | Policy per-entitas (`TenantUomPolicy`, `TenantCurrencyPolicy`, dll) sudah modular. [RBAC Progress](./modules/rbac.md) |
-| i18n | Done | 100% | Frontend Team | 2026-04-02 | Locale end-to-end selesai: `X-Locale` header → `SetRequestLocale` → `EnsureTenantAccess` respects header → `lang/en+id/validation.php` → `parseApiError` frontend reactive. [i18n Progress](./modules/i18n.md) |
+| i18n | Done | 100% | Frontend Team | 2026-04-03 | Locale end-to-end selesai: `X-Locale` header → `SetRequestLocale` → `EnsureTenantAccess` respects header → `lang/en+id/validation.php` → `parseApiError` frontend reactive. Finance & Master Data i18n diperluas. [i18n Progress](./modules/i18n.md) |
 | Subscription | Done | 95% | Platform Team | 2026-04-02 | Guard + quota tersedia di semua modul Master Data. Tersisa E2E test upgrade flow. [Subscription Progress](./modules/subscription.md) |
-| Master Data CRUD | Done | 100% | Platform Team | 2026-04-02 | UoM, Currency, Tag, Category: full CRUD + Policy + Soft-Delete Aware Unique Index + i18n + Toast standardized. |
-| Finance | Done | 90% | Finance Team | 2026-04-02 | Transaction CRUD aktif. Tersisa laporan/export. |
+| Master Data CRUD | Done | 100% | Platform Team | 2026-04-03 | UoM, Currency, Tag, Category: full CRUD + Policy + Soft-Delete Aware Unique Index + i18n + Toast standardized. Tag `is_active` management ditambahkan. |
+| Finance | Done | 95% | Finance Team | 2026-04-03 | Transaction CRUD aktif + Payment Methods + Tags integration + Polymorphic relations fixed. Tersisa laporan/export. |
 | Tenant Settings | Done | 90% | Platform Team | 2026-03-30 | Tenant profile, billing, localization, dan branding upload per tenant sudah aktif; tersisa verifikasi browser/E2E visual. |
 | WhatsApp | Done | 100% | Integration Team | 2026-03-31 | [WhatsApp Progress](./modules/whatsapp.md) |
 | Routing & Websocket | Done | 100% | Platform Team | 2026-03-31 | Subdomain-based routing, CORS Inertia, dynamisasi Reverb WSS. |
@@ -20,6 +20,16 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 ## Top Global Blocker
 
 - *Belum ada blocker sistemik yang menghalangi rilis ke staging.*
+
+## Perubahan Arsitektural Besar (2026-04-03)
+
+1. **Polymorphic Relations ID Type Fix**: Fixed type mismatch di `tenant_taggables` dan `tenant_attachments` dengan mengubah kolom `*_id` dari `ulid()` ke `string(100)` untuk kompatibilitas dengan BIGINT dan ULID/UUID models.
+2. **FinanceTransaction Polymorphic Workaround**: Menambahkan `$keyType = 'string'` ke `FinanceTransaction` model untuk kompatibilitas dengan polymorphic relations tanpa mengubah primary key type.
+3. **Tags is_active Management**: Menambahkan field `is_active` ke `tenant_tags` untuk soft-deactivation tags tanpa menghapus data.
+4. **Finance Payment Methods**: Implementasi payment method enum (Tunai, Transfer, Kartu Kredit/Debit, E-Wallet, QRIS, Lainnya) di finance transactions.
+5. **Finance Tags Integration**: Tags sekarang bisa di-attach ke finance transactions via polymorphic relation (`morphToMany`).
+6. **Category Module Selection**: Category sekarang memiliki field `module` untuk membedakan kategori per modul (finance, grocery, inventory, task, medical, wishlist).
+7. **Extensive i18n Coverage**: Penambahan translation keys untuk finance (payment methods, notifications, placeholders) dan master data (categories modules, status, bulk operations).
 
 ## Perubahan Arsitektural Besar (2026-04-02)
 

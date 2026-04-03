@@ -205,24 +205,39 @@ const CategoryModal = ({
             <Col lg={6}>
               <Form.Group className="mb-3">
                 <Form.Label>{t("master.categories.fields.module")}</Form.Label>
-                <Form.Control
-                  type="text"
-                  value={formData.module ? formData.module.toUpperCase() : ""}
-                  disabled
-                />
+                {isEdit ? (
+                  <Form.Control
+                    type="text"
+                    value={formData.module ? t(`master.categories.modules.${formData.module}`) : ""}
+                    disabled
+                  />
+                ) : (
+                  <Form.Select
+                    value={formData.module}
+                    onChange={(e) => setFormData({ ...formData, module: e.target.value })}
+                  >
+                    <option value="">{t("master.categories.placeholders.select_module")}</option>
+                    <option value="finance">{t("master.categories.modules.finance")}</option>
+                    <option value="grocery">{t("master.categories.modules.grocery")}</option>
+                    <option value="inventory">{t("master.categories.modules.inventory")}</option>
+                    <option value="task">{t("master.categories.modules.task")}</option>
+                    <option value="medical">{t("master.categories.modules.medical")}</option>
+                    <option value="wishlist">{t("master.categories.modules.wishlist")}</option>
+                  </Form.Select>
+                )}
               </Form.Group>
             </Col>
 
             {module === 'finance' && (
               <Col lg={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>Type</Form.Label>
+                  <Form.Label>{t("master.categories.fields.type")}</Form.Label>
                   <Form.Select
                     value={formData.sub_type}
                     onChange={(e) => setFormData({ ...formData, sub_type: e.target.value })}
                   >
-                    <option value="pemasukan">Income (Pemasukan)</option>
-                    <option value="pengeluaran">Expense (Pengeluaran)</option>
+                    <option value="pemasukan">{t("master.categories.types.income")}</option>
+                    <option value="pengeluaran">{t("master.categories.types.expense")}</option>
                   </Form.Select>
                 </Form.Group>
               </Col>
@@ -230,22 +245,22 @@ const CategoryModal = ({
 
             <Col lg={12}>
               <Form.Group className="mb-3">
-                <Form.Label>Parent Category (Optional)</Form.Label>
+                <Form.Label>{t("master.categories.fields.parent")}</Form.Label>
                 <Select
                   options={parentOptions}
                   value={parentOptions.find(o => String(o.value) === String(formData.parent_id)) || null}
                   onChange={(opt: any) => setFormData({ ...formData, parent_id: opt ? opt.value : "" })}
                   isClearable
-                  placeholder="Select Parent (Root only)"
+                  placeholder={t("master.categories.placeholders.parent")}
                   classNamePrefix="react-select"
                 />
-                <Form.Text className="text-muted">Max 1 level nesting (Root to Child)</Form.Text>
+                <Form.Text className="text-muted">{t("master.categories.help.parent_max_level")}</Form.Text>
               </Form.Group>
             </Col>
 
             <Col lg={6}>
               <Form.Group className="mb-3">
-                <Form.Label>Icon</Form.Label>
+                <Form.Label>{t("master.categories.fields.icon")}</Form.Label>
                 <Select
                     options={ICON_OPTIONS}
                     components={{ Option: IconOption, SingleValue: IconSingleValue }}
@@ -258,7 +273,7 @@ const CategoryModal = ({
 
             <Col lg={6}>
               <Form.Group className="mb-3">
-                <Form.Label>Theme Color</Form.Label>
+                <Form.Label>{t("master.categories.fields.color")}</Form.Label>
                 <Select
                     options={COLOR_OPTIONS}
                     components={{ Option: ColorOption, SingleValue: ColorSingleValue }}
@@ -283,9 +298,9 @@ const CategoryModal = ({
           </Row>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="light" onClick={onClose} disabled={loading}>{t("master.uom.buttons.cancel")}</Button>
+          <Button variant="light" onClick={onClose} disabled={loading}>{t("master.categories.buttons.cancel")}</Button>
           <Button variant="primary" type="submit" disabled={loading}>
-            {loading ? t("master.uom.buttons.saving") : (isEdit ? t("master.categories.modals.edit_title") : t("master.categories.modals.add_title"))}
+            {loading ? t("master.categories.buttons.saving") : (isEdit ? t("master.categories.buttons.update") : t("master.categories.buttons.save"))}
           </Button>
         </Modal.Footer>
       </Form>

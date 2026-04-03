@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import Select from "react-select";
 
 import TagsInput from "../../../../Components/Finance/TagsInput";
+import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
 import { useTenantRoute } from "../../../../common/tenantRoute";
 
@@ -36,58 +37,60 @@ const TransactionModal = ({
 
     const [loading, setLoading] = useState(false);
     const [formData, setFormData] = useState({
-        type: "expense",
+        type: "pengeluaran",  // Backend enum value (NOT "expense")
         transaction_date: new Date().toISOString(),
         amount: "",
         currency_code: defaultCurrency,
         category_id: "",
-        payment_method: "cash",
+        payment_method: "tunai",  // Backend enum value
         description: "",
         tags: [] as string[],
+        row_version: 1,
     });
 
     useEffect(() => {
         if (show) {
             if (transaction) {
+                // Backend sends enum values directly (pemasukan/pengeluaran)
+                // No mapping needed - use directly as form values
                 setFormData({
-                    type: transaction.type,
+                    type: transaction.type,  // Direct from backend
                     transaction_date: transaction.transaction_date,
                     amount: String(transaction.amount),
                     currency_code: transaction.currency_code,
                     category_id: String(transaction.category_id || ""),
-                    payment_method: transaction.payment_method,
+                    payment_method: transaction.payment_method,  // Direct from backend
                     description: transaction.description || "",
                     tags: (transaction.tags || []).map((tag: any) => tag.name),
+                    row_version: transaction.row_version || 1,
                 });
             } else {
                 setFormData({
-                    type: "expense",
+                    type: "pengeluaran",  // Backend enum value
                     transaction_date: new Date().toISOString(),
                     amount: "",
                     currency_code: defaultCurrency,
                     category_id: "",
-                    payment_method: "cash",
+                    payment_method: "tunai",  // Backend enum value
                     description: "",
                     tags: [],
+                    row_version: 1,
                 });
             }
         }
     }, [show, transaction, defaultCurrency]);
 
-    // Map English type to Indonesian sub_type for category filtering
+    // Filter categories based on type (backend enum values)
     const getSubTypeForType = (type: string): string => {
-        const typeMap: Record<string, string> = {
-            'income': 'pemasukan',
-            'expense': 'pengeluaran',
-            'transfer': 'all'
-        };
-        return typeMap[type] || 'all';
+        // Backend enum values are already in Indonesian
+        // Just return as-is for category filtering
+        return type === 'transfer' ? 'all' : type;
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.amount || !formData.transaction_date) {
-            notify.error("Please fill required fields");
+            notify.error(t("finance.notifications.missing_fields"));
             return;
         }
 
@@ -97,21 +100,30 @@ const TransactionModal = ({
             : tenantRoute.apiTo("/finance/transactions");
 
         try {
+            const payload: any = {
+                ...formData,
+                amount: parseFloat(formData.amount),
+            };
+            
+            // Only send row_version for update (edit) operations
+            if (isEdit) {
+                payload.row_version = formData.row_version;
+            }
+
             await axios({
                 method: isEdit ? "patch" : "post",
                 url,
-                data: {
-                    ...formData,
-                    amount: parseFloat(formData.amount),
-                    row_version: transaction?.row_version
-                }
+                data: payload
             });
             notify.success(t(isEdit ? "finance.messages.success_update" : "finance.messages.success_save"));
             onSuccess();
             onClose();
         } catch (error: any) {
-            const msg = error.response?.data?.message || "Something went wrong";
-            notify.error(msg);
+            const parsed = parseApiError(error, t("finance.notifications.transaction_save_failed"));
+            notify.error({
+                title: parsed.title,
+                detail: parsed.detail
+            });
         } finally {
             setLoading(false);
         }
@@ -146,15 +158,16 @@ const TransactionModal = ({
                         <Col md={6}>
                             <Form.Label>{t("finance.modals.transaction.fields.type")}</Form.Label>
                             <div className="d-flex gap-3 mt-1">
-                                {["income", "expense", "transfer"].map((type) => (
+                                {["pemasukan", "pengeluaran", "transfer"].map((type) => (
                                     <Form.Check
                                         key={type}
                                         type="radio"
                                         id={`type-${type}`}
                                         label={t(`finance.transactions.types.${type}`)}
                                         name="type"
+                                        value={type}
                                         checked={formData.type === type}
-                                        onChange={() => setFormData({ ...formData, type })}
+                                        onChange={(e: any) => setFormData({ ...formData, type: e.target.value })}
                                     />
                                 ))}
                             </div>
@@ -188,7 +201,7 @@ const TransactionModal = ({
                                 step="any"
                                 value={formData.amount}
                                 onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                                placeholder="0.00"
+                                placeholder={t("finance.modals.transaction.placeholders.amount")}
                                 required
                             />
                         </Col>
@@ -202,7 +215,7 @@ const TransactionModal = ({
                                 value={categoryOptions.find(o => o.value === formData.category_id)}
                                 onChange={(opt: any) => setFormData({ ...formData, category_id: opt?.value || "" })}
                                 isClearable
-                                placeholder="Select category..."
+                                placeholder={t("finance.modals.transaction.placeholders.category")}
                                 classNamePrefix="react-select"
                             />
                         </Col>
@@ -225,7 +238,7 @@ const TransactionModal = ({
                                 rows={2}
                                 value={formData.description}
                                 onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                placeholder="Buy groceries, Netflix subscription, etc."
+                                placeholder={t("finance.modals.transaction.placeholders.description")}
                             />
                         </Col>
                     </Row>
@@ -236,6 +249,7 @@ const TransactionModal = ({
                             <TagsInput
                                 value={formData.tags}
                                 onChange={(tags) => setFormData({ ...formData, tags })}
+                                placeholder={t("finance.modals.transaction.placeholders.tags")}
                             />
                         </Col>
                     </Row>

@@ -16,6 +16,7 @@ use App\Policies\TenantTagPolicy;
 use App\Policies\TenantCurrencyPolicy;
 use App\Policies\TenantUomPolicy;
 use Illuminate\Foundation\Support\Providers\AuthServiceProvider as ServiceProvider;
+use Illuminate\Support\Str;
 use Spatie\Permission\Models\Role;
 
 class AuthServiceProvider extends ServiceProvider
@@ -40,6 +41,15 @@ class AuthServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        // Register morph map for polymorphic relations
+        // This ensures consistent naming and helps with type compatibility
+        \Illuminate\Database\Eloquent\Relations\Relation::morphMap([
+            'finance_transaction' => FinanceTransaction::class,
+            'tenant_category' => TenantCategory::class,
+            'tenant_member' => TenantMember::class,
+            'tenant_tag' => TenantTag::class,
+            'tenant_currency' => TenantCurrency::class,
+            'tenant_uom' => TenantUom::class,
+        ]);
     }
 }

@@ -23,12 +23,13 @@ class FinanceSummaryService
                 ->forTenant($tenant->id)
                 ->whereYear('transaction_date', $year)
                 ->whereMonth('transaction_date', $mon)
-                ->selectRaw('type, SUM(amount_base) as total, COUNT(*) as count')
+                ->selectRaw('type, SUM(amount_base) as total')
                 ->groupBy('type')
-                ->pluck('total', 'type');
+                ->get()
+                ->mapWithKeys(fn ($item) => [$item->type->value => (float) $item->total]);
 
-            $totalIncome  = (float) ($totals['pemasukan']   ?? 0);
-            $totalExpense = (float) ($totals['pengeluaran'] ?? 0);
+            $totalIncome  = $totals['pemasukan'] ?? 0;
+            $totalExpense = $totals['pengeluaran'] ?? 0;
 
             $transactionCount = FinanceTransaction::query()
                 ->forTenant($tenant->id)
@@ -40,7 +41,8 @@ class FinanceSummaryService
                 ->forTenant($tenant->id)
                 ->whereYear('transaction_date', $year)
                 ->whereMonth('transaction_date', $mon)
-                ->where('currency_code', '!=', $tenant->currency_code ?? 'IDR')
+                ->join('tenant_currencies', 'tenant_currencies.id', '=', 'finance_transactions.currency_id')
+                ->where('tenant_currencies.code', '!=', $tenant->currency_code ?? 'IDR')
                 ->exists();
 
             // Top 5 expense categories
@@ -49,9 +51,9 @@ class FinanceSummaryService
                 ->whereYear('transaction_date', $year)
                 ->whereMonth('transaction_date', $mon)
                 ->where('type', 'pengeluaran')
-                ->join('shared_categories', 'shared_categories.id', '=', 'finance_transactions.category_id')
-                ->selectRaw('shared_categories.id, shared_categories.name, shared_categories.icon, shared_categories.color, SUM(finance_transactions.amount_base) as total')
-                ->groupBy('shared_categories.id', 'shared_categories.name', 'shared_categories.icon', 'shared_categories.color')
+                ->join('tenant_categories', 'tenant_categories.id', '=', 'finance_transactions.category_id')
+                ->selectRaw('tenant_categories.id, tenant_categories.name, tenant_categories.icon, tenant_categories.color, SUM(finance_transactions.amount_base) as total')
+                ->groupBy('tenant_categories.id', 'tenant_categories.name', 'tenant_categories.icon', 'tenant_categories.color')
                 ->orderByDesc('total')
                 ->limit(5)
                 ->get()
