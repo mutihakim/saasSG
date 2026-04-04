@@ -27,8 +27,10 @@ export default defineConfig({
       {
         text: 'Guides & Features',
         items: [
+          { text: 'Finance', link: '/03-features/finance' },
           { text: 'RBAC', link: '/guide/rbac' },
           { text: 'i18n', link: '/guide/i18n' },
+          { text: 'PWA Module Template', link: '/guide/pwa-module-template' },
           { text: 'Subscription', link: '/guide/subscription' },
           { text: 'WhatsApp Integration', link: '/guide/whatsapp' },
           { text: 'Tenant Settings', link: '/03-features/tenant-settings' },
@@ -38,6 +40,7 @@ export default defineConfig({
         text: 'Progress',
         items: [
           { text: 'Progress Dashboard', link: '/08-progress/index' },
+          { text: 'Finance Progress', link: '/08-progress/modules/finance' },
           { text: 'RBAC Progress', link: '/08-progress/modules/rbac' },
           { text: 'i18n Progress', link: '/08-progress/modules/i18n' },
           { text: 'Subscription Progress', link: '/08-progress/modules/subscription' },
@@ -51,6 +54,7 @@ export default defineConfig({
           { text: 'UI Walkthrough', link: '/ui-walkthrough' },
           { text: 'Testing & Quality', link: '/testing-quality' },
           { text: 'Extension Guide', link: '/extension-guide' },
+          { text: 'PWA Module Template', link: '/guide/pwa-module-template' },
           { text: 'Installation Guide', link: '/installation-guide' },
         ],
       },

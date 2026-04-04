@@ -4,6 +4,9 @@ use App\Http\Controllers\Api\MasterCategoryApiController;
 use App\Http\Controllers\Api\MasterTagApiController;
 use App\Http\Controllers\Api\MasterCurrencyApiController;
 use App\Http\Controllers\Api\MasterUomApiController;
+use App\Http\Controllers\Api\FinanceAccountApiController;
+use App\Http\Controllers\Api\FinanceBudgetApiController;
+use App\Http\Controllers\Api\FinanceReportApiController;
 use App\Http\Controllers\Api\FinanceTransactionApiController;
 use App\Http\Controllers\Api\V1\TenantMemberApiController;
 use App\Http\Controllers\Api\V1\TenantMemberProfileApiController;
@@ -64,6 +67,15 @@ Route::prefix('v1')
                 // ── Finance ────────────────────────────────────────────────────────────
                 Route::prefix('finance')->group(function () {
                     Route::get('/summary', [FinanceTransactionApiController::class, 'summary'])->middleware('tenant.feature:finance,view');
+                    Route::get('/reports', [FinanceReportApiController::class, 'index'])->middleware('tenant.feature:finance,view');
+                    Route::get('/accounts', [FinanceAccountApiController::class, 'index'])->middleware('tenant.feature:finance,view');
+                    Route::post('/accounts', [FinanceAccountApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,create', 'throttle:tenant.mutation']);
+                    Route::patch('/accounts/{account}', [FinanceAccountApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
+                    Route::delete('/accounts/{account}', [FinanceAccountApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
+                    Route::get('/budgets', [FinanceBudgetApiController::class, 'index'])->middleware('tenant.feature:finance,view');
+                    Route::post('/budgets', [FinanceBudgetApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,create', 'throttle:tenant.mutation']);
+                    Route::patch('/budgets/{budget}', [FinanceBudgetApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
+                    Route::delete('/budgets/{budget}', [FinanceBudgetApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
                     Route::get('/transactions/export', [FinanceTransactionApiController::class, 'export'])->middleware('tenant.feature:finance,view');
                     Route::get('/transactions', [FinanceTransactionApiController::class, 'index'])->middleware('tenant.feature:finance,view');
                     Route::post('/transactions', [FinanceTransactionApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,create', 'throttle:tenant.mutation']);

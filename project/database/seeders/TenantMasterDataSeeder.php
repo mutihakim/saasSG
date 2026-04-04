@@ -13,6 +13,8 @@ class TenantMasterDataSeeder extends Seeder
             TenantUomSeeder::class,
             TenantCategorySeeder::class,
             TenantTagSeeder::class,
+            TenantBankAccountSeeder::class,
+            TenantBudgetSeeder::class,
             FinanceTransactionSeeder::class,
         ]);
     }

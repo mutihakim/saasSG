@@ -1,440 +1,200 @@
 # 03 Features - Finance Module
 
-## 1) Tujuan dan Ruang Lingkup
+## 1) Ringkasan
 
-Finance module adalah sistem pencatatan transaksi keuangan multi-currency dengan dukungan untuk:
-- pencatatan transaksi pemasukan/pengeluaran/transfer
-- kategorisasi transaksi per modul (finance, grocery, inventory, dll)
-- tagging untuk labeling dan filtering
-- payment method tracking (Tunai, Transfer, Kartu Kredit/Debit, E-Wallet, QRIS)
-- multi-currency dengan konversi ke base currency
-- summary dashboard dengan top expense categories
+Finance sekarang bukan lagi sekadar CRUD transaksi sederhana. Modul ini sudah bergerak ke pola **account-centric**, **member-aware**, dan **Finance PWA Module** yang dibuka dari **Hub**.
 
-Tujuan utamanya:
-- memberikan pencatatan keuangan yang akurat dan teraudit
-- mendukung workflow keluarga/organisasi dalam mengelola keuangan
-- menyediakan data untuk laporan dan analisis
+Fokus implementasi saat ini:
+- transaksi tenant berbasis **ULID string**
+- seluruh kolom polymorphic tetap **`string(100)`**
+- visibilitas transaksi berbasis role + akses akun/budget
+- akun dan budget tenant dapat **private** atau **shared**
+- member biasa memakai model **Private Only** untuk account dan budget
+- transfer dicatat sebagai **pasangan transaksi internal**
+- shell `/finance` berdiri sebagai **Finance PWA Module**
 
-## 2) Arsitektur dan Komponen
+## 2) Kapabilitas Utama
 
-### Backend Components
+- Mencatat `pemasukan`, `pengeluaran`, dan `transfer`
+- Menyimpan transaksi terhadap **akun riil** (`cash`, `bank`, `ewallet`, `credit_card`, `paylater`)
+- Menautkan transaksi ke **budget** secara opsional
+- Mencatat `owner_member_id` untuk audit dan pengalaman multi-member
+- Mendukung **shared access** untuk akun dan budget
+- Mengizinkan member biasa CRUD account/budget **private miliknya sendiri** tanpa menyentuh struktur shared
+- Menyediakan summary dan report yang filter-aware
+- Menulis activity log create/update/delete untuk transaksi finance
 
-| Component | File | Purpose |
+## 3) Arsitektur Domain
+
+### Entitas utama
+
+| Entitas | File | Peran |
 |---|---|---|
-| Model | `app/Models/FinanceTransaction.php` | Transaction entity dengan polymorphic relations |
-| Controller | `app/Http/Controllers/Api/MasterCategoryApiController.php` | Category CRUD API |
-| Controller | `app/Http/Controllers/Api/MasterTagApiController.php` | Tag CRUD API |
-| Service | `app/Services/FinanceSummaryService.php` | Summary calculation & caching |
-| Migration | `database/migrations/*_finance_transactions.php` | Schema definition |
-| Migration | `database/migrations/2026_04_02_230825_add_is_active_to_tenant_tags.php` | Tag is_active field |
-| Migration | `database/migrations/2026_04_02_233000_fix_tenant_taggables_polymorphic_id.php` | Polymorphic ID fix |
+| Transaction | `project/app/Models/FinanceTransaction.php` | Sumber data utama cashflow |
+| Account | `project/app/Models/TenantBankAccount.php` | Menyimpan saldo dan akses akun |
+| Budget | `project/app/Models/TenantBudget.php` | Menyimpan pagu budget periodik |
+| Budget Line | `project/app/Models/TenantBudgetLine.php` | Ledger pemakaian budget |
+| Access Service | `project/app/Services/FinanceAccessService.php` | Scope akun, budget, dan transaksi per member |
+| Ledger Service | `project/app/Services/FinanceLedgerService.php` | Update saldo akun dan ledger terkait |
+| Summary Service | `project/app/Services/FinanceSummaryService.php` | Agregasi summary + pengecualian transfer internal |
 
-### Frontend Components
+### Identifier internal
 
-| Component | File | Purpose |
-|---|---|---|
-| Page | `resources/js/Pages/Tenant/Finance/Index.tsx` | Main finance dashboard |
-| Component | `resources/js/Pages/Tenant/Finance/components/FinanceCol.tsx` | Finance column components |
-| Component | `resources/js/Pages/Tenant/Finance/components/TransactionModal.tsx` | Transaction CRUD modal |
-| Component | `resources/js/Components/Finance/TagsInput.tsx` | Tags input component |
-| Locale | `resources/js/locales/{en,id}/tenant/finance.json` | Finance translations |
+- `TenantBudget.code` tetap ada di database sebagai identifier internal untuk audit, export, dan referensi admin
+- `TenantBudget.code` **tidak lagi ditampilkan di UI Finance PWA**
+- bila `code` tidak dikirim saat create/update, backend akan:
+  - membuat `code` otomatis saat data baru dibuat
+  - mempertahankan `code` lama bila budget existing diedit tanpa mengubah kode
+- `TenantBankAccount` **tidak memiliki field `code`**
+- account diidentifikasi lewat kombinasi `name`, `type`, `currency_code`, `scope`, dan `owner_member_id`
 
-## 3) Database Schema
+### Prinsip multi-tenant dan multi-member
 
-### Finance Transactions
+- `Tenant` merepresentasikan keluarga
+- `TenantMember` merepresentasikan ayah/ibu/anak/dll
+- setiap transaksi wajib punya `owner_member_id`
+- `Owner/Admin` default melihat seluruh transaksi tenant
+- `Owner/Admin` bisa CRUD shared dan private account/budget
+- member biasa memakai model **Private Only**:
+  - bisa CRUD transaksi miliknya
+  - bisa CRUD account private miliknya sendiri
+  - bisa CRUD budget private miliknya sendiri
+  - tidak bisa membuat atau mengubah item shared
+- member biasa default melihat transaksi yang relevan terhadap dirinya:
+  - transaksi miliknya
+  - transaksi pada akun yang bisa dia lihat/pakai
+  - transaksi pada budget yang bisa dia lihat
+  - transfer yang melibatkan akun yang bisa dia akses
 
-```sql
-CREATE TABLE finance_transactions (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    category_id BIGINT,
-    currency_id BIGINT,
-    created_by BIGINT,
-    type ENUM('pemasukan', 'pengeluaran', 'transfer') NOT NULL,
-    transaction_date DATE NOT NULL,
-    amount DECIMAL(12, 2) NOT NULL,
-    description TEXT,
-    exchange_rate DECIMAL(12, 6) DEFAULT 1.000000,
-    base_currency_code VARCHAR(10) DEFAULT 'IDR',
-    amount_base DECIMAL(12, 2),
-    notes TEXT,
-    payment_method ENUM('tunai', 'transfer', 'kartu_kredit', 'kartu_debit', 'dompet_digital', 'qris', 'lainnya'),
-    reference_number VARCHAR(100),
-    merchant_name VARCHAR(255),
-    location VARCHAR(255),
-    status VARCHAR(50) DEFAULT 'draft',
-    row_version INTEGER DEFAULT 1,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP NULL,
-    
-    -- Indexes
-    INDEX idx_tenant_date (tenant_id, transaction_date),
-    INDEX idx_type (type),
-    INDEX idx_category (category_id),
-    INDEX idx_payment_method (payment_method)
-);
-```
+## 4) Database & ID Strategy
 
-### Polymorphic Relations (Tags)
+### Finance Transaction
 
-```sql
-CREATE TABLE tenant_tags (
-    id BIGINT PRIMARY KEY AUTO_INCREMENT,
-    tenant_id BIGINT NOT NULL,
-    name VARCHAR(100) NOT NULL,
-    color VARCHAR(7) DEFAULT '#677abd',
-    usage_count INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT TRUE,  -- ← Added 2026-04-03
-    row_version INTEGER DEFAULT 1,
-    created_at TIMESTAMP,
-    updated_at TIMESTAMP,
-    deleted_at TIMESTAMP NULL,
-    
-    INDEX idx_tenant_active (tenant_id, is_active)
-);
+- `finance_transactions.id` memakai **ULID string**
+- model memakai `HasUlids`, bukan workaround legacy
+- kolom integrasi baru:
+  - `source_type`
+  - `source_id`
+  - `bank_account_id`
+  - `budget_id`
+  - `owner_member_id`
+  - `budget_status`
+  - `budget_delta`
+  - `is_internal_transfer`
+  - `transfer_pair_id`
 
-CREATE TABLE tenant_taggables (
-    tenant_tag_id BIGINT NOT NULL,
-    taggable_type VARCHAR(100) NOT NULL,
-    taggable_id VARCHAR(100) NOT NULL,  -- ← STRING untuk polymorphic compatibility
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    
-    PRIMARY KEY (tenant_tag_id, taggable_type, taggable_id),
-    INDEX idx_taggable (taggable_type, taggable_id),
-    FOREIGN KEY (tenant_tag_id) REFERENCES tenant_tags(id) ON DELETE CASCADE
-);
+### Polymorphic rule
+
+Sesuai `docs/extension-guide.md`, seluruh kolom polymorphic tetap:
+
+```php
+$table->string('taggable_id', 100);
+$table->string('attachable_id', 100);
+$table->string('ruleable_id', 100);
+$table->string('source_id', 100);
 ```
 
 > [!IMPORTANT]
-> **Polymorphic ID Type:** `taggable_id` menggunakan `string(100)` bukan `ulid()` atau `bigInteger()` untuk mendukung berbagai tipe primary key dari model yang berbeda (BIGINT, ULID, UUID).
+> Finance memakai ULID string, **bukan binary**, agar tetap konsisten dengan seluruh polymorphic contract repo.
 
-## 4) Enum Definitions
-
-### Transaction Type
-
-```php
-enum TransactionType: string
-{
-    case PEMASUKAN = 'pemasukan';
-    case PENGELUARAN = 'pengeluaran';
-    case TRANSFER = 'transfer';
-}
-```
-
-### Payment Method
-
-```php
-enum PaymentMethod: string
-{
-    case TUNAI = 'tunai';
-    case TRANSFER = 'transfer';
-    case KARTU_KREDIT = 'kartu_kredit';
-    case KARTU_DEBIT = 'kartu_debit';
-    case DOMPET_DIGITAL = 'dompet_digital';
-    case QRIS = 'qris';
-    case LAINNYA = 'lainnya';
-}
-```
-
-## 5) API Endpoints
+## 5) API Surface
 
 ### Transactions
 
-| Method | Endpoint | Permission | Description |
-|---|---|---|---|
-| GET | `/api/transactions` | `finance.view` | List transactions dengan filter |
-| POST | `/api/transactions` | `finance.create` | Create transaction |
-| PATCH | `/api/transactions/{id}` | `finance.update` | Update transaction |
-| DELETE | `/api/transactions/{id}` | `finance.delete` | Soft delete transaction |
-
-### Categories
-
-| Method | Endpoint | Permission | Description |
-|---|---|---|---|
-| GET | `/api/categories` | `master.categories.view` | List categories per module |
-| POST | `/api/categories` | `master.categories.create` | Create category |
-| PATCH | `/api/categories/{id}` | `master.categories.update` | Update category |
-| DELETE | `/api/categories/{id}` | `master.categories.delete` | Soft delete category |
-
-### Tags
-
-| Method | Endpoint | Permission | Description |
-|---|---|---|---|
-| GET | `/api/tags` | `master.tags.view` | List tags (dengan filter is_active) |
-| POST | `/api/tags` | `master.tags.create` | Create tag |
-| PATCH | `/api/tags/{id}` | `master.tags.update` | Update tag |
-| DELETE | `/api/tags/{id}` | `master.tags.delete` | Soft delete tag |
-
-## 6) Frontend-Backend Communication
-
-### Request Pattern
-
-```tsx
-// Create transaction dengan tags
-const response = await axios.post(`/api/tenants/${tenant.id}/transactions`, {
-  type: 'pengeluaran',
-  amount: 150000,
-  transaction_date: '2026-04-03',
-  category_id: 5,
-  payment_method: 'dompet_digital',
-  description: 'Belanja bulanan',
-  tags: [1, 3, 7],  // Array of tag IDs
-  row_version: 1
-});
-```
-
-### Response Pattern
-
-```json
-{
-  "ok": true,
-  "data": {
-    "id": 123,
-    "type": "pengeluaran",
-    "amount": "150000.00",
-    "amount_base": "150000.00",
-    "payment_method": "dompet_digital",
-    "category": { "id": 5, "name": "Belanja", "icon": "ri-shopping-cart-line", "color": "#4CAF50" },
-    "tags": [
-      { "id": 1, "name": "Penting", "color": "#FF5722", "is_active": true },
-      { "id": 3, "name": "Bulanan", "color": "#2196F3", "is_active": true }
-    ],
-    "row_version": 1,
-    "transaction_date": "2026-04-03",
-    "created_at": "2026-04-03T10:00:00Z"
-  }
-}
-```
-
-### Optimistic Concurrency Control
-
-```tsx
-// Frontend menyimpan row_version
-const [formData, setFormData] = useState({
-  amount: 0,
-  row_version: 1
-});
-
-// Saat update, kirim row_version
-await axios.patch(`/api/transactions/${id}`, {
-  ...formData,
-  row_version: currentTransaction.row_version
-});
-
-// Handle version conflict (409)
-if (response.status === 409 && response.data.error_code === 'VERSION_CONFLICT') {
-  notify.error({
-    title: 'Conflict',
-    detail: 'Data diubah oleh pengguna lain. Silakan muat ulang.'
-  });
-  // Reload data
-}
-```
-
-## 7) Finance Summary Service
-
-Service ini menghitung summary keuangan untuk dashboard dengan caching:
-
-```php
-// Usage
-$summary = app(FinanceSummaryService::class)->getSummary($tenant, '2026-04');
-
-// Response
-[
-    'period' => '2026-04',
-    'base_currency' => 'IDR',
-    'total_income_base' => 5000000.00,
-    'total_expense_base' => 3500000.00,
-    'balance_base' => 1500000.00,
-    'transaction_count' => 25,
-    'has_multi_currency' => false,
-    'top_expense_categories' => [
-        ['id' => 5, 'name' => 'Belanja', 'icon' => 'ri-shopping-cart-line', 'color' => '#4CAF50', 'amount' => 1500000, 'pct' => 42.9],
-        // ... top 5
-    ]
-]
-```
-
-**Cache Invalidation:**
-```php
-// Setelah transaction CRUD
-app(FinanceSummaryService::class)->invalidate($tenantId, '2026-04');
-```
-
-## 8) i18n Keys
-
-### Finance Module
-
-```json
-{
-  "finance.transactions.table.payment_method": "Payment Method",
-  "finance.transactions.types.pemasukan": "Income",
-  "finance.transactions.types.pengeluaran": "Expense",
-  "finance.transactions.payment_methods.tunai": "Cash",
-  "finance.transactions.payment_methods.dompet_digital": "E-Wallet",
-  "finance.modals.transaction.fields.payment_method": "Payment Method",
-  "finance.modals.transaction.fields.tags": "Tags",
-  "finance.notifications.transaction_save_failed": "Failed to save transaction"
-}
-```
-
-### Master Data - Categories
-
-```json
-{
-  "master.categories.modules.finance": "Finance",
-  "master.categories.modules.grocery": "Grocery",
-  "master.categories.modules.inventory": "Inventory",
-  "master.categories.types.income": "Income",
-  "master.categories.types.expense": "Expense",
-  "master.categories.placeholders.select_module": "Select module..."
-}
-```
-
-### Master Data - Tags
-
-```json
-{
-  "master.tags.status.active": "Active",
-  "master.tags.status.inactive": "Inactive",
-  "master.tags.fields.is_active": "Active"
-}
-```
-
-## 9) Access Rules dan Permission
-
-Permission contract untuk finance module:
-
-| Permission | Description |
-|---|---|
-| `finance.view` | View transactions dan dashboard |
-| `finance.create` | Create transaction baru |
-| `finance.update` | Update transaction existing |
-| `finance.delete` | Soft delete transaction |
-
-Master Data permissions:
-
-| Permission | Description |
-|---|---|
-| `master.categories.view` | View categories |
-| `master.categories.create` | Create category |
-| `master.categories.update` | Update category |
-| `master.categories.delete` | Delete category |
-| `master.tags.view` | View tags |
-| `master.tags.create` | Create tag |
-| `master.tags.update` | Update tag |
-| `master.tags.delete` | Delete tag |
-
-## 10) Error Handling
-
-### Common Error Codes
-
-| Error Code | HTTP Status | Description |
+| Method | Endpoint | Keterangan |
 |---|---|---|
-| `VERSION_CONFLICT` | 409 | Optimistic concurrency conflict |
-| `MISSING_FIELDS` | 422 | Required fields not filled |
-| `CATEGORY_NOT_FOUND` | 404 | Category ID tidak valid |
-| `TAG_INACTIVE` | 400 | Tag yang digunakan sudah nonaktif |
+| `GET` | `/api/v1/tenants/{tenant}/finance/transactions` | List transaksi filter-aware |
+| `GET` | `/api/v1/tenants/{tenant}/finance/summary` | Summary berdasarkan filter aktif |
+| `POST` | `/api/v1/tenants/{tenant}/finance/transactions` | Create income/expense |
+| `PATCH` | `/api/v1/tenants/{tenant}/finance/transactions/{transaction}` | Update transaksi |
+| `DELETE` | `/api/v1/tenants/{tenant}/finance/transactions/{transaction}` | Delete transaksi |
 
-### Frontend Error Handling
+### Accounts / Budgets / Reports
 
-```tsx
-import { parseApiError } from '../../../../common/apiError';
-import { notify } from '../../../../common/notify';
+| Method | Endpoint | Keterangan |
+|---|---|---|
+| `GET` | `/api/v1/tenants/{tenant}/finance/accounts` | List akun yang boleh diakses member |
+| `POST` | `/api/v1/tenants/{tenant}/finance/accounts` | Create account |
+| `PATCH` | `/api/v1/tenants/{tenant}/finance/accounts/{account}` | Update account |
+| `DELETE` | `/api/v1/tenants/{tenant}/finance/accounts/{account}` | Delete account |
+| `GET` | `/api/v1/tenants/{tenant}/finance/budgets` | List budget by period |
+| `POST` | `/api/v1/tenants/{tenant}/finance/budgets` | Create budget, `code` boleh kosong dan akan di-generate backend |
+| `PATCH` | `/api/v1/tenants/{tenant}/finance/budgets/{budget}` | Update budget, `code` lama dipertahankan bila payload tidak mengirim kode |
+| `DELETE` | `/api/v1/tenants/{tenant}/finance/budgets/{budget}` | Delete budget |
+| `GET` | `/api/v1/tenants/{tenant}/finance/reports` | Report aggregate untuk tab stats/reports |
 
-try {
-  await saveTransaction();
-  notify.success(t('finance.messages.success_save'));
-} catch (err: any) {
-  const parsed = parseApiError(err, t('finance.notifications.transaction_save_failed'));
-  notify.error({ title: parsed.title, detail: parsed.detail });
-}
+## 6) Summary & Cashflow Rule
+
+Summary finance sekarang tidak lagi dihitung hanya dari list frontend. Summary berasal dari backend dengan filter yang sama dengan list.
+
+Aturan penting:
+- filter member spesifik: agregasi terhadap member tersebut
+- filter tenant/family-wide: agregasi tenant penuh
+- **transfer internal dikeluarkan dari income/expense family-wide** agar tidak double count
+- transfer tetap muncul di history transaksi dan movement akun
+
+## 7) UI / PWA Shell
+
+### Struktur file
+
+| Layer | File / Folder | Tanggung jawab |
+|---|---|---|
+| Route shell | `project/resources/js/Pages/Tenant/Finance/Page.tsx` | Surface route-level finance |
+| Orchestrator | `project/resources/js/Pages/Tenant/Finance/Index.tsx` | State, fetch, modal, tab, zero-refresh |
+| PWA components | `project/resources/js/Pages/Tenant/Finance/components/pwa/*` | Topbar, nav, grouped list, sheet, FAB, skeleton |
+| Form modals | `project/resources/js/Pages/Tenant/Finance/components/*Modal.tsx` | Create/edit account, budget, transaction, transfer |
+
+### Pola UX
+
+- `/finance` berdiri sebagai **PWA Module** yang dibuka dari `Hub`
+- top bar finance ringkas dan khusus modul
+- grouped transaction list per tanggal
+- FAB sebagai aksi utama create
+- detail transaksi memakai full-screen overlay
+- create/edit/delete berjalan dengan **local state upsert/remove**, bukan refresh penuh list
+- bottom nav finance terpisah dari bottom nav home `/hub`
+- form budget disederhanakan:
+  - user hanya mengisi field penting seperti `name`, `period`, `allocated_amount`, `scope`, dan `owner`
+  - `code` budget menjadi concern backend, bukan field form utama
+
+## 8) Seed Data
+
+Seeder tenant finance saat ini:
+
+- `project/database/seeders/TenantBankAccountSeeder.php`
+  - akun private per member
+  - akun shared tenant
+- `project/database/seeders/TenantBudgetSeeder.php`
+  - budget shared dan sample budget personal
+- `project/database/seeders/FinanceTransactionSeeder.php`
+  - sample transaksi finance yang memakai account dan budget
+
+## 9) Testing & Verification
+
+### Automated
+
+```bash
+php artisan migrate:fresh --seed --force
+php artisan test tests/Feature/FinanceTransactionApiTest.php
 ```
 
-## 11) Best Practices
+### Quality gates frontend / docs
 
-### Do:
-- Selalu gunakan `amount_base` untuk perhitungan dan agregasi (base currency)
-- Increment `row_version` setiap update untuk optimistic concurrency control
-- Gunakan `is_active` pada tags untuk soft-deactivation daripada hard delete
-- Invalidate cache summary setelah setiap transaction mutation
-- Gunakan polymorphic relations dengan `string(100)` untuk kolom ID
-- Documentasikan `$keyType = 'string'` workaround di model BIGINT legacy
-
-### Don't:
-- Jangan gunakan `amount` untuk agregasi jika ada multi-currency
-- Jangan skip `row_version` validation di update endpoint
-- Jangan hard delete tags yang masih digunakan (gunakan `is_active = false`)
-- Jangan gunakan `ulid()` atau `bigInteger()` untuk kolom polymorphic pivot
-- Jangan lupa sync `row_version` dari data yang diedit ke frontend state
-
-## 12) Migration Notes
-
-### Polymorphic ID Fix (2026-04-03)
-
-Migration ini memperbaiki type mismatch di polymorphic relations:
-
-```php
-// BEFORE (salah)
-$table->ulid('taggable_id');  // Tidak kompatibel dengan BIGINT models
-
-// AFTER (benar)
-$table->string('taggable_id', 100);  // Kompatibel dengan semua tipe PK
+```bash
+cd project && npm run typecheck
+cd project && npm run build
+npm run docs:build
 ```
 
-**FinanceTransaction Workaround:**
-```php
-class FinanceTransaction extends Model
-{
-    // Workaround untuk kompatibilitas dengan polymorphic string ID
-    protected $keyType = 'string';
-    public $incrementing = true;  // Tetap auto-increment
-}
-```
+## 10) Known Direction
 
-> [!WARNING]
-> Workaround `$keyType = 'string'` hanya untuk model BIGINT legacy. Model baru harus menggunakan `HasUlids` trait.
+Yang sudah menjadi baseline:
+- account-centric finance
+- role-aware transaction visibility
+- shared account / shared budget
+- finance standalone PWA shell
 
-### Tags is_active Field (2026-04-03)
-
-Migration untuk menambahkan status aktif/nonaktif:
-
-```php
-Schema::table('tenant_tags', function (Blueprint $table) {
-    $table->boolean('is_active')->default(true)->after('usage_count');
-    $table->index(['tenant_id', 'is_active']);
-});
-```
-
-**Usage:**
-```php
-// Query hanya tags aktif
-$tags = TenantTag::forTenant($tenantId)->active()->get();
-
-// Toggle is_active
-$tag->update(['is_active' => !$tag->is_active]);
-```
-
-## 13) Screenshot Checklist
-
-Minimum screenshot untuk finance module:
-
-1. `finance-dashboard-happy.png` - Dashboard dengan summary
-2. `finance-transaction-create.png` - Modal create transaction
-3. `finance-transaction-with-tags.png` - Transaction dengan tags
-4. `finance-payment-methods.png` - Payment method selection
-5. `finance-categories-module.png` - Categories dengan module filter
-6. `finance-tags-management.png` - Tags dengan is_active toggle
-
-Folder target:
-- `docs/assets/screenshots/finance`
-
-## 14) Test Coverage Terkait
-
-- `tests/Feature/FinanceTransactionTest.php`
-- `tests/Feature/FinanceSummaryServiceTest.php`
-- `tests/Feature/MasterCategoryTest.php`
-- `tests/Feature/MasterTagTest.php`
-- `tests/Feature/PolymorphicRelationsTest.php`
-- `tests/e2e/finance-crud.spec.ts`
+Yang masih layak dilanjutkan:
+- polishing visual untuk device-specific spacing
+- report/export yang lebih kaya
+- pattern reuse ke modul tenant lain

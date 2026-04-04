@@ -1,14 +1,5 @@
 import i18n from '../i18n';
 
-type ApiErrorEnvelope = {
-    code?: string;
-    message?: string;
-    details?: {
-        hint?: string;
-        fields?: Record<string, string[]>;
-    };
-};
-
 export type ParsedApiError = {
     title: string;
     detail?: string;

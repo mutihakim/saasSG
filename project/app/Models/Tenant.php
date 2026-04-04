@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Str;
 use Stancl\Tenancy\Contracts\Tenant as TenantContract;
 use Stancl\Tenancy\Tenancy;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Tenant extends Model implements TenantContract
 {
@@ -103,6 +104,16 @@ class Tenant extends Model implements TenantContract
     public function members()
     {
         return $this->hasMany(TenantMember::class);
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(TenantBankAccount::class);
+    }
+
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(TenantBudget::class);
     }
 
     public function presentableName(): string

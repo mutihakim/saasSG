@@ -27,7 +27,7 @@ return new class extends Migration
         Schema::create('tenant_taggables', function (Blueprint $table) {
             $table->unsignedBigInteger('tenant_tag_id');
             $table->string('taggable_type', 100);
-            $table->ulid('taggable_id'); // Keeping ULID for transactions/projects that use it
+            $table->string('taggable_id', 100);
             $table->timestamp('created_at')->useCurrent();
 
             $table->primary(['tenant_tag_id', 'taggable_type', 'taggable_id']);

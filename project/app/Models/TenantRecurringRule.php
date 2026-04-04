@@ -17,7 +17,7 @@ class TenantRecurringRule extends Model
         'tenant_id', 'ruleable_type', 'ruleable_id',
         'frequency', 'interval', 'by_day', 'day_of_month',
         'start_date', 'end_date', 'total_occurrences',
-        'row_version',
+        'next_run_at', 'is_active', 'row_version',
     ];
 
     protected function casts(): array
@@ -29,6 +29,8 @@ class TenantRecurringRule extends Model
             'start_date'        => 'date',
             'end_date'          => 'date',
             'total_occurrences' => 'integer',
+            'next_run_at'       => 'datetime',
+            'is_active'         => 'boolean',
             'row_version'       => 'integer',
         ];
     }

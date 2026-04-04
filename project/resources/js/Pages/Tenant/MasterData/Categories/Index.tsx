@@ -2,7 +2,6 @@ import { Head } from "@inertiajs/react";
 import axios from "axios";
 import React, { useMemo, useState, useEffect } from "react";
 import {
-    Container,
     Card,
     Row,
     Col,
@@ -15,12 +14,11 @@ import { useTranslation } from "react-i18next";
 import DeleteModal from "../../../../Components/Common/DeleteModal";
 import TenantPageTitle from "../../../../Components/Common/TenantPageTitle";
 import TenantLayout from "../../../../Layouts/TenantLayout";
+import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
 import { useTenantRoute } from "../../../../common/tenantRoute";
-import { parseApiError } from "../../../../common/apiError";
-
-import CategoryModal from "./components/CategoryModal";
 import CategoriesWidgets from "./components/CategoriesWidgets";
+import CategoryModal from "./components/CategoryModal";
 
 interface CategoriesProps {
     categories: any[];
@@ -46,7 +44,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
     const [isDeleting, setIsDeleting] = useState(false);
     
     const [currentPage, setCurrentPage] = useState(1);
-    const [pageSize, setPageSize] = useState(10);
+    const [pageSize] = useState(10);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
     const fetchCategories = async () => {
@@ -69,7 +67,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
     // Fetch categories when activeTab changes
     useEffect(() => {
         fetchCategories();
-    }, [activeTab]);
+    }, [activeTab, tenantRoute]);
 
     // Flattening logic for nested display
     const flattenCategories = (items: any[], depth = 0): any[] => {
@@ -143,22 +141,6 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
             });
         } finally {
             setIsDeleting(false);
-        }
-    };
-
-    const handleBulkDelete = async () => {
-        if (selectedRows.length === 0) return;
-        if (!window.confirm(t("master.categories.messages.confirm_bulk_delete", { count: selectedRows.length }))) return;
-
-        try {
-            await axios.delete(tenantRoute.apiTo("/master/categories"), {
-                data: { ids: selectedRows }
-            });
-            notify.success(t("master.categories.messages.bulk_delete_success"));
-            setSelectedRows([]);
-            fetchCategories();
-        } catch {
-            notify.error(t("master.categories.messages.bulk_delete_failed"));
         }
     };
 

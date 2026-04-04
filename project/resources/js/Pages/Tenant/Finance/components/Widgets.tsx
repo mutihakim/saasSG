@@ -1,5 +1,5 @@
 import React from 'react';
-import { Card, Row, Col } from 'react-bootstrap';
+import { Card, Col } from 'react-bootstrap';
 import CountUp from 'react-countup';
 
 interface SummaryCardProps {

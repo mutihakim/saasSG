@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\SharedTag;
+use App\Models\TenantTag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 
@@ -15,9 +15,9 @@ class TagService
     {
         if (empty($tagNames)) {
             // Detach all, decrement usage_count
-            $existingTagIds = $model->tags()->pluck('shared_tags.id')->all();
+            $existingTagIds = $model->tags()->pluck('tenant_tags.id')->all();
             if (! empty($existingTagIds)) {
-                SharedTag::whereIn('id', $existingTagIds)
+                TenantTag::whereIn('id', $existingTagIds)
                     ->where('tenant_id', $tenantId)
                     ->decrement('usage_count');
             }
@@ -29,7 +29,7 @@ class TagService
 
         // Upsert tags
         $tags = collect($tagNames)->map(function (string $name) use ($tenantId) {
-            return SharedTag::firstOrCreate(
+            return TenantTag::firstOrCreate(
                 ['tenant_id' => $tenantId, 'name' => $name],
                 ['color' => $this->generateColor($name)]
             );
@@ -37,16 +37,16 @@ class TagService
 
         // Find tags being removed to decrement
         $newIds    = $tags->pluck('id')->all();
-        $oldIds    = $model->tags()->pluck('shared_tags.id')->all();
+        $oldIds    = $model->tags()->pluck('tenant_tags.id')->all();
         $removedIds = array_diff($oldIds, $newIds);
         $addedIds   = array_diff($newIds, $oldIds);
 
         if (! empty($removedIds)) {
-            SharedTag::whereIn('id', $removedIds)->decrement('usage_count');
+            TenantTag::whereIn('id', $removedIds)->decrement('usage_count');
         }
 
         if (! empty($addedIds)) {
-            SharedTag::whereIn('id', $addedIds)->increment('usage_count');
+            TenantTag::whereIn('id', $addedIds)->increment('usage_count');
         }
 
         $model->tags()->sync($newIds);
@@ -57,7 +57,7 @@ class TagService
      */
     public function suggest(int $tenantId, string $query, int $limit = 10): Collection
     {
-        return SharedTag::forTenant($tenantId)
+        return TenantTag::forTenant($tenantId)
             ->search($query)
             ->popular()
             ->limit($limit)

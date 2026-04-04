@@ -25,6 +25,47 @@ Contoh di bawah menggunakan modul `master.warehouses` (Gudang) sebagai ilustrasi
 
 ---
 
+## Standar Baru untuk Hub dan PWA Module
+
+### Istilah Baku
+
+- `Hub` = home utama member di `/hub`
+- `PWA Module` = modul tenant standalone seperti `/finance`
+- `PWA` = sifat teknis mobile-first, bukan nama produk utama
+
+Untuk `Hub` atau `PWA Module` tenant yang ditujukan sebagai pengalaman aplikasi mobile penuh, JANGAN membuat satu halaman raksasa yang memegang seluruh shell, state, filter, loading, dan list sekaligus.
+
+Gunakan dokumen ini bersama template praktis di [`docs/guide/pwa-module-template.md`](./guide/pwa-module-template.md) bila modul baru akan dibangun sebagai standalone PWA tenant.
+
+Gunakan pola berikut sebagai standar:
+
+| Layer | Tanggung Jawab |
+|---|---|
+| `Page.tsx` | Shell route-level yang tipis. Hanya `Head`, background utama, dan mount container modul. |
+| `Index.tsx` | Orchestrator modul. Menjembatani data bootstrapped, state utama, dan event lintas layar. |
+| `components/pwa/*` | UI surface terpisah: top bar, filter panel, list content, skeleton, bottom nav, error state. |
+| `components/*Modal.tsx` | Form create/edit/fullscreen flow yang berdiri sendiri. |
+| `common/*` / service API | Helper tanggal, parsing error, route helper, dan query builder agar tidak duplikasi di layar. |
+
+### Aturan Praktis
+
+- `Page.tsx` target maksimum: tipis dan tidak memuat business state besar.
+- `Index.tsx` boleh jadi orchestration layer, tetapi tetap harus mendorong UI besar ke komponen terpisah bila sudah melewati satu concern besar.
+- Filter kompleks untuk PWA mobile sebaiknya dipindah ke surface sendiri, misalnya slide-in panel atau full-screen filter page. Jangan menumpuk chip/filter bar di header utama.
+- Loading state wajib memakai skeleton untuk layar utama modul PWA, bukan spinner saja.
+- Error state wajib ramah pengguna dan menyediakan aksi retry. Jangan biarkan layar blank saat API gagal.
+- Floating bottom navigation wajib diimbangi `padding-bottom` konten yang eksplisit agar item paling bawah tetap terbaca di atas nav dan safe area.
+- Safe area (`env(safe-area-inset-*)`) harus dipertimbangkan sejak awal untuk top bar, bottom nav, FAB, dan modal fullscreen.
+- Jangan memaksa field identifier internal seperti `code` muncul di UI operasional jika tidak dibutuhkan. Lebih baik:
+  - tampilkan field bisnis utama saja
+  - generate identifier internal di backend saat kosong
+  - pertahankan identifier lama saat edit data existing
+
+> [!IMPORTANT]
+> Untuk modul PWA baru, anggap pola `Page.tsx` + `Index.tsx` + `components/pwa/*` ini sebagai baseline. Jangan lagi memulai dari satu file page monolitik lalu memecahnya belakangan.
+
+---
+
 ### Step 1 — Daftarkan Permission Module
 
 **File:** `config/permission_modules.php`
@@ -118,8 +159,9 @@ $table->bigInteger('taggable_id');   // ❌ SALAH: tidak kompatibel dengan ULID/
 
 > [!IMPORTANT]
 > **Alasan:** Polymorphic relation harus bisa menangani berbagai tipe primary key dari model yang berbeda:
-> - `FinanceTransaction` menggunakan `BIGINT` (id)
-> - Model lain mungkin menggunakan `ULID` atau `UUID`
+> - `FinanceTransaction` sekarang menggunakan **ULID string**
+> - Model lama lain mungkin masih `BIGINT`
+> - Model lain mungkin menggunakan `UUID`
 > 
 > Menggunakan `string(100)` adalah **best practice Laravel** untuk menghindari type mismatch error di database (PostgreSQL error: `operator does not exist: character varying = bigint`).
 
@@ -169,7 +211,7 @@ class NewTransaction extends Model
 | Model baru + akan pakai polymorphic | Gunakan `HasUlids` |
 | Model lama BIGINT + harus pakai polymorphic | Tambahkan `$keyType = 'string'` + dokumentasikan alasannya di kode |
 | Tabel pivot polymorphic | Selalu `string(100)` untuk kolom `*_type` dan `*_id` |
-| Jangan pernah | Pakai `bigInteger` atau `ulid()` untuk kolom polymorphic pivot |
+| Jangan pernah | Pakai `bigInteger`, `uuidMorphs`, atau `ulid()` untuk kolom polymorphic pivot |
 
 
 ---

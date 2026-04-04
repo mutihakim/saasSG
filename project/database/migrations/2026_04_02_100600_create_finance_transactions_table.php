@@ -9,15 +9,17 @@ return new class extends Migration
     public function up(): void
     {
         Schema::create('finance_transactions', function (Blueprint $table) {
-            $table->id(); // Following tenant_members (BIGINT)
+            $table->ulid('id')->primary();
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             
             $table->unsignedBigInteger('category_id')->nullable();
             $table->unsignedBigInteger('currency_id');
             $table->unsignedBigInteger('created_by')->nullable();
+            $table->unsignedBigInteger('updated_by')->nullable();
+            $table->unsignedBigInteger('approved_by')->nullable();
 
             // Core fields
-            $table->enum('type', ['pemasukan', 'pengeluaran']);
+            $table->enum('type', ['pemasukan', 'pengeluaran', 'transfer']);
             $table->date('transaction_date');
             $table->decimal('amount', 15, 2);
             $table->string('description', 255);
@@ -32,11 +34,18 @@ return new class extends Migration
             $table->enum('payment_method', [
                 'tunai', 'transfer', 'kartu_kredit', 'kartu_debit',
                 'dompet_digital', 'qris', 'lainnya'
-            ])->default('tunai');
+            ])->nullable();
             $table->string('reference_number', 100)->nullable();
             $table->string('merchant_name', 150)->nullable();
             $table->string('location', 200)->nullable();
             $table->enum('status', ['terverifikasi', 'pending', 'ditandai'])->default('terverifikasi');
+            $table->string('source_type', 100)->nullable();
+            $table->string('source_id', 100)->nullable();
+            $table->char('budget_id', 26)->nullable();
+            $table->char('bank_account_id', 26)->nullable();
+            $table->timestampTz('approved_at')->nullable();
+            $table->boolean('is_internal_transfer')->default(false);
+            $table->char('transfer_pair_id', 26)->nullable();
 
             // Audit
             $table->unsignedBigInteger('row_version')->default(1);
@@ -58,6 +67,16 @@ return new class extends Migration
                   ->on('tenant_members')
                   ->nullOnDelete();
 
+            $table->foreign('updated_by')
+                  ->references('id')
+                  ->on('tenant_members')
+                  ->nullOnDelete();
+
+            $table->foreign('approved_by')
+                  ->references('id')
+                  ->on('tenant_members')
+                  ->nullOnDelete();
+
             // Indexes for performance
             $table->index(['tenant_id', 'transaction_date']);
             $table->index(['tenant_id', 'type', 'transaction_date']);
@@ -65,6 +84,11 @@ return new class extends Migration
             $table->index(['tenant_id', 'currency_id']);
             $table->index(['tenant_id', 'amount_base']);
             $table->index(['tenant_id', 'deleted_at']);
+            $table->index(['source_type', 'source_id']);
+            $table->index(['tenant_id', 'budget_id']);
+            $table->index(['tenant_id', 'bank_account_id']);
+            $table->index(['tenant_id', 'is_internal_transfer']);
+            $table->index(['tenant_id', 'transfer_pair_id']);
         });
     }
 

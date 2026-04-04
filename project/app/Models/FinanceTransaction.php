@@ -4,6 +4,7 @@ namespace App\Models;
 
 use App\Enums\PaymentMethod;
 use App\Enums\TransactionType;
+use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
@@ -15,31 +16,27 @@ use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FinanceTransaction extends Model
 {
-    use HasFactory, SoftDeletes;
-
-    /**
-     * The "type" of the primary key ID.
-     * 
-     * Using 'string' for polymorphic relation compatibility with PostgreSQL.
-     * This is required because tenant_taggables.taggable_id uses string type
-     * to support multiple model types (BIGINT, ULID, UUID).
-     * 
-     * @see docs/extension-guide.md#polymorphic-relations-id-type
-     */
-    protected $keyType = 'string';
-
-    /**
-     * Indicates if the IDs are auto-incrementing.
-     * Note: Must remain true for BIGINT auto-increment primary key.
-     */
-    public $incrementing = true;
+    use HasFactory, HasUlids, SoftDeletes;
 
     protected $fillable = [
-        'tenant_id', 'category_id', 'currency_id', 'created_by',
+        'tenant_id', 'category_id', 'currency_id', 'created_by', 'owner_member_id', 'updated_by',
+        'approved_by', 'approved_at',
         'type', 'transaction_date', 'amount', 'description',
         'exchange_rate', 'base_currency_code', 'amount_base',
         'notes', 'payment_method', 'reference_number',
         'merchant_name', 'location', 'status', 'row_version',
+        'source_type', 'source_id', 'budget_id', 'bank_account_id',
+        'budget_status', 'budget_delta',
+        'is_internal_transfer', 'transfer_direction', 'transfer_pair_id',
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     */
+    protected $appends = [
+        'currency_code',
+        'formatted_amount',
+        'formatted_amount_base',
     ];
 
     protected function casts(): array
@@ -51,7 +48,10 @@ class FinanceTransaction extends Model
             'amount'           => 'decimal:2',
             'exchange_rate'    => 'decimal:6',
             'amount_base'      => 'decimal:2',
+            'budget_delta'     => 'decimal:2',
             'row_version'      => 'integer',
+            'approved_at'      => 'datetime',
+            'is_internal_transfer' => 'boolean',
         ];
     }
 
@@ -134,6 +134,21 @@ class FinanceTransaction extends Model
         return $this->belongsTo(TenantMember::class, 'created_by');
     }
 
+    public function updatedBy(): BelongsTo
+    {
+        return $this->belongsTo(TenantMember::class, 'updated_by');
+    }
+
+    public function ownerMember(): BelongsTo
+    {
+        return $this->belongsTo(TenantMember::class, 'owner_member_id');
+    }
+
+    public function approvedBy(): BelongsTo
+    {
+        return $this->belongsTo(TenantMember::class, 'approved_by');
+    }
+
     public function attachments(): MorphMany
     {
         return $this->morphMany(TenantAttachment::class, 'attachable')
@@ -151,6 +166,21 @@ class FinanceTransaction extends Model
         return $this->morphOne(TenantRecurringRule::class, 'ruleable');
     }
 
+    public function pairedTransfer(): BelongsTo
+    {
+        return $this->belongsTo(self::class, 'transfer_pair_id');
+    }
+
+    public function bankAccount(): BelongsTo
+    {
+        return $this->belongsTo(TenantBankAccount::class, 'bank_account_id');
+    }
+
+    public function budget(): BelongsTo
+    {
+        return $this->belongsTo(TenantBudget::class, 'budget_id');
+    }
+
     // Accessors
     public function getFormattedAmountAttribute(): string
     {
@@ -164,5 +194,10 @@ class FinanceTransaction extends Model
     public function getFormattedAmountBaseAttribute(): string
     {
         return 'Rp ' . number_format((float) $this->amount_base, 0, ',', '.');
+    }
+
+    public function getCurrencyCodeAttribute(): ?string
+    {
+        return $this->currency?->code ?? $this->base_currency_code;
     }
 }

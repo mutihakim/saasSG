@@ -87,6 +87,16 @@ class TenantCategorySeeder extends Seeder
         ]);
         TenantCategory::updateOrCreate(['tenant_id' => $tenant->id, 'module' => 'finance', 'sub_type' => 'pengeluaran', 'parent_id' => $health->id, 'name' => 'Obat & Vitamin'], []);
         TenantCategory::updateOrCreate(['tenant_id' => $tenant->id, 'module' => 'finance', 'sub_type' => 'pengeluaran', 'parent_id' => $health->id, 'name' => 'Konsultasi Dokter'], []);
+
+        TenantCategory::updateOrCreate([
+            'tenant_id' => $tenant->id,
+            'module'    => 'finance',
+            'sub_type'  => 'transfer',
+            'name'      => 'Transfer Internal',
+        ], [
+            'icon'      => 'ri-arrow-left-right-line',
+            'color'     => '#6C757D',
+        ]);
     }
 
     private function seedGrocery(Tenant $tenant): void

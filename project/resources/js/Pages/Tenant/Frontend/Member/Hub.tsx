@@ -1,9 +1,7 @@
 import { Link } from '@inertiajs/react';
+import { usePage } from '@inertiajs/react';
 import React from 'react';
-import { Row, Col, Card, Badge } from 'react-bootstrap';
-
-import MemberPage from '../../../../Components/Common/MemberPage';
-import TenantMemberLayout from '../../../../Layouts/TenantMemberLayout';
+import { Badge, Card, ProgressBar } from 'react-bootstrap';
 
 interface Props {
     tenantName: string;
@@ -12,169 +10,235 @@ interface Props {
     demo: any;
 }
 
-const Hub: React.FC<Props> = ({ tenantName, member, demo }) => {
+const Hub: React.FC<Props> = ({ tenantName, member, demo: _demo }) => {
+    const { props } = usePage<any>();
     const memberName = member?.user?.name ?? 'Anggota';
     const hour = new Date().getHours();
     const greeting = hour < 11 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : hour < 18 ? 'Selamat Sore' : 'Selamat Malam';
-
-    const totalPoints = (demo?.leaderboard || []).reduce((s: number, l: any) => s + (l.points || 0), 0);
-
+    const entitlements = props.entitlements?.modules ?? {};
     const modules = [
-        { label: 'Kalender', desc: 'Jadwal & agenda', icon: 'ri-calendar-2-line', color: 'primary', href: '/calendar' },
-        { label: 'Proyek', desc: 'Papan proyek Kanban', icon: 'ri-kanban-view', color: 'warning', href: '/projects' },
-        { label: 'Tugas', desc: 'Rutinitas & to-do', icon: 'ri-checkbox-multiple-line', color: 'success', href: '/tasks' },
-        { label: 'Reward', desc: 'Toko hadiah & poin', icon: 'ri-trophy-line', color: 'warning', href: '/rewards' },
-        { label: 'Dompet Anak', desc: 'Saldo poin per anak', icon: 'ri-wallet-3-line', color: 'info', href: '/wallet' },
-        { label: 'Keuangan', desc: 'Pemasukan & pengeluaran', icon: 'ri-money-dollar-circle-line', color: 'success', href: '/finance' },
-        { label: 'Meal Planner', desc: 'Menu & belanja', icon: 'ri-restaurant-2-line', color: 'danger', href: '/kitchen' },
-        { label: 'Growth Tracker', desc: 'Tumbuh kembang anak', icon: 'ri-seedling-line', color: 'success', href: '/health' },
-        { label: 'Rekam Medis', desc: 'Imunisasi & dokumen', icon: 'ri-medicine-bottle-line', color: 'danger', href: '/medical' },
-        { label: 'Inventaris', desc: 'Aset & info rumah', icon: 'ri-home-gear-line', color: 'primary', href: '/assets' },
-        { label: 'Wishlist', desc: 'Wisata & kuliner impian', icon: 'ri-heart-3-line', color: 'danger', href: '/leisure' },
-        { label: 'Vacation', desc: 'Itinerary & packing', icon: 'ri-suitcase-3-line', color: 'primary', href: '/vacation' },
-        { label: 'Game Center', desc: 'Mini-games keluarga', icon: 'ri-gamepad-line', color: 'info', href: '/games' },
-        { label: 'WhatsApp', desc: 'WA bot & perintah', icon: 'ri-whatsapp-line', color: 'success', href: '/whatsapp' },
-        { label: 'Galeri', desc: 'Album foto keluarga', icon: 'ri-image-line', color: 'info', href: '/gallery' },
-        { label: 'Blog', desc: 'Wisata & parenting', icon: 'ri-article-line', color: 'success', href: '/blog' },
-        { label: 'File Manager', desc: 'Dokumen penting', icon: 'ri-folder-3-line', color: 'warning', href: '/files' },
+        { label: 'Finance', desc: 'Cashflow, budget, transfer', icon: 'ri-wallet-3-line', tone: '#27c3d9', href: '/finance', enabled: entitlements.finance !== false },
+        { label: 'Calendar', desc: 'Agenda keluarga', icon: 'ri-calendar-event-line', tone: '#6f7cff', href: '/calendar', enabled: true },
+        { label: 'Shopping', desc: 'Belanja & pantry', icon: 'ri-shopping-bag-3-line', tone: '#ff8a65', href: '/shopping', enabled: true },
+        { label: 'Tasks', desc: 'Rutinitas harian', icon: 'ri-checkbox-circle-line', tone: '#5bc58f', href: '/tasks', enabled: true },
+        { label: 'Rewards', desc: 'Poin & hadiah', icon: 'ri-gift-2-line', tone: '#ffbe55', href: '/rewards', enabled: true },
+        { label: 'Files', desc: 'Dokumen penting', icon: 'ri-folder-3-line', tone: '#70a5ff', href: '/files', enabled: true },
+        { label: 'WhatsApp', desc: 'Bot keluarga', icon: 'ri-whatsapp-line', tone: '#37c971', href: '/whatsapp', enabled: true },
+        { label: 'More', desc: 'Modul tambahan', icon: 'ri-more-2-fill', tone: '#a6aec1', href: '/hub#more', enabled: true },
     ];
 
+    const activityItems = [
+        { title: 'Tagihan internet jatuh tempo 5 hari lagi', meta: 'Finance · Shared budget', tone: 'warning' },
+        { title: 'Belanja dapur minggu ini belum lengkap', meta: 'Shopping · 7 item pending', tone: 'info' },
+        { title: 'Rutinitas pagi anak sudah 80%', meta: 'Tasks · Hari ini', tone: 'success' },
+    ];
+
+    const teaserCards = [
+        { title: 'Family Savings Sprint', body: 'Naik 12% dari bulan lalu. Pertahankan ritme minggu ini.', action: 'Buka Finance', href: '/finance' },
+        { title: 'Weekend Plan', body: 'Ada 3 agenda dan 1 wishlist yang cocok untuk akhir pekan ini.', action: 'Lihat Kalender', href: '/calendar' },
+    ];
+
+    const progress = 75;
+
     return (
-        <MemberPage title="Member Hub" parentLabel="Dashboard">
-            <div className="mb-4">
-                <Card className="border-0 shadow-sm overflow-hidden">
-                    <Card.Body className="p-0">
-                        <div className="p-4" style={{ background: 'linear-gradient(135deg, var(--vz-primary) 0%, #405189 100%)' }}>
-                            <Row className="align-items-center g-4">
-                                <Col lg={8}>
-                                    <h3 className="text-white fw-bold mb-2">{greeting}, {memberName}! 👋</h3>
-                                    <p className="text-white-50 mb-0">
-                                        Selamat datang kembali di keluarga <strong className="text-white">{tenantName}</strong>. 
-                                        Semua modul manajemen rumah tangga Anda siap diakses melalui menu atau shortcut di bawah.
-                                    </p>
-                                </Col>
-                                <Col lg={4} className="text-lg-end">
-                                    <div className="d-inline-flex align-items-center gap-3">
-                                        <div className="text-center bg-white bg-opacity-10 px-3 py-2 rounded-3 border border-white border-opacity-10">
-                                            <div className="text-white fw-bold fs-16">{totalPoints.toLocaleString()}</div>
-                                            <div className="text-white-50 fs-11">Poin Keluarga</div>
-                                        </div>
-                                        <div className="text-center bg-white bg-opacity-10 px-3 py-2 rounded-3 border border-white border-opacity-10">
-                                            <div className="text-white fw-bold fs-16">{(demo?.projects || []).length}</div>
-                                            <div className="text-white-50 fs-11">Proyek Aktif</div>
-                                        </div>
-                                    </div>
-                                </Col>
-                            </Row>
+        <div
+            style={{
+                minHeight: '100vh',
+                background: 'linear-gradient(180deg, #25c2de 0%, #b7f4ff 20%, #f6f8fb 20%, #f6f8fb 100%)',
+                padding: 'max(14px, env(safe-area-inset-top)) 0 calc(120px + env(safe-area-inset-bottom))',
+                touchAction: 'pan-y',
+            }}
+        >
+            <div className="container-fluid px-3">
+                <div className="mx-auto" style={{ maxWidth: 460 }}>
+                    <div
+                        className="position-sticky top-0 z-3 mb-3"
+                        style={{
+                            background: 'rgba(248, 249, 250, 0.72)',
+                            backdropFilter: 'blur(18px)',
+                            WebkitBackdropFilter: 'blur(18px)',
+                            boxShadow: '0 8px 24px rgba(15, 23, 42, 0.06)',
+                            borderRadius: 24,
+                        }}
+                    >
+                        <div className="d-flex align-items-center justify-content-between text-white px-3 py-3">
+                            <div>
+                                <div className="small opacity-75">{greeting}</div>
+                                <div className="fw-semibold fs-5">{tenantName}</div>
+                            </div>
+                            <div className="d-flex align-items-center gap-2">
+                                <button
+                                    type="button"
+                                    className="btn btn-light rounded-circle border-0 shadow-sm d-inline-flex align-items-center justify-content-center"
+                                    style={{ width: 42, height: 42 }}
+                                >
+                                    <i className="ri-notification-3-line text-info fs-5"></i>
+                                </button>
+                                <Link
+                                    href="/me"
+                                    className="rounded-circle bg-white text-info d-inline-flex align-items-center justify-content-center fw-bold text-decoration-none shadow-sm"
+                                    style={{ width: 42, height: 42 }}
+                                >
+                                    {memberName.charAt(0).toUpperCase()}
+                                </Link>
+                            </div>
                         </div>
-                    </Card.Body>
-                </Card>
-            </div>
+                    </div>
 
-            <section className="section py-3">
-                <h5 className="fw-bold mb-4">Semua Modul ({modules.length})</h5>
-                <Row className="g-3">
-                    {(demo?.modules || modules).map((mod: any, i: number) => (
-                        <Col xs={6} sm={4} md={3} lg={2} key={i}>
-                            <Link href={mod.href} className="text-decoration-none">
-                                <Card className="border h-100"
-                                    style={{ transition: 'transform 0.2s, box-shadow 0.2s', cursor: 'pointer' }}
-                                    onMouseEnter={e => {
-                                        const el = e.currentTarget as HTMLElement;
-                                        el.style.transform = 'translateY(-4px)';
-                                        el.style.boxShadow = '0 8px 24px rgba(0,0,0,0.1)';
-                                    }}
-                                    onMouseLeave={e => {
-                                        const el = e.currentTarget as HTMLElement;
-                                        el.style.transform = '';
-                                        el.style.boxShadow = '';
-                                    }}>
-                                <Card.Body className="p-3 text-center">
-                                    <div className={`rounded-3 mx-auto d-flex align-items-center justify-content-center mb-2 bg-${mod.color}-subtle`}
-                                        style={{ width: 48, height: 48 }}>
-                                        <i className={`${mod.icon} text-${mod.color} fs-20`}></i>
+                    <Card className="border-0 shadow-sm rounded-4 overflow-hidden mb-3">
+                        <Card.Body className="p-3">
+                            <div className="d-flex align-items-start justify-content-between gap-3">
+                                <div>
+                                    <div className="small text-muted mb-1">Family Snapshot</div>
+                                    <div className="fw-semibold text-dark">Siap untuk hari yang produktif</div>
+                                    <div className="small text-muted mt-1">Hook singkat yang hangat, bukan dashboard panjang.</div>
+                                </div>
+                                <Link href="/finance" className="btn btn-light btn-sm rounded-pill">Explore</Link>
+                            </div>
+                            <div className="row g-2 mt-2">
+                                <div className="col-6">
+                                    <div className="rounded-4 p-3" style={{ background: '#eef8ff' }}>
+                                        <div className="small text-muted">Saldo siap pakai</div>
+                                        <div className="fw-semibold fs-5">Rp 8,4 jt</div>
                                     </div>
-                                    <h6 className="fw-semibold mb-0 fs-13">{mod.label}</h6>
-                                    <p className="text-muted fs-11 mb-0 mt-1">{mod.desc}</p>
-                                </Card.Body>
-                                </Card>
-                            </Link>
-                        </Col>
-                    ))}
-                </Row>
-            </section>
-
-            <section className="section bg-light py-4">
-                <Row className="g-4">
-                    <Col lg={4}>
-                        <Card className="border-0 shadow-sm h-100">
-                            <Card.Header className="bg-transparent border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
-                                <h6 className="fw-bold mb-0"><i className="ri-calendar-todo-line text-primary me-2"></i>Agenda Mendatang</h6>
-                                <Link href="/calendar" className="btn btn-soft-primary btn-sm">Lihat Semua</Link>
-                            </Card.Header>
-                            <Card.Body className="pt-2">
-                                {(demo?.calendar || []).map((e: any) => (
-                                    <div key={e.id} className={`p-2 rounded-3 mb-2 ${e.className?.split(' ')[0] || 'bg-primary-subtle'}`}>
-                                        <p className="fw-semibold mb-0 fs-13">{e.title}</p>
-                                        <p className="text-muted fs-11 mb-0">
-                                            {new Date(e.start).toLocaleDateString('id-ID', { weekday: 'short', day: 'numeric', month: 'short' })}
-                                        </p>
+                                </div>
+                                <div className="col-6">
+                                    <div className="rounded-4 p-3" style={{ background: '#f6f8ea' }}>
+                                        <div className="small text-muted">Agenda minggu ini</div>
+                                        <div className="fw-semibold fs-5">4 kegiatan</div>
                                     </div>
-                                ))}
-                            </Card.Body>
-                        </Card>
-                    </Col>
+                                </div>
+                            </div>
+                        </Card.Body>
+                    </Card>
 
-                    <Col lg={4}>
-                        <Card className="border-0 shadow-sm h-100">
-                            <Card.Header className="bg-transparent border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
-                                <h6 className="fw-bold mb-0"><i className="ri-sun-line text-warning me-2"></i>Rutinitas Hari Ini</h6>
-                                <Link href="/tasks" className="btn btn-soft-warning btn-sm">Lihat Semua</Link>
-                            </Card.Header>
-                            <Card.Body className="pt-2">
-                                {[...demo.routines.morning.slice(0, 3), ...demo.routines.night.slice(0, 2)].map((r: any) => (
-                                    <div key={r.id} className={`d-flex align-items-center gap-2 mb-2 p-2 rounded-3 ${r.done ? 'bg-success-subtle' : 'border'}`}>
-                                        <i className={`${r.done ? 'ri-checkbox-circle-fill text-success' : 'ri-circle-line text-muted'} fs-16 flex-shrink-0`}></i>
-                                        <div className="flex-grow-1">
-                                            <p className="mb-0 fs-13 fw-medium">{r.task}</p>
-                                            <p className="mb-0 fs-11 text-muted">{r.time} · {r.assignee}</p>
+                    <Card className="border-0 rounded-4 shadow-sm mb-3">
+                        <Card.Body className="p-3">
+                            <div className="d-flex justify-content-between align-items-start gap-3">
+                                <div>
+                                    <div className="fw-semibold">Lengkapi profil keluarga</div>
+                                    <div className="small text-muted">Supaya rekomendasi dan shortcut makin relevan.</div>
+                                </div>
+                                <button type="button" className="btn btn-link btn-sm p-0 text-decoration-none">Tutup</button>
+                            </div>
+                            <div className="mt-3">
+                                <div className="small fw-semibold mb-2">{progress}%</div>
+                                <ProgressBar now={progress} style={{ height: 6 }} />
+                            </div>
+                        </Card.Body>
+                    </Card>
+
+                    <section className="mb-4">
+                        <div className="fw-semibold text-dark mb-3">Modul keluarga</div>
+                        <div className="row g-3">
+                            {modules.map((mod) => {
+                                const content = (
+                                    <div className="rounded-4 bg-white shadow-sm h-100 p-3 border">
+                                        <div
+                                            className="rounded-4 d-inline-flex align-items-center justify-content-center mb-2 text-white"
+                                            style={{ width: 52, height: 52, background: mod.tone }}
+                                        >
+                                            <i className={`${mod.icon} fs-4`}></i>
                                         </div>
-                                        <Badge bg="warning" className="fs-11">+{r.points}</Badge>
+                                        <div className="fw-semibold text-dark">{mod.label}</div>
+                                        <div className="small text-muted mt-1">{mod.desc}</div>
+                                        {!mod.enabled && (
+                                            <Badge bg="warning" text="dark" className="mt-2">Locked</Badge>
+                                        )}
                                     </div>
-                                ))}
-                            </Card.Body>
-                        </Card>
-                    </Col>
+                                );
 
-                    <Col lg={4}>
-                        <Card className="border-0 shadow-sm h-100">
-                            <Card.Header className="bg-transparent border-0 pt-3 pb-0 d-flex justify-content-between align-items-center">
-                                <h6 className="fw-bold mb-0"><i className="ri-article-line text-success me-2"></i>Blog Terbaru</h6>
-                                <Link href="/blog" className="btn btn-soft-success btn-sm">Lihat Semua</Link>
-                            </Card.Header>
-                            <Card.Body className="pt-2">
-                                {demo.blogs.slice(0, 3).map((b: any) => (
-                                    <div key={b.id} className="d-flex gap-3 mb-3">
-                                        <img src={b.cover} alt={b.title} className="rounded-2 flex-shrink-0"
-                                            style={{ width: 52, height: 44, objectFit: 'cover' }} />
-                                        <div>
-                                            <p className="fw-semibold fs-13 mb-0">{b.title}</p>
-                                            <div className="d-flex gap-2 text-muted fs-11">
-                                                <Badge bg="light" text="dark" className="border fs-11">{b.cat}</Badge>
-                                                <span>{b.date}</span>
+                                return (
+                                    <div className="col-3" key={mod.label}>
+                                        {mod.enabled ? (
+                                            <Link href={mod.href} className="text-decoration-none d-block">{content}</Link>
+                                        ) : (
+                                            <Link href="/admin/upgrade-required?module=finance" className="text-decoration-none d-block opacity-75">{content}</Link>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    </section>
+
+                    <section className="mb-4">
+                        <div className="d-flex align-items-center justify-content-between mb-3">
+                            <div className="fw-semibold text-dark">Aktivitas penting</div>
+                            <button type="button" className="btn btn-link btn-sm text-decoration-none p-0">Lihat semua</button>
+                        </div>
+                        <div className="d-flex flex-column gap-2">
+                            {activityItems.map((item) => (
+                                <Card key={item.title} className="border-0 shadow-sm rounded-4">
+                                    <Card.Body className="py-3 px-3">
+                                        <div className="d-flex align-items-start gap-3">
+                                            <div className={`rounded-circle flex-shrink-0 bg-${item.tone}-subtle text-${item.tone} d-inline-flex align-items-center justify-content-center`} style={{ width: 36, height: 36 }}>
+                                                <i className="ri-notification-3-line"></i>
+                                            </div>
+                                            <div className="flex-grow-1">
+                                                <div className="fw-medium text-dark">{item.title}</div>
+                                                <div className="small text-muted">{item.meta}</div>
                                             </div>
                                         </div>
+                                    </Card.Body>
+                                </Card>
+                            ))}
+                        </div>
+                    </section>
+
+                    <section style={{ paddingBottom: 'calc(120px + env(safe-area-inset-bottom))' }}>
+                        <div className="fw-semibold text-dark mb-3">Hook minggu ini</div>
+                        <div className="d-flex flex-column gap-3">
+                            {teaserCards.map((card) => (
+                                <Card key={card.title} className="border-0 shadow-sm rounded-4 overflow-hidden">
+                                    <Card.Body className="p-3">
+                                        <div className="fw-semibold text-dark">{card.title}</div>
+                                        <div className="small text-muted mt-1 mb-3">{card.body}</div>
+                                        <Link href={card.href} className="btn btn-outline-info rounded-pill btn-sm">{card.action}</Link>
+                                    </Card.Body>
+                                </Card>
+                            ))}
+                        </div>
+                    </section>
+
+                    <div
+                        className="position-fixed start-50 translate-middle-x z-3"
+                        style={{
+                            bottom: 'max(12px, env(safe-area-inset-bottom))',
+                            width: 'min(100% - 24px, 420px)',
+                        }}
+                    >
+                        <div className="bg-white border rounded-pill shadow-sm px-2 py-2 d-flex justify-content-between align-items-center">
+                            {[
+                                { icon: 'ri-home-5-line', label: 'Home', active: true, href: '/hub' },
+                                { icon: 'ri-pulse-line', label: 'Activity', active: false, href: '/hub#activity' },
+                                { icon: 'ri-add-circle-fill', label: '', active: false, href: '/finance' },
+                                { icon: 'ri-gift-line', label: 'Rewards', active: false, href: '/rewards' },
+                                { icon: 'ri-user-3-line', label: 'Account', active: false, href: '/me' },
+                            ].map((item) => (
+                                <Link
+                                    key={item.icon}
+                                    href={item.href}
+                                    className={`btn border-0 flex-fill px-1 ${item.active ? 'text-info' : 'text-muted'}`}
+                                >
+                                    <div className="d-flex flex-column align-items-center justify-content-center" style={{ minWidth: 0 }}>
+                                        <i className={`${item.icon} ${item.label ? 'fs-5' : 'fs-2'}`}></i>
+                                        {item.label ? (
+                                            <span
+                                                className="small text-truncate"
+                                                style={{ maxWidth: '100%', fontSize: 11 }}
+                                            >
+                                                {item.label}
+                                            </span>
+                                        ) : null}
                                     </div>
-                                ))}
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                </Row>
-            </section>
-        </MemberPage>
+                                </Link>
+                            ))}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     );
 };
-
-(Hub as any).layout = (page: React.ReactNode) => <TenantMemberLayout>{page}</TenantMemberLayout>;
 
 export default Hub;

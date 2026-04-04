@@ -4,8 +4,8 @@ namespace App\Services;
 
 use App\Models\FinanceTransaction;
 use App\Models\Tenant;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\DB;
 
 class FinanceSummaryService
 {
@@ -86,5 +86,56 @@ class FinanceSummaryService
     public function invalidate(int $tenantId, string $month): void
     {
         Cache::forget("finance_summary:{$tenantId}:{$month}");
+    }
+
+    public function getFilteredSummary(Builder $query, Tenant $tenant, array $options = []): array
+    {
+        $excludeInternalTransfers = (bool) ($options['exclude_internal_transfers'] ?? false);
+
+        $totals = (clone $query)
+            ->selectRaw('
+                COALESCE(SUM(CASE WHEN type = ? THEN amount_base ELSE 0 END), 0) as income_total,
+                COALESCE(SUM(CASE WHEN type = ? THEN amount_base ELSE 0 END), 0) as expense_total,
+                COALESCE(SUM(CASE WHEN type = ? OR COALESCE(is_internal_transfer, false) = true THEN amount_base ELSE 0 END), 0) as transfer_total,
+                COUNT(*) as transaction_count
+            ', ['pemasukan', 'pengeluaran', 'transfer'])
+            ->first();
+
+        $topExpenseCategories = (clone $query)
+            ->where('type', 'pengeluaran')
+            ->when($excludeInternalTransfers, fn (Builder $expenseQuery) => $expenseQuery->where(function (Builder $safeQuery) {
+                $safeQuery
+                    ->whereNull('is_internal_transfer')
+                    ->orWhere('is_internal_transfer', false);
+            }))
+            ->join('tenant_categories', 'tenant_categories.id', '=', 'finance_transactions.category_id')
+            ->selectRaw('tenant_categories.id, tenant_categories.name, tenant_categories.icon, tenant_categories.color, SUM(finance_transactions.amount_base) as total')
+            ->groupBy('tenant_categories.id', 'tenant_categories.name', 'tenant_categories.icon', 'tenant_categories.color')
+            ->orderByDesc('total')
+            ->limit(5)
+            ->get();
+
+        $income = round((float) ($totals?->income_total ?? 0), 2);
+        $expense = round((float) ($totals?->expense_total ?? 0), 2);
+        $transfer = round((float) ($totals?->transfer_total ?? 0), 2);
+
+        return [
+            'base_currency' => $tenant->currency_code ?? 'IDR',
+            'total_income_base' => $income,
+            'total_expense_base' => $expense,
+            'balance_base' => round($income - $expense, 2),
+            'transfer_total_base' => $transfer,
+            'transaction_count' => (int) ($totals?->transaction_count ?? 0),
+            'top_expense_categories' => $topExpenseCategories
+                ->map(fn ($row) => [
+                    'id' => $row->id,
+                    'name' => $row->name,
+                    'icon' => $row->icon,
+                    'color' => $row->color,
+                    'amount' => (float) $row->total,
+                    'pct' => $expense > 0 ? round(((float) $row->total / $expense) * 100, 1) : 0,
+                ])
+                ->all(),
+        ];
     }
 }

@@ -10,7 +10,7 @@ interface DeleteModalProps {
 
 const DeleteModal = ({ show, onDeleteClick, onCloseClick, loading }: DeleteModalProps) => {
   return (
-    <Modal show={show} onHide={onCloseClick} centered>
+    <Modal show={show} onHide={onCloseClick} centered style={{ zIndex: 1400 }} data-testid="confirm-delete-modal">
       <div className="modal-content">
         <Modal.Header className="pt-4 px-4 pb-2 border-0" closeButton>
         </Modal.Header>
@@ -37,6 +37,7 @@ const DeleteModal = ({ show, onDeleteClick, onCloseClick, loading }: DeleteModal
                 className="w-sm"
                 onClick={onDeleteClick}
                 disabled={loading}
+                data-testid="confirm-delete-action"
               >
                 {loading ? "Deleting..." : "Yes, Delete It!"}
               </Button>

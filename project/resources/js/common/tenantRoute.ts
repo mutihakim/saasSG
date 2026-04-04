@@ -1,4 +1,5 @@
 import { usePage } from '@inertiajs/react';
+import { useMemo } from 'react';
 
 function buildTenantPath(slug: string | undefined, isSuperadmin: boolean, path = ''): string {
     if (!slug) return isSuperadmin ? '/admin/tenants' : '/tenant-access-required';
@@ -24,9 +25,9 @@ export function useTenantRoute() {
     const slug = page.props.currentTenant?.slug ?? tenantSlugFromPath();
     const isSuperadmin = Boolean(page.props.auth?.user?.is_superadmin);
 
-    return {
+    return useMemo(() => ({
         to: (path = '') => buildTenantPath(slug, isSuperadmin, path),
         routeTenant: (path = '') => buildTenantPath(slug, isSuperadmin, path),
         apiTo: (path = '') => `/api/v1/tenants/${slug}${path.startsWith('/') ? path : `/${path}`}`,
-    };
+    }), [slug, isSuperadmin]);
 }

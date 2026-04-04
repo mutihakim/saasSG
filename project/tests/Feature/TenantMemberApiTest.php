@@ -147,6 +147,6 @@ class TenantMemberApiTest extends TestCase
         $response->assertStatus(422)
             ->assertJsonPath('ok', false)
             ->assertJsonPath('error.code', 'VALIDATION_ERROR')
-            ->assertJsonPath('error.details.fields.role_code.0', 'The selected role code is invalid.');
+            ->assertJsonPath('error.details.fields.role_code.0', 'role code yang dipilih tidak valid.');
     }
 }

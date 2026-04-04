@@ -12,7 +12,7 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 | i18n | Done | 100% | Frontend Team | 2026-04-03 | Locale end-to-end selesai: `X-Locale` header → `SetRequestLocale` → `EnsureTenantAccess` respects header → `lang/en+id/validation.php` → `parseApiError` frontend reactive. Finance & Master Data i18n diperluas. [i18n Progress](./modules/i18n.md) |
 | Subscription | Done | 95% | Platform Team | 2026-04-02 | Guard + quota tersedia di semua modul Master Data. Tersisa E2E test upgrade flow. [Subscription Progress](./modules/subscription.md) |
 | Master Data CRUD | Done | 100% | Platform Team | 2026-04-03 | UoM, Currency, Tag, Category: full CRUD + Policy + Soft-Delete Aware Unique Index + i18n + Toast standardized. Tag `is_active` management ditambahkan. |
-| Finance | Done | 95% | Finance Team | 2026-04-03 | Transaction CRUD aktif + Payment Methods + Tags integration + Polymorphic relations fixed. Tersisa laporan/export. |
+| Finance | In Progress | 95% | Finance Team | 2026-04-03 | Finance V2 aktif: ULID string, accounts, budgets, shared access, summary filter-aware, dan Finance PWA Module. [Finance Progress](./modules/finance.md) |
 | Tenant Settings | Done | 90% | Platform Team | 2026-03-30 | Tenant profile, billing, localization, dan branding upload per tenant sudah aktif; tersisa verifikasi browser/E2E visual. |
 | WhatsApp | Done | 100% | Integration Team | 2026-03-31 | [WhatsApp Progress](./modules/whatsapp.md) |
 | Routing & Websocket | Done | 100% | Platform Team | 2026-03-31 | Subdomain-based routing, CORS Inertia, dynamisasi Reverb WSS. |
@@ -23,13 +23,13 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 
 ## Perubahan Arsitektural Besar (2026-04-03)
 
-1. **Polymorphic Relations ID Type Fix**: Fixed type mismatch di `tenant_taggables` dan `tenant_attachments` dengan mengubah kolom `*_id` dari `ulid()` ke `string(100)` untuk kompatibilitas dengan BIGINT dan ULID/UUID models.
-2. **FinanceTransaction Polymorphic Workaround**: Menambahkan `$keyType = 'string'` ke `FinanceTransaction` model untuk kompatibilitas dengan polymorphic relations tanpa mengubah primary key type.
-3. **Tags is_active Management**: Menambahkan field `is_active` ke `tenant_tags` untuk soft-deactivation tags tanpa menghapus data.
-4. **Finance Payment Methods**: Implementasi payment method enum (Tunai, Transfer, Kartu Kredit/Debit, E-Wallet, QRIS, Lainnya) di finance transactions.
-5. **Finance Tags Integration**: Tags sekarang bisa di-attach ke finance transactions via polymorphic relation (`morphToMany`).
-6. **Category Module Selection**: Category sekarang memiliki field `module` untuk membedakan kategori per modul (finance, grocery, inventory, task, medical, wishlist).
-7. **Extensive i18n Coverage**: Penambahan translation keys untuk finance (payment methods, notifications, placeholders) dan master data (categories modules, status, bulk operations).
+1. **Finance ULID Modernization**: `finance_transactions.id` sekarang memakai ULID string dan kontrak polymorphic tetap `string(100)`.
+2. **Finance Accounts & Budgets**: Tenant kini punya entitas akun (`TenantBankAccount`) dan budget (`TenantBudget`) dengan mode private/shared.
+3. **Member-Aware Finance Access**: Akses akun, budget, dan transaksi sekarang discope melalui `FinanceAccessService` sesuai role dan hubungan member.
+4. **Transfer-Safe Summary**: Summary family-wide mengecualikan transfer internal dari income/expense agar tidak double count.
+5. **Finance PWA Module**: `/finance` tidak lagi dibangun sebagai halaman admin klasik, tetapi sebagai PWA Module yang dibuka dari Hub dan bisa menjadi pola modul lain.
+6. **Seed Data Finance V2**: Seeder akun, budget, dan sample transaction tenant sudah tersedia untuk `migrate:fresh --seed --force`.
+7. **Docs PWA Template**: Template reusable untuk modul tenant PWA ditambahkan agar pola finance bisa dipakai ulang.
 
 ## Perubahan Arsitektural Besar (2026-04-02)
 
@@ -51,5 +51,6 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 - [RBAC Progress](./modules/rbac.md)
 - [i18n Progress](./modules/i18n.md)
 - [Subscription Progress](./modules/subscription.md)
+- [Finance Progress](./modules/finance.md)
 - [WhatsApp Progress](./modules/whatsapp.md)
 - [Changelog 2026-03](./changelog/2026-03.md)

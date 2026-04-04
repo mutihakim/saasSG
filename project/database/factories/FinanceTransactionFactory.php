@@ -24,6 +24,10 @@ class FinanceTransactionFactory extends Factory
             'description'      => $this->faker->sentence(),
             'payment_method'   => $this->faker->randomElement(['tunai', 'transfer', 'kartu_kredit']),
             'row_version'      => 1,
+            'status'           => 'terverifikasi',
+            'budget_status'    => 'unbudgeted',
+            'budget_delta'     => 0,
+            'is_internal_transfer' => false,
         ];
     }
 }

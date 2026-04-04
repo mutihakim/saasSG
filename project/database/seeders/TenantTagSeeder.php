@@ -14,25 +14,25 @@ class TenantTagSeeder extends Seeder
 
         $tagsByModule = [
             'finance' => [
-                ['name' => 'Monthly', 'color' => 'primary'],
-                ['name' => 'Emergency', 'color' => 'danger'],
-                ['name' => 'Investment', 'color' => 'success'],
-                ['name' => 'Leisure', 'color' => 'info'],
-                ['name' => 'Educational', 'color' => 'warning'],
+                ['name' => 'Monthly', 'color' => '#405189'],
+                ['name' => 'Emergency', 'color' => '#F06548'],
+                ['name' => 'Investment', 'color' => '#0AB39C'],
+                ['name' => 'Leisure', 'color' => '#299CDB'],
+                ['name' => 'Educational', 'color' => '#F7B84B'],
             ],
             'grocery' => [
-                ['name' => 'Fresh', 'color' => 'success'],
-                ['name' => 'Frozen', 'color' => 'info'],
-                ['name' => 'Spices', 'color' => 'warning'],
-                ['name' => 'Dairy', 'color' => 'light'],
-                ['name' => 'Organic', 'color' => 'success'],
+                ['name' => 'Fresh', 'color' => '#0AB39C'],
+                ['name' => 'Frozen', 'color' => '#299CDB'],
+                ['name' => 'Spices', 'color' => '#F7B84B'],
+                ['name' => 'Dairy', 'color' => '#CED4DA'],
+                ['name' => 'Organic', 'color' => '#0AB39C'],
             ],
             'tasks' => [
-                ['name' => 'Urgent', 'color' => 'danger'],
-                ['name' => 'High Priority', 'color' => 'warning'],
-                ['name' => 'Recurring', 'color' => 'primary'],
-                ['name' => 'Personal', 'color' => 'secondary'],
-                ['name' => 'Family', 'color' => 'info'],
+                ['name' => 'Urgent', 'color' => '#F06548'],
+                ['name' => 'High Priority', 'color' => '#F7B84B'],
+                ['name' => 'Recurring', 'color' => '#405189'],
+                ['name' => 'Personal', 'color' => '#6C757D'],
+                ['name' => 'Family', 'color' => '#299CDB'],
             ],
         ];
 

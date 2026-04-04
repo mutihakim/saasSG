@@ -16,15 +16,6 @@ class DatabaseSeeder extends Seeder
 {
     public function run(): void
     {
-        // Master data (global, tidak tenant-specific)
-        $this->call([
-            MasterCurrencySeeder::class,
-            MasterUomSeeder::class,
-            SharedTagSeeder::class,
-            SharedCategorySeeder::class,
-            FinanceTransactionSeeder::class,
-        ]);
-
         $superadmin = User::query()->updateOrCreate(
             ['email' => 'superadmin@test.com'],
             [
@@ -82,6 +73,12 @@ class DatabaseSeeder extends Seeder
             ->filter(fn (string $permission) => str_ends_with($permission, '.view'))
             ->reject(fn (string $permission) => str_starts_with($permission, 'whatsapp.settings.'))
             ->reject(fn (string $permission) => str_starts_with($permission, 'tenant.settings.'))
+            ->merge([
+                'finance.create',
+                'finance.update',
+                'finance.delete',
+            ])
+            ->unique()
             ->values()
             ->all();
 
@@ -148,6 +145,10 @@ class DatabaseSeeder extends Seeder
         TenantMember::query()
             ->where('user_id', $superadmin->id)
             ->delete();
+
+        $this->call([
+            TenantMasterDataSeeder::class,
+        ]);
 
         $permissionRegistrar->forgetCachedPermissions();
     }

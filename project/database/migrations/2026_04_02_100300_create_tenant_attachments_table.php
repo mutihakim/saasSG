@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             
             $table->string('attachable_type', 100);
-            $table->ulid('attachable_id');
+            $table->string('attachable_id', 100);
             
             $table->string('file_name', 255);
             $table->string('file_path');

@@ -63,6 +63,12 @@ class TenantProvisioningService
                 ->filter(fn (string $permission) => str_ends_with($permission, '.view'))
                 ->reject(fn (string $permission) => str_starts_with($permission, 'whatsapp.settings.'))
                 ->reject(fn (string $permission) => str_starts_with($permission, 'tenant.settings.'))
+                ->merge([
+                    'finance.create',
+                    'finance.update',
+                    'finance.delete',
+                ])
+                ->unique()
                 ->values()
                 ->all();
 

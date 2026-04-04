@@ -13,7 +13,7 @@ return new class extends Migration
             $table->foreignId('tenant_id')->constrained('tenants')->cascadeOnDelete();
             
             $table->string('ruleable_type', 100);
-            $table->ulid('ruleable_id');
+            $table->string('ruleable_id', 100);
             
             $table->string('frequency', 20); // daily, weekly, monthly, yearly
             $table->integer('interval')->default(1);
@@ -23,6 +23,8 @@ return new class extends Migration
             $table->date('start_date');
             $table->date('end_date')->nullable();
             $table->integer('total_occurrences')->nullable();
+            $table->timestampTz('next_run_at')->nullable();
+            $table->boolean('is_active')->default(true);
             
             $table->unsignedInteger('row_version')->default(1);
             $table->timestamps();
