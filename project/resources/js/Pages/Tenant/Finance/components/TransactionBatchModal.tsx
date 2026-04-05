@@ -180,40 +180,53 @@ const TransactionBatchModal = ({
                 </div>
             </Modal.Header>
             <Modal.Body className="bg-white" style={{ paddingBottom: 112 }}>
-                <Row className="g-3 mb-4">
-                    {canManageShared && (
-                        <Col xs={12}>
-                            <Form.Label>Owner</Form.Label>
+                <div className="mb-4 d-grid gap-3">
+                    <Row className="g-3">
+                        {canManageShared ? (
+                            <>
+                                <Col xs={12} md={8}>
+                                    <Form.Label>Owner</Form.Label>
+                                    <Select
+                                        options={memberOptions}
+                                        value={memberOptions.find((option) => option.value === ownerMemberId)}
+                                        onChange={(option: any) => setOwnerMemberId(option?.value ?? "")}
+                                        classNamePrefix="react-select"
+                                    />
+                                </Col>
+                                <Col xs={12} md={4}>
+                                    <Form.Label>Tanggal</Form.Label>
+                                    <Form.Control type="date" value={transactionDate} onChange={(event) => setTransactionDate(event.target.value)} />
+                                </Col>
+                            </>
+                        ) : (
+                            <Col xs={12}>
+                                <Form.Label>Tanggal</Form.Label>
+                                <Form.Control type="date" value={transactionDate} onChange={(event) => setTransactionDate(event.target.value)} />
+                            </Col>
+                        )}
+                    </Row>
+                    <Row className="g-3">
+                        <Col xs={12} md={8}>
+                            <Form.Label>Akun</Form.Label>
                             <Select
-                                options={memberOptions}
-                                value={memberOptions.find((option) => option.value === ownerMemberId)}
-                                onChange={(option: any) => setOwnerMemberId(option?.value ?? "")}
+                                options={accountOptions}
+                                value={accountOptions.find((option) => option.value === bankAccountId)}
+                                onChange={(option: any) => setBankAccountId(option?.value ?? "")}
                                 classNamePrefix="react-select"
                             />
                         </Col>
-                    )}
-                    <Col xs={12}>
-                        <Form.Label>Tanggal</Form.Label>
-                        <Form.Control type="date" value={transactionDate} onChange={(event) => setTransactionDate(event.target.value)} />
-                    </Col>
-                    <Col xs={12}>
-                        <Form.Label>Akun</Form.Label>
-                        <Select
-                            options={accountOptions}
-                            value={accountOptions.find((option) => option.value === bankAccountId)}
-                            onChange={(option: any) => setBankAccountId(option?.value ?? "")}
-                            classNamePrefix="react-select"
-                        />
-                    </Col>
-                    <Col xs={12}>
-                        <Form.Label>Label Grup / Merchant</Form.Label>
-                        <Form.Control value={merchantName} onChange={(event) => setMerchantName(event.target.value)} placeholder="Contoh: Belanja Mingguan" />
-                    </Col>
-                    <Col xs={12}>
-                        <Form.Label>Catatan Grup</Form.Label>
-                        <Form.Control as="textarea" rows={2} value={sharedNotes} onChange={(event) => setSharedNotes(event.target.value)} placeholder="Opsional, akan ditambahkan ke semua item." />
-                    </Col>
-                </Row>
+                        <Col xs={12} md={4}>
+                            <Form.Label>Label Grup / Merchant</Form.Label>
+                            <Form.Control value={merchantName} onChange={(event) => setMerchantName(event.target.value)} placeholder="Contoh: Belanja Mingguan" />
+                        </Col>
+                    </Row>
+                    <Row className="g-3">
+                        <Col xs={12}>
+                            <Form.Label>Catatan Grup</Form.Label>
+                            <Form.Control as="textarea" rows={2} value={sharedNotes} onChange={(event) => setSharedNotes(event.target.value)} placeholder="Opsional, akan ditambahkan ke semua item." />
+                        </Col>
+                    </Row>
+                </div>
 
                 <div className="d-grid gap-3">
                     {items.map((item, index) => (
@@ -225,15 +238,25 @@ const TransactionBatchModal = ({
                                 </Button>
                             </div>
                             <Row className="g-3">
-                                <Col xs={12}>
+                                <Col xs={8}>
                                     <Form.Label>Deskripsi</Form.Label>
                                     <Form.Control value={item.description} onChange={(event) => updateItem(index, "description", event.target.value)} />
                                 </Col>
-                                <Col xs={12}>
+                                <Col xs={4}>
                                     <Form.Label>Nominal</Form.Label>
                                     <Form.Control type="number" step="0.01" value={item.amount} onChange={(event) => updateItem(index, "amount", event.target.value)} />
                                 </Col>
-                                <Col xs={12}>
+                                <Col xs={7}>
+                                    <Form.Label>Budget</Form.Label>
+                                    <Select
+                                        options={budgetOptions}
+                                        value={budgetOptions.find((option) => option.value === item.budget_id)}
+                                        onChange={(option: any) => updateItem(index, "budget_id", option?.value ?? "")}
+                                        classNamePrefix="react-select"
+                                        isClearable
+                                    />
+                                </Col>
+                                <Col xs={5}>
                                     <Form.Label>Kategori</Form.Label>
                                     <Select
                                         options={categoryOptions}
@@ -244,18 +267,8 @@ const TransactionBatchModal = ({
                                     />
                                 </Col>
                                 <Col xs={12}>
-                                    <Form.Label>Budget</Form.Label>
-                                    <Select
-                                        options={budgetOptions}
-                                        value={budgetOptions.find((option) => option.value === item.budget_id)}
-                                        onChange={(option: any) => updateItem(index, "budget_id", option?.value ?? "")}
-                                        classNamePrefix="react-select"
-                                        isClearable
-                                    />
-                                </Col>
-                                <Col xs={12}>
                                     <Form.Label>Catatan Item</Form.Label>
-                                    <Form.Control as="textarea" rows={2} value={item.notes} onChange={(event) => updateItem(index, "notes", event.target.value)} />
+                                    <Form.Control size="sm" value={item.notes} onChange={(event) => updateItem(index, "notes", event.target.value)} />
                                 </Col>
                             </Row>
                         </div>
