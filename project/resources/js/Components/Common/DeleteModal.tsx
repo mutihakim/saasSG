@@ -6,9 +6,22 @@ interface DeleteModalProps {
   onDeleteClick: () => void;
   onCloseClick: () => void;
   loading?: boolean;
+  title?: string;
+  message?: string;
+  confirmLabel?: string;
+  closeLabel?: string;
 }
 
-const DeleteModal = ({ show, onDeleteClick, onCloseClick, loading }: DeleteModalProps) => {
+const DeleteModal = ({
+  show,
+  onDeleteClick,
+  onCloseClick,
+  loading,
+  title = "Are you sure?",
+  message = "Are you sure you want to delete this record? This action cannot be undone.",
+  confirmLabel = "Yes, Delete It!",
+  closeLabel = "Close",
+}: DeleteModalProps) => {
   return (
     <Modal show={show} onHide={onCloseClick} centered style={{ zIndex: 1400 }} data-testid="confirm-delete-modal">
       <div className="modal-content">
@@ -19,9 +32,9 @@ const DeleteModal = ({ show, onDeleteClick, onCloseClick, loading }: DeleteModal
             <i className="ri-delete-bin-line display-4"></i>
           </div>
           <div className="mt-4">
-            <h4 className="mb-2">Are you sure?</h4>
+            <h4 className="mb-2">{title}</h4>
             <p className="text-muted fs-14 mb-4">
-              Are you sure you want to delete this record? This action cannot be undone.
+              {message}
             </p>
             <div className="d-flex gap-2 justify-content-center">
               <Button
@@ -30,7 +43,7 @@ const DeleteModal = ({ show, onDeleteClick, onCloseClick, loading }: DeleteModal
                 onClick={onCloseClick}
                 disabled={loading}
               >
-                Close
+                {closeLabel}
               </Button>
               <Button
                 variant="danger"
@@ -39,7 +52,7 @@ const DeleteModal = ({ show, onDeleteClick, onCloseClick, loading }: DeleteModal
                 disabled={loading}
                 data-testid="confirm-delete-action"
               >
-                {loading ? "Deleting..." : "Yes, Delete It!"}
+                {loading ? "Deleting..." : confirmLabel}
               </Button>
             </div>
           </div>

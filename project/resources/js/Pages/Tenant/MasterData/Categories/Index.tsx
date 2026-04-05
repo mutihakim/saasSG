@@ -1,6 +1,6 @@
 import { Head } from "@inertiajs/react";
 import axios from "axios";
-import React, { useMemo, useState, useEffect } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
     Card,
     Row,
@@ -17,6 +17,7 @@ import TenantLayout from "../../../../Layouts/TenantLayout";
 import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
 import { useTenantRoute } from "../../../../common/tenantRoute";
+
 import CategoriesWidgets from "./components/CategoriesWidgets";
 import CategoryModal from "./components/CategoryModal";
 
@@ -47,7 +48,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
     const [pageSize] = useState(10);
     const [selectedRows, setSelectedRows] = useState<number[]>([]);
 
-    const fetchCategories = async () => {
+    const fetchCategories = useCallback(async () => {
         try {
             const params: any = {};
             // Only send module param if not "all"
@@ -62,15 +63,15 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
         } catch (err: any) {
             console.error("Failed to refresh categories", err);
         }
-    };
+    }, [activeTab, tenantRoute]);
 
     // Fetch categories when activeTab changes
     useEffect(() => {
         fetchCategories();
-    }, [activeTab, tenantRoute]);
+    }, [fetchCategories]);
 
     // Flattening logic for nested display
-    const flattenCategories = (items: any[], depth = 0): any[] => {
+    const flattenCategories = useCallback((items: any[], depth = 0): any[] => {
         if (!Array.isArray(items)) return [];
         let result: any[] = [];
         items.forEach(item => {
@@ -80,7 +81,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
             }
         });
         return result;
-    };
+    }, []);
 
     const filteredCategories = useMemo(() => {
         if (!Array.isArray(categories)) return [];
@@ -95,7 +96,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
         }
 
         return filtered;
-    }, [categories, searchTerm]);
+    }, [categories, flattenCategories, searchTerm]);
 
     const paginatedCategories = useMemo(() => {
         const startIndex = (currentPage - 1) * pageSize;

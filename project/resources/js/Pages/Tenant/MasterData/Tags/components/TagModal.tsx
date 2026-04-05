@@ -3,9 +3,9 @@ import React, { useEffect, useState } from "react";
 import { Modal, Button, Form, Alert } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
+import { parseApiError } from "../../../../../common/apiError";
 import { notify } from "../../../../../common/notify";
 import { useTenantRoute } from "../../../../../common/tenantRoute";
-import { parseApiError } from "../../../../../common/apiError";
 
 interface TagModalProps {
   show: boolean;

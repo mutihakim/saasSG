@@ -52,6 +52,11 @@ export default defineConfig({
         items: [
           { text: 'API Reference', link: '/api-reference' },
           { text: 'UI Walkthrough', link: '/ui-walkthrough' },
+          { text: 'Velzon Navbar Reference', link: '/reference/velzon-navbar-reference' },
+          { text: 'Velzon Dashboards & Apps', link: '/reference/velzon-dashboards-apps' },
+          { text: 'Velzon Auth, Pages & Landing', link: '/reference/velzon-auth-pages-landing' },
+          { text: 'Velzon Base UI', link: '/reference/velzon-base-ui' },
+          { text: 'Velzon More Reference', link: '/reference/velzon-more-reference' },
           { text: 'Testing & Quality', link: '/testing-quality' },
           { text: 'Extension Guide', link: '/extension-guide' },
           { text: 'PWA Module Template', link: '/guide/pwa-module-template' },

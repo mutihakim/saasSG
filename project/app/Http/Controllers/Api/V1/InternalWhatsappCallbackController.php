@@ -11,9 +11,11 @@ use App\Models\TenantWhatsappMedia;
 use App\Models\TenantWhatsappMessage;
 use App\Models\TenantWhatsappSetting;
 use App\Services\WhatsappServiceClient;
+use App\Services\WhatsappFinanceIntentService;
 use App\Support\ApiResponder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use Illuminate\Database\QueryException;
 
@@ -22,7 +24,8 @@ class InternalWhatsappCallbackController extends Controller
     use ApiResponder;
 
     public function __construct(
-        private readonly WhatsappServiceClient $serviceClient
+        private readonly WhatsappServiceClient $serviceClient,
+        private readonly WhatsappFinanceIntentService $financeIntentService,
     ) {
     }
 
@@ -339,6 +342,26 @@ class InternalWhatsappCallbackController extends Controller
         }
 
         $this->handleIncomingAutoCommand($payload);
+        if (($payload['direction'] ?? null) === 'incoming' && $chatJid) {
+            $tenant = Tenant::query()->find((int) $payload['tenant_id']);
+            if ($tenant) {
+                try {
+                    $this->financeIntentService->handleIncomingMessage(
+                        tenant: $tenant,
+                        senderJid: $chatJid,
+                        text: (string) (($payload['payload']['text'] ?? '') ?: ''),
+                        message: $messageModel
+                    );
+                } catch (\Throwable $exception) {
+                    Log::error('whatsapp.callback.messages.finance_intent_failed', [
+                        'tenant_id' => (int) $payload['tenant_id'],
+                        'sender_jid' => $chatJid,
+                        'whatsapp_message_id' => (string) $payload['whatsapp_message_id'],
+                        'error' => $exception->getMessage(),
+                    ]);
+                }
+            }
+        }
 
         return $this->ok(['received' => true]);
     }
@@ -350,13 +373,13 @@ class InternalWhatsappCallbackController extends Controller
         }
 
         $payload = $request->validate([
-            'tenant_id' => ['required', 'integer', 'exists:tenants,id'],
-            'sender_jid' => ['nullable', 'string', 'max:60'],
-            'mime_type' => ['required', 'string', 'max:120'],
-            'size_bytes' => ['required', 'integer', 'min:1', 'max:4194304'],
-            'storage_path' => ['nullable', 'string', 'max:255'],
+            'tenant_id'      => ['required', 'integer', 'exists:tenants,id'],
+            'sender_jid'     => ['nullable', 'string', 'max:60'],
+            'mime_type'      => ['required', 'string', 'max:120'],
+            'size_bytes'     => ['required', 'integer', 'min:1', 'max:4194304'],
+            'storage_path'   => ['nullable', 'string', 'max:255'],
             'content_base64' => ['nullable', 'string'],
-            'meta' => ['nullable', 'array'],
+            'meta'           => ['nullable', 'array'],
         ]);
 
         $allowed = ['application/pdf'];
@@ -367,17 +390,53 @@ class InternalWhatsappCallbackController extends Controller
 
         $path = $payload['storage_path'] ?? ('whatsapp/media/' . Str::uuid()->toString());
 
-        TenantWhatsappMedia::query()->create([
-            'tenant_id' => $payload['tenant_id'],
-            'sender_jid' => $payload['sender_jid'] ?? null,
-            'mime_type' => $payload['mime_type'],
-            'size_bytes' => $payload['size_bytes'],
+        // Persist the binary from content_base64 to storage BEFORE creating the DB record,
+        // so the AI service can load it immediately via Storage::get($storagePath).
+        $storedToDisk = false;
+        if (!empty($payload['content_base64'])) {
+            try {
+                $binary = base64_decode($payload['content_base64'], strict: false);
+                if ($binary !== false && strlen($binary) > 0) {
+                    Storage::put($path, $binary);
+                    $storedToDisk = true;
+                }
+            } catch (\Throwable $e) {
+                Log::warning('whatsapp.callback.media.storage_write_failed', [
+                    'tenant_id'    => (int) $payload['tenant_id'],
+                    'storage_path' => $path,
+                    'error'        => $e->getMessage(),
+                ]);
+            }
+        }
+
+        $media = TenantWhatsappMedia::query()->create([
+            'tenant_id'    => $payload['tenant_id'],
+            'sender_jid'   => $payload['sender_jid'] ?? null,
+            'mime_type'    => $payload['mime_type'],
+            'size_bytes'   => $payload['size_bytes'],
             'storage_path' => $path,
-            'meta' => $payload['meta'] ?? null,
-            'consumed_at' => null,
+            'meta'         => array_merge(
+                is_array($payload['meta'] ?? null) ? $payload['meta'] : [],
+                ['stored_to_disk' => $storedToDisk]
+            ),
+            'consumed_at'  => null,
         ]);
 
-        return $this->ok(['stored' => true, 'storage_path' => $path]);
+        $tenant = Tenant::query()->find((int) $payload['tenant_id']);
+        if ($tenant && !empty($payload['sender_jid'])) {
+            try {
+                $this->financeIntentService->handleIncomingMedia($tenant, (string) $payload['sender_jid'], $media);
+            } catch (\Throwable $exception) {
+                Log::error('whatsapp.callback.media.finance_intent_failed', [
+                    'tenant_id'  => (int) $payload['tenant_id'],
+                    'sender_jid' => (string) $payload['sender_jid'],
+                    'media_id'   => (int) $media->id,
+                    'error'      => $exception->getMessage(),
+                ]);
+            }
+        }
+
+        return $this->ok(['stored' => true, 'storage_path' => $path, 'stored_to_disk' => $storedToDisk]);
     }
 
     private function ensureInternalToken(Request $request): ?\Illuminate\Http\JsonResponse
@@ -423,7 +482,7 @@ class InternalWhatsappCallbackController extends Controller
         }
 
         $senderJid = trim((string) ($payload['sender_jid'] ?? ''));
-        if (!preg_match('/^\d{6,20}@(c|g|lid)\.us$/', $senderJid)) {
+        if (!preg_match('/^\d{6,20}@(?:(?:c|g)\.us|lid(?:\.us)?)$/', $senderJid)) {
             return;
         }
 
@@ -438,6 +497,10 @@ class InternalWhatsappCallbackController extends Controller
         $withoutPrefix = trim(Str::substr($text, 1));
         $slug = Str::lower((string) Str::of($withoutPrefix)->before(' ')->value());
         if ($slug === '') {
+            return;
+        }
+
+        if (in_array($slug, ['tx', 'bulk'], true)) {
             return;
         }
 

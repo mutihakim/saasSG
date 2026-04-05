@@ -3,10 +3,12 @@ import { useTranslation } from "react-i18next";
 
 import { TransactionType } from "./types";
 
+type ComposerAction = TransactionType | "bulk";
+
 interface FinanceComposerFabProps {
     showComposer: boolean;
     onToggle: () => void;
-    onSelect: (type: TransactionType) => void;
+    onSelect: (type: ComposerAction) => void;
 }
 
 const FinanceComposerFab = ({ showComposer, onToggle, onSelect }: FinanceComposerFabProps) => {
@@ -25,7 +27,8 @@ const FinanceComposerFab = ({ showComposer, onToggle, onSelect }: FinanceCompose
                                 { type: "pengeluaran", icon: "ri-arrow-right-up-line", label: t("finance.transactions.types.pengeluaran") },
                                 { type: "pemasukan", icon: "ri-arrow-right-down-line", label: t("finance.transactions.types.pemasukan") },
                                 { type: "transfer", icon: "ri-repeat-line", label: t("finance.transactions.types.transfer") },
-                            ] as { type: TransactionType; icon: string; label: string }[]).map((item) => (
+                                { type: "bulk", icon: "ri-list-check-3", label: "Bulk Entry" },
+                            ] as { type: ComposerAction; icon: string; label: string }[]).map((item) => (
                                 <button key={item.type} type="button" className="btn btn-light text-start rounded-pill shadow-sm px-3 py-2" onClick={() => onSelect(item.type)} data-testid={`finance-composer-option-${item.type}`}>
                                     <i className={`${item.icon} me-2`}></i>
                                     {item.label}

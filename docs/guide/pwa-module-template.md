@@ -31,6 +31,35 @@ resources/js/Pages/Tenant/<Module>/
         └── types.ts
 ```
 
+## 1.1) Referensi UI Wajib
+
+Sebelum membuat surface baru, cek referensi Velzon berikut:
+
+- [`docs/reference/velzon-navbar-reference.md`](../reference/velzon-navbar-reference.md)
+- [`docs/reference/velzon-base-ui.md`](../reference/velzon-base-ui.md)
+- [`docs/reference/velzon-more-reference.md`](../reference/velzon-more-reference.md)
+
+> [!WARNING]
+> Referensi Velzon adalah **lookup index**, bukan bahan untuk dibaca habis.
+> Buka hanya file yang memang relevan dengan komponen yang sedang dibuat.
+> Jangan menghabiskan konteks agent dengan membaca banyak page contoh yang tidak dibutuhkan.
+>
+> Standar kerja:
+> - cari kategori yang tepat di docs referensi
+> - pilih `1-2` file source paling dekat
+> - implementasikan dari sana
+> - hentikan eksplorasi jika kebutuhan UI sudah jelas
+
+Aturan baku:
+
+- button/action: lihat `Base UI > Buttons`
+- badge/status: lihat `Base UI > Badges`
+- list/grouped rows: lihat `Base UI > Lists`
+- card/surface: lihat `Base UI > Cards`
+- form fields/layout: lihat `Forms`
+- modal/offcanvas basis: lihat `Base UI > Modals` dan `Base UI > Offcanvas`
+- widgets/summary tiles: lihat `Widgets`
+
 ## 2) Tanggung Jawab Per Layer
 
 ### `Page.tsx`

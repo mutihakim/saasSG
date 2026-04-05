@@ -1,6 +1,6 @@
 # 08 - Progress Dashboard
 
-Last updated: `2026-04-03`
+Last updated: `2026-04-05`
 
 Progress dashboard ini dipakai untuk memantau execution health lintas modul. Detail teknis tetap ada di `03-features/*`.
 
@@ -12,7 +12,7 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 | i18n | Done | 100% | Frontend Team | 2026-04-03 | Locale end-to-end selesai: `X-Locale` header → `SetRequestLocale` → `EnsureTenantAccess` respects header → `lang/en+id/validation.php` → `parseApiError` frontend reactive. Finance & Master Data i18n diperluas. [i18n Progress](./modules/i18n.md) |
 | Subscription | Done | 95% | Platform Team | 2026-04-02 | Guard + quota tersedia di semua modul Master Data. Tersisa E2E test upgrade flow. [Subscription Progress](./modules/subscription.md) |
 | Master Data CRUD | Done | 100% | Platform Team | 2026-04-03 | UoM, Currency, Tag, Category: full CRUD + Policy + Soft-Delete Aware Unique Index + i18n + Toast standardized. Tag `is_active` management ditambahkan. |
-| Finance | In Progress | 95% | Finance Team | 2026-04-03 | Finance V2 aktif: ULID string, accounts, budgets, shared access, summary filter-aware, dan Finance PWA Module. [Finance Progress](./modules/finance.md) |
+| Finance | In Progress | 98% | Finance Team | 2026-04-05 | Finance V2 aktif: ULID string, accounts, budgets, shared access, attachment, grouped bulk entry, Finance PWA Module, dan WhatsApp draft loop end-to-end. [Finance Progress](./modules/finance.md) |
 | Tenant Settings | Done | 90% | Platform Team | 2026-03-30 | Tenant profile, billing, localization, dan branding upload per tenant sudah aktif; tersisa verifikasi browser/E2E visual. |
 | WhatsApp | Done | 100% | Integration Team | 2026-03-31 | [WhatsApp Progress](./modules/whatsapp.md) |
 | Routing & Websocket | Done | 100% | Platform Team | 2026-03-31 | Subdomain-based routing, CORS Inertia, dynamisasi Reverb WSS. |
@@ -30,6 +30,7 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 5. **Finance PWA Module**: `/finance` tidak lagi dibangun sebagai halaman admin klasik, tetapi sebagai PWA Module yang dibuka dari Hub dan bisa menjadi pola modul lain.
 6. **Seed Data Finance V2**: Seeder akun, budget, dan sample transaction tenant sudah tersedia untuk `migrate:fresh --seed --force`.
 7. **Docs PWA Template**: Template reusable untuk modul tenant PWA ditambahkan agar pola finance bisa dipakai ulang.
+8. **Finance Attachment & Grouped Bulk**: Attachment transaksi, duplicate flow, bulk entry PWA, dan grouped bulk action sekarang aktif pada shell `/finance`.
 
 ## Perubahan Arsitektural Besar (2026-04-02)
 

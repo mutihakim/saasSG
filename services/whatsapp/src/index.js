@@ -25,7 +25,7 @@ if (!fs.existsSync(AUTH_DIR)) {
 }
 
 const app = express();
-app.use(express.json({ limit: '2mb' }));
+app.use(express.json({ limit: '15mb' }));
 
 const callbackHttp = axios.create({
     baseURL: APP_CALLBACK_URL,
@@ -155,7 +155,7 @@ function isLogoutLikeReason(reason) {
 }
 
 function isSupportedJid(jid) {
-    return /^\d{6,20}@(c|g|lid)\.us$/.test((jid || '').trim());
+    return /^\d{6,20}@(?:(?:c|g)\.us|lid(?:\.us)?)$/.test((jid || '').trim());
 }
 
 function isBrowserLockError(error) {
@@ -309,6 +309,45 @@ async function postMessage(payload) {
         // eslint-disable-next-line no-console
         console.error('[DEBUG] Failed to send messages callback', payload.tenant_id, detail);
     }
+}
+
+async function postMedia(payload) {
+    const maxAttempts = Math.max(1, CALLBACK_MAX_ATTEMPTS);
+    for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+            await callbackHttp.post('/internal/v1/whatsapp/media', payload);
+            logEvent('info', 'message.media.callback.sent', {
+                tenant_id: payload.tenant_id,
+                meta: {
+                    mime_type: payload.mime_type,
+                    size_bytes: payload.size_bytes,
+                    attempt,
+                },
+            });
+            return true;
+        } catch (error) {
+            const status = error.response?.status || null;
+            const detail = error.response?.data || error.message;
+            if (attempt < maxAttempts) {
+                logEvent('warn', 'message.media.callback.retrying', {
+                    tenant_id: payload.tenant_id,
+                    reason: 'callback_error',
+                    meta: { attempt, max_attempts: maxAttempts, status, error: detail },
+                });
+                const delay = CALLBACK_RETRY_DELAYS_MS[Math.min(attempt - 1, CALLBACK_RETRY_DELAYS_MS.length - 1)];
+                // eslint-disable-next-line no-await-in-loop
+                await wait(delay);
+                continue;
+            }
+            logEvent('error', 'message.media.callback.failed_final', {
+                tenant_id: payload.tenant_id,
+                reason: 'callback_error',
+                meta: { attempt, max_attempts: maxAttempts, status, error: detail },
+            });
+            return false;
+        }
+    }
+    return false;
 }
 
 function ensureRuntime(tenantId, sessionName) {
@@ -551,11 +590,14 @@ function registerClientHandlers(runtime) {
             return;
         }
 
+        const whatsappMessageId = message.id?._serialized || `incoming-${Date.now()}`;
+        const senderJid = message.from || null;
+
         await postMessage({
             tenant_id: tenantId,
             direction: 'incoming',
-            whatsapp_message_id: message.id?._serialized || `incoming-${Date.now()}`,
-            sender_jid: message.from || null,
+            whatsapp_message_id: whatsappMessageId,
+            sender_jid: senderJid,
             recipient_jid: message.to || runtime.connectedJid,
             payload: {
                 text: message.body || '',
@@ -563,6 +605,50 @@ function registerClientHandlers(runtime) {
                 timestamp: message.timestamp || null,
             },
         });
+
+        // Download and forward media (images, documents, etc.) to Laravel
+        if (message.hasMedia) {
+            try {
+                const media = await message.downloadMedia();
+                if (media && media.data && media.mimetype) {
+                    // Calculate byte size from base64 string (approximate)
+                    const sizeBytes = Math.round((media.data.length * 3) / 4);
+
+                    await postMedia({
+                        tenant_id: tenantId,
+                        sender_jid: senderJid,
+                        mime_type: media.mimetype,
+                        size_bytes: media.filesize || sizeBytes,
+                        content_base64: media.data,
+                        meta: {
+                            whatsapp_message_id: whatsappMessageId,
+                            message_type: message.type || 'unknown',
+                            filename: media.filename || null,
+                        },
+                    });
+                } else {
+                    logEvent('warn', 'message.media.download.empty', {
+                        tenant_id: tenantId,
+                        session_name: runtime.sessionName,
+                        meta: {
+                            whatsapp_message_id: whatsappMessageId,
+                            message_type: message.type || 'unknown',
+                        },
+                    });
+                }
+            } catch (mediaError) {
+                logEvent('error', 'message.media.download.failed', {
+                    tenant_id: tenantId,
+                    session_name: runtime.sessionName,
+                    reason: 'download_failed',
+                    meta: {
+                        whatsapp_message_id: whatsappMessageId,
+                        message_type: message.type || 'unknown',
+                        error: String(mediaError?.message || mediaError || 'unknown'),
+                    },
+                });
+            }
+        }
     });
 }
 

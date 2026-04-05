@@ -8,6 +8,7 @@ use App\Http\Requests\UpdateFinanceTransactionRequest;
 use App\Models\ActivityLog;
 use App\Models\FinanceTransaction;
 use App\Models\Tenant;
+use App\Models\TenantAttachment;
 use App\Models\TenantBankAccount;
 use App\Models\TenantBudget;
 use App\Models\TenantCurrency;
@@ -21,8 +22,13 @@ use App\Support\SubscriptionEntitlements;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FinanceTransactionApiController extends Controller
 {
@@ -43,17 +49,7 @@ class FinanceTransactionApiController extends Controller
         $member = $request->attributes->get('currentTenantMember');
 
         $query = $this->access->visibleTransactionsQuery($tenant, $member)
-            ->with([
-                'category:id,name,icon,color',
-                'currency:id,code,symbol,decimal_places',
-                'createdBy:id,full_name',
-                'ownerMember:id,full_name',
-                'updatedBy:id,full_name',
-                'approvedBy:id,full_name',
-                'bankAccount:id,name,type,currency_code',
-                'budget:id,name,period_month,allocated_amount,spent_amount,remaining_amount',
-                'tags:id,name,color',
-            ])
+            ->with($this->transactionRelations())
             ->tap(fn (Builder $builder) => $this->applyTransactionFilters($builder, $request));
 
         $sortField = in_array($request->sort, ['transaction_date', 'amount_base', 'created_at'])
@@ -162,7 +158,7 @@ class FinanceTransactionApiController extends Controller
                 $this->syncRecurringRule($transaction, $tenant->id, $data, $isRecurring);
                 $this->ledger->syncAfterCreate($transaction);
 
-                $fresh = $transaction->fresh(['category', 'currency', 'tags', 'recurringRule', 'bankAccount', 'budget', 'ownerMember']);
+                $fresh = $transaction->fresh($this->transactionRelations());
 
                 ActivityLog::create($this->makeActivityLogPayload(
                     request: $request,
@@ -201,7 +197,7 @@ class FinanceTransactionApiController extends Controller
 
         return response()->json([
             'ok'   => true,
-            'data' => ['transaction' => $transaction->load(['category', 'currency', 'createdBy', 'ownerMember', 'updatedBy', 'approvedBy', 'bankAccount', 'budget', 'tags', 'recurringRule'])],
+            'data' => ['transaction' => $transaction->load($this->transactionRelations())],
         ]);
     }
 
@@ -286,7 +282,7 @@ class FinanceTransactionApiController extends Controller
                 $this->syncRecurringRule($transaction, $tenant->id, $data, $isRecurring);
                 $this->ledger->syncAfterUpdate($beforeModel, $transaction->fresh());
 
-                $fresh = $transaction->fresh(['category', 'currency', 'tags', 'recurringRule', 'bankAccount', 'budget', 'ownerMember']);
+                $fresh = $transaction->fresh($this->transactionRelations());
 
                 ActivityLog::create($this->makeActivityLogPayload(
                     request: $request,
@@ -341,30 +337,147 @@ class FinanceTransactionApiController extends Controller
                 }
             }
 
-            $transactions
-                ->unique('id')
-                ->each(function (FinanceTransaction $item) use ($tenant, $member) {
-                    $beforeModel = $item->load(['tags', 'recurringRule', 'bankAccount', 'budget', 'ownerMember']);
-                    $before = $this->snapshotTransaction($beforeModel);
-
-                    $this->ledger->syncAfterDelete($beforeModel);
-                    $item->delete();
-
-                    ActivityLog::create($this->makeActivityLogPayload(
-                        request: request(),
-                        tenantId: $tenant->id,
-                        actorMemberId: $member?->id,
-                        action: 'finance.transaction.deleted',
-                        targetId: $item->id,
-                        before: $before,
-                        after: null,
-                        beforeVersion: (int) $item->row_version,
-                        afterVersion: null,
-                    ));
-                });
+            $this->deleteTransactions(
+                tenant: $tenant,
+                transactions: $transactions->unique('id')->values(),
+                actorMember: $member,
+                request: request(),
+                writeDeletionActivityLog: true,
+            );
         });
 
         $this->summary->invalidate($tenant->id, $month);
+
+        return response()->json(['ok' => true]);
+    }
+
+    public function destroyGroup(Request $request, Tenant $tenant, string $sourceId): JsonResponse
+    {
+        $this->authorize('delete', new FinanceTransaction());
+
+        /** @var TenantMember|null $member */
+        $member = $request->attributes->get('currentTenantMember');
+
+        $transactions = $this->access->visibleTransactionsQuery($tenant, $member)
+            ->with($this->transactionRelations())
+            ->where('source_type', 'finance_bulk')
+            ->where('source_id', $sourceId)
+            ->get();
+
+        if ($transactions->isEmpty()) {
+            return response()->json(['ok' => false, 'message' => 'Grup transaksi tidak ditemukan.'], 404);
+        }
+
+        $months = $transactions
+            ->map(fn (FinanceTransaction $transaction) => date('Y-m', strtotime((string) $transaction->transaction_date)))
+            ->unique()
+            ->values();
+
+        DB::transaction(function () use ($tenant, $transactions, $member, $request) {
+            $this->deleteTransactions(
+                tenant: $tenant,
+                transactions: $transactions,
+                actorMember: $member,
+                request: $request,
+                writeDeletionActivityLog: false,
+            );
+        });
+
+        foreach ($months as $month) {
+            $this->summary->invalidate($tenant->id, $month);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'deleted' => $transactions->count(),
+            'source_id' => $sourceId,
+        ]);
+    }
+
+    public function uploadAttachments(Request $request, Tenant $tenant, FinanceTransaction $transaction): JsonResponse
+    {
+        $this->authorize('update', $transaction);
+        abort_if((int) $transaction->tenant_id !== (int) $tenant->id, 404);
+
+        $payload = $request->validate([
+            'attachments' => ['required', 'array', 'min:1', 'max:10'],
+            'attachments.*' => ['file', 'max:5120', 'mimetypes:image/jpeg,image/png,image/webp,application/pdf'],
+        ]);
+
+        $existingSortOrder = (int) $transaction->attachments()->max('sort_order');
+        $created = [];
+
+        foreach ($payload['attachments'] as $index => $file) {
+            if (!$file instanceof UploadedFile) {
+                continue;
+            }
+
+            $stored = $this->storeAttachmentFile($transaction, $file);
+            $created[] = $transaction->attachments()->create([
+                'tenant_id' => $tenant->id,
+                'file_name' => $stored['file_name'],
+                'file_path' => $stored['path'],
+                'mime_type' => $stored['mime_type'],
+                'file_size' => $stored['file_size'],
+                'label' => null,
+                'sort_order' => $existingSortOrder + $index + 1,
+                'row_version' => 1,
+            ]);
+        }
+
+        return response()->json([
+            'ok' => true,
+            'data' => [
+                'attachments' => collect($created)->map(fn (TenantAttachment $attachment) => $this->attachmentPayload($attachment))->values(),
+            ],
+        ], 201);
+    }
+
+    public function previewAttachment(Tenant $tenant, FinanceTransaction $transaction, TenantAttachment $attachment): StreamedResponse|JsonResponse
+    {
+        $this->authorize('view', $transaction);
+        abort_if((int) $transaction->tenant_id !== (int) $tenant->id, 404);
+
+        if (!$this->attachmentBelongsToTransaction($transaction, $attachment)) {
+            return response()->json(['ok' => false, 'message' => 'Attachment not found.'], 404);
+        }
+
+        if (!Storage::exists($attachment->file_path)) {
+            return response()->json(['ok' => false, 'message' => 'Attachment file not found.'], 404);
+        }
+
+        $stream = Storage::readStream($attachment->file_path);
+        if ($stream === false) {
+            return response()->json(['ok' => false, 'message' => 'Attachment file not found.'], 404);
+        }
+
+        return response()->stream(function () use ($stream) {
+            fpassthru($stream);
+            if (is_resource($stream)) {
+                fclose($stream);
+            }
+        }, 200, [
+            'Content-Type' => $attachment->mime_type ?: 'application/octet-stream',
+            'Content-Length' => (string) max((int) $attachment->file_size, 0),
+            'Content-Disposition' => 'inline; filename="' . addslashes($attachment->file_name) . '"',
+            'Cache-Control' => 'private, max-age=300',
+        ]);
+    }
+
+    public function destroyAttachment(Tenant $tenant, FinanceTransaction $transaction, TenantAttachment $attachment): JsonResponse
+    {
+        $this->authorize('update', $transaction);
+        abort_if((int) $transaction->tenant_id !== (int) $tenant->id, 404);
+
+        if (!$this->attachmentBelongsToTransaction($transaction, $attachment)) {
+            return response()->json(['ok' => false, 'message' => 'Attachment not found.'], 404);
+        }
+
+        if ($attachment->file_path && Storage::exists($attachment->file_path)) {
+            Storage::delete($attachment->file_path);
+        }
+
+        $attachment->delete();
 
         return response()->json(['ok' => true]);
     }
@@ -384,11 +497,14 @@ class FinanceTransactionApiController extends Controller
 
         $months = $affected->map(fn ($t) => date('Y-m', strtotime((string) $t->transaction_date)))->unique();
 
-        DB::transaction(function () use ($affected) {
-            $affected->each(function (FinanceTransaction $transaction) {
-                $this->ledger->syncAfterDelete($transaction);
-                $transaction->delete();
-            });
+        DB::transaction(function () use ($tenant, $affected) {
+            $this->deleteTransactions(
+                tenant: $tenant,
+                transactions: $affected,
+                actorMember: null,
+                request: request(),
+                writeDeletionActivityLog: false,
+            );
         });
 
         foreach ($months as $month) {
@@ -522,6 +638,204 @@ class FinanceTransactionApiController extends Controller
             }))
             ->when($request->month, fn ($q) => $q->forMonth($request->month))
             ->when(! $request->month, fn ($q) => $q->byDateRange($request->date_from, $request->date_to));
+    }
+
+    private function transactionRelations(): array
+    {
+        return [
+            'category:id,name,icon,color',
+            'currency:id,code,symbol,decimal_places',
+            'createdBy:id,full_name',
+            'ownerMember:id,full_name',
+            'updatedBy:id,full_name',
+            'approvedBy:id,full_name',
+            'bankAccount:id,name,type,currency_code',
+            'budget:id,name,period_month,allocated_amount,spent_amount,remaining_amount',
+            'tags:id,name,color',
+            'attachments',
+            'recurringRule',
+        ];
+    }
+
+    private function attachmentPayload(TenantAttachment $attachment): array
+    {
+        return [
+            'id' => $attachment->id,
+            'file_name' => $attachment->file_name,
+            'mime_type' => $attachment->mime_type,
+            'file_size' => $attachment->file_size,
+            'label' => $attachment->label,
+            'sort_order' => $attachment->sort_order,
+        ];
+    }
+
+    private function storeAttachmentFile(FinanceTransaction $transaction, UploadedFile $file): array
+    {
+        $mimeType = $file->getClientMimeType() ?: $file->getMimeType() ?: 'application/octet-stream';
+        if ($this->isConvertibleImageMime($mimeType)) {
+            return $this->storeOptimizedImageAttachment(
+                transaction: $transaction,
+                contents: file_get_contents($file->getRealPath()) ?: '',
+                originalName: $file->getClientOriginalName() ?: ('attachment-' . Str::uuid() . '.webp'),
+                fallbackMimeType: $mimeType,
+            );
+        }
+
+        $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'bin';
+        $fileName = Str::uuid()->toString() . '.' . strtolower($extension);
+        $path = sprintf(
+            'finance/attachments/transactions/%s/%s',
+            $transaction->id,
+            $fileName
+        );
+
+        Storage::putFileAs(dirname($path), $file, basename($path));
+
+        return [
+            'path' => $path,
+            'file_name' => $file->getClientOriginalName(),
+            'mime_type' => $mimeType,
+            'file_size' => $file->getSize() ?: 0,
+        ];
+    }
+
+    private function attachmentBelongsToTransaction(FinanceTransaction $transaction, TenantAttachment $attachment): bool
+    {
+        return (int) $attachment->tenant_id === (int) $transaction->tenant_id
+            && $attachment->attachable_type === FinanceTransaction::class
+            && (string) $attachment->attachable_id === (string) $transaction->id;
+    }
+
+    private function isConvertibleImageMime(?string $mimeType): bool
+    {
+        return in_array((string) $mimeType, ['image/jpeg', 'image/png', 'image/webp'], true);
+    }
+
+    private function storeOptimizedImageAttachment(
+        FinanceTransaction $transaction,
+        string $contents,
+        string $originalName,
+        string $fallbackMimeType,
+    ): array {
+        $image = @imagecreatefromstring($contents);
+        if (!$image) {
+            $fileName = Str::uuid()->toString() . '.webp';
+            $path = sprintf('finance/attachments/transactions/%s/%s', $transaction->id, $fileName);
+            Storage::put($path, $contents);
+
+            return [
+                'path' => $path,
+                'file_name' => $this->normalizedWebpName($originalName),
+                'mime_type' => $fallbackMimeType,
+                'file_size' => strlen($contents),
+            ];
+        }
+
+        $this->prepareImageResource($image);
+        $optimized = $this->encodeWebpUnderLimit($image, 100 * 1024);
+        imagedestroy($image);
+
+        $fileName = Str::uuid()->toString() . '.webp';
+        $path = sprintf('finance/attachments/transactions/%s/%s', $transaction->id, $fileName);
+        Storage::put($path, $optimized);
+
+        return [
+            'path' => $path,
+            'file_name' => $this->normalizedWebpName($originalName),
+            'mime_type' => 'image/webp',
+            'file_size' => strlen($optimized),
+        ];
+    }
+
+    private function encodeWebpUnderLimit(\GdImage $image, int $maxBytes): string
+    {
+        $current = $image;
+        $ownsCurrent = false;
+        $bestBytes = null;
+        $qualities = [82, 76, 70, 64, 58, 52, 46, 40, 34];
+
+        for ($iteration = 0; $iteration < 6; $iteration++) {
+            foreach ($qualities as $quality) {
+                $encoded = $this->encodeImageToWebp($current, $quality);
+                if ($encoded === null) {
+                    continue;
+                }
+
+                if ($bestBytes === null || strlen($encoded) < strlen($bestBytes)) {
+                    $bestBytes = $encoded;
+                }
+
+                if (strlen($encoded) <= $maxBytes) {
+                    if ($ownsCurrent && $current !== $image) {
+                        imagedestroy($current);
+                    }
+
+                    return $encoded;
+                }
+            }
+
+            $width = imagesx($current);
+            $height = imagesy($current);
+            if ($width <= 480 && $height <= 480) {
+                break;
+            }
+
+            $scaled = imagescale(
+                $current,
+                max(320, (int) floor($width * 0.85)),
+                max(320, (int) floor($height * 0.85)),
+                IMG_BILINEAR_FIXED
+            );
+
+            if ($scaled === false) {
+                break;
+            }
+
+            $this->prepareImageResource($scaled);
+            if ($ownsCurrent && $current !== $image) {
+                imagedestroy($current);
+            }
+
+            $current = $scaled;
+            $ownsCurrent = true;
+        }
+
+        if ($ownsCurrent && $current !== $image) {
+            imagedestroy($current);
+        }
+
+        return $bestBytes ?? throw new \RuntimeException('Failed to optimize image attachment.');
+    }
+
+    private function encodeImageToWebp(\GdImage $image, int $quality): ?string
+    {
+        ob_start();
+        $success = imagewebp($image, null, $quality);
+        $contents = ob_get_clean();
+
+        if (!$success || !is_string($contents) || $contents === '') {
+            return null;
+        }
+
+        return $contents;
+    }
+
+    private function prepareImageResource(\GdImage $image): void
+    {
+        if (function_exists('imagepalettetotruecolor')) {
+            @imagepalettetotruecolor($image);
+        }
+
+        imagealphablending($image, false);
+        imagesavealpha($image, true);
+    }
+
+    private function normalizedWebpName(string $originalName): string
+    {
+        $name = pathinfo($originalName, PATHINFO_FILENAME);
+        $name = trim($name) !== '' ? $name : 'attachment';
+
+        return $name . '.webp';
     }
 
     private function transactionPayload(
@@ -677,6 +991,67 @@ class FinanceTransactionApiController extends Controller
             'source_ip' => $request->ip(),
             'user_agent' => $request->userAgent(),
         ];
+    }
+
+    private function deleteTransactions(
+        Tenant $tenant,
+        Collection $transactions,
+        ?TenantMember $actorMember,
+        Request $request,
+        bool $writeDeletionActivityLog,
+    ): void {
+        $transactions
+            ->unique('id')
+            ->each(function (FinanceTransaction $transaction) use ($tenant, $actorMember, $request, $writeDeletionActivityLog) {
+                $beforeModel = $transaction->relationLoaded('attachments')
+                    ? $transaction
+                    : $transaction->load($this->transactionRelations());
+
+                $before = $this->snapshotTransaction($beforeModel);
+
+                $this->deleteTransactionArtifacts($tenant, $beforeModel);
+                $this->ledger->syncAfterDelete($beforeModel);
+                $beforeModel->delete();
+
+                if ($writeDeletionActivityLog) {
+                    ActivityLog::create($this->makeActivityLogPayload(
+                        request: $request,
+                        tenantId: $tenant->id,
+                        actorMemberId: $actorMember?->id,
+                        action: 'finance.transaction.deleted',
+                        targetId: (string) $beforeModel->id,
+                        before: $before,
+                        after: null,
+                        beforeVersion: (int) $beforeModel->row_version,
+                        afterVersion: null,
+                    ));
+                }
+            });
+    }
+
+    private function deleteTransactionArtifacts(Tenant $tenant, FinanceTransaction $transaction): void
+    {
+        $attachments = $transaction->relationLoaded('attachments')
+            ? $transaction->attachments
+            : $transaction->attachments()->get();
+
+        foreach ($attachments as $attachment) {
+            if ($attachment->file_path && Storage::exists($attachment->file_path)) {
+                Storage::delete($attachment->file_path);
+            }
+
+            $attachment->delete();
+        }
+
+        $this->tags->syncTags($transaction, $tenant->id, []);
+
+        DB::table('activity_logs')
+            ->where('tenant_id', $tenant->id)
+            ->where('target_type', 'finance_transactions')
+            ->where('target_id', (string) $transaction->id)
+            ->delete();
+
+        $transaction->recurringRule?->delete();
     }
 
     private function resolveUsableAccount(Tenant $tenant, ?TenantMember $member, ?string $accountId): ?TenantBankAccount

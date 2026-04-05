@@ -10,7 +10,10 @@ interface TransactionDetailSheetProps {
     defaultCurrency: string;
     onClose: () => void;
     onEdit: () => void;
+    onDuplicate: () => void;
+    onAddToGroup: () => void;
     onDelete: () => void;
+    onPreviewAttachment: (transaction: any, attachment: any) => void;
     canEdit?: boolean;
     canDelete?: boolean;
 }
@@ -41,7 +44,10 @@ const TransactionDetailSheet = ({
     defaultCurrency,
     onClose,
     onEdit,
+    onDuplicate,
+    onAddToGroup,
     onDelete,
+    onPreviewAttachment,
     canEdit = false,
     canDelete = false,
 }: TransactionDetailSheetProps) => {
@@ -57,6 +63,8 @@ const TransactionDetailSheet = ({
     const headerColor = transaction.type === "transfer" ? "text-primary" : amountClass;
     const headerIcon = transaction.category?.icon || (transaction.type === "pemasukan" ? "ri-arrow-down-circle-line" : transaction.type === "pengeluaran" ? "ri-arrow-up-circle-line" : "ri-loop-left-line");
     const budgetStatusLabel = transaction.budget_status ? t(`finance.budgets.status.${transaction.budget_status === "within_budget" ? "within" : transaction.budget_status === "over_budget" ? "over" : "unbudgeted"}`) : null;
+    const isGrouped = transaction.source_type === "finance_bulk" && !!transaction.source_id;
+    const groupLabel = transaction.merchant_name || transaction.notes || transaction.description || "Bulk Entry";
 
     if (!show) {
         return null;
@@ -95,6 +103,9 @@ const TransactionDetailSheet = ({
                     </button>
                     <div className="fw-semibold text-dark">{t("finance.pwa.detail.receipt")}</div>
                     <div className="d-flex align-items-center gap-2">
+                        <button type="button" className="btn btn-light rounded-circle border-0 shadow-sm d-inline-flex align-items-center justify-content-center" style={{ width: 40, height: 40 }} onClick={onDuplicate} data-testid="finance-detail-duplicate">
+                            <i className="ri-file-copy-line fs-5"></i>
+                        </button>
                         {canEdit && transaction.type !== "transfer" && (
                             <button type="button" className="btn btn-light rounded-circle border-0 shadow-sm d-inline-flex align-items-center justify-content-center" style={{ width: 40, height: 40 }} onClick={onEdit} data-testid="finance-detail-edit">
                                 <i className="ri-pencil-line fs-5"></i>
@@ -133,6 +144,13 @@ const TransactionDetailSheet = ({
                                 {t("finance.budgets.status.over")}
                             </Badge>
                         )}
+                        {isGrouped && (
+                            <div className="mt-3">
+                                <Badge bg="secondary-subtle" text="secondary" className="rounded-pill px-3 py-2">
+                                    Bagian dari grup: {groupLabel}
+                                </Badge>
+                            </div>
+                        )}
                     </div>
 
                     <div className="bg-white shadow-sm p-3 mt-4" style={{ borderRadius: CARD_RADIUS }}>
@@ -161,6 +179,9 @@ const TransactionDetailSheet = ({
                         {transaction.location && <DetailRow label={t("finance.modals.transaction.fields.location")} value={transaction.location} muted />}
                         {transaction.reference_number && <DetailRow label={t("finance.modals.transaction.fields.reference_number")} value={transaction.reference_number} muted />}
                         {transaction.payment_method && <DetailRow label={t("finance.modals.transaction.fields.payment_method_optional")} value={transaction.payment_method} muted />}
+                        {isGrouped && (
+                            <DetailRow label="Bagian dari grup" value={groupLabel} muted />
+                        )}
                         {Array.isArray(transaction.tags) && transaction.tags.length > 0 && (
                             <DetailRow
                                 label={t("finance.modals.transaction.fields.tags")}
@@ -168,7 +189,44 @@ const TransactionDetailSheet = ({
                                 muted
                             />
                         )}
+                        {Array.isArray(transaction.attachments) && transaction.attachments.length > 0 && (
+                            <>
+                                <DottedDivider />
+                                <div className="py-2">
+                                    <div className="small text-muted mb-2">Lampiran</div>
+                                    <div className="d-grid gap-2">
+                                        {transaction.attachments.map((attachment: any) => (
+                                            <button
+                                                key={attachment.id}
+                                                type="button"
+                                                className="btn btn-light text-start rounded-4 border px-3 py-2"
+                                                onClick={() => onPreviewAttachment(transaction, attachment)}
+                                            >
+                                                <div className="d-flex align-items-center justify-content-between gap-3">
+                                                    <div className="overflow-hidden">
+                                                        <div className="fw-medium text-dark text-truncate">{attachment.file_name || `Lampiran ${attachment.id}`}</div>
+                                                        <div className="small text-muted">
+                                                            {attachment.mime_type || "file"}
+                                                            {attachment.file_size ? ` · ${(Number(attachment.file_size) / 1024).toFixed(0)} KB` : ""}
+                                                        </div>
+                                                    </div>
+                                                    <i className={`${String(attachment.mime_type || "").startsWith("image/") ? "ri-image-line" : "ri-attachment-2"} fs-5 text-muted`}></i>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                </div>
+                            </>
+                        )}
                         <DottedDivider />
+                        {isGrouped && (
+                            <div className="d-grid gap-2 mb-3">
+                                <button type="button" className="btn btn-light rounded-pill" onClick={onAddToGroup}>
+                                    <i className="ri-add-line me-1"></i>
+                                    Tambah Item ke Grup Ini
+                                </button>
+                            </div>
+                        )}
                         <DetailRow label={t("finance.shared.created_by")} value={transaction.created_by?.full_name || transaction.createdBy?.full_name || "-"} muted />
                         <DetailRow
                             label={t("finance.shared.created_at")}

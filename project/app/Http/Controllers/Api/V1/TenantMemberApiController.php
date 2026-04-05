@@ -405,7 +405,7 @@ class TenantMemberApiController extends Controller
         }
 
         $trimmed = trim($input);
-        if (preg_match('/^\d{6,20}@(c|g|lid)\.us$/', $trimmed) === 1) {
+        if (preg_match('/^\d{6,20}@(?:(?:c|g)\.us|lid(?:\.us)?)$/', $trimmed) === 1) {
             return $trimmed;
         }
 

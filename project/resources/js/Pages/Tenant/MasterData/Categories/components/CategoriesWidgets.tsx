@@ -1,6 +1,6 @@
 import React from 'react';
-import CountUp from "react-countup";
 import { Card, Col, Row } from 'react-bootstrap';
+import CountUp from "react-countup";
 
 interface WidgetItemProps {
     title: string;

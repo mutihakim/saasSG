@@ -13,8 +13,11 @@ import { useTenantRoute } from "../../../common/tenantRoute";
 import AccountModal from "./components/AccountModal";
 import BudgetModal from "./components/BudgetModal";
 import ReportsPanel from "./components/ReportsPanel";
+import TransactionBatchModal from "./components/TransactionBatchModal";
 import TransactionModal from "./components/TransactionModal";
 import TransferModal from "./components/TransferModal";
+import WhatsappBatchReviewModal from "./components/WhatsappBatchReviewModal";
+import AttachmentPreviewModal from "./components/pwa/AttachmentPreviewModal";
 import FinanceBottomNav from "./components/pwa/FinanceBottomNav";
 import FinanceComposerFab from "./components/pwa/FinanceComposerFab";
 import FinanceFilterPanel from "./components/pwa/FinanceFilterPanel";
@@ -83,6 +86,7 @@ const FinanceIndex = ({
     const [showComposer, setShowComposer] = useState(false);
     const [transactionModal, setTransactionModal] = useState(false);
     const [transferModal, setTransferModal] = useState(false);
+    const [batchEntryModal, setBatchEntryModal] = useState(false);
     const [accountModal, setAccountModal] = useState(false);
     const [budgetModal, setBudgetModal] = useState(false);
     const [selectedTransaction, setSelectedTransaction] = useState<any>(null);
@@ -92,9 +96,30 @@ const FinanceIndex = ({
     const [showDetailSheet, setShowDetailSheet] = useState(false);
     const [deleteModal, setDeleteModal] = useState(false);
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
-    const [deleteTargetType, setDeleteTargetType] = useState<"transaction" | "account" | "budget">("transaction");
+    const [deleteTargetType, setDeleteTargetType] = useState<"transaction" | "transaction_group" | "account" | "budget">("transaction");
     const [isDeleting, setIsDeleting] = useState(false);
+    const [attachmentPreview, setAttachmentPreview] = useState<{ url: string; title?: string | null; mimeType?: string | null } | null>(null);
     const [transactionPresetType, setTransactionPresetType] = useState<"pemasukan" | "pengeluaran">("pengeluaran");
+    const [transactionDraft, setTransactionDraft] = useState<Record<string, any> | null>(null);
+    const [transactionGroupLock, setTransactionGroupLock] = useState<{
+        sourceType: string;
+        sourceId: string;
+        merchantName?: string | null;
+        label?: string | null;
+    } | null>(null);
+    const [transactionDraftMeta, setTransactionDraftMeta] = useState<{
+        source?: string | null;
+        confidenceScore?: number | null;
+        mediaPreviewUrl?: string | null;
+        mediaItems?: Array<{
+            id: number;
+            preview_url: string;
+            mime_type?: string | null;
+            size_bytes?: number | null;
+        }>;
+    } | null>(null);
+    const [batchDraft, setBatchDraft] = useState<any | null>(null);
+    const [batchModal, setBatchModal] = useState(false);
     const [statsMetric, setStatsMetric] = useState<"expense" | "income">("expense");
     const [showFilters, setShowFilters] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
@@ -181,6 +206,18 @@ const FinanceIndex = ({
         await Promise.all([fetchSummary(), fetchAccounts(), fetchBudgets()]);
     }, [fetchAccounts, fetchBudgets, fetchSummary]);
 
+    const clearWhatsappQuery = useCallback(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        const url = new URL(window.location.href);
+        url.searchParams.delete("source");
+        url.searchParams.delete("action");
+        url.searchParams.delete("intent");
+        window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
+    }, []);
+
     const loadFinance = useCallback(async () => {
         setLoading(true);
         setErrorState(null);
@@ -198,6 +235,78 @@ const FinanceIndex = ({
     useEffect(() => {
         loadFinance();
     }, [loadFinance]);
+
+    useEffect(() => {
+        if (typeof window === "undefined") {
+            return;
+        }
+
+        const params = new URLSearchParams(window.location.search);
+        const source = params.get("source");
+        const action = params.get("action");
+        const intent = params.get("intent");
+
+        if (source !== "wa" || !intent) {
+            return;
+        }
+
+        (async () => {
+            try {
+                const response = await axios.get(tenantRoute.apiTo(`/finance/whatsapp-intents/${intent}`));
+                const payload = response.data?.data?.intent;
+                if (!payload) {
+                    return;
+                }
+
+                const mediaPreviewUrl = payload.media?.id
+                    ? tenantRoute.apiTo(`/finance/whatsapp-media/${payload.media.id}/preview`)
+                    : null;
+                const mediaItems = Array.isArray(payload.media_items) ? payload.media_items : [];
+
+                if (action === "batch-review") {
+                    setBatchDraft({
+                        ...payload,
+                        media_preview_url: mediaPreviewUrl,
+                        media_items: mediaItems,
+                    });
+                    setBatchModal(true);
+                    return;
+                }
+
+                const extracted = payload.extracted_payload || {};
+                setTransactionDraft({
+                    owner_member_id: payload.member_id || activeMemberId || "",
+                    type: extracted.type || "pengeluaran",
+                    amount: extracted.amount || "",
+                    currency_code: extracted.currency_code || defaultCurrency,
+                    category_id: extracted.category_id ? String(extracted.category_id) : "",
+                    transaction_date: extracted.transaction_date || (() => {
+                        const now = new Date();
+                        const y = now.getFullYear();
+                        const m = String(now.getMonth() + 1).padStart(2, '0');
+                        const d = String(now.getDate()).padStart(2, '0');
+                        return `${y}-${m}-${d}`;
+                    })(),
+                    description: extracted.description || extracted.notes || "",
+                    notes: extracted.notes || "",
+                    merchant: extracted.merchant || "",
+                });
+                setTransactionDraftMeta({
+                    source: "whatsapp",
+                    confidenceScore: payload.confidence_score,
+                    mediaPreviewUrl,
+                    mediaItems,
+                });
+                setSelectedTransaction(null);
+                setTransactionPresetType(extracted.type === "pemasukan" ? "pemasukan" : "pengeluaran");
+                setTransactionModal(true);
+            } catch (error: any) {
+                const parsed = parseApiError(error, "Failed to open WhatsApp draft");
+                notify.error({ title: parsed.title, detail: parsed.detail });
+                clearWhatsappQuery();
+            }
+        })();
+    }, [activeMemberId, clearWhatsappQuery, defaultCurrency, tenantRoute]);
 
     const totalAssets = useMemo(
         () => accounts.filter((account) => !["credit_card", "paylater"].includes(account.type)).reduce((sum, account) => sum + Number(account.current_balance || 0), 0),
@@ -389,6 +498,11 @@ const FinanceIndex = ({
         }
     }, [focusTransactionRow]);
 
+    const removeTransactionGroupFromList = useCallback((sourceId: string) => {
+        setTransactions((prev) => prev.filter((item) => !(item.source_type === "finance_bulk" && String(item.source_id || "") === sourceId)));
+        setFocusedTransactionId(null);
+    }, []);
+
     const upsertAccountInList = useCallback((account: any) => {
         if (!account) {
             return;
@@ -452,11 +566,77 @@ const FinanceIndex = ({
     const editFromDetailSheet = useCallback(() => {
         setShowDetailSheet(false);
         setTransactionPresetType(selectedTransaction?.type === "pemasukan" ? "pemasukan" : "pengeluaran");
+        setTransactionGroupLock(null);
         setTransactionModal(true);
     }, [selectedTransaction]);
 
-    const openNewTransaction = (type: TransactionType) => {
+    const buildTransactionDraftFromSource = useCallback((transaction: any, options?: {
+        duplicate?: boolean;
+        preserveGroup?: boolean;
+    }) => {
+        if (!transaction) {
+            return null;
+        }
+
+        const preserveGroup = options?.preserveGroup ?? false;
+        const today = new Date().toISOString().slice(0, 10);
+
+        return {
+            owner_member_id: transaction.owner_member_id || transaction.owner_member?.id || activeMemberId || "",
+            type: transaction.type === "pemasukan" ? "pemasukan" : "pengeluaran",
+            amount: transaction.amount || "",
+            currency_code: transaction.currency_code || defaultCurrency,
+            category_id: transaction.category_id ? String(transaction.category_id) : "",
+            transaction_date: options?.duplicate ? today : (transaction.transaction_date || today),
+            description: transaction.description || "",
+            notes: transaction.notes || "",
+            merchant_name: transaction.merchant_name || "",
+            location: transaction.location || "",
+            reference_number: transaction.reference_number || "",
+            bank_account_id: transaction.bank_account_id || transaction.bank_account?.id || "",
+            budget_id: transaction.budget_id ? String(transaction.budget_id) : "",
+            payment_method: transaction.payment_method || "",
+            exchange_rate: transaction.exchange_rate || "1.0",
+            tags: Array.isArray(transaction.tags) ? transaction.tags.map((tag: any) => tag.name || tag) : [],
+            source_type: preserveGroup ? (transaction.source_type || "") : "",
+            source_id: preserveGroup ? (transaction.source_id || "") : "",
+        };
+    }, [activeMemberId, defaultCurrency]);
+
+    const openCreateFromGroupedTransaction = useCallback((transaction: any, options?: {
+        duplicate?: boolean;
+    }) => {
+        if (!transaction) {
+            return;
+        }
+
+        const label = transaction.merchant_name || transaction.notes || transaction.description || "Bulk Entry";
+        const preserveGroup = transaction.source_type === "finance_bulk" && !!transaction.source_id;
+
+        setSelectedTransaction(null);
+        setShowDetailSheet(false);
+        setTransactionPresetType(transaction.type === "pemasukan" ? "pemasukan" : "pengeluaran");
+        setTransactionDraft(buildTransactionDraftFromSource(transaction, {
+            duplicate: options?.duplicate,
+            preserveGroup,
+        }));
+        setTransactionDraftMeta(null);
+        setTransactionGroupLock(preserveGroup ? {
+            sourceType: transaction.source_type,
+            sourceId: transaction.source_id,
+            merchantName: transaction.merchant_name || null,
+            label,
+        } : null);
+        setTransactionModal(true);
+    }, [buildTransactionDraftFromSource]);
+
+    const openNewTransaction = (type: TransactionType | "bulk") => {
         setShowComposer(false);
+        if (type === "bulk") {
+            setBatchEntryModal(true);
+            return;
+        }
+
         if (type === "transfer") {
             setTransferModal(true);
             return;
@@ -464,6 +644,9 @@ const FinanceIndex = ({
 
         setTransactionPresetType(type);
         setSelectedTransaction(null);
+        setTransactionDraft(null);
+        setTransactionDraftMeta(null);
+        setTransactionGroupLock(null);
         setTransactionModal(true);
     };
 
@@ -476,6 +659,10 @@ const FinanceIndex = ({
         try {
             if (deleteTargetType === "transaction") {
                 await axios.delete(tenantRoute.apiTo(`/finance/transactions/${deleteTarget.id}`));
+            }
+
+            if (deleteTargetType === "transaction_group") {
+                await axios.delete(tenantRoute.apiTo(`/finance/transactions/groups/${deleteTarget.sourceId}`));
             }
 
             if (deleteTargetType === "account") {
@@ -494,6 +681,16 @@ const FinanceIndex = ({
                 setShowDetailSheet(false);
                 setSelectedTransaction(null);
                 removeTransactionFromList(deletedId);
+                await refreshFinanceSideData();
+                return;
+            }
+
+            if (deleteTargetType === "transaction_group") {
+                setShowDetailSheet(false);
+                if (selectedTransaction?.source_type === "finance_bulk" && String(selectedTransaction?.source_id || "") === String(deleteTarget.sourceId || "")) {
+                    setSelectedTransaction(null);
+                }
+                removeTransactionGroupFromList(String(deleteTarget.sourceId || ""));
                 await refreshFinanceSideData();
                 return;
             }
@@ -523,6 +720,11 @@ const FinanceIndex = ({
                 onDeleteClick={handleDelete}
                 onCloseClick={() => setDeleteModal(false)}
                 loading={isDeleting}
+                title={deleteTargetType === "transaction_group" ? "Hapus seluruh grup?" : "Are you sure?"}
+                message={deleteTargetType === "transaction_group"
+                    ? "Apakah Anda yakin ingin menghapus seluruh grup ini beserta transaksi, lampiran, tag, dan log terkait? Tindakan ini tidak dapat dibatalkan."
+                    : "Are you sure you want to delete this record? This action cannot be undone."}
+                confirmLabel={deleteTargetType === "transaction_group" ? "Ya, Hapus Grup" : "Yes, Delete It!"}
             />
 
             <TransactionDetailSheet
@@ -531,6 +733,20 @@ const FinanceIndex = ({
                 defaultCurrency={defaultCurrency}
                 onClose={closeDetailSheet}
                 onEdit={editFromDetailSheet}
+                onDuplicate={() => {
+                    if (!selectedTransaction) {
+                        return;
+                    }
+
+                    openCreateFromGroupedTransaction(selectedTransaction, { duplicate: true });
+                }}
+                onAddToGroup={() => {
+                    if (!selectedTransaction || selectedTransaction.source_type !== "finance_bulk" || !selectedTransaction.source_id) {
+                        return;
+                    }
+
+                    openCreateFromGroupedTransaction(selectedTransaction);
+                }}
                 onDelete={() => {
                     if (!selectedTransaction) {
                         return;
@@ -539,14 +755,30 @@ const FinanceIndex = ({
                     setDeleteTargetType("transaction");
                     setDeleteModal(true);
                 }}
+                onPreviewAttachment={(currentTransaction, attachment) => {
+                    setAttachmentPreview({
+                        url: tenantRoute.apiTo(`/finance/transactions/${currentTransaction.id}/attachments/${attachment.id}/preview`),
+                        title: attachment.file_name || `Lampiran ${attachment.id}`,
+                        mimeType: attachment.mime_type || null,
+                    });
+                }}
                 canEdit={permissions.update}
                 canDelete={permissions.delete}
+            />
+            <AttachmentPreviewModal
+                show={attachmentPreview !== null}
+                item={attachmentPreview}
+                onClose={() => setAttachmentPreview(null)}
             />
 
             <TransactionModal
                 show={transactionModal}
                 onClose={() => {
                     setTransactionModal(false);
+                    setTransactionDraft(null);
+                    setTransactionDraftMeta(null);
+                    setTransactionGroupLock(null);
+                    clearWhatsappQuery();
                     if (!showDetailSheet) {
                         setSelectedTransaction(null);
                     }
@@ -554,9 +786,26 @@ const FinanceIndex = ({
                 onSuccess={async (transaction) => {
                     upsertTransactionInList(transaction);
                     setShowDetailSheet(false);
+                    try {
+                        const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+                        const intentToken = params?.get("intent");
+                        if (intentToken && transaction?.id) {
+                            await axios.post(tenantRoute.apiTo(`/finance/whatsapp-intents/${intentToken}/submitted`), {
+                                linked_resource_type: "finance_transaction",
+                                submitted_count: 1,
+                                transaction_ids: [String(transaction.id)],
+                            });
+                        }
+                    } catch {
+                        // Keep transaction success path non-blocking if intent status update fails.
+                    }
+                    clearWhatsappQuery();
                     await refreshFinanceSideData();
                 }}
                 transaction={selectedTransaction}
+                initialDraft={selectedTransaction ? null : transactionDraft}
+                draftMeta={transactionDraftMeta}
+                lockedGroupMeta={transactionGroupLock}
                 categories={categories}
                 currencies={currencies}
                 defaultCurrency={defaultCurrency}
@@ -567,6 +816,58 @@ const FinanceIndex = ({
                 activeMemberId={activeMemberId}
                 canManageShared={permissions.manageShared}
                 initialType={transactionPresetType}
+            />
+
+            <TransactionBatchModal
+                show={batchEntryModal}
+                onClose={() => setBatchEntryModal(false)}
+                onSuccess={async (createdTransactions) => {
+                    createdTransactions.forEach((transaction) => upsertTransactionInList(transaction));
+                    await refreshFinanceSideData();
+                }}
+                categories={categories}
+                accounts={accounts}
+                budgets={budgets}
+                members={members}
+                activeMemberId={activeMemberId}
+                canManageShared={permissions.manageShared}
+                defaultCurrency={defaultCurrency}
+            />
+
+            <WhatsappBatchReviewModal
+                show={batchModal}
+                onClose={() => {
+                    setBatchModal(false);
+                    setBatchDraft(null);
+                    clearWhatsappQuery();
+                }}
+                onSuccess={async (createdTransactions) => {
+                    createdTransactions.forEach((transaction) => upsertTransactionInList(transaction));
+                    try {
+                        const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
+                        const intentToken = params?.get("intent");
+                        if (intentToken) {
+                            await axios.post(tenantRoute.apiTo(`/finance/whatsapp-intents/${intentToken}/submitted`), {
+                                linked_resource_type: "finance_transaction_batch",
+                                submitted_count: createdTransactions.length || 1,
+                                transaction_ids: createdTransactions
+                                    .map((transaction) => String(transaction?.id || ""))
+                                    .filter((id) => id !== ""),
+                            });
+                        }
+                    } catch {
+                        // Keep batch success path non-blocking if intent status update fails.
+                    }
+                    clearWhatsappQuery();
+                    await refreshFinanceSideData();
+                }}
+                draft={batchDraft}
+                categories={categories}
+                accounts={accounts}
+                budgets={budgets}
+                members={members}
+                activeMemberId={activeMemberId}
+                canManageShared={permissions.manageShared}
             />
 
             <TransferModal
@@ -738,6 +1039,12 @@ const FinanceIndex = ({
                                         quickType={quickType}
                                         selectedTransactionId={focusedTransactionId}
                                         onQuickTypeChange={setQuickType}
+                                        onAddItemToGroup={(transaction) => openCreateFromGroupedTransaction(transaction)}
+                                        onDeleteGroup={(group) => {
+                                            setDeleteTarget(group);
+                                            setDeleteTargetType("transaction_group");
+                                            setDeleteModal(true);
+                                        }}
                                         onTransactionClick={(transaction) => {
                                             setFocusedTransactionId(String(transaction.id));
                                             setSelectedTransaction(transaction);

@@ -41,6 +41,45 @@ Route::middleware([
     'tenant.resolve',
 ])->group(function () {
 
+    Route::get('/manifest.webmanifest', function (\Illuminate\Http\Request $request) {
+        $tenant = $request->attributes->get('currentTenant');
+        $tenantName = trim((string) (
+            $tenant?->presentable_name
+            ?? $tenant?->display_name
+            ?? $tenant?->name
+            ?? config('app.name', 'Family Hub')
+        ));
+
+        $name = $tenantName !== '' ? $tenantName : config('app.name', 'Family Hub');
+        $shortName = \Illuminate\Support\Str::limit($name, 12, '');
+
+        return response()->json([
+            'id' => '/',
+            'name' => $name,
+            'short_name' => $shortName !== '' ? $shortName : 'Family Hub',
+            'description' => 'Aplikasi keluarga untuk finance, aktivitas, dan hub WhatsApp.',
+            'start_url' => '/hub',
+            'scope' => '/',
+            'display' => 'standalone',
+            'background_color' => '#f6f8fb',
+            'theme_color' => '#0dcaf0',
+            'icons' => [
+                [
+                    'src' => '/icons/pwa-192.png',
+                    'sizes' => '192x192',
+                    'type' => 'image/png',
+                    'purpose' => 'any maskable',
+                ],
+                [
+                    'src' => '/icons/pwa-512.png',
+                    'sizes' => '512x512',
+                    'type' => 'image/png',
+                    'purpose' => 'any maskable',
+                ],
+            ],
+        ])->header('Content-Type', 'application/manifest+json');
+    })->name('tenant.pwa.manifest');
+
     // Branching Root Route: Central Landing OR Tenant Family Profile
     Route::get('/', function (\Illuminate\Http\Request $request) {
         if (in_array($request->getHost(), config('tenancy.central_domains'))) {

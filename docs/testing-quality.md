@@ -45,6 +45,29 @@ Subscription:
 - `tests/Feature/TenantSubscriptionGuardTest.php`
 - `tests/Feature/TenantSubscriptionQuotaTest.php`
 
+Finance WhatsApp Draft:
+
+- `tests/Feature/WhatsappFinanceIntentTest.php`
+- Wajib mencakup:
+  - known sender `/tx deskripsi#jumlah` membuat intent finance tanpa AI
+  - sender yang tidak terhubung ke member ditolak tanpa membuat intent
+  - akses draft WhatsApp dibatasi ke member pemilik atau actor privileged
+  - finalisasi draft `submitted` mengirim konfirmasi balik ke WhatsApp sekali saja
+  - natural language `/tx` dan `/bulk` wajib gagal tertutup jika AI provider aktif tidak tersedia atau respons AI gagal
+  - AI `category_id` hanya diterima jika valid untuk kategori finance tenant, dan hanya untuk flow natural language
+  - `/tx` dan `/bulk` menyimpan debug payload AI ke intent untuk kebutuhan investigasi parsing
+  - media WhatsApp yang ikut draft harus ikut ditempel ke transaksi hasil submit
+
+Finance PWA / Attachment:
+
+- `GET /finance/transactions/{transaction}/attachments/{attachment}/preview` harus terbuka tanpa `500`
+- grouped bulk list harus tetap stabil saat:
+  - duplicate item bulk
+  - add item ke grup
+  - delete item terakhir di grup
+- edit item bulk tidak boleh menghapus `source_type/source_id`
+- upload gambar attachment harus tersimpan sebagai WebP teroptimasi di backend
+
 WhatsApp (API + Realtime):
 
 - `tests/Feature/TenantWhatsappServiceIntegrationTest.php`

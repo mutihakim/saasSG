@@ -18,6 +18,23 @@ configureEcho({
 
 const appName = import.meta.env.VITE_APP_NAME || 'Laravel';
 
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker
+            .register('/sw.js')
+            .then((registration) => {
+                console.debug('[PWA] service worker registered', {
+                    scope: registration.scope,
+                });
+            })
+            .catch((error) => {
+                console.warn('[PWA] service worker registration failed', error);
+            });
+    });
+} else {
+    console.debug('[PWA] service worker unsupported in this browser');
+}
+
 createInertiaApp({
     title: (title) => `${title} - ${appName}`,
     resolve: (name) =>

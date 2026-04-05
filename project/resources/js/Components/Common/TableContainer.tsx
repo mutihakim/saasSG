@@ -2,12 +2,12 @@ import { rankItem } from '@tanstack/match-sorter-utils';
 import {
   ColumnFiltersState,
   FilterFn,
-  useReactTable,
   getCoreRowModel,
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  flexRender
+  flexRender,
+  useReactTable
 } from '@tanstack/react-table';
 import React, { useState, useEffect, Fragment } from "react";
 import { Button, Col, Row, Table } from "react-bootstrap";
@@ -80,6 +80,7 @@ const TableContainer = ({
     return itemRank.passed;
   };
 
+  // eslint-disable-next-line react-hooks/incompatible-library
   const table = useReactTable({
     columns,
     data,

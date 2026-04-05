@@ -1,9 +1,10 @@
 import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Col, Form, Modal, Row } from "react-bootstrap";
+import { Button, Col, Form, Modal, Row, InputGroup } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 import Select from "react-select";
 
+import MiniCalculator from "../../../../Components/Common/MiniCalculator";
 import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
 import { useTenantRoute } from "../../../../common/tenantRoute";
@@ -25,6 +26,7 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, acti
     const tenantRoute = useTenantRoute();
     const isEdit = Boolean(budget);
     const [loading, setLoading] = useState(false);
+    const [showCalculator, setShowCalculator] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
         scope: "shared",
@@ -132,14 +134,25 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, acti
                             />
                         </Col>
                         <Col md={6}>
-                            <Form.Label>{t("finance.budgets.fields.allocated_amount")}</Form.Label>
-                            <Form.Control
-                                type="number"
-                                step="0.01"
-                                value={formData.allocated_amount}
-                                onChange={(e) => setFormData((prev) => ({ ...prev, allocated_amount: e.target.value }))}
-                                required
-                            />
+                            <div className="d-flex align-items-center justify-content-between">
+                                <Form.Label className="mb-0">{t("finance.budgets.fields.allocated_amount")}</Form.Label>
+                                <Button type="button" variant="link" size="sm" className="p-0 text-decoration-none" onClick={() => setShowCalculator(true)}>
+                                    {t("finance.calculator.open")}
+                                </Button>
+                            </div>
+                            <InputGroup>
+                                <Form.Control
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.allocated_amount}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, allocated_amount: e.target.value }))}
+                                    readOnly={showCalculator}
+                                    required
+                                />
+                                <Button type="button" variant="outline-secondary" onClick={() => setShowCalculator(true)}>
+                                    <i className="ri-calculator-line" aria-hidden="true" />
+                                </Button>
+                            </InputGroup>
                         </Col>
                         <Col md={6}>
                             <Form.Label>{t("finance.budgets.fields.scope")}</Form.Label>
@@ -216,6 +229,13 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, acti
                     </Button>
                 </Modal.Footer>
             </Form>
+            <MiniCalculator
+                show={showCalculator}
+                onClose={() => setShowCalculator(false)}
+                onCommit={(value) => setFormData((prev) => ({ ...prev, allocated_amount: value }))}
+                value={formData.allocated_amount}
+                title={t("finance.calculator.budget_title")}
+            />
         </Modal>
     );
 };

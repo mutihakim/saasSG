@@ -8,6 +8,7 @@ use App\Http\Controllers\Api\FinanceAccountApiController;
 use App\Http\Controllers\Api\FinanceBudgetApiController;
 use App\Http\Controllers\Api\FinanceReportApiController;
 use App\Http\Controllers\Api\FinanceTransactionApiController;
+use App\Http\Controllers\Api\FinanceWhatsappIntentApiController;
 use App\Http\Controllers\Api\V1\TenantMemberApiController;
 use App\Http\Controllers\Api\V1\TenantMemberProfileApiController;
 use App\Http\Controllers\Api\V1\TenantLifecycleApiController;
@@ -68,6 +69,9 @@ Route::prefix('v1')
                 Route::prefix('finance')->group(function () {
                     Route::get('/summary', [FinanceTransactionApiController::class, 'summary'])->middleware('tenant.feature:finance,view');
                     Route::get('/reports', [FinanceReportApiController::class, 'index'])->middleware('tenant.feature:finance,view');
+                    Route::get('/whatsapp-intents/{token}', [FinanceWhatsappIntentApiController::class, 'show'])->middleware('tenant.feature:finance,view');
+                    Route::post('/whatsapp-intents/{token}/submitted', [FinanceWhatsappIntentApiController::class, 'markSubmitted'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,create', 'throttle:tenant.mutation']);
+                    Route::get('/whatsapp-media/{media}/preview', [FinanceWhatsappIntentApiController::class, 'mediaPreview'])->middleware('tenant.feature:finance,view')->name('api.finance.whatsapp-media.preview');
                     Route::get('/accounts', [FinanceAccountApiController::class, 'index'])->middleware('tenant.feature:finance,view');
                     Route::post('/accounts', [FinanceAccountApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,create', 'throttle:tenant.mutation']);
                     Route::patch('/accounts/{account}', [FinanceAccountApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
@@ -81,6 +85,10 @@ Route::prefix('v1')
                     Route::post('/transactions', [FinanceTransactionApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,create', 'throttle:tenant.mutation']);
                     Route::get('/transactions/{transaction}', [FinanceTransactionApiController::class, 'show'])->middleware('tenant.feature:finance,view');
                     Route::patch('/transactions/{transaction}', [FinanceTransactionApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
+                    Route::post('/transactions/{transaction}/attachments', [FinanceTransactionApiController::class, 'uploadAttachments'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
+                    Route::get('/transactions/{transaction}/attachments/{attachment}/preview', [FinanceTransactionApiController::class, 'previewAttachment'])->middleware('tenant.feature:finance,view');
+                    Route::delete('/transactions/{transaction}/attachments/{attachment}', [FinanceTransactionApiController::class, 'destroyAttachment'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
+                    Route::delete('/transactions/groups/{sourceId}', [FinanceTransactionApiController::class, 'destroyGroup'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
                     Route::delete('/transactions', [FinanceTransactionApiController::class, 'bulkDestroy'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
                     Route::delete('/transactions/{transaction}', [FinanceTransactionApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
                 });

@@ -5,7 +5,6 @@ import { Card, Row, Col, Badge, Button, Dropdown } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import DeleteModal from "../../../../Components/Common/DeleteModal";
-
 import TenantPageTitle from "../../../../Components/Common/TenantPageTitle";
 import TenantLayout from "../../../../Layouts/TenantLayout";
 import { notify } from "../../../../common/notify";

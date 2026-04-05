@@ -138,3 +138,20 @@ Semua endpoint master data ada di bawah `/api/v1/tenants/{tenant}/master/`
 - `POST /api/v1/tenants/{tenant}/finance/transactions`
 - `PATCH /api/v1/tenants/{tenant}/finance/transactions/{transaction}`
 - `DELETE /api/v1/tenants/{tenant}/finance/transactions/{transaction}`
+- `POST /api/v1/tenants/{tenant}/finance/transactions/{transaction}/attachments`
+- `GET /api/v1/tenants/{tenant}/finance/transactions/{transaction}/attachments/{attachment}/preview`
+- `DELETE /api/v1/tenants/{tenant}/finance/transactions/{transaction}/attachments/{attachment}`
+- `GET /api/v1/tenants/{tenant}/finance/whatsapp-intents/{token}`
+- `POST /api/v1/tenants/{tenant}/finance/whatsapp-intents/{token}/submitted`
+- `GET /api/v1/tenants/{tenant}/finance/whatsapp-media/{media}/preview`
+
+Catatan:
+- `POST /finance/whatsapp-intents/{token}/submitted` menerima `linked_resource_type?`, `submitted_count?`, dan `transaction_ids[]`.
+- Endpoint tersebut bersifat idempotent untuk draft yang sudah `submitted`.
+- Attachment image upload akan dinormalisasi ke `image/webp` di backend bila file sumber berupa gambar.
+- WhatsApp finance intent punya 2 mode ekstraksi:
+  - natural language `/tx` dan `/bulk` wajib diproses AI provider yang aktif
+  - structured command memakai format `deskripsi#jumlah` dan diparse tanpa AI
+- Default AI provider saat ini adalah OpenRouter dengan model `qwen/qwen3.6-plus:free`.
+- Jika ekstraksi AI gagal untuk natural language, backend tidak mengirim link review ke `/finance`; pengguna menerima pesan error di WhatsApp dan intent disimpan dengan status `failed`.
+- Response draft WhatsApp finance sekarang dapat memuat `media_items[]` selain media utama tunggal, agar PWA bisa menampilkan banyak preview attachment.

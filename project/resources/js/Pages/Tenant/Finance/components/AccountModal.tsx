@@ -1,9 +1,10 @@
 import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
-import { Button, Form, Modal, Row, Col } from "react-bootstrap";
+import { Button, Form, Modal, Row, Col, InputGroup } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 import Select from "react-select";
 
+import MiniCalculator from "../../../../Components/Common/MiniCalculator";
 import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
 import { useTenantRoute } from "../../../../common/tenantRoute";
@@ -26,6 +27,7 @@ const AccountModal = ({ show, onClose, onSuccess, onDelete, account, currencies,
     const tenantRoute = useTenantRoute();
     const isEdit = Boolean(account);
     const [loading, setLoading] = useState(false);
+    const [showCalculator, setShowCalculator] = useState(false);
     const [formData, setFormData] = useState({
         name: "",
         scope: "private",
@@ -185,14 +187,25 @@ const AccountModal = ({ show, onClose, onSuccess, onDelete, account, currencies,
                             />
                         </Col>
                         <Col md={6}>
-                            <Form.Label>{t("finance.accounts.fields.opening_balance")}</Form.Label>
-                            <Form.Control
-                                type="number"
-                                step="0.01"
-                                value={formData.opening_balance}
-                                onChange={(e) => setFormData((prev) => ({ ...prev, opening_balance: e.target.value }))}
-                                required
-                            />
+                            <div className="d-flex align-items-center justify-content-between">
+                                <Form.Label className="mb-0">{t("finance.accounts.fields.opening_balance")}</Form.Label>
+                                <Button type="button" variant="link" size="sm" className="p-0 text-decoration-none" onClick={() => setShowCalculator(true)}>
+                                    {t("finance.calculator.open")}
+                                </Button>
+                            </div>
+                            <InputGroup>
+                                <Form.Control
+                                    type="number"
+                                    step="0.01"
+                                    value={formData.opening_balance}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, opening_balance: e.target.value }))}
+                                    readOnly={showCalculator}
+                                    required
+                                />
+                                <Button type="button" variant="outline-secondary" onClick={() => setShowCalculator(true)}>
+                                    <i className="ri-calculator-line" aria-hidden="true" />
+                                </Button>
+                            </InputGroup>
                         </Col>
                         <Col md={6}>
                             <Form.Label>{t("finance.accounts.fields.status")}</Form.Label>
@@ -242,6 +255,14 @@ const AccountModal = ({ show, onClose, onSuccess, onDelete, account, currencies,
                     </Button>
                 </Modal.Footer>
             </Form>
+            <MiniCalculator
+                show={showCalculator}
+                onClose={() => setShowCalculator(false)}
+                onCommit={(value) => setFormData((prev) => ({ ...prev, opening_balance: value }))}
+                value={formData.opening_balance}
+                currencyCode={formData.currency_code}
+                title={t("finance.calculator.account_title")}
+            />
         </Modal>
     );
 };

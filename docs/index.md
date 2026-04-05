@@ -10,6 +10,8 @@ Berikut adalah modul-modul utama yang tersedia:
 - [🔐 RBAC & Permissions](./guide/rbac.md)
 - [💳 Subscription](./guide/subscription.md)
 - [💬 WhatsApp Integration](./guide/whatsapp.md)
+- [💸 Finance Module](./03-features/finance.md)
+- [🎨 Velzon Navbar Reference](./reference/velzon-navbar-reference.md)
 - [📈 Progress Dashboard](./08-progress/index.md)
 
 ## 🚀 Cara Menjalankan Lokal

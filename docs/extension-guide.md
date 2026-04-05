@@ -37,6 +37,22 @@ Untuk `Hub` atau `PWA Module` tenant yang ditujukan sebagai pengalaman aplikasi 
 
 Gunakan dokumen ini bersama template praktis di [`docs/guide/pwa-module-template.md`](./guide/pwa-module-template.md) bila modul baru akan dibangun sebagai standalone PWA tenant.
 
+Sebelum menulis UI baru, WAJIB cek referensi Velzon di:
+
+- [`docs/reference/velzon-navbar-reference.md`](./reference/velzon-navbar-reference.md)
+- [`docs/reference/velzon-base-ui.md`](./reference/velzon-base-ui.md)
+- [`docs/reference/velzon-more-reference.md`](./reference/velzon-more-reference.md)
+
+> [!WARNING]
+> Saat memakai referensi Velzon, baca **hanya file yang diperlukan**.
+> Jangan menjelajah seluruh folder `velzon/Saas` tanpa kebutuhan konkret.
+> Pola yang benar:
+> 1. cari menu yang relevan di docs referensi
+> 2. pilih source file terdekat
+> 3. buka hanya file itu dan, bila perlu, maksimal satu file pendukung lagi
+>
+> Ini aturan wajib untuk mencegah pemborosan konteks agent dan menjaga implementasi tetap fokus.
+
 Gunakan pola berikut sebagai standar:
 
 | Layer | Tanggung Jawab |
@@ -60,6 +76,10 @@ Gunakan pola berikut sebagai standar:
   - tampilkan field bisnis utama saja
   - generate identifier internal di backend saat kosong
   - pertahankan identifier lama saat edit data existing
+- Untuk tombol, badge, card, list, form, modal, dan widget:
+  - cari padanan Velzon dulu
+  - gunakan class/variant Velzon lebih dulu
+  - custom CSS hanya untuk gap yang memang tidak disediakan Velzon, terutama perilaku mobile PWA
 
 > [!IMPORTANT]
 > Untuk modul PWA baru, anggap pola `Page.tsx` + `Index.tsx` + `components/pwa/*` ini sebagai baseline. Jangan lagi memulai dari satu file page monolitik lalu memecahnya belakangan.

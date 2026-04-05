@@ -1,7 +1,7 @@
 import { Link } from '@inertiajs/react';
 import { usePage } from '@inertiajs/react';
-import React from 'react';
-import { Badge, Card, ProgressBar } from 'react-bootstrap';
+import React, { useEffect, useMemo, useState } from 'react';
+import { Badge, Button, Card, Modal, ProgressBar } from 'react-bootstrap';
 
 interface Props {
     tenantName: string;
@@ -10,12 +10,25 @@ interface Props {
     demo: any;
 }
 
+type BeforeInstallPromptEvent = Event & {
+    prompt: () => Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+};
+
+const PWA_INSTALL_DISMISSED_KEY = 'hub-pwa-install-fab-dismissed-v2';
+
 const Hub: React.FC<Props> = ({ tenantName, member, demo: _demo }) => {
     const { props } = usePage<any>();
     const memberName = member?.user?.name ?? 'Anggota';
     const hour = new Date().getHours();
     const greeting = hour < 11 ? 'Selamat Pagi' : hour < 15 ? 'Selamat Siang' : hour < 18 ? 'Selamat Sore' : 'Selamat Malam';
     const entitlements = props.entitlements?.modules ?? {};
+    const [installPromptEvent, setInstallPromptEvent] = useState<BeforeInstallPromptEvent | null>(null);
+    const [installBannerClosed, setInstallBannerClosed] = useState(false);
+    const [isInstalled, setIsInstalled] = useState(false);
+    const [isInstalling, setIsInstalling] = useState(false);
+    const [showInstallHelp, setShowInstallHelp] = useState(false);
+    const [isIosSafari, setIsIosSafari] = useState(false);
     const modules = [
         { label: 'Finance', desc: 'Cashflow, budget, transfer', icon: 'ri-wallet-3-line', tone: '#27c3d9', href: '/finance', enabled: entitlements.finance !== false },
         { label: 'Calendar', desc: 'Agenda keluarga', icon: 'ri-calendar-event-line', tone: '#6f7cff', href: '/calendar', enabled: true },
@@ -39,6 +52,73 @@ const Hub: React.FC<Props> = ({ tenantName, member, demo: _demo }) => {
     ];
 
     const progress = 75;
+    const showInstallFab = useMemo(
+        () => !installBannerClosed && !isInstalled,
+        [installBannerClosed, isInstalled]
+    );
+
+    useEffect(() => {
+        if (typeof window === 'undefined') {
+            return;
+        }
+
+        const ua = window.navigator.userAgent.toLowerCase();
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches
+            || ((window.navigator as Navigator & { standalone?: boolean }).standalone === true);
+        const isIos = /iphone|ipad|ipod/.test(ua);
+        const isSafari = /safari/.test(ua) && !/crios|fxios|edgios|chrome|android/.test(ua);
+
+        setIsInstalled(isStandalone);
+        setIsIosSafari(isIos && isSafari);
+        setInstallBannerClosed(window.sessionStorage.getItem(PWA_INSTALL_DISMISSED_KEY) === '1');
+
+        const onBeforeInstallPrompt = (event: Event) => {
+            const promptEvent = event as BeforeInstallPromptEvent;
+            promptEvent.preventDefault();
+            setInstallPromptEvent(promptEvent);
+        };
+
+        const onAppInstalled = () => {
+            setIsInstalled(true);
+            setInstallPromptEvent(null);
+        };
+
+        window.addEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+        window.addEventListener('appinstalled', onAppInstalled);
+
+        return () => {
+            window.removeEventListener('beforeinstallprompt', onBeforeInstallPrompt);
+            window.removeEventListener('appinstalled', onAppInstalled);
+        };
+    }, []);
+
+    const handleInstallClick = async () => {
+        if (!installPromptEvent) {
+            setShowInstallHelp(true);
+            return;
+        }
+
+        setIsInstalling(true);
+        try {
+            await installPromptEvent.prompt();
+            const choice = await installPromptEvent.userChoice;
+            if (choice.outcome === 'accepted') {
+                setIsInstalled(true);
+            } else {
+                setShowInstallHelp(true);
+            }
+        } finally {
+            setInstallPromptEvent(null);
+            setIsInstalling(false);
+        }
+    };
+
+    const handleCloseInstallBanner = () => {
+        setInstallBannerClosed(true);
+        if (typeof window !== 'undefined') {
+            window.sessionStorage.setItem(PWA_INSTALL_DISMISSED_KEY, '1');
+        }
+    };
 
     return (
         <div
@@ -235,8 +315,66 @@ const Hub: React.FC<Props> = ({ tenantName, member, demo: _demo }) => {
                             ))}
                         </div>
                     </div>
+
+                    {showInstallFab ? (
+                        <div
+                            className="position-fixed start-50 translate-middle-x z-3"
+                            style={{ width: 'min(100% - 24px, 420px)', bottom: 'calc(env(safe-area-inset-bottom) + 94px)' }}
+                        >
+                            <div className="d-flex justify-content-end pe-1">
+                                <div className="position-relative">
+                                    <Button
+                                        type="button"
+                                        className="rounded-circle border-0 shadow-lg d-inline-flex align-items-center justify-content-center"
+                                        style={{
+                                            width: 62,
+                                            height: 62,
+                                            background: 'linear-gradient(135deg, #0dcaf0 0%, #25c2de 100%)',
+                                            color: '#fff',
+                                        }}
+                                        onClick={handleInstallClick}
+                                        disabled={isInstalling}
+                                        title="Instal aplikasi"
+                                    >
+                                        <i className={`fs-3 ${isInstalling ? 'ri-loader-4-line' : 'ri-download-cloud-2-line'}`}></i>
+                                    </Button>
+                                    <button
+                                        type="button"
+                                        className="btn btn-light rounded-circle border shadow-sm position-absolute top-0 start-0 translate-middle p-0"
+                                        style={{ width: 26, height: 26, lineHeight: 1 }}
+                                        onClick={handleCloseInstallBanner}
+                                        aria-label="Close install button"
+                                    >
+                                        <i className="ri-close-line"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : null}
                 </div>
             </div>
+
+            <Modal show={showInstallHelp} onHide={() => setShowInstallHelp(false)} centered>
+                <Modal.Header closeButton>
+                    <Modal.Title>Instal aplikasi keluarga</Modal.Title>
+                </Modal.Header>
+                <Modal.Body>
+                    {isIosSafari ? (
+                        <div className="small text-muted">
+                            Di Safari iPhone/iPad, instalasi memang tidak bisa dipaksa dari tombol.
+                            Gunakan tombol Share Safari lalu pilih <strong>Add to Home Screen</strong>.
+                        </div>
+                    ) : (
+                        <div className="small text-muted">
+                            Jika prompt instal tidak muncul, buka menu browser lalu pilih <strong>Install app</strong> atau <strong>Add to Home screen</strong>.
+                            Di beberapa HP Android, browser tidak selalu menampilkan prompt otomatis walaupun aplikasi sudah siap diinstal.
+                        </div>
+                    )}
+                </Modal.Body>
+                <Modal.Footer>
+                    <Button variant="light" onClick={() => setShowInstallHelp(false)}>Close</Button>
+                </Modal.Footer>
+            </Modal>
         </div>
     );
 };

@@ -12,6 +12,8 @@ Fokus implementasi saat ini:
 - member biasa memakai model **Private Only** untuk account dan budget
 - transfer dicatat sebagai **pasangan transaksi internal**
 - shell `/finance` berdiri sebagai **Finance PWA Module**
+- attachment transaksi aktif untuk PWA dan draft WhatsApp
+- bulk entry sekarang bisa dibuat dari WhatsApp dan PWA, lalu ditampilkan sebagai grup ringkas
 
 ## 2) Kapabilitas Utama
 
@@ -23,6 +25,9 @@ Fokus implementasi saat ini:
 - Mengizinkan member biasa CRUD account/budget **private miliknya sendiri** tanpa menyentuh struktur shared
 - Menyediakan summary dan report yang filter-aware
 - Menulis activity log create/update/delete untuk transaksi finance
+- Mengizinkan upload lampiran transaksi dan preview langsung dari PWA
+- Mendukung duplicate transaksi dari detail preview
+- Mendukung grouped bulk item dengan add/delete item per grup
 
 ## 3) Arsitektur Domain
 
@@ -108,11 +113,17 @@ $table->string('source_id', 100);
 | `POST` | `/api/v1/tenants/{tenant}/finance/transactions` | Create income/expense |
 | `PATCH` | `/api/v1/tenants/{tenant}/finance/transactions/{transaction}` | Update transaksi |
 | `DELETE` | `/api/v1/tenants/{tenant}/finance/transactions/{transaction}` | Delete transaksi |
+| `POST` | `/api/v1/tenants/{tenant}/finance/transactions/{transaction}/attachments` | Upload lampiran transaksi |
+| `GET` | `/api/v1/tenants/{tenant}/finance/transactions/{transaction}/attachments/{attachment}/preview` | Preview lampiran transaksi |
+| `DELETE` | `/api/v1/tenants/{tenant}/finance/transactions/{transaction}/attachments/{attachment}` | Hapus lampiran transaksi |
 
 ### Accounts / Budgets / Reports
 
 | Method | Endpoint | Keterangan |
 |---|---|---|
+| `GET` | `/api/v1/tenants/{tenant}/finance/whatsapp-intents/{token}` | Load draft WhatsApp untuk review di PWA |
+| `POST` | `/api/v1/tenants/{tenant}/finance/whatsapp-intents/{token}/submitted` | Finalisasi draft WhatsApp yang sudah disimpan dari PWA |
+| `GET` | `/api/v1/tenants/{tenant}/finance/whatsapp-media/{media}/preview` | Preview lampiran WhatsApp untuk draft intent |
 | `GET` | `/api/v1/tenants/{tenant}/finance/accounts` | List akun yang boleh diakses member |
 | `POST` | `/api/v1/tenants/{tenant}/finance/accounts` | Create account |
 | `PATCH` | `/api/v1/tenants/{tenant}/finance/accounts/{account}` | Update account |
@@ -149,6 +160,7 @@ Aturan penting:
 - `/finance` berdiri sebagai **PWA Module** yang dibuka dari `Hub`
 - top bar finance ringkas dan khusus modul
 - grouped transaction list per tanggal
+- item bulk dengan `source_type = finance_bulk` dan `source_id` sama diringkas jadi satu row grup
 - FAB sebagai aksi utama create
 - detail transaksi memakai full-screen overlay
 - create/edit/delete berjalan dengan **local state upsert/remove**, bukan refresh penuh list
@@ -156,6 +168,22 @@ Aturan penting:
 - form budget disederhanakan:
   - user hanya mengisi field penting seperti `name`, `period`, `allocated_amount`, `scope`, dan `owner`
   - `code` budget menjadi concern backend, bukan field form utama
+
+### Attachment & Bulk UX
+
+- modal transaksi mendukung upload multi-file
+- gambar upload dioptimalkan ke `WebP` pada backend
+- draft WhatsApp dapat membawa banyak media (`media_items`)
+- lampiran WhatsApp yang ikut draft akan ditempel ke transaksi saat draft disubmit
+- bulk entry PWA punya modal khusus `Bulk Entry` dengan tombol `Tambah Item`
+- row grup bulk di list utama mendukung:
+  - expand/collapse
+  - tambah item ke grup
+  - hapus item langsung dari daftar expand
+- detail transaksi sekarang mendukung:
+  - duplicate transaksi
+  - info `Bagian dari grup`
+  - shortcut tambah item jika transaksi tersebut bagian dari bulk group
 
 ## 8) Seed Data
 
@@ -193,8 +221,28 @@ Yang sudah menjadi baseline:
 - role-aware transaction visibility
 - shared account / shared budget
 - finance standalone PWA shell
+- WhatsApp finance intent (`/tx` dan `/bulk`) membuat draft, bukan auto-post transaksi final
+- draft WhatsApp sekarang bisa:
+  - memakai 2 mode input yang berbeda:
+    - natural language: wajib diproses AI provider yang aktif, dengan default OpenRouter `qwen/qwen3.6-plus:free`; jika AI gagal, sistem tidak membuat link review dan akan mengirim pesan error ke WhatsApp
+    - structured command: bisa diparse tanpa AI dengan format `deskripsi#jumlah`
+  - auto-map `category_id` tenant hanya pada mode natural language saat AI mengembalikan ID kategori finance yang valid
+  - mengunci owner batch ke member pemilik `whatsapp_jid` pengirim
+  - mengirim konfirmasi kembali ke WhatsApp setelah draft berhasil disubmit dari PWA
+  - menyimpan debug payload AI di intent (`raw_input`, `extracted_payload`, `ai_raw_response`) untuk audit parsing
+
+### Kontrak WhatsApp intent
+
+- `/tx` natural language, contoh `/tx nasi goreng 3 porsi total harga 42000`, wajib lewat AI provider aktif
+- `/bulk` natural language, contoh `/bulk beli telur 10000, susu 20000`, wajib lewat AI provider aktif
+- `/tx` structured command, contoh `/tx nasi goreng 3 porsi#42000`, diparse lokal tanpa AI
+- `/bulk` structured command, contoh `/bulk telur#10000, susu#20000`, diparse lokal tanpa AI
+- mode structured tidak melakukan auto-mapping kategori; user memilih kategori sendiri saat review di PWA
+- default konfigurasi saat ini memakai OpenRouter model `qwen/qwen3.6-plus:free`
+- jika provider AI tidak tersedia, kuota habis, atau respons AI invalid, intent natural language ditandai gagal dan WhatsApp menerima pesan error, bukan link review
 
 Yang masih layak dilanjutkan:
 - polishing visual untuk device-specific spacing
+- QA manual final untuk duplicate + grouped bulk interaction di perangkat mobile
 - report/export yang lebih kaya
 - pattern reuse ke modul tenant lain

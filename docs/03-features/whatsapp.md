@@ -48,6 +48,12 @@ Aplikasi SaaS ini **meninggalkan proses HTTP polling usang** dan beralih ke rute
 * Safety net database: unique partial index `connected_jid IS NOT NULL` di `tenant_whatsapp_settings`.
 * Saat migrasi, data duplikat existing dibersihkan otomatis dengan policy **keep tenant terlama** (`updated_at` paling lama, tie-break `id` terkecil); tenant lain ditandai `jid_conflict_migration`.
 
+### 7. Finance Draft Media & LID Compatibility
+* Finance intent WhatsApp sekarang mendukung draft dengan banyak media.
+* Jika user mengirim gambar setelah `/tx` atau `/bulk`, media tersebut akan ditempel ke intent aktif/terbaru selama draft belum disubmit.
+* Saat draft disubmit dari PWA, media WhatsApp otomatis disalin menjadi attachment transaksi finance.
+* JID modern seperti `digits@lid` dan `digits@lid.us` sekarang diterima di jalur auto command dan sinkronisasi finance intent, agar chat dari akun non-`@c.us` tidak lepas dari alur bot.
+
 ## Keamanan Otentikasi Channel
 Semua saluran dilindungi berlapis oleh `routes/channels.php` yang secara paksa menolak koneksi (`403 Forbidden`) jika ID Tenant pada String Channel tidak sesuai dengan ID Tenant otoritasi sesi user terkait.
 

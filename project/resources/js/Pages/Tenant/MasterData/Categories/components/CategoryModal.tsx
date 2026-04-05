@@ -4,9 +4,9 @@ import { Modal, Button, Form, Row, Col } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 import Select, { components, OptionProps, SingleValueProps } from "react-select";
 
+import { parseApiError } from "../../../../../common/apiError";
 import { notify } from "../../../../../common/notify";
 import { useTenantRoute } from "../../../../../common/tenantRoute";
-import { parseApiError } from "../../../../../common/apiError";
 
 interface CategoryModalProps {
   show: boolean;

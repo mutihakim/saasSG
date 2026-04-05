@@ -13,6 +13,13 @@
 
         <title inertia>{{ $tenantName ? $tenantName.' | '.config('app.name', 'Laravel') : config('app.name', 'Laravel') }}</title>
         <link rel="icon" href="{{ $faviconHref }}" data-app-favicon="true">
+        <link rel="manifest" href="{{ url('/manifest.webmanifest') }}">
+        <link rel="apple-touch-icon" href="{{ asset('icons/pwa-192.png') }}">
+        <meta name="theme-color" content="#0dcaf0">
+        <meta name="mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-capable" content="yes">
+        <meta name="apple-mobile-web-app-status-bar-style" content="default">
+        <meta name="apple-mobile-web-app-title" content="{{ $tenantName ?: config('app.name', 'Laravel') }}">
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.bunny.net">
