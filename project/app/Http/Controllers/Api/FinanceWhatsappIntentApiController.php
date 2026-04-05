@@ -5,12 +5,14 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\FinanceTransaction;
 use App\Models\Tenant;
-use App\Models\TenantAttachment;
 use App\Models\TenantWhatsappIntent;
 use App\Models\TenantWhatsappMedia;
 use App\Models\TenantMember;
 use App\Services\FinanceAccessService;
+use App\Services\FinanceTransactionPresenter;
 use App\Services\WhatsappFinanceIntentService;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -21,6 +23,7 @@ class FinanceWhatsappIntentApiController extends Controller
     public function __construct(
         private readonly FinanceAccessService $access,
         private readonly WhatsappFinanceIntentService $intentService,
+        private readonly FinanceTransactionPresenter $presenter,
     ) {
     }
 
@@ -95,7 +98,7 @@ class FinanceWhatsappIntentApiController extends Controller
         ]);
     }
 
-    public function markSubmitted(Request $request, Tenant $tenant, string $token)
+    public function markSubmitted(Request $request, Tenant $tenant, string $token): JsonResponse
     {
         /** @var TenantMember|null $member */
         $member = $request->attributes->get('currentTenantMember');
@@ -120,9 +123,9 @@ class FinanceWhatsappIntentApiController extends Controller
             'transaction_ids.*' => ['string', 'max:26'],
         ]);
 
-        if (!empty($payload['transaction_ids'])) {
-            $this->attachIntentMediaToTransactions($tenant, $intent, $payload['transaction_ids']);
-        }
+        $updatedTransactions = !empty($payload['transaction_ids'])
+            ? $this->attachIntentMediaToTransactions($tenant, $intent, $payload['transaction_ids'])
+            : collect();
 
         $this->intentService->finalizeSubmittedIntent(
             tenant: $tenant,
@@ -133,7 +136,15 @@ class FinanceWhatsappIntentApiController extends Controller
             transactionIds: $payload['transaction_ids'] ?? null,
         );
 
-        return response()->json(['ok' => true]);
+        return response()->json([
+            'ok' => true,
+            'data' => [
+                'transactions' => $updatedTransactions
+                    ->map(fn (FinanceTransaction $transaction) => $this->presenter->transaction($tenant, $transaction))
+                    ->values()
+                    ->all(),
+            ],
+        ]);
     }
 
     private function resolveIntentMediaItems(Tenant $tenant, TenantWhatsappIntent $intent): array
@@ -180,7 +191,7 @@ class FinanceWhatsappIntentApiController extends Controller
             ->all();
     }
 
-    private function attachIntentMediaToTransactions(Tenant $tenant, TenantWhatsappIntent $intent, array $transactionIds): void
+    private function attachIntentMediaToTransactions(Tenant $tenant, TenantWhatsappIntent $intent, array $transactionIds): EloquentCollection
     {
         $mediaIds = collect([
             $intent->media_id,
@@ -192,23 +203,25 @@ class FinanceWhatsappIntentApiController extends Controller
             ->values();
 
         if ($mediaIds->isEmpty()) {
-            return;
+            return new EloquentCollection();
         }
 
         $transactions = FinanceTransaction::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('id', collect($transactionIds)->map(fn ($id) => (string) $id)->all())
-            ->with('attachments:id,tenant_id,attachable_id,attachable_type,file_name,label,sort_order')
+            ->with($this->presenter->relations())
             ->get();
 
         if ($transactions->isEmpty()) {
-            return;
+            return $transactions;
         }
 
         $mediaItems = TenantWhatsappMedia::query()
             ->where('tenant_id', $tenant->id)
             ->whereIn('id', $mediaIds->all())
             ->get();
+
+        $storedGroupMedia = [];
 
         foreach ($transactions as $transaction) {
             $nextSortOrder = (int) $transaction->attachments->max('sort_order');
@@ -226,7 +239,20 @@ class FinanceWhatsappIntentApiController extends Controller
                     continue;
                 }
 
-                $storedAttachment = $this->storeMediaAsAttachment($transaction, $media);
+                $storedAttachment = null;
+                $isBulkAttachment = (string) $transaction->source_type === 'finance_bulk' && filled($transaction->source_id);
+
+                if ($isBulkAttachment) {
+                    $groupCacheKey = sprintf('%s:%d', (string) $transaction->source_id, (int) $media->id);
+                    $storedAttachment = $storedGroupMedia[$groupCacheKey] ?? null;
+
+                    if ($storedAttachment === null) {
+                        $storedAttachment = $this->storeMediaAsGroupAttachment($tenant, (string) $transaction->source_id, $media);
+                        $storedGroupMedia[$groupCacheKey] = $storedAttachment;
+                    }
+                } else {
+                    $storedAttachment = $this->storeMediaAsAttachment($transaction, $media);
+                }
 
                 $transaction->attachments()->create([
                     'tenant_id' => $tenant->id,
@@ -240,6 +266,22 @@ class FinanceWhatsappIntentApiController extends Controller
                 ]);
             }
         }
+
+        if ($mediaItems->isNotEmpty()) {
+            TenantWhatsappMedia::query()
+                ->whereIn('id', $mediaItems->pluck('id')->all())
+                ->update(['consumed_at' => now()]);
+        }
+
+        return FinanceTransaction::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereIn('id', collect($transactionIds)->map(fn ($id) => (string) $id)->all())
+            ->with($this->presenter->relations())
+            ->get()
+            ->sortBy(function (FinanceTransaction $transaction) use ($transactionIds) {
+                return array_search((string) $transaction->id, array_map('strval', $transactionIds), true);
+            })
+            ->values();
     }
 
     private function storeMediaAsAttachment(FinanceTransaction $transaction, TenantWhatsappMedia $media): array
@@ -254,7 +296,8 @@ class FinanceWhatsappIntentApiController extends Controller
                 imagedestroy($image);
 
                 $path = sprintf(
-                    'finance/attachments/transactions/%s/%s.webp',
+                    'tenants/%d/finance/attachments/transactions/%s/%s.webp',
+                    $transaction->tenant_id,
                     $transaction->id,
                     Str::uuid()->toString()
                 );
@@ -275,7 +318,8 @@ class FinanceWhatsappIntentApiController extends Controller
         }
 
         $path = sprintf(
-            'finance/attachments/transactions/%s/%s.%s',
+            'tenants/%d/finance/attachments/transactions/%s/%s.%s',
+            $transaction->tenant_id,
             $transaction->id,
             Str::uuid()->toString(),
             $extension
@@ -288,6 +332,84 @@ class FinanceWhatsappIntentApiController extends Controller
             'mime_type' => $media->mime_type,
             'file_size' => strlen($contents),
         ];
+    }
+
+    private function storeMediaAsGroupAttachment(Tenant $tenant, string $sourceId, TenantWhatsappMedia $media): array
+    {
+        $existingPath = $this->groupAttachmentStoragePath($tenant, $sourceId, $media, $this->resolveMediaExtension($media));
+        if (Storage::exists($existingPath)) {
+            return [
+                'path' => $existingPath,
+                'file_name' => $this->groupAttachmentFileName($media),
+                'mime_type' => $this->resolveMediaMimeType($media),
+                'file_size' => Storage::size($existingPath) ?: 0,
+            ];
+        }
+
+        $contents = Storage::get($media->storage_path);
+
+        if (in_array((string) $media->mime_type, ['image/jpeg', 'image/png', 'image/webp'], true)) {
+            $image = @imagecreatefromstring($contents);
+            if ($image) {
+                $this->prepareImageResource($image);
+                $optimized = $this->encodeWebpUnderLimit($image, 100 * 1024);
+                imagedestroy($image);
+
+                $path = $this->groupAttachmentStoragePath($tenant, $sourceId, $media, 'webp');
+                Storage::put($path, $optimized);
+
+                return [
+                    'path' => $path,
+                    'file_name' => sprintf('whatsapp-%d.webp', $media->id),
+                    'mime_type' => 'image/webp',
+                    'file_size' => strlen($optimized),
+                ];
+            }
+        }
+
+        $extension = $this->resolveMediaExtension($media);
+        $path = $this->groupAttachmentStoragePath($tenant, $sourceId, $media, $extension);
+        Storage::put($path, $contents);
+
+        return [
+            'path' => $path,
+            'file_name' => $this->groupAttachmentFileName($media, $extension),
+            'mime_type' => $this->resolveMediaMimeType($media),
+            'file_size' => strlen($contents),
+        ];
+    }
+
+    private function groupAttachmentStoragePath(Tenant $tenant, string $sourceId, TenantWhatsappMedia $media, string $extension): string
+    {
+        return sprintf(
+            'tenants/%d/finance/attachments/groups/%s/%d.%s',
+            $tenant->id,
+            $sourceId,
+            $media->id,
+            ltrim($extension, '.')
+        );
+    }
+
+    private function groupAttachmentFileName(TenantWhatsappMedia $media, ?string $extension = null): string
+    {
+        $resolvedExtension = $extension ?: $this->resolveMediaExtension($media);
+
+        return sprintf('whatsapp-%d.%s', $media->id, $resolvedExtension);
+    }
+
+    private function resolveMediaExtension(TenantWhatsappMedia $media): string
+    {
+        $extension = pathinfo((string) $media->storage_path, PATHINFO_EXTENSION);
+        if ($extension === '') {
+            $extension = Str::lower((string) Str::afterLast($media->mime_type, '/')) ?: 'bin';
+        }
+
+        return ltrim(Str::lower($extension), '.');
+    }
+
+    private function resolveMediaMimeType(TenantWhatsappMedia $media): string
+    {
+        return $media->mime_type ?: 'application/octet-stream';
     }
 
     private function encodeWebpUnderLimit(\GdImage $image, int $maxBytes): string

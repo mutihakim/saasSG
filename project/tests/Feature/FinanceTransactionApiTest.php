@@ -6,12 +6,14 @@ use App\Models\FinanceTransaction;
 use App\Models\TenantCategory;
 use App\Models\TenantCurrency;
 use App\Models\Tenant;
+use App\Models\TenantAttachment;
 use App\Models\User;
 use App\Models\TenantMember;
 use App\Models\ActivityLog;
 use App\Models\TenantBankAccount;
 use App\Services\FinanceAccessService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 
 class FinanceTransactionApiTest extends TestCase
@@ -292,5 +294,121 @@ class FinanceTransactionApiTest extends TestCase
         $response->assertJsonPath('data.total_expense_base', 40000);
         $response->assertJsonPath('data.balance_base', 60000);
         $response->assertJsonPath('data.transfer_total_base', 25000);
+    }
+
+    public function test_can_preview_attachment_with_morph_alias(): void
+    {
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $path = sprintf('tenants/%d/finance/attachments/transactions/%s/receipt.webp', $this->tenant->id, $transaction->id);
+        Storage::put($path, 'image-bytes');
+
+        $attachment = TenantAttachment::create([
+            'tenant_id' => $this->tenant->id,
+            'attachable_type' => 'finance_transaction',
+            'attachable_id' => (string) $transaction->id,
+            'file_name' => 'receipt.webp',
+            'file_path' => $path,
+            'mime_type' => 'image/webp',
+            'file_size' => strlen('image-bytes'),
+            'sort_order' => 1,
+            'row_version' => 1,
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->get("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}/attachments/{$attachment->id}/preview");
+
+        $response->assertOk();
+        $response->assertStreamed();
+        $response->assertHeader('Content-Type', 'image/webp');
+        $response->assertStreamedContent('image-bytes');
+    }
+
+    public function test_can_preview_attachment_with_legacy_storage_path(): void
+    {
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $legacyPath = sprintf('finance/attachments/transactions/%s/legacy.jpg', $transaction->id);
+        Storage::put($legacyPath, 'legacy-image');
+
+        $attachment = TenantAttachment::create([
+            'tenant_id' => $this->tenant->id,
+            'attachable_type' => 'finance_transaction',
+            'attachable_id' => (string) $transaction->id,
+            'file_name' => 'legacy.jpg',
+            'file_path' => $legacyPath,
+            'mime_type' => 'image/jpeg',
+            'file_size' => strlen('legacy-image'),
+            'sort_order' => 1,
+            'row_version' => 1,
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->get("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}/attachments/{$attachment->id}/preview");
+
+        $response->assertOk();
+        $response->assertStreamed();
+        $response->assertHeader('Content-Type', 'image/jpeg');
+        $response->assertStreamedContent('legacy-image');
+    }
+
+    public function test_preview_attachment_returns_not_found_for_attachment_from_other_transaction(): void
+    {
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $otherTransaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $path = sprintf('tenants/%d/finance/attachments/transactions/%s/other.webp', $this->tenant->id, $otherTransaction->id);
+        Storage::put($path, 'other-image');
+
+        $attachment = TenantAttachment::create([
+            'tenant_id' => $this->tenant->id,
+            'attachable_type' => 'finance_transaction',
+            'attachable_id' => (string) $otherTransaction->id,
+            'file_name' => 'other.webp',
+            'file_path' => $path,
+            'mime_type' => 'image/webp',
+            'file_size' => strlen('other-image'),
+            'sort_order' => 1,
+            'row_version' => 1,
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}/attachments/{$attachment->id}/preview");
+
+        $response->assertNotFound();
     }
 }

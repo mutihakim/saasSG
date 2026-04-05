@@ -15,19 +15,19 @@ use App\Models\TenantCurrency;
 use App\Models\TenantMember;
 use App\Models\TenantRecurringRule;
 use App\Services\FinanceAccessService;
+use App\Services\FinanceAttachmentService;
 use App\Services\FinanceLedgerService;
 use App\Services\FinanceSummaryService;
+use App\Services\FinanceTransactionPresenter;
 use App\Services\TagService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Str;
 use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class FinanceTransactionApiController extends Controller
@@ -38,6 +38,8 @@ class FinanceTransactionApiController extends Controller
         private readonly SubscriptionEntitlements $entitlements,
         private readonly FinanceAccessService $access,
         private readonly FinanceLedgerService $ledger,
+        private readonly FinanceAttachmentService $attachmentService,
+        private readonly FinanceTransactionPresenter $presenter,
     ) {}
 
     // ─── GET /finance/transactions ───────────────────────────────────────────
@@ -49,7 +51,7 @@ class FinanceTransactionApiController extends Controller
         $member = $request->attributes->get('currentTenantMember');
 
         $query = $this->access->visibleTransactionsQuery($tenant, $member)
-            ->with($this->transactionRelations())
+            ->with($this->presenter->relations())
             ->tap(fn (Builder $builder) => $this->applyTransactionFilters($builder, $request));
 
         $sortField = in_array($request->sort, ['transaction_date', 'amount_base', 'created_at'])
@@ -57,19 +59,28 @@ class FinanceTransactionApiController extends Controller
             : 'transaction_date';
         $direction = $request->direction === 'asc' ? 'asc' : 'desc';
         $query->orderBy($sortField, $direction);
+        if ($sortField !== 'created_at') {
+            $query->orderBy('created_at', $direction);
+        }
+        if ($sortField !== 'id') {
+            $query->orderBy('id', $direction);
+        }
 
-        $perPage   = min((int) ($request->per_page ?? 15), 100);
+        $perPage   = max(1, min((int) ($request->per_page ?? 15), 100));
         $paginator = $query->paginate($perPage);
 
         return response()->json([
             'ok'   => true,
             'data' => [
-                'transactions' => $paginator->items(),
+                'transactions' => collect($paginator->items())
+                    ->map(fn (FinanceTransaction $transaction) => $this->presenter->transaction($tenant, $transaction))
+                    ->values(),
                 'meta'         => [
                     'current_page' => $paginator->currentPage(),
                     'per_page'     => $paginator->perPage(),
                     'total'        => $paginator->total(),
                     'last_page'    => $paginator->lastPage(),
+                    'has_more'     => $paginator->hasMorePages(),
                 ],
             ],
         ]);
@@ -158,7 +169,7 @@ class FinanceTransactionApiController extends Controller
                 $this->syncRecurringRule($transaction, $tenant->id, $data, $isRecurring);
                 $this->ledger->syncAfterCreate($transaction);
 
-                $fresh = $transaction->fresh($this->transactionRelations());
+                $fresh = $transaction->fresh($this->presenter->relations());
 
                 ActivityLog::create($this->makeActivityLogPayload(
                     request: $request,
@@ -181,7 +192,7 @@ class FinanceTransactionApiController extends Controller
 
             return response()->json([
                 'ok'   => true,
-                'data' => ['transaction' => $transaction],
+                'data' => ['transaction' => $this->presenter->transaction($tenant, $transaction)],
             ], 201);
         } catch (\Throwable $e) {
             report($e);
@@ -197,7 +208,7 @@ class FinanceTransactionApiController extends Controller
 
         return response()->json([
             'ok'   => true,
-            'data' => ['transaction' => $transaction->load($this->transactionRelations())],
+            'data' => ['transaction' => $this->presenter->transaction($tenant, $transaction->load($this->presenter->relations()))],
         ]);
     }
 
@@ -282,7 +293,7 @@ class FinanceTransactionApiController extends Controller
                 $this->syncRecurringRule($transaction, $tenant->id, $data, $isRecurring);
                 $this->ledger->syncAfterUpdate($beforeModel, $transaction->fresh());
 
-                $fresh = $transaction->fresh($this->transactionRelations());
+                $fresh = $transaction->fresh($this->presenter->relations());
 
                 ActivityLog::create($this->makeActivityLogPayload(
                     request: $request,
@@ -306,7 +317,7 @@ class FinanceTransactionApiController extends Controller
 
             return response()->json([
                 'ok'   => true,
-                'data' => ['transaction' => $updated],
+                'data' => ['transaction' => $this->presenter->transaction($tenant, $updated)],
             ]);
         } catch (\Throwable $e) {
             report($e);
@@ -359,7 +370,7 @@ class FinanceTransactionApiController extends Controller
         $member = $request->attributes->get('currentTenantMember');
 
         $transactions = $this->access->visibleTransactionsQuery($tenant, $member)
-            ->with($this->transactionRelations())
+            ->with($this->presenter->relations())
             ->where('source_type', 'finance_bulk')
             ->where('source_id', $sourceId)
             ->get();
@@ -412,7 +423,7 @@ class FinanceTransactionApiController extends Controller
                 continue;
             }
 
-            $stored = $this->storeAttachmentFile($transaction, $file);
+            $stored = $this->attachmentService->storeUploadedFile($transaction, $file);
             $created[] = $transaction->attachments()->create([
                 'tenant_id' => $tenant->id,
                 'file_name' => $stored['file_name'],
@@ -428,7 +439,7 @@ class FinanceTransactionApiController extends Controller
         return response()->json([
             'ok' => true,
             'data' => [
-                'attachments' => collect($created)->map(fn (TenantAttachment $attachment) => $this->attachmentPayload($attachment))->values(),
+                'attachments' => collect($created)->map(fn (TenantAttachment $attachment) => $this->attachmentService->payload($tenant, $transaction, $attachment))->values(),
             ],
         ], 201);
     }
@@ -438,15 +449,16 @@ class FinanceTransactionApiController extends Controller
         $this->authorize('view', $transaction);
         abort_if((int) $transaction->tenant_id !== (int) $tenant->id, 404);
 
-        if (!$this->attachmentBelongsToTransaction($transaction, $attachment)) {
+        if (!$this->attachmentService->belongsToTransaction($transaction, $attachment)) {
             return response()->json(['ok' => false, 'message' => 'Attachment not found.'], 404);
         }
 
-        if (!Storage::exists($attachment->file_path)) {
+        $resolvedPath = $this->attachmentService->resolveStoragePath($attachment);
+        if ($resolvedPath === null) {
             return response()->json(['ok' => false, 'message' => 'Attachment file not found.'], 404);
         }
 
-        $stream = Storage::readStream($attachment->file_path);
+        $stream = Storage::readStream($resolvedPath);
         if ($stream === false) {
             return response()->json(['ok' => false, 'message' => 'Attachment file not found.'], 404);
         }
@@ -458,7 +470,7 @@ class FinanceTransactionApiController extends Controller
             }
         }, 200, [
             'Content-Type' => $attachment->mime_type ?: 'application/octet-stream',
-            'Content-Length' => (string) max((int) $attachment->file_size, 0),
+            'Content-Length' => (string) max((int) (Storage::size($resolvedPath) ?: $attachment->file_size), 0),
             'Content-Disposition' => 'inline; filename="' . addslashes($attachment->file_name) . '"',
             'Cache-Control' => 'private, max-age=300',
         ]);
@@ -469,15 +481,11 @@ class FinanceTransactionApiController extends Controller
         $this->authorize('update', $transaction);
         abort_if((int) $transaction->tenant_id !== (int) $tenant->id, 404);
 
-        if (!$this->attachmentBelongsToTransaction($transaction, $attachment)) {
+        if (!$this->attachmentService->belongsToTransaction($transaction, $attachment)) {
             return response()->json(['ok' => false, 'message' => 'Attachment not found.'], 404);
         }
 
-        if ($attachment->file_path && Storage::exists($attachment->file_path)) {
-            Storage::delete($attachment->file_path);
-        }
-
-        $attachment->delete();
+        $this->deleteAttachmentRecord($attachment);
 
         return response()->json(['ok' => true]);
     }
@@ -638,204 +646,6 @@ class FinanceTransactionApiController extends Controller
             }))
             ->when($request->month, fn ($q) => $q->forMonth($request->month))
             ->when(! $request->month, fn ($q) => $q->byDateRange($request->date_from, $request->date_to));
-    }
-
-    private function transactionRelations(): array
-    {
-        return [
-            'category:id,name,icon,color',
-            'currency:id,code,symbol,decimal_places',
-            'createdBy:id,full_name',
-            'ownerMember:id,full_name',
-            'updatedBy:id,full_name',
-            'approvedBy:id,full_name',
-            'bankAccount:id,name,type,currency_code',
-            'budget:id,name,period_month,allocated_amount,spent_amount,remaining_amount',
-            'tags:id,name,color',
-            'attachments',
-            'recurringRule',
-        ];
-    }
-
-    private function attachmentPayload(TenantAttachment $attachment): array
-    {
-        return [
-            'id' => $attachment->id,
-            'file_name' => $attachment->file_name,
-            'mime_type' => $attachment->mime_type,
-            'file_size' => $attachment->file_size,
-            'label' => $attachment->label,
-            'sort_order' => $attachment->sort_order,
-        ];
-    }
-
-    private function storeAttachmentFile(FinanceTransaction $transaction, UploadedFile $file): array
-    {
-        $mimeType = $file->getClientMimeType() ?: $file->getMimeType() ?: 'application/octet-stream';
-        if ($this->isConvertibleImageMime($mimeType)) {
-            return $this->storeOptimizedImageAttachment(
-                transaction: $transaction,
-                contents: file_get_contents($file->getRealPath()) ?: '',
-                originalName: $file->getClientOriginalName() ?: ('attachment-' . Str::uuid() . '.webp'),
-                fallbackMimeType: $mimeType,
-            );
-        }
-
-        $extension = $file->getClientOriginalExtension() ?: $file->guessExtension() ?: 'bin';
-        $fileName = Str::uuid()->toString() . '.' . strtolower($extension);
-        $path = sprintf(
-            'finance/attachments/transactions/%s/%s',
-            $transaction->id,
-            $fileName
-        );
-
-        Storage::putFileAs(dirname($path), $file, basename($path));
-
-        return [
-            'path' => $path,
-            'file_name' => $file->getClientOriginalName(),
-            'mime_type' => $mimeType,
-            'file_size' => $file->getSize() ?: 0,
-        ];
-    }
-
-    private function attachmentBelongsToTransaction(FinanceTransaction $transaction, TenantAttachment $attachment): bool
-    {
-        return (int) $attachment->tenant_id === (int) $transaction->tenant_id
-            && $attachment->attachable_type === FinanceTransaction::class
-            && (string) $attachment->attachable_id === (string) $transaction->id;
-    }
-
-    private function isConvertibleImageMime(?string $mimeType): bool
-    {
-        return in_array((string) $mimeType, ['image/jpeg', 'image/png', 'image/webp'], true);
-    }
-
-    private function storeOptimizedImageAttachment(
-        FinanceTransaction $transaction,
-        string $contents,
-        string $originalName,
-        string $fallbackMimeType,
-    ): array {
-        $image = @imagecreatefromstring($contents);
-        if (!$image) {
-            $fileName = Str::uuid()->toString() . '.webp';
-            $path = sprintf('finance/attachments/transactions/%s/%s', $transaction->id, $fileName);
-            Storage::put($path, $contents);
-
-            return [
-                'path' => $path,
-                'file_name' => $this->normalizedWebpName($originalName),
-                'mime_type' => $fallbackMimeType,
-                'file_size' => strlen($contents),
-            ];
-        }
-
-        $this->prepareImageResource($image);
-        $optimized = $this->encodeWebpUnderLimit($image, 100 * 1024);
-        imagedestroy($image);
-
-        $fileName = Str::uuid()->toString() . '.webp';
-        $path = sprintf('finance/attachments/transactions/%s/%s', $transaction->id, $fileName);
-        Storage::put($path, $optimized);
-
-        return [
-            'path' => $path,
-            'file_name' => $this->normalizedWebpName($originalName),
-            'mime_type' => 'image/webp',
-            'file_size' => strlen($optimized),
-        ];
-    }
-
-    private function encodeWebpUnderLimit(\GdImage $image, int $maxBytes): string
-    {
-        $current = $image;
-        $ownsCurrent = false;
-        $bestBytes = null;
-        $qualities = [82, 76, 70, 64, 58, 52, 46, 40, 34];
-
-        for ($iteration = 0; $iteration < 6; $iteration++) {
-            foreach ($qualities as $quality) {
-                $encoded = $this->encodeImageToWebp($current, $quality);
-                if ($encoded === null) {
-                    continue;
-                }
-
-                if ($bestBytes === null || strlen($encoded) < strlen($bestBytes)) {
-                    $bestBytes = $encoded;
-                }
-
-                if (strlen($encoded) <= $maxBytes) {
-                    if ($ownsCurrent && $current !== $image) {
-                        imagedestroy($current);
-                    }
-
-                    return $encoded;
-                }
-            }
-
-            $width = imagesx($current);
-            $height = imagesy($current);
-            if ($width <= 480 && $height <= 480) {
-                break;
-            }
-
-            $scaled = imagescale(
-                $current,
-                max(320, (int) floor($width * 0.85)),
-                max(320, (int) floor($height * 0.85)),
-                IMG_BILINEAR_FIXED
-            );
-
-            if ($scaled === false) {
-                break;
-            }
-
-            $this->prepareImageResource($scaled);
-            if ($ownsCurrent && $current !== $image) {
-                imagedestroy($current);
-            }
-
-            $current = $scaled;
-            $ownsCurrent = true;
-        }
-
-        if ($ownsCurrent && $current !== $image) {
-            imagedestroy($current);
-        }
-
-        return $bestBytes ?? throw new \RuntimeException('Failed to optimize image attachment.');
-    }
-
-    private function encodeImageToWebp(\GdImage $image, int $quality): ?string
-    {
-        ob_start();
-        $success = imagewebp($image, null, $quality);
-        $contents = ob_get_clean();
-
-        if (!$success || !is_string($contents) || $contents === '') {
-            return null;
-        }
-
-        return $contents;
-    }
-
-    private function prepareImageResource(\GdImage $image): void
-    {
-        if (function_exists('imagepalettetotruecolor')) {
-            @imagepalettetotruecolor($image);
-        }
-
-        imagealphablending($image, false);
-        imagesavealpha($image, true);
-    }
-
-    private function normalizedWebpName(string $originalName): string
-    {
-        $name = pathinfo($originalName, PATHINFO_FILENAME);
-        $name = trim($name) !== '' ? $name : 'attachment';
-
-        return $name . '.webp';
     }
 
     private function transactionPayload(
@@ -1005,7 +815,7 @@ class FinanceTransactionApiController extends Controller
             ->each(function (FinanceTransaction $transaction) use ($tenant, $actorMember, $request, $writeDeletionActivityLog) {
                 $beforeModel = $transaction->relationLoaded('attachments')
                     ? $transaction
-                    : $transaction->load($this->transactionRelations());
+                    : $transaction->load($this->presenter->relations());
 
                 $before = $this->snapshotTransaction($beforeModel);
 
@@ -1036,11 +846,7 @@ class FinanceTransactionApiController extends Controller
             : $transaction->attachments()->get();
 
         foreach ($attachments as $attachment) {
-            if ($attachment->file_path && Storage::exists($attachment->file_path)) {
-                Storage::delete($attachment->file_path);
-            }
-
-            $attachment->delete();
+            $this->deleteAttachmentRecord($attachment);
         }
 
         $this->tags->syncTags($transaction, $tenant->id, []);
@@ -1052,6 +858,26 @@ class FinanceTransactionApiController extends Controller
             ->delete();
 
         $transaction->recurringRule?->delete();
+    }
+
+    private function deleteAttachmentRecord(TenantAttachment $attachment): void
+    {
+        $filePath = (string) ($attachment->file_path ?? '');
+
+        $attachment->delete();
+
+        if ($filePath === '') {
+            return;
+        }
+
+        $stillReferenced = TenantAttachment::query()
+            ->where('tenant_id', $attachment->tenant_id)
+            ->where('file_path', $filePath)
+            ->exists();
+
+        if (!$stillReferenced && Storage::exists($filePath)) {
+            Storage::delete($filePath);
+        }
     }
 
     private function resolveUsableAccount(Tenant $tenant, ?TenantMember $member, ?string $accountId): ?TenantBankAccount

@@ -1,12 +1,12 @@
 import axios from "axios";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import { Button, Card } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import DeleteModal from "../../../Components/Common/DeleteModal";
 import { parseApiError } from "../../../common/apiError";
-import { currentMonthValue, shiftMonthValue } from "../../../common/month";
+import { shiftMonthValue } from "../../../common/month";
 import { notify } from "../../../common/notify";
 import { useTenantRoute } from "../../../common/tenantRoute";
 
@@ -17,7 +17,6 @@ import TransactionBatchModal from "./components/TransactionBatchModal";
 import TransactionModal from "./components/TransactionModal";
 import TransferModal from "./components/TransferModal";
 import WhatsappBatchReviewModal from "./components/WhatsappBatchReviewModal";
-import AttachmentPreviewModal from "./components/pwa/AttachmentPreviewModal";
 import FinanceBottomNav from "./components/pwa/FinanceBottomNav";
 import FinanceComposerFab from "./components/pwa/FinanceComposerFab";
 import FinanceFilterPanel from "./components/pwa/FinanceFilterPanel";
@@ -25,9 +24,10 @@ import { SummarySkeleton, TransactionSkeleton } from "./components/pwa/FinanceSk
 import FinanceTopbar from "./components/pwa/FinanceTopbar";
 import TransactionDetailSheet from "./components/pwa/TransactionDetailSheet";
 import TransactionGroupedList from "./components/pwa/TransactionGroupedList";
+import { useFinanceData } from "./hooks/useFinanceData";
+import { useFinanceFilters } from "./hooks/useFinanceFilters";
 import {
     CARD_RADIUS,
-    FinanceFilters,
     MainTab,
     MoreView,
     QuickType,
@@ -76,13 +76,6 @@ const FinanceIndex = ({
 
     const [activeTab, setActiveTab] = useState<MainTab>("transactions");
     const [moreView, setMoreView] = useState<MoreView>("menu");
-    const [transactions, setTransactions] = useState<any[]>([]);
-    const [summary, setSummary] = useState<any | null>(null);
-    const [accounts, setAccounts] = useState<any[]>(seededAccounts ?? []);
-    const [budgets, setBudgets] = useState<any[]>(seededBudgets ?? []);
-    const [loading, setLoading] = useState(true);
-    const [summaryLoading, setSummaryLoading] = useState(true);
-    const [errorState, setErrorState] = useState<string | null>(null);
     const [showComposer, setShowComposer] = useState(false);
     const [transactionModal, setTransactionModal] = useState(false);
     const [transferModal, setTransferModal] = useState(false);
@@ -98,7 +91,6 @@ const FinanceIndex = ({
     const [deleteTarget, setDeleteTarget] = useState<any>(null);
     const [deleteTargetType, setDeleteTargetType] = useState<"transaction" | "transaction_group" | "account" | "budget">("transaction");
     const [isDeleting, setIsDeleting] = useState(false);
-    const [attachmentPreview, setAttachmentPreview] = useState<{ url: string; title?: string | null; mimeType?: string | null } | null>(null);
     const [transactionPresetType, setTransactionPresetType] = useState<"pemasukan" | "pengeluaran">("pengeluaran");
     const [transactionDraft, setTransactionDraft] = useState<Record<string, any> | null>(null);
     const [transactionGroupLock, setTransactionGroupLock] = useState<{
@@ -124,87 +116,38 @@ const FinanceIndex = ({
     const [showFilters, setShowFilters] = useState(false);
     const [searchOpen, setSearchOpen] = useState(false);
     const [quickType, setQuickType] = useState<QuickType>("all");
+    const loadMoreRef = useRef<HTMLDivElement | null>(null);
     const canManageFinanceStructures = permissions.manageShared || permissions.managePrivateStructures;
+    const { filters, setFilters, draftFilters, setDraftFilters, apiParams } = useFinanceFilters({
+        activeMemberId,
+        canManageShared: permissions.manageShared,
+    });
+    const {
+        transactions,
+        setTransactions,
+        summary,
+        accounts,
+        setAccounts,
+        budgets,
+        setBudgets,
+        loading,
+        summaryLoading,
+        errorState,
+        transactionsMeta,
+        loadingMoreTransactions,
+        refreshFinanceSideData,
+        loadFinance,
+        loadMoreTransactions,
+    } = useFinanceData({
+        seededAccounts,
+        seededBudgets,
+        filters,
+        apiParams,
+        tenantRoute,
+        loadErrorMessage: t("finance.notifications.transaction_load_failed"),
+    });
     const accountCreateDisabled = canManageFinanceStructures && limits.accounts.limit !== null && limits.accounts.limit !== -1 && accounts.length >= limits.accounts.limit;
     const budgetCreateDisabled = canManageFinanceStructures && limits.budgets.limit !== null && limits.budgets.limit !== -1 && budgets.filter((budget) => budget.is_active !== false).length >= limits.budgets.limit;
-    const [filters, setFilters] = useState<FinanceFilters>({
-        search: "",
-        owner_member_id: permissions.manageShared ? "" : String(activeMemberId ?? ""),
-        bank_account_id: "",
-        category_id: "",
-        transaction_kind: "all",
-        month: currentMonthValue(),
-        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
-        date_to: new Date().toISOString().slice(0, 10),
-        use_custom_range: false,
-    });
-    const [draftFilters, setDraftFilters] = useState<FinanceFilters>({
-        search: "",
-        owner_member_id: permissions.manageShared ? "" : String(activeMemberId ?? ""),
-        bank_account_id: "",
-        category_id: "",
-        transaction_kind: "all",
-        month: currentMonthValue(),
-        date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
-        date_to: new Date().toISOString().slice(0, 10),
-        use_custom_range: false,
-    });
-
-    const apiParams = useMemo(() => {
-        const params: Record<string, string> = {
-            search: filters.search,
-            owner_member_id: filters.owner_member_id,
-            bank_account_id: filters.bank_account_id,
-            category_id: filters.category_id,
-            transaction_kind: filters.transaction_kind,
-        };
-
-        if (filters.use_custom_range) {
-            params.date_from = filters.date_from;
-            params.date_to = filters.date_to;
-        } else {
-            params.month = filters.month;
-        }
-
-        Object.keys(params).forEach((key) => {
-            if (!params[key]) {
-                delete params[key];
-            }
-        });
-
-        return params;
-    }, [filters]);
-
-    const fetchTransactions = useCallback(async () => {
-        const response = await axios.get(tenantRoute.apiTo("/finance/transactions"), { params: apiParams });
-        setTransactions(response.data.data?.transactions || []);
-    }, [apiParams, tenantRoute]);
-
-    const fetchSummary = useCallback(async () => {
-        setSummaryLoading(true);
-        try {
-            const response = await axios.get(tenantRoute.apiTo("/finance/summary"), { params: apiParams });
-            setSummary(response.data.data || null);
-        } finally {
-            setSummaryLoading(false);
-        }
-    }, [apiParams, tenantRoute]);
-
-    const fetchAccounts = useCallback(async () => {
-        const response = await axios.get(tenantRoute.apiTo("/finance/accounts"));
-        setAccounts(response.data.data?.accounts || []);
-    }, [tenantRoute]);
-
-    const fetchBudgets = useCallback(async () => {
-        const response = await axios.get(tenantRoute.apiTo("/finance/budgets"), {
-            params: filters.use_custom_range ? undefined : { period_month: filters.month },
-        });
-        setBudgets(response.data.data?.budgets || []);
-    }, [filters.month, filters.use_custom_range, tenantRoute]);
-
-    const refreshFinanceSideData = useCallback(async () => {
-        await Promise.all([fetchSummary(), fetchAccounts(), fetchBudgets()]);
-    }, [fetchAccounts, fetchBudgets, fetchSummary]);
 
     const clearWhatsappQuery = useCallback(() => {
         if (typeof window === "undefined") {
@@ -218,23 +161,27 @@ const FinanceIndex = ({
         window.history.replaceState({}, "", `${url.pathname}${url.search}${url.hash}`);
     }, []);
 
-    const loadFinance = useCallback(async () => {
-        setLoading(true);
-        setErrorState(null);
-        try {
-            await Promise.all([fetchTransactions(), fetchSummary(), fetchAccounts(), fetchBudgets()]);
-        } catch (error: any) {
-            const parsed = parseApiError(error, t("finance.notifications.transaction_load_failed"));
-            setErrorState(parsed.detail || parsed.title);
-            notify.error({ title: parsed.title, detail: parsed.detail });
-        } finally {
-            setLoading(false);
-        }
-    }, [fetchAccounts, fetchBudgets, fetchSummary, fetchTransactions, t]);
-
     useEffect(() => {
         loadFinance();
     }, [loadFinance]);
+
+    useEffect(() => {
+        if (activeTab !== "transactions" || !transactionsMeta.hasMore || !loadMoreRef.current) {
+            return;
+        }
+
+        const node = loadMoreRef.current;
+        const observer = new IntersectionObserver((entries) => {
+            if (entries[0]?.isIntersecting) {
+                loadMoreTransactions();
+            }
+        }, {
+            rootMargin: "240px 0px",
+        });
+
+        observer.observe(node);
+        return () => observer.disconnect();
+    }, [activeTab, loadMoreTransactions, transactionsMeta.hasMore]);
 
     useEffect(() => {
         if (typeof window === "undefined") {
@@ -755,20 +702,8 @@ const FinanceIndex = ({
                     setDeleteTargetType("transaction");
                     setDeleteModal(true);
                 }}
-                onPreviewAttachment={(currentTransaction, attachment) => {
-                    setAttachmentPreview({
-                        url: tenantRoute.apiTo(`/finance/transactions/${currentTransaction.id}/attachments/${attachment.id}/preview`),
-                        title: attachment.file_name || `Lampiran ${attachment.id}`,
-                        mimeType: attachment.mime_type || null,
-                    });
-                }}
                 canEdit={permissions.update}
                 canDelete={permissions.delete}
-            />
-            <AttachmentPreviewModal
-                show={attachmentPreview !== null}
-                item={attachmentPreview}
-                onClose={() => setAttachmentPreview(null)}
             />
 
             <TransactionModal
@@ -784,21 +719,30 @@ const FinanceIndex = ({
                     }
                 }}
                 onSuccess={async (transaction) => {
-                    upsertTransactionInList(transaction);
-                    setShowDetailSheet(false);
+                    let finalTransaction = transaction;
+
                     try {
                         const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
                         const intentToken = params?.get("intent");
                         if (intentToken && transaction?.id) {
-                            await axios.post(tenantRoute.apiTo(`/finance/whatsapp-intents/${intentToken}/submitted`), {
+                            const submittedResponse = await axios.post(tenantRoute.apiTo(`/finance/whatsapp-intents/${intentToken}/submitted`), {
                                 linked_resource_type: "finance_transaction",
                                 submitted_count: 1,
                                 transaction_ids: [String(transaction.id)],
                             });
+
+                            const submittedTransactions = Array.isArray(submittedResponse.data?.data?.transactions)
+                                ? submittedResponse.data.data.transactions
+                                : [];
+
+                            finalTransaction = submittedTransactions[0] || finalTransaction;
                         }
                     } catch {
                         // Keep transaction success path non-blocking if intent status update fails.
                     }
+
+                    upsertTransactionInList(finalTransaction);
+                    setShowDetailSheet(false);
                     clearWhatsappQuery();
                     await refreshFinanceSideData();
                 }}
@@ -842,22 +786,33 @@ const FinanceIndex = ({
                     clearWhatsappQuery();
                 }}
                 onSuccess={async (createdTransactions) => {
-                    createdTransactions.forEach((transaction) => upsertTransactionInList(transaction));
+                    let finalTransactions = createdTransactions;
+
                     try {
                         const params = typeof window !== "undefined" ? new URLSearchParams(window.location.search) : null;
                         const intentToken = params?.get("intent");
                         if (intentToken) {
-                            await axios.post(tenantRoute.apiTo(`/finance/whatsapp-intents/${intentToken}/submitted`), {
+                            const submittedResponse = await axios.post(tenantRoute.apiTo(`/finance/whatsapp-intents/${intentToken}/submitted`), {
                                 linked_resource_type: "finance_transaction_batch",
                                 submitted_count: createdTransactions.length || 1,
                                 transaction_ids: createdTransactions
                                     .map((transaction) => String(transaction?.id || ""))
                                     .filter((id) => id !== ""),
                             });
+
+                            const submittedTransactions = Array.isArray(submittedResponse.data?.data?.transactions)
+                                ? submittedResponse.data.data.transactions
+                                : [];
+
+                            if (submittedTransactions.length > 0) {
+                                finalTransactions = submittedTransactions;
+                            }
                         }
                     } catch {
                         // Keep batch success path non-blocking if intent status update fails.
                     }
+
+                    finalTransactions.forEach((transaction) => upsertTransactionInList(transaction));
                     clearWhatsappQuery();
                     await refreshFinanceSideData();
                 }}
@@ -1038,6 +993,9 @@ const FinanceIndex = ({
                                         showTransferHint={showTransferHint}
                                         quickType={quickType}
                                         selectedTransactionId={focusedTransactionId}
+                                        hasMore={transactionsMeta.hasMore}
+                                        isLoadingMore={loadingMoreTransactions}
+                                        loadMoreRef={loadMoreRef}
                                         onQuickTypeChange={setQuickType}
                                         onAddItemToGroup={(transaction) => openCreateFromGroupedTransaction(transaction)}
                                         onDeleteGroup={(group) => {
