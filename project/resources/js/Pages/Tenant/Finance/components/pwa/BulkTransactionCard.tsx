@@ -3,9 +3,10 @@ import { Badge, Button } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import { FinanceTransaction } from "../../types";
-import { formatAmount } from "./types";
-import { BulkTransactionGroup, getTransactionAccent, toSoftAccent } from "./transactionListUtils";
+
 import TransactionCard from "./TransactionCard";
+import { BulkTransactionGroup, getTransactionAccent, toSoftAccent } from "./transactionListUtils";
+import { formatAmount } from "./types";
 
 type Props = {
     entry: BulkTransactionGroup;

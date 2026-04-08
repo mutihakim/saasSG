@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\TenantUom;
 use App\Models\Tenant;
+use App\Services\ActivityLogService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,6 +16,7 @@ class MasterUomApiController extends Controller
 {
     public function __construct(
         private readonly SubscriptionEntitlements $entitlements,
+        private readonly ActivityLogService $activityLogs,
     ) {}
 
     // GET /master/uom
@@ -110,6 +112,16 @@ class MasterUomApiController extends Controller
             'row_version' => 1,
         ]);
 
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.uom.created',
+            'tenant_uom',
+            $unit->id,
+            null,
+            $this->activityLogs->snapshot($unit)
+        );
+
         return response()->json([
             'ok' => true,
             'data' => $unit,
@@ -161,6 +173,9 @@ class MasterUomApiController extends Controller
             ], 422);
         }
 
+        $before = $this->activityLogs->snapshot($uom);
+        $beforeVersion = (int) $uom->row_version;
+
         $uom->update([
             'code' => isset($validated['code']) ? strtoupper($validated['code']) : $uom->code,
             'name' => $validated['name'] ?? $uom->name,
@@ -173,9 +188,23 @@ class MasterUomApiController extends Controller
             'row_version' => $uom->row_version + 1,
         ]);
 
+        $fresh = $uom->fresh();
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.uom.updated',
+            'tenant_uom',
+            $uom->id,
+            $before,
+            $this->activityLogs->snapshot($fresh),
+            [],
+            $beforeVersion,
+            (int) $fresh->row_version
+        );
+
         return response()->json([
             'ok' => true,
-            'data' => $uom->fresh(),
+            'data' => $fresh,
         ]);
     }
 
@@ -193,7 +222,22 @@ class MasterUomApiController extends Controller
             ], 422);
         }
         
+        $before = $this->activityLogs->snapshot($uom);
+        $beforeVersion = (int) $uom->row_version;
         $uom->delete();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.uom.deleted',
+            'tenant_uom',
+            $uom->id,
+            $before,
+            null,
+            [],
+            $beforeVersion,
+            null
+        );
 
         return response()->json([
             'ok' => true,

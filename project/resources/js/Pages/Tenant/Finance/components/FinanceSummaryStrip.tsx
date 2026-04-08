@@ -3,8 +3,9 @@ import { Button, Card, Form } from "react-bootstrap";
 import Select, { StylesConfig } from "react-select";
 
 import { FinanceFilterDraft, FinancePocket } from "../types";
-import { CARD_RADIUS, formatAmount } from "./pwa/types";
+
 import { SummarySkeleton, TransactionSkeleton } from "./pwa/FinanceSkeletons";
+import { CARD_RADIUS, formatAmount } from "./pwa/types";
 
 type TypeOption = {
     value: string;
@@ -339,7 +340,7 @@ const FinanceSummaryStrip = ({
                                 }}
                                 placeholder={t("finance.pwa.filters.all")}
                                 styles={sharedSelectStyles}
-                                formatOptionLabel={(option, meta) => (
+                                formatOptionLabel={(option, _meta) => (
                                     <div
                                         className="d-flex align-items-center justify-content-between gap-2 py-0"
                                         style={{ paddingLeft: `${option.indentLevel * 16}px` }}

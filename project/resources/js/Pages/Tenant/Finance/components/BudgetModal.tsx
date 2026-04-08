@@ -2,12 +2,13 @@ import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { Button, Col, Form, Modal, Row, InputGroup } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
-import Select from "react-select";
 
 import MiniCalculator from "../../../../Components/Common/MiniCalculator";
 import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
 import { useTenantRoute } from "../../../../common/tenantRoute";
+
+import { MemberAccessSelector, MemberAccessState } from "./MemberAccessSelector";
 
 interface BudgetModalProps {
     show: boolean;
@@ -34,6 +35,7 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, pock
     const isEdit = Boolean(budget);
     const [loading, setLoading] = useState(false);
     const [showCalculator, setShowCalculator] = useState(false);
+    const canManageScope = !isEdit || canManageShared || String(budget?.owner_member_id) === String(activeMemberId);
     const [formData, setFormData] = useState({
         name: "",
         scope: "shared",
@@ -41,7 +43,7 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, pock
         allocated_amount: "0",
         owner_member_id: "",
         pocket_id: "",
-        member_access_ids: [] as number[],
+        member_access: [] as MemberAccessState[],
         notes: "",
         is_active: true,
         row_version: 1,
@@ -55,14 +57,19 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, pock
         if (budget) {
             setFormData({
                 name: budget.name ?? "",
-                scope: canManageShared ? budget.scope ?? "shared" : "private",
+                scope: canManageScope ? budget.scope ?? "shared" : "private",
                 period_month: budget.period_month ?? new Date().toISOString().slice(0, 7),
                 allocated_amount: String(budget.allocated_amount ?? "0"),
-                owner_member_id: canManageShared
+                owner_member_id: canManageScope
                     ? (budget.owner_member_id ? String(budget.owner_member_id) : "")
                     : String(budget.owner_member_id ?? activeMemberId ?? ""),
                 pocket_id: budget.pocket_id ? String(budget.pocket_id) : "",
-                member_access_ids: canManageShared ? (budget.member_access || []).map((member: any) => member.id) : [],
+                member_access: canManageScope ? (budget.member_access || (budget as any).memberAccess || []).map((m: any) => ({
+                    id: String(m.id),
+                    can_view: Boolean(m.pivot?.can_view),
+                    can_use: Boolean(m.pivot?.can_use),
+                    can_manage: Boolean(m.pivot?.can_manage),
+                })) : [],
                 notes: budget.notes ?? "",
                 is_active: budget.is_active ?? true,
                 row_version: budget.row_version ?? 1,
@@ -77,37 +84,27 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, pock
             allocated_amount: "0",
             owner_member_id: activeMemberId ? String(activeMemberId) : "",
             pocket_id: "",
-            member_access_ids: [],
+            member_access: [],
             notes: "",
             is_active: true,
             row_version: 1,
         });
-    }, [show, budget, activeMemberId, canManageShared]);
-
-    const memberOptions = useMemo(() => members.map((member) => ({
-        value: member.id,
-        label: member.full_name,
-    })), [members]);
+    }, [show, budget, activeMemberId, canManageScope]);
 
     const visiblePockets = useMemo(
         () => pockets.filter((pocket) => canUseForOwner(pocket, formData.owner_member_id)),
         [formData.owner_member_id, pockets],
     );
 
-    const pocketOptions = useMemo(() => visiblePockets.map((pocket) => ({
-        value: String(pocket.id),
-        label: `${pocket.name} · ${pocket.real_account?.name || pocket.realAccount?.name || pocket.currency_code}`,
-    })), [visiblePockets]);
-
     useEffect(() => {
         if (!show) {
             return;
         }
 
-        if (formData.pocket_id && !pocketOptions.some((option) => option.value === formData.pocket_id)) {
+        if (formData.pocket_id && !visiblePockets.some((pocket) => String(pocket.id) === formData.pocket_id)) {
             setFormData((prev) => ({ ...prev, pocket_id: "" }));
         }
-    }, [formData.pocket_id, pocketOptions, show]);
+    }, [formData.pocket_id, show, visiblePockets]);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -123,7 +120,7 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, pock
                     ...formData,
                     owner_member_id: formData.owner_member_id ? parseInt(formData.owner_member_id, 10) : null,
                     pocket_id: formData.pocket_id || null,
-                    member_access_ids: formData.scope === "shared" ? formData.member_access_ids : [],
+                    member_access: formData.scope === "shared" ? formData.member_access : [],
                     allocated_amount: parseFloat(formData.allocated_amount || "0"),
                 },
             });
@@ -175,6 +172,8 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, pock
                                 <Form.Control
                                     type="number"
                                     step="0.01"
+                                    inputMode="decimal"
+                                    pattern="[0-9]*"
                                     value={formData.allocated_amount}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, allocated_amount: e.target.value }))}
                                     readOnly={showCalculator}
@@ -187,53 +186,54 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, pock
                         </Col>
                         <Col md={6}>
                             <Form.Label>{t("finance.budgets.fields.scope")}</Form.Label>
-                            <Select
-                                options={[
-                                    { value: "private", label: t("finance.shared.private") },
-                                    { value: "shared", label: t("finance.shared.shared") },
-                                ]}
-                                value={{
-                                    value: formData.scope,
-                                    label: formData.scope === "shared" ? t("finance.shared.shared") : t("finance.shared.private"),
-                                }}
-                                onChange={(option: any) => setFormData((prev) => ({ ...prev, scope: option.value }))}
-                                isDisabled={!canManageShared}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select
+                                value={formData.scope}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, scope: e.target.value as "private" | "shared" }))}
+                                disabled={!canManageScope}
+                            >
+                                <option value="private">{t("finance.shared.private")}</option>
+                                <option value="shared">{t("finance.shared.shared")}</option>
+                            </Form.Select>
                         </Col>
                         <Col md={6}>
                             <Form.Label>{t("finance.budgets.fields.owner")}</Form.Label>
-                            <Select
-                                options={memberOptions}
-                                isClearable
-                                value={memberOptions.find((option) => String(option.value) === formData.owner_member_id)}
-                                onChange={(option: any) => setFormData((prev) => ({ ...prev, owner_member_id: option ? String(option.value) : "" }))}
-                                isDisabled={!canManageShared}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select
+                                value={formData.owner_member_id}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, owner_member_id: e.target.value }))}
+                                disabled={!canManageScope}
+                            >
+                                <option value="">{t("finance.shared.unassigned", { defaultValue: "Tanpa owner" })}</option>
+                                {members.map((member) => (
+                                    <option key={member.id} value={String(member.id)}>
+                                        {member.full_name}
+                                    </option>
+                                ))}
+                            </Form.Select>
                         </Col>
                         <Col md={12}>
                             <Form.Label>{t("wallet.title", { defaultValue: "Wallet" })}</Form.Label>
-                            <Select
-                                options={pocketOptions}
-                                isClearable
-                                value={pocketOptions.find((option) => option.value === formData.pocket_id) ?? null}
-                                onChange={(option: any) => setFormData((prev) => ({ ...prev, pocket_id: option ? String(option.value) : "" }))}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select
+                                value={formData.pocket_id}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, pocket_id: e.target.value }))}
+                            >
+                                <option value="">{t("finance.shared.select_placeholder", { defaultValue: "Pilih wallet" })}</option>
+                                {visiblePockets.map((pocket) => (
+                                    <option key={pocket.id} value={String(pocket.id)}>
+                                        {`${pocket.name} · ${pocket.real_account?.name || pocket.realAccount?.name || pocket.currency_code}`}
+                                    </option>
+                                ))}
+                            </Form.Select>
                         </Col>
-                        {canManageShared && formData.scope === "shared" && (
+                        {canManageScope && formData.scope === "shared" && (
                             <Col md={12}>
-                                <Form.Label>{t("finance.budgets.fields.shared_members")}</Form.Label>
-                                <Select
-                                    options={memberOptions}
-                                    isMulti
-                                    value={memberOptions.filter((option) => formData.member_access_ids.includes(option.value))}
-                                    onChange={(options: any) => setFormData((prev) => ({
-                                        ...prev,
-                                        member_access_ids: (options || []).map((option: any) => option.value),
-                                    }))}
-                                    classNamePrefix="react-select"
+                                <Form.Label className="fw-semibold small text-uppercase text-muted">{t("finance.budgets.fields.shared_members")}</Form.Label>
+                                <MemberAccessSelector
+                                    members={members}
+                                    value={formData.member_access}
+                                    onChange={(val) => setFormData(prev => ({ ...prev, member_access: val }))}
+                                    ownerMemberId={formData.owner_member_id}
+                                    activeMemberId={activeMemberId ? String(activeMemberId) : null}
+                                    disabled={!canManageScope}
                                 />
                             </Col>
                         )}

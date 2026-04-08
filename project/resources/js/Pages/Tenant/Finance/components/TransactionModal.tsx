@@ -7,12 +7,12 @@ import { useTenantRoute } from "../../../../common/tenantRoute";
 import { submitTransaction } from "../hooks/useSubmitTransaction";
 import { useTransactionModalState } from "../hooks/useTransactionModalState";
 
-import AttachmentPreviewModal from "./pwa/AttachmentPreviewModal";
 import TransactionModalAlerts from "./TransactionModalAlerts";
 import TransactionModalAttachmentSection from "./TransactionModalAttachmentSection";
 import TransactionModalHeader from "./TransactionModalHeader";
 import TransactionModalMainFields from "./TransactionModalMainFields";
 import TransactionModalOptionalDetails from "./TransactionModalOptionalDetails";
+import AttachmentPreviewModal from "./pwa/AttachmentPreviewModal";
 import { TransactionModalProps } from "./transactionModalTypes";
 
 const TransactionModal = ({
@@ -76,7 +76,7 @@ const TransactionModal = ({
         pockets,
         members,
         activeMemberId,
-        walletSubscribed,
+        _walletSubscribed: walletSubscribed,
         initialType,
         initialDraft,
         lockedGroupMeta,

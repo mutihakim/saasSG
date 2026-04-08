@@ -1,7 +1,7 @@
 import { useCallback } from "react";
 
-import { LockedGroupMeta, TransactionDraftMeta, TransactionDraftPayload } from "../components/transactionModalTypes";
 import { TransactionType } from "../components/pwa/types";
+import { LockedGroupMeta, TransactionDraftMeta, TransactionDraftPayload } from "../components/transactionModalTypes";
 import { FinanceTransaction } from "../types";
 
 type Args = {

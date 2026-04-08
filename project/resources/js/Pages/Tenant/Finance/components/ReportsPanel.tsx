@@ -3,7 +3,6 @@ import React, { useCallback, useEffect, useMemo, useState } from "react";
 import ReactApexChart from "react-apexcharts";
 import { Button, Card, Col, Form, Row, Spinner, Table } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
-import Select from "react-select";
 
 import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
@@ -92,39 +91,33 @@ const ReportsPanel = ({ accounts, budgets, categories, members, compact = false 
                         </Col>
                         <Col md={2}>
                             <Form.Label>{t("finance.reports.filters.group_by")}</Form.Label>
-                            <Select
-                                options={[
-                                    { value: "day", label: t("finance.reports.group.day") },
-                                    { value: "week", label: t("finance.reports.group.week") },
-                                    { value: "month", label: t("finance.reports.group.month") },
-                                ]}
-                                value={{
-                                    value: filters.group_by,
-                                    label: t(`finance.reports.group.${filters.group_by}`),
-                                }}
-                                onChange={(option: any) => setFilters((prev) => ({ ...prev, group_by: option.value }))}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select value={filters.group_by} onChange={(e) => setFilters((prev) => ({ ...prev, group_by: e.target.value }))}>
+                                <option value="day">{t("finance.reports.group.day")}</option>
+                                <option value="week">{t("finance.reports.group.week")}</option>
+                                <option value="month">{t("finance.reports.group.month")}</option>
+                            </Form.Select>
                         </Col>
                         <Col md={2}>
                             <Form.Label>{t("finance.reports.filters.account")}</Form.Label>
-                            <Select
-                                options={accounts.map((account) => ({ value: account.id, label: account.name }))}
-                                isClearable
-                                value={accounts.find((account) => account.id === filters.account_id) ? { value: filters.account_id, label: accounts.find((account) => account.id === filters.account_id)?.name } : null}
-                                onChange={(option: any) => setFilters((prev) => ({ ...prev, account_id: option?.value ?? "" }))}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select value={filters.account_id} onChange={(e) => setFilters((prev) => ({ ...prev, account_id: e.target.value }))}>
+                                <option value="">{t("finance.pwa.filters.all")}</option>
+                                {accounts.map((account) => (
+                                    <option key={account.id} value={account.id}>
+                                        {account.name}
+                                    </option>
+                                ))}
+                            </Form.Select>
                         </Col>
                         <Col md={2}>
                             <Form.Label>{t("finance.reports.filters.budget")}</Form.Label>
-                            <Select
-                                options={budgets.map((budget) => ({ value: budget.id, label: budget.name }))}
-                                isClearable
-                                value={budgets.find((budget) => budget.id === filters.budget_id) ? { value: filters.budget_id, label: budgets.find((budget) => budget.id === filters.budget_id)?.name } : null}
-                                onChange={(option: any) => setFilters((prev) => ({ ...prev, budget_id: option?.value ?? "" }))}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select value={filters.budget_id} onChange={(e) => setFilters((prev) => ({ ...prev, budget_id: e.target.value }))}>
+                                <option value="">{t("finance.pwa.filters.all")}</option>
+                                {budgets.map((budget) => (
+                                    <option key={budget.id} value={budget.id}>
+                                        {budget.name}
+                                    </option>
+                                ))}
+                            </Form.Select>
                         </Col>
                         <Col md={2}>
                             <Button className="w-100" onClick={loadReport}>{t("finance.reports.actions.apply")}</Button>
@@ -133,23 +126,25 @@ const ReportsPanel = ({ accounts, budgets, categories, members, compact = false 
                     <Row className="g-3 mt-1">
                         <Col md={4}>
                             <Form.Label>{t("finance.reports.filters.category")}</Form.Label>
-                            <Select
-                                options={categories.map((category) => ({ value: String(category.id), label: category.name }))}
-                                isClearable
-                                value={categories.find((category) => String(category.id) === filters.category_id) ? { value: filters.category_id, label: categories.find((category) => String(category.id) === filters.category_id)?.name } : null}
-                                onChange={(option: any) => setFilters((prev) => ({ ...prev, category_id: option?.value ?? "" }))}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select value={filters.category_id} onChange={(e) => setFilters((prev) => ({ ...prev, category_id: e.target.value }))}>
+                                <option value="">{t("finance.pwa.filters.all")}</option>
+                                {categories.map((category) => (
+                                    <option key={category.id} value={String(category.id)}>
+                                        {category.name}
+                                    </option>
+                                ))}
+                            </Form.Select>
                         </Col>
                         <Col md={4}>
                             <Form.Label>{t("finance.reports.filters.member")}</Form.Label>
-                            <Select
-                                options={members.map((member) => ({ value: String(member.id), label: member.full_name }))}
-                                isClearable
-                                value={members.find((member) => String(member.id) === filters.owner_member_id) ? { value: filters.owner_member_id, label: members.find((member) => String(member.id) === filters.owner_member_id)?.full_name } : null}
-                                onChange={(option: any) => setFilters((prev) => ({ ...prev, owner_member_id: option?.value ?? "" }))}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select value={filters.owner_member_id} onChange={(e) => setFilters((prev) => ({ ...prev, owner_member_id: e.target.value }))}>
+                                <option value="">{t("finance.pwa.filters.all")}</option>
+                                {members.map((member) => (
+                                    <option key={member.id} value={String(member.id)}>
+                                        {member.full_name}
+                                    </option>
+                                ))}
+                            </Form.Select>
                         </Col>
                     </Row>
                 </Card.Body>

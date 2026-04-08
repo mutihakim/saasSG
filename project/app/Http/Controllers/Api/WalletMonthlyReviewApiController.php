@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
-use App\Services\MonthlyReviewService;
+use App\Services\ActivityLogService;
+use App\Services\Finance\MonthlyReviewService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use RuntimeException;
@@ -13,6 +14,7 @@ class WalletMonthlyReviewApiController extends Controller
 {
     public function __construct(
         private readonly MonthlyReviewService $reviews,
+        private readonly ActivityLogService $activityLogs,
     ) {
     }
 
@@ -82,14 +84,34 @@ class WalletMonthlyReviewApiController extends Controller
         ]);
 
         try {
+            $result = $this->reviews->submit(
+                $tenant,
+                $request->attributes->get('currentTenantMember'),
+                $validated,
+            );
+
+            $this->activityLogs->log(
+                $request,
+                $tenant,
+                'finance.month_review.closed',
+                'finance_month_reviews',
+                $result['period_month'],
+                null,
+                $result,
+                [
+                    'budget_method' => $validated['budget_method'],
+                    'sweep_action_count' => count($validated['sweep_actions'] ?? []),
+                    'budget_draft_count' => count($validated['budget_drafts'] ?? []),
+                ],
+                null,
+                null,
+                $request->attributes->get('currentTenantMember')
+            );
+
             return response()->json([
                 'ok' => true,
                 'data' => [
-                    'review' => $this->reviews->submit(
-                        $tenant,
-                        $request->attributes->get('currentTenantMember'),
-                        $validated,
-                    ),
+                    'review' => $result,
                 ],
             ]);
         } catch (RuntimeException $exception) {

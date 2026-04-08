@@ -22,12 +22,11 @@ php artisan migrate --seed
 
 ## Menjalankan Aplikasi
 
-Aplikasi SaaS ini membutuhkan 4 komponen untuk berjalan penuh (Web, WebSocket, Queue, dan WhatsApp Node.js). 
+Aplikasi SaaS ini membutuhkan 4 komponen untuk berjalan penuh (Nginx + PHP-FPM, WebSocket, Queue, dan WhatsApp Node.js). 
 Gunakan *background service* PM2:
 
 ```bash
 pm2 start ecosystem.config.cjs
-pm2 start cabinet-web.config.cjs
 cd ../services/whatsapp && pm2 start pm2.config.js
 ```
 
@@ -44,10 +43,12 @@ npm run test:e2e
 npm run docs:dev
 ```
 
+Preview ini bersifat manual dan hanya bind ke `127.0.0.1`.
+
 Build static HTML:
 
 ```bash
 npm run docs:build
 ```
 
-Output build ada di `docs/.vitepress/dist`.
+Output build ada di `../docs/.vitepress/dist`.

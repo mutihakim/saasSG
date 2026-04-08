@@ -1,13 +1,13 @@
 import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { Alert, Button, Col, Form, InputGroup, Modal, Row } from "react-bootstrap";
-import Select from "react-select";
 
 import MiniCalculator from "../../../../Components/Common/MiniCalculator";
 import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
 import { useTenantRoute } from "../../../../common/tenantRoute";
 import { FinanceBatchDraft } from "../types";
+
 import AttachmentPreviewModal from "./pwa/AttachmentPreviewModal";
 
 type BatchEntryItem = {
@@ -105,7 +105,7 @@ const TransactionBatchModal = ({
         setShowCalculator(false);
         setActiveCalculatorIndex(null);
         setPreviewItem(null);
-    }, [accounts, activeMemberId, draft, members, show]);
+    }, [accounts, activeMemberId, draft, members, pockets, show]);
 
     const visiblePockets = useMemo(() => pockets.filter((pocket) => canUseForOwner(pocket, ownerMemberId)), [ownerMemberId, pockets]);
     const selectedPocket = useMemo(() => visiblePockets.find((pocket) => String(pocket.id) === String(pocketId)) ?? null, [pocketId, visiblePockets]);
@@ -314,24 +314,28 @@ const TransactionBatchModal = ({
                         <Row className="g-3">
                             <Col xs={12}>
                                 <Form.Label>Owner</Form.Label>
-                                <Select
-                                    options={memberOptions}
-                                    value={memberOptions.find((option) => option.value === ownerMemberId)}
-                                    onChange={(option: any) => setOwnerMemberId(option?.value ?? "")}
-                                    classNamePrefix="react-select"
-                                />
+                                <Form.Select value={ownerMemberId} onChange={(event) => setOwnerMemberId(event.target.value)}>
+                                    <option value="">Pilih owner</option>
+                                    {memberOptions.map((option) => (
+                                        <option key={option.value} value={option.value}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </Form.Select>
                             </Col>
                         </Row>
                     )}
                     <Row className="g-3">
                         <Col xs={8}>
                             <Form.Label>Wallet</Form.Label>
-                            <Select
-                                options={pocketOptions}
-                                value={pocketOptions.find((option) => option.value === pocketId)}
-                                onChange={(option: any) => setPocketId(option?.value ?? "")}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select value={pocketId} onChange={(event) => setPocketId(event.target.value)}>
+                                <option value="">Pilih wallet</option>
+                                {pocketOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </Form.Select>
                             {selectedAccount && (
                                 <Form.Text className="text-muted">
                                     Akun: {selectedAccount.name} · {selectedAccount.currency_code}
@@ -380,6 +384,8 @@ const TransactionBatchModal = ({
                                         <Form.Control
                                             type="number"
                                             step="0.01"
+                                            inputMode="decimal"
+                                            pattern="[0-9]*"
                                             value={item.amount}
                                             onChange={(event) => updateItem(index, "amount", event.target.value)}
                                             readOnly={showCalculator && activeCalculatorIndex === index}
@@ -391,14 +397,18 @@ const TransactionBatchModal = ({
                                 </Col>
                                 <Col xs={7}>
                                     <Form.Label>Budget</Form.Label>
-                                    <Select
-                                        options={budgetOptions}
-                                        value={budgetOptions.find((option) => option.value === item.budget_id)}
-                                        onChange={(option: any) => updateItem(index, "budget_id", option?.value ?? "")}
-                                        classNamePrefix="react-select"
-                                        isClearable
-                                        isDisabled={Boolean(selectedPocket?.budget_lock_enabled && selectedPocket?.default_budget_key)}
-                                    />
+                                    <Form.Select
+                                        value={item.budget_id}
+                                        onChange={(event) => updateItem(index, "budget_id", event.target.value)}
+                                        disabled={Boolean(selectedPocket?.budget_lock_enabled && selectedPocket?.default_budget_key)}
+                                    >
+                                        <option value="">Pilih budget</option>
+                                        {budgetOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </Form.Select>
                                     {selectedPocket?.budget_lock_enabled && selectedPocket?.default_budget_key && (
                                         <Form.Text className="text-muted">
                                             Budget dikunci oleh wallet batch ini.
@@ -407,13 +417,14 @@ const TransactionBatchModal = ({
                                 </Col>
                                 <Col xs={5}>
                                     <Form.Label>Kategori</Form.Label>
-                                    <Select
-                                        options={categoryOptions}
-                                        value={categoryOptions.find((option) => option.value === item.category_id)}
-                                        onChange={(option: any) => updateItem(index, "category_id", option?.value ?? "")}
-                                        classNamePrefix="react-select"
-                                        isClearable
-                                    />
+                                    <Form.Select value={item.category_id} onChange={(event) => updateItem(index, "category_id", event.target.value)}>
+                                        <option value="">Pilih kategori</option>
+                                        {categoryOptions.map((option) => (
+                                            <option key={option.value} value={option.value}>
+                                                {option.label}
+                                            </option>
+                                        ))}
+                                    </Form.Select>
                                 </Col>
                                 <Col xs={12}>
                                     <Form.Label>Catatan Item</Form.Label>

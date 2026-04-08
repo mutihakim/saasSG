@@ -7,11 +7,13 @@ use App\Models\FinancePocket;
 use App\Models\Tenant;
 use App\Models\TenantBudget;
 use App\Models\TenantMember;
-use App\Services\FinanceAccessService;
-use App\Services\MonthlyReviewService;
+use App\Services\ActivityLogService;
+use App\Services\Finance\FinanceAccessService;
+use App\Services\Finance\MonthlyReviewService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Str;
 
@@ -21,6 +23,7 @@ class FinanceBudgetApiController extends Controller
         private readonly FinanceAccessService $access,
         private readonly SubscriptionEntitlements $entitlements,
         private readonly MonthlyReviewService $monthlyReview,
+        private readonly ActivityLogService $activityLogs,
     ) {}
 
     public function index(Request $request, Tenant $tenant): JsonResponse
@@ -48,10 +51,14 @@ class FinanceBudgetApiController extends Controller
 
         $limit = $this->entitlements->limit($tenant, 'finance.budgets.active.max') ?? -1;
         if ($limit !== -1) {
-            $activeBudgets = TenantBudget::query()
-                ->forTenant($tenant->id)
-                ->active()
-                ->count();
+            // Atomic quota check with pessimistic lock to prevent race conditions
+            $activeBudgets = DB::transaction(function () use ($tenant) {
+                return TenantBudget::query()
+                    ->forTenant($tenant->id)
+                    ->active()
+                    ->lockForUpdate()
+                    ->count();
+            });
 
             if ($activeBudgets >= $limit) {
                 return response()->json([
@@ -76,8 +83,11 @@ class FinanceBudgetApiController extends Controller
             'pocket_id' => ['nullable', 'string', 'size:26', Rule::exists('finance_pockets', 'id')->where('tenant_id', $tenant->id)],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['nullable', 'boolean'],
-            'member_access_ids' => ['nullable', 'array'],
-            'member_access_ids.*' => [Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id)],
+            'member_access' => ['nullable', 'array'],
+            'member_access.*.id' => ['required', Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id)],
+            'member_access.*.can_view' => ['nullable', 'boolean'],
+            'member_access.*.can_use' => ['nullable', 'boolean'],
+            'member_access.*.can_manage' => ['nullable', 'boolean'],
         ]);
 
         if ($this->monthlyReview->isPlanningBlockedForPeriod($tenant, $data['period_month'])) {
@@ -100,9 +110,7 @@ class FinanceBudgetApiController extends Controller
         }
 
         if (! $this->access->isPrivileged($member)) {
-            $data['scope'] = 'private';
             $data['owner_member_id'] = $member?->id;
-            $data['member_access_ids'] = [];
         }
 
         $budget = TenantBudget::create([
@@ -127,11 +135,26 @@ class FinanceBudgetApiController extends Controller
             'row_version' => 1,
         ]);
 
-        $this->syncAccess($budget, $tenant, $data['member_access_ids'] ?? [], $member?->id);
+        $this->syncAccess($budget, $tenant, $data['member_access'] ?? [], $member?->id);
+
+        $fresh = $budget->load(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'pocket:id,name,real_account_id']);
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'finance.budget.created',
+            'tenant_budgets',
+            $budget->id,
+            null,
+            $this->activityLogs->snapshot($fresh),
+            ['scope' => $budget->scope, 'period_month' => $budget->period_month],
+            null,
+            (int) $budget->row_version,
+            $member
+        );
 
         return response()->json([
             'ok' => true,
-            'data' => ['budget' => $budget->load(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'pocket:id,name,real_account_id'])],
+            'data' => ['budget' => $fresh],
         ], 201);
     }
 
@@ -156,8 +179,11 @@ class FinanceBudgetApiController extends Controller
             'pocket_id' => ['nullable', 'string', 'size:26', Rule::exists('finance_pockets', 'id')->where('tenant_id', $tenant->id)],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['nullable', 'boolean'],
-            'member_access_ids' => ['nullable', 'array'],
-            'member_access_ids.*' => [Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id)],
+            'member_access' => ['nullable', 'array'],
+            'member_access.*.id' => ['required', Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id)],
+            'member_access.*.can_view' => ['nullable', 'boolean'],
+            'member_access.*.can_use' => ['nullable', 'boolean'],
+            'member_access.*.can_manage' => ['nullable', 'boolean'],
             'row_version' => ['required', 'integer', 'min:1'],
         ]);
 
@@ -170,13 +196,25 @@ class FinanceBudgetApiController extends Controller
         }
 
         if (! $this->access->isPrivileged($member)) {
-            if ($budget->scope !== 'private' || (string) $budget->owner_member_id !== (string) $member?->id) {
+            if (! $this->access->canManageBudget($budget, $member)) {
                 abort(403);
             }
 
-            $data['scope'] = 'private';
-            $data['owner_member_id'] = $member?->id;
-            $data['member_access_ids'] = [];
+            if (! $this->access->canManageStructureSharing($member, $budget->owner_member_id)) {
+                $data['scope'] = $budget->scope;
+                $data['owner_member_id'] = $budget->owner_member_id;
+                $data['member_access'] = $budget->memberAccess()
+                    ->get(['tenant_members.id'])
+                    ->map(fn (TenantMember $sharedMember) => [
+                        'id' => $sharedMember->id,
+                        'can_view' => (bool) $sharedMember->pivot?->can_view,
+                        'can_use' => (bool) $sharedMember->pivot?->can_use,
+                        'can_manage' => (bool) $sharedMember->pivot?->can_manage,
+                    ])
+                    ->all();
+            } else {
+                $data['owner_member_id'] = $member?->id;
+            }
         }
 
         if ((int) $budget->row_version !== (int) $data['row_version']) {
@@ -197,6 +235,9 @@ class FinanceBudgetApiController extends Controller
                 return response()->json(['ok' => false, 'message' => 'Wallet budget tidak ditemukan atau tidak bisa diakses.'], 422);
             }
         }
+
+        $before = $this->activityLogs->snapshot($budget->load(['memberAccess:id', 'pocket:id']));
+        $beforeVersion = (int) $budget->row_version;
 
         $budget->update([
             'owner_member_id' => $data['owner_member_id'] ?? null,
@@ -220,11 +261,26 @@ class FinanceBudgetApiController extends Controller
             'row_version' => $budget->row_version + 1,
         ]);
 
-        $this->syncAccess($budget, $tenant, $data['member_access_ids'] ?? [], $member?->id);
+        $this->syncAccess($budget, $tenant, $data['member_access'] ?? [], $member?->id);
+
+        $fresh = $budget->fresh(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'pocket:id,name,real_account_id']);
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'finance.budget.updated',
+            'tenant_budgets',
+            $budget->id,
+            $before,
+            $this->activityLogs->snapshot($fresh),
+            ['scope' => $fresh->scope, 'period_month' => $fresh->period_month],
+            $beforeVersion,
+            (int) $fresh->row_version,
+            $member
+        );
 
         return response()->json([
             'ok' => true,
-            'data' => ['budget' => $budget->fresh(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'pocket:id,name,real_account_id'])],
+            'data' => ['budget' => $fresh],
         ]);
     }
 
@@ -256,15 +312,37 @@ class FinanceBudgetApiController extends Controller
                 'budget_lock_enabled' => false,
             ]);
 
+        $before = $this->activityLogs->snapshot($budget->load(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'pocket:id,name,real_account_id']));
+        $beforeVersion = (int) $budget->row_version;
         $budget->delete();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'finance.budget.deleted',
+            'tenant_budgets',
+            $budget->id,
+            $before,
+            null,
+            ['scope' => $budget->scope, 'period_month' => $budget->period_month],
+            $beforeVersion,
+            null,
+            $member
+        );
 
         return response()->json(['ok' => true]);
     }
 
-    private function syncAccess(TenantBudget $budget, Tenant $tenant, array $memberAccessIds, ?int $actorMemberId): void
+    private function syncAccess(TenantBudget $budget, Tenant $tenant, array $memberAccess, ?int $actorMemberId): void
     {
-        $sync = collect($memberAccessIds)
-            ->mapWithKeys(fn ($memberId) => [(int) $memberId => ['can_view' => true, 'can_use' => true, 'can_manage' => false]])
+        $sync = collect($memberAccess)
+            ->mapWithKeys(fn ($access) => [
+                (int) $access['id'] => [
+                    'can_view' => (bool) ($access['can_view'] ?? false),
+                    'can_use' => (bool) ($access['can_use'] ?? false),
+                    'can_manage' => (bool) ($access['can_manage'] ?? false),
+                ]
+            ])
             ->all();
 
         if ($budget->owner_member_id) {

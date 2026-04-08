@@ -1,4 +1,4 @@
-import { FinanceAccount, FinanceBudget, FinanceCurrency, FinanceMember, FinancePocket, FinanceSavingsGoal } from "../Finance/types";
+import { FinanceAccount, FinanceBudget, FinanceCurrency, FinanceMember, FinancePocket, FinanceSavingsGoal, FinanceTransaction } from "../Finance/types";
 
 export type WalletWish = {
     id: string;
@@ -49,7 +49,7 @@ export type WalletPageProps = {
 
 export type WalletFormState = {
     name: string;
-    type: "personal" | "business" | "shared";
+    type: string;
     purpose_type: "spending" | "saving" | "income";
     scope: "private" | "shared";
     real_account_id: string;
@@ -61,6 +61,7 @@ export type WalletFormState = {
     notes: string;
     background_color: string;
     row_version: number;
+    member_access: import('../Finance/components/MemberAccessSelector').MemberAccessState[];
 };
 
 export type GoalFormState = {
@@ -71,6 +72,32 @@ export type GoalFormState = {
     status: "active" | "completed" | "paused";
     notes: string;
     row_version: number;
+};
+
+export type GoalFundFormState = {
+    source_pocket_id: string;
+    amount: string;
+    transaction_date: string;
+    description: string;
+    notes: string;
+};
+
+export type GoalSpendFormState = {
+    amount: string;
+    transaction_date: string;
+    category_id: string;
+    budget_id: string;
+    payment_method: string;
+    description: string;
+    merchant_name: string;
+    reference_number: string;
+    location: string;
+    notes: string;
+};
+
+export type GoalDetailPayload = {
+    goal: FinanceSavingsGoal | null;
+    activities: FinanceTransaction[];
 };
 
 export type WishFormState = {

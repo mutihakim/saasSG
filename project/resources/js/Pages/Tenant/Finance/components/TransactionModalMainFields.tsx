@@ -1,9 +1,9 @@
 import React from "react";
 import { Alert, Button, Col, Form, InputGroup, Row } from "react-bootstrap";
-import Select from "react-select";
+
+import { FinanceBudget } from "../types";
 
 import { TransactionFormData, TransactionSelectOption } from "./transactionModalTypes";
-import { FinanceBudget } from "../types";
 
 type Props = {
     canManageShared: boolean;
@@ -58,22 +58,32 @@ const TransactionModalMainFields = ({
             {canManageShared && (
                 <Col xs={12}>
                     <Form.Label>{t("finance.modals.transaction.fields.owner_member")}</Form.Label>
-                    <Select
-                        options={memberOptions}
-                        value={memberOptions.find((option) => option.value === formData.owner_member_id) ?? null}
-                        onChange={(option) => setFormData((prev) => ({ ...prev, owner_member_id: option?.value ?? "" }))}
-                        classNamePrefix="react-select"
-                    />
+                    <Form.Select
+                        value={formData.owner_member_id}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, owner_member_id: e.target.value }))}
+                    >
+                        <option value="">{t("finance.shared.select_placeholder", { defaultValue: "Pilih owner" })}</option>
+                        {memberOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </Form.Select>
                 </Col>
             )}
             <Col xs={12}>
                 <Form.Label>{t("wallet.title", { defaultValue: "Wallet" })}</Form.Label>
-                <Select
-                    options={pocketOptions}
-                    value={pocketOptions.find((option) => option.value === formData.pocket_id) ?? null}
-                    onChange={(option) => setFormData((prev) => ({ ...prev, pocket_id: option?.value ?? "" }))}
-                    classNamePrefix="react-select"
-                />
+                <Form.Select
+                    value={formData.pocket_id}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, pocket_id: e.target.value }))}
+                >
+                    <option value="">{t("finance.shared.select_placeholder", { defaultValue: "Pilih wallet" })}</option>
+                    {pocketOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
+                </Form.Select>
                 {(selectedPocket || selectedAccount) && (
                     <div className="mt-2">
                         {selectedPocket && (
@@ -90,18 +100,22 @@ const TransactionModalMainFields = ({
                 )}
             </Col>
             <Col xs={5} className="d-flex flex-column justify-content-end">
-                <Form.Label className="mb-2">{t("finance.modals.transaction.fields.currency")}</Form.Label>
-                <div className="flex-grow-1 d-flex align-items-end">
-                    <div className="w-100">
-                        <Select
-                            options={currencyOptions}
-                            value={currencyOptions.find((option) => option.value === formData.currency_code) ?? null}
-                            onChange={(option) => setFormData((prev) => ({ ...prev, currency_code: option?.value || prev.currency_code }))}
-                            classNamePrefix="react-select"
-                        />
+                    <Form.Label className="mb-2">{t("finance.modals.transaction.fields.currency")}</Form.Label>
+                    <div className="flex-grow-1 d-flex align-items-end">
+                        <div className="w-100">
+                            <Form.Select
+                                value={formData.currency_code}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, currency_code: e.target.value || prev.currency_code }))}
+                            >
+                                {currencyOptions.map((option) => (
+                                    <option key={option.value} value={option.value}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </Form.Select>
+                        </div>
                     </div>
-                </div>
-            </Col>
+                </Col>
             <Col xs={7} className="d-flex flex-column justify-content-end">
                 <div className="d-flex align-items-center justify-content-between mb-2">
                     <Form.Label className="mb-0">{t("finance.modals.transaction.fields.amount")}</Form.Label>
@@ -114,6 +128,8 @@ const TransactionModalMainFields = ({
                         <Form.Control
                             type="number"
                             step="0.01"
+                            inputMode="decimal"
+                            pattern="[0-9]*"
                             value={formData.amount}
                             onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
                             placeholder={t("finance.modals.transaction.placeholders.amount")}
@@ -133,6 +149,8 @@ const TransactionModalMainFields = ({
                         <Form.Control
                             type="number"
                             step="0.000001"
+                            inputMode="decimal"
+                            pattern="[0-9]*"
                             value={formData.exchange_rate}
                             onChange={(e) => setFormData((prev) => ({ ...prev, exchange_rate: e.target.value }))}
                             placeholder={t("finance.modals.transaction.placeholders.exchange_rate")}
@@ -143,25 +161,33 @@ const TransactionModalMainFields = ({
             )}
             <Col xs={12}>
                 <Form.Label>{t("finance.modals.transaction.fields.category")}</Form.Label>
-                <Select
-                    options={categoryOptions}
-                    value={categoryOptions.find((option) => option.value === formData.category_id) ?? null}
-                    onChange={(option) => setFormData((prev) => ({ ...prev, category_id: option?.value || "" }))}
-                    isClearable
-                    classNamePrefix="react-select"
-                />
+                <Form.Select
+                    value={formData.category_id}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, category_id: e.target.value }))}
+                >
+                    <option value="">{t("finance.shared.select_placeholder", { defaultValue: "Pilih kategori" })}</option>
+                    {categoryOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                            {option.label}
+                        </option>
+                    ))}
+                </Form.Select>
             </Col>
             {formData.type === "pengeluaran" && (
                 <Col xs={12}>
                     <Form.Label>{t("finance.modals.transaction.fields.budget")}</Form.Label>
-                    <Select
-                        options={budgetOptions}
-                        value={budgetOptions.find((option) => option.value === formData.budget_id) ?? null}
-                        onChange={(option) => setFormData((prev) => ({ ...prev, budget_id: option?.value || "" }))}
-                        isClearable
-                        isDisabled={budgetLocked}
-                        classNamePrefix="react-select"
-                    />
+                    <Form.Select
+                        value={formData.budget_id}
+                        onChange={(e) => setFormData((prev) => ({ ...prev, budget_id: e.target.value }))}
+                        disabled={budgetLocked}
+                    >
+                        <option value="">{t("finance.shared.select_placeholder", { defaultValue: "Pilih budget" })}</option>
+                        {budgetOptions.map((option) => (
+                            <option key={option.value} value={option.value}>
+                                {option.label}
+                            </option>
+                        ))}
+                    </Form.Select>
                     {budgetLocked && selectedBudget && (
                         <Form.Text className="text-muted">
                             {t("finance.modals.transaction.budget_locked_hint", { defaultValue: "Budget dikunci oleh wallet ini dan tidak bisa diganti." })}

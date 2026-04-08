@@ -11,6 +11,9 @@ const useWalletPageState = (initialAccountId?: string | null) => {
     const [showAccountModal, setShowAccountModal] = useState(false);
     const [showWalletModal, setShowWalletModal] = useState(false);
     const [showGoalModal, setShowGoalModal] = useState(false);
+    const [showGoalDetailSheet, setShowGoalDetailSheet] = useState(false);
+    const [showGoalFundModal, setShowGoalFundModal] = useState(false);
+    const [showGoalSpendModal, setShowGoalSpendModal] = useState(false);
     const [showWishModal, setShowWishModal] = useState(false);
     const [showConvertModal, setShowConvertModal] = useState(false);
     const [showAccountDetailSheet, setShowAccountDetailSheet] = useState(false);
@@ -27,6 +30,8 @@ const useWalletPageState = (initialAccountId?: string | null) => {
     const [selectedWish, setSelectedWish] = useState<WalletWish | null>(null);
     const [savingWallet, setSavingWallet] = useState(false);
     const [savingGoal, setSavingGoal] = useState(false);
+    const [fundingGoal, setFundingGoal] = useState(false);
+    const [spendingGoal, setSpendingGoal] = useState(false);
     const [savingWish, setSavingWish] = useState(false);
     const [convertingWish, setConvertingWish] = useState(false);
     const [convertForm, setConvertForm] = useState<ConvertWishFormState>({
@@ -51,6 +56,12 @@ const useWalletPageState = (initialAccountId?: string | null) => {
         setShowWalletModal,
         showGoalModal,
         setShowGoalModal,
+        showGoalDetailSheet,
+        setShowGoalDetailSheet,
+        showGoalFundModal,
+        setShowGoalFundModal,
+        showGoalSpendModal,
+        setShowGoalSpendModal,
         showWishModal,
         setShowWishModal,
         showConvertModal,
@@ -75,6 +86,10 @@ const useWalletPageState = (initialAccountId?: string | null) => {
         setSavingWallet,
         savingGoal,
         setSavingGoal,
+        fundingGoal,
+        setFundingGoal,
+        spendingGoal,
+        setSpendingGoal,
         savingWish,
         setSavingWish,
         convertingWish,

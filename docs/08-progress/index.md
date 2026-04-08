@@ -1,6 +1,6 @@
 # 08 - Progress Dashboard
 
-Last updated: `2026-04-06`
+Last updated: `2026-04-08`
 
 Progress dashboard ini dipakai untuk memantau execution health lintas modul. Detail teknis tetap ada di `03-features/*`.
 
@@ -15,8 +15,8 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 | Finance | In Progress | 99% | Finance Team | 2026-04-06 | Finance V2 aktif: ULID string, accounts, budgets, shared access, attachment, grouped bulk entry, Wallet/Pocket PWA v1, dan WhatsApp draft loop end-to-end. [Finance Progress](./modules/finance.md) |
 | Wallet | In Progress | 75% | Finance Team | 2026-04-06 | Wallet/Pocket v1 aktif: pocket tenant, wallet PWA `/wallet`, CRUD pocket, dan integrasi transaksi normal berbasis pocket. [Wallet Progress](./modules/wallet.md) |
 | Tenant Settings | Done | 90% | Platform Team | 2026-03-30 | Tenant profile, billing, localization, dan branding upload per tenant sudah aktif; tersisa verifikasi browser/E2E visual. |
-| WhatsApp | Done | 100% | Integration Team | 2026-03-31 | [WhatsApp Progress](./modules/whatsapp.md) |
-| Routing & Websocket | Done | 100% | Platform Team | 2026-03-31 | Subdomain-based routing, CORS Inertia, dynamisasi Reverb WSS. |
+| WhatsApp | Done | 100% | Integration Team | 2026-04-08 | Realtime tetap stabil dengan Reverb internal-only di belakang proxy Nginx `/app`. [WhatsApp Progress](./modules/whatsapp.md) |
+| Routing & Websocket | Done | 100% | Platform Team | 2026-04-08 | Ingress publik dipersempit ke Nginx (`80/443`), Reverb bind lokal `127.0.0.1`, dan docs dipublish sebagai static site Nginx. |
 
 ## Top Global Blocker
 

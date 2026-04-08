@@ -75,7 +75,7 @@ class FinanceStructureAccessTest extends TestCase
         $this->seedFinanceRolePermissions();
     }
 
-    public function test_member_can_create_private_account_but_payload_is_forced_private(): void
+    public function test_member_can_create_shared_account_as_owner(): void
     {
         $response = $this->actingAs($this->member)
             ->withHeader('X-Tenant', $this->tenant->slug)
@@ -85,25 +85,36 @@ class FinanceStructureAccessTest extends TestCase
                 'type' => 'cash',
                 'currency_code' => 'IDR',
                 'owner_member_id' => $this->ownerMembership->id,
-                'member_access_ids' => [$this->ownerMembership->id],
+                'member_access' => [[
+                    'id' => $this->ownerMembership->id,
+                    'can_view' => true,
+                    'can_use' => true,
+                    'can_manage' => false,
+                ]],
                 'opening_balance' => 50000,
-                'notes' => 'Should be private only',
+                'notes' => 'Shared by creator',
             ]);
 
         $response->assertCreated();
-        $response->assertJsonPath('data.account.scope', 'private');
+        $response->assertJsonPath('data.account.scope', 'shared');
         $response->assertJsonPath('data.account.owner_member_id', $this->memberMembership->id);
-        $response->assertJsonPath('data.account.member_access.0.id', $this->memberMembership->id);
-        $response->assertJsonPath('data.account.member_access.0.pivot.can_manage', 1);
+        $memberAccess = collect($response->json('data.account.member_access'));
+        $ownerAccess = $memberAccess->firstWhere('id', $this->ownerMembership->id);
+        $selfAccess = $memberAccess->firstWhere('id', $this->memberMembership->id);
+
+        $this->assertNotNull($selfAccess);
+        $this->assertNotNull($ownerAccess);
+        $this->assertSame(1, $selfAccess['pivot']['can_manage']);
+        $this->assertSame(0, $ownerAccess['pivot']['can_manage']);
     }
 
-    public function test_member_can_update_and_delete_own_private_account_but_cannot_touch_shared_account(): void
+    public function test_member_can_update_and_delete_own_account_but_cannot_touch_other_shared_account(): void
     {
         $private = TenantBankAccount::create([
             'tenant_id' => $this->tenant->id,
             'owner_member_id' => $this->memberMembership->id,
             'name' => 'Private Wallet',
-            'scope' => 'private',
+            'scope' => 'shared',
             'type' => 'cash',
             'currency_code' => 'IDR',
             'opening_balance' => 10000,
@@ -143,13 +154,23 @@ class FinanceStructureAccessTest extends TestCase
                 'owner_member_id' => $this->ownerMembership->id,
                 'notes' => 'Updated note',
                 'is_active' => true,
-                'member_access_ids' => [$this->ownerMembership->id],
+                'member_access' => [[
+                    'id' => $this->ownerMembership->id,
+                    'can_view' => true,
+                    'can_use' => true,
+                    'can_manage' => false,
+                ]],
                 'row_version' => 1,
             ]);
 
         $updatePrivate->assertOk();
-        $updatePrivate->assertJsonPath('data.account.scope', 'private');
-        $updatePrivate->assertJsonPath('data.account.owner_member_id', $this->memberMembership->id);
+        $updatePrivate->assertJsonPath('data.account.scope', 'shared');
+        $updatePrivate->assertJsonPath('data.account.owner_member_id', $this->ownerMembership->id);
+        $this->assertDatabaseHas('tenant_bank_account_member_access', [
+            'tenant_bank_account_id' => $private->id,
+            'member_id' => $this->memberMembership->id,
+            'can_manage' => true,
+        ]);
 
         $updateShared = $this->actingAs($this->member)
             ->withHeader('X-Tenant', $this->tenant->slug)
@@ -161,7 +182,7 @@ class FinanceStructureAccessTest extends TestCase
                 'owner_member_id' => $this->ownerMembership->id,
                 'notes' => '',
                 'is_active' => true,
-                'member_access_ids' => [],
+                'member_access' => [],
                 'row_version' => 1,
             ]);
 
@@ -180,7 +201,7 @@ class FinanceStructureAccessTest extends TestCase
         $deleteShared->assertForbidden();
     }
 
-    public function test_member_can_create_update_and_delete_private_budget_but_cannot_touch_shared_budget(): void
+    public function test_member_can_create_update_and_delete_own_budget_but_cannot_touch_other_shared_budget(): void
     {
         $create = $this->actingAs($this->member)
             ->withHeader('X-Tenant', $this->tenant->slug)
@@ -190,12 +211,17 @@ class FinanceStructureAccessTest extends TestCase
                 'period_month' => '2026-04',
                 'allocated_amount' => 250000,
                 'owner_member_id' => $this->ownerMembership->id,
-                'member_access_ids' => [$this->ownerMembership->id],
-                'notes' => 'Should be private only',
+                'member_access' => [[
+                    'id' => $this->ownerMembership->id,
+                    'can_view' => true,
+                    'can_use' => true,
+                    'can_manage' => false,
+                ]],
+                'notes' => 'Shared by creator',
             ]);
 
         $create->assertCreated();
-        $create->assertJsonPath('data.budget.scope', 'private');
+        $create->assertJsonPath('data.budget.scope', 'shared');
         $create->assertJsonPath('data.budget.owner_member_id', $this->memberMembership->id);
         $this->assertNotEmpty($create->json('data.budget.code'));
 
@@ -227,14 +253,19 @@ class FinanceStructureAccessTest extends TestCase
                 'period_month' => '2026-04',
                 'allocated_amount' => 275000,
                 'owner_member_id' => $this->ownerMembership->id,
-                'member_access_ids' => [$this->ownerMembership->id],
+                'member_access' => [[
+                    'id' => $this->ownerMembership->id,
+                    'can_view' => true,
+                    'can_use' => true,
+                    'can_manage' => false,
+                ]],
                 'notes' => 'Updated',
                 'is_active' => true,
                 'row_version' => 1,
             ]);
 
         $updatePrivate->assertOk();
-        $updatePrivate->assertJsonPath('data.budget.scope', 'private');
+        $updatePrivate->assertJsonPath('data.budget.scope', 'shared');
         $updatePrivate->assertJsonPath('data.budget.owner_member_id', $this->memberMembership->id);
         $this->assertNotEmpty($updatePrivate->json('data.budget.code'));
 
@@ -247,7 +278,7 @@ class FinanceStructureAccessTest extends TestCase
                 'period_month' => '2026-04',
                 'allocated_amount' => 500000,
                 'owner_member_id' => $this->ownerMembership->id,
-                'member_access_ids' => [],
+                'member_access' => [],
                 'notes' => '',
                 'is_active' => true,
                 'row_version' => 1,
@@ -365,6 +396,226 @@ class FinanceStructureAccessTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('data.budget.code', 'HOME-APR');
+    }
+
+    public function test_account_and_budget_mutations_write_activity_logs(): void
+    {
+        $accountResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts", [
+                'name' => 'Audit Account',
+                'scope' => 'private',
+                'type' => 'cash',
+                'currency_code' => 'IDR',
+                'owner_member_id' => $this->ownerMembership->id,
+                'opening_balance' => 100000,
+            ])
+            ->assertCreated();
+
+        $account = $accountResponse->json('data.account');
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $this->tenant->id,
+            'action' => 'finance.account.created',
+            'target_id' => (string) $account['id'],
+        ]);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$account['id']}", [
+                'name' => 'Audit Account Updated',
+                'scope' => 'private',
+                'type' => 'cash',
+                'currency_code' => 'IDR',
+                'owner_member_id' => $this->ownerMembership->id,
+                'opening_balance' => 100000,
+                'is_active' => true,
+                'notes' => '',
+                'member_access' => [],
+                'row_version' => $account['row_version'],
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $this->tenant->id,
+            'action' => 'finance.account.updated',
+            'target_id' => (string) $account['id'],
+        ]);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$account['id']}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $this->tenant->id,
+            'action' => 'finance.account.deleted',
+            'target_id' => (string) $account['id'],
+        ]);
+
+        $budgetResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/budgets", [
+                'name' => 'Audit Budget',
+                'scope' => 'private',
+                'period_month' => '2026-04',
+                'allocated_amount' => 300000,
+                'owner_member_id' => $this->ownerMembership->id,
+            ])
+            ->assertCreated();
+
+        $budget = $budgetResponse->json('data.budget');
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $this->tenant->id,
+            'action' => 'finance.budget.created',
+            'target_id' => (string) $budget['id'],
+        ]);
+
+        $updatedBudget = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/budgets/{$budget['id']}", [
+                'name' => 'Audit Budget Updated',
+                'scope' => 'private',
+                'period_month' => '2026-04',
+                'allocated_amount' => 350000,
+                'owner_member_id' => $this->ownerMembership->id,
+                'member_access' => [],
+                'notes' => '',
+                'is_active' => true,
+                'row_version' => $budget['row_version'],
+            ])
+            ->assertOk()
+            ->json('data.budget');
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $this->tenant->id,
+            'action' => 'finance.budget.updated',
+            'target_id' => (string) $budget['id'],
+        ]);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/finance/budgets/{$updatedBudget['id']}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $this->tenant->id,
+            'action' => 'finance.budget.deleted',
+            'target_id' => (string) $budget['id'],
+        ]);
+    }
+
+    public function test_account_owner_transfer_keeps_shared_scope_and_preserves_previous_owner_manager_but_private_stays_private(): void
+    {
+        $shared = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Shared Transfer',
+            'scope' => 'shared',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 200000,
+            'current_balance' => 200000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+        $shared->memberAccess()->sync([
+            $this->memberMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => false],
+        ]);
+
+        $sharedMainPocket = app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($shared);
+
+        $sharedResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$shared->id}", [
+                'name' => 'Shared Transfer',
+                'scope' => 'shared',
+                'type' => 'cash',
+                'currency_code' => 'IDR',
+                'owner_member_id' => $this->memberMembership->id,
+                'opening_balance' => 200000,
+                'notes' => '',
+                'is_active' => true,
+                'member_access' => [],
+                'row_version' => 1,
+            ]);
+
+        $sharedResponse->assertOk()
+            ->assertJsonPath('data.account.owner_member_id', $this->memberMembership->id)
+            ->assertJsonPath('data.account.scope', 'shared');
+
+        $this->assertDatabaseHas('tenant_bank_account_member_access', [
+            'tenant_bank_account_id' => $shared->id,
+            'member_id' => $this->ownerMembership->id,
+            'can_view' => true,
+            'can_use' => true,
+            'can_manage' => true,
+        ]);
+
+        $this->assertDatabaseHas('tenant_bank_account_member_access', [
+            'tenant_bank_account_id' => $shared->id,
+            'member_id' => $this->memberMembership->id,
+            'can_view' => true,
+            'can_use' => true,
+            'can_manage' => true,
+        ]);
+
+        $sharedMainPocket->refresh();
+        $this->assertSame($this->memberMembership->id, $sharedMainPocket->owner_member_id);
+        $this->assertSame('shared', $sharedMainPocket->scope);
+        $this->assertDatabaseHas('finance_pocket_member_access', [
+            'finance_pocket_id' => $sharedMainPocket->id,
+            'member_id' => $this->ownerMembership->id,
+            'can_manage' => true,
+        ]);
+
+        $private = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Private Transfer',
+            'scope' => 'private',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 120000,
+            'current_balance' => 120000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $privateMainPocket = app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($private);
+
+        $privateResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$private->id}", [
+                'name' => 'Private Transfer',
+                'scope' => 'private',
+                'type' => 'cash',
+                'currency_code' => 'IDR',
+                'owner_member_id' => $this->memberMembership->id,
+                'opening_balance' => 120000,
+                'notes' => '',
+                'is_active' => true,
+                'member_access' => [],
+                'row_version' => 1,
+            ]);
+
+        $privateResponse->assertOk()
+            ->assertJsonPath('data.account.owner_member_id', $this->memberMembership->id)
+            ->assertJsonPath('data.account.scope', 'private');
+
+        $this->assertDatabaseMissing('tenant_bank_account_member_access', [
+            'tenant_bank_account_id' => $private->id,
+            'member_id' => $this->ownerMembership->id,
+        ]);
+
+        $privateMainPocket->refresh();
+        $this->assertSame($this->memberMembership->id, $privateMainPocket->owner_member_id);
+        $this->assertSame('private', $privateMainPocket->scope);
+        $this->assertDatabaseMissing('finance_pocket_member_access', [
+            'finance_pocket_id' => $privateMainPocket->id,
+            'member_id' => $this->ownerMembership->id,
+        ]);
     }
 
     public function test_member_cannot_update_or_delete_shared_transaction_without_manage_scope(): void

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\TenantCategory;
 use App\Models\Tenant;
+use App\Services\ActivityLogService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class MasterCategoryApiController extends Controller
 {
     public function __construct(
         private readonly SubscriptionEntitlements $entitlements,
+        private readonly ActivityLogService $activityLogs,
     ) {}
 
     // GET /master/categories
@@ -104,6 +106,17 @@ class MasterCategoryApiController extends Controller
             'sort_order' => $data['sort_order'] ?? 50,
         ]);
 
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.category.created',
+            'tenant_categories',
+            $category->id,
+            null,
+            $this->activityLogs->snapshot($category),
+            ['module' => $category->module]
+        );
+
         return response()->json(['ok' => true, 'data' => ['category' => $category]], 201);
     }
 
@@ -144,6 +157,9 @@ class MasterCategoryApiController extends Controller
             'row_version' => ['required', 'integer'],
         ]);
 
+        $before = $this->activityLogs->snapshot($category);
+        $beforeVersion = (int) $category->row_version;
+
         $category->update([
             'name'       => $data['name'],
             'sub_type'   => $data['sub_type'] ?? $category->sub_type,
@@ -155,7 +171,21 @@ class MasterCategoryApiController extends Controller
             'is_active'  => $data['is_active'] ?? $category->is_active,
         ]);
 
-        return response()->json(['ok' => true, 'data' => ['category' => $category->fresh()]]);
+        $fresh = $category->fresh();
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.category.updated',
+            'tenant_categories',
+            $category->id,
+            $before,
+            $this->activityLogs->snapshot($fresh),
+            ['module' => $category->module],
+            $beforeVersion,
+            (int) $fresh->row_version
+        );
+
+        return response()->json(['ok' => true, 'data' => ['category' => $fresh]]);
     }
 
     // DELETE /master/categories/{category}
@@ -182,7 +212,22 @@ class MasterCategoryApiController extends Controller
             ], 422);
         }
 
+        $before = $this->activityLogs->snapshot($category);
+        $beforeVersion = (int) $category->row_version;
         $category->delete();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.category.deleted',
+            'tenant_categories',
+            $category->id,
+            $before,
+            null,
+            ['module' => $category->module],
+            $beforeVersion,
+            null
+        );
 
         return response()->json(['ok' => true]);
     }
@@ -193,10 +238,43 @@ class MasterCategoryApiController extends Controller
         $this->authorize('delete', TenantCategory::class);
         $ids = $request->validate(['ids' => 'required|array|min:1'])['ids'];
 
-        $count = TenantCategory::forTenant($tenant->id)
+        $categories = TenantCategory::forTenant($tenant->id)
             ->whereIn('id', $ids)
             ->where('is_default', false)
+            ->get();
+
+        $count = TenantCategory::forTenant($tenant->id)
+            ->whereIn('id', $categories->pluck('id'))
             ->delete();
+
+        foreach ($categories as $category) {
+            $this->activityLogs->log(
+                $request,
+                $tenant,
+                'master.category.deleted',
+                'tenant_categories',
+                $category->id,
+                $this->activityLogs->snapshot($category),
+                null,
+                ['module' => $category->module, 'bulk' => true],
+                (int) $category->row_version,
+                null
+            );
+        }
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.category.bulk_deleted',
+            'tenants',
+            $tenant->id,
+            null,
+            null,
+            [
+                'ids' => $categories->pluck('id')->values()->all(),
+                'deleted_count' => $count,
+            ]
+        );
 
         return response()->json(['ok' => true, 'deleted' => $count]);
     }
@@ -210,10 +288,49 @@ class MasterCategoryApiController extends Controller
             'parent_id' => 'nullable|integer',
         ]);
 
-        $count = TenantCategory::forTenant($tenant->id)
+        $categories = TenantCategory::forTenant($tenant->id)
             ->whereIn('id', $data['ids'])
             ->where('is_default', false)
+            ->get();
+
+        $count = TenantCategory::forTenant($tenant->id)
+            ->whereIn('id', $categories->pluck('id'))
             ->update(['parent_id' => $data['parent_id']]);
+
+        foreach ($categories as $category) {
+            $after = $this->activityLogs->snapshot(array_merge(
+                $category->attributesToArray(),
+                ['parent_id' => $data['parent_id']]
+            ));
+
+            $this->activityLogs->log(
+                $request,
+                $tenant,
+                'master.category.updated',
+                'tenant_categories',
+                $category->id,
+                $this->activityLogs->snapshot($category),
+                $after,
+                ['module' => $category->module, 'bulk' => true],
+                (int) $category->row_version,
+                (int) $category->row_version
+            );
+        }
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.category.bulk_parent_updated',
+            'tenants',
+            $tenant->id,
+            null,
+            null,
+            [
+                'ids' => $categories->pluck('id')->values()->all(),
+                'updated_count' => $count,
+                'parent_id' => $data['parent_id'],
+            ]
+        );
 
         return response()->json(['ok' => true, 'updated' => $count]);
     }

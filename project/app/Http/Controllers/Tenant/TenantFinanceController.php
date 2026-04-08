@@ -6,7 +6,8 @@ use App\Http\Controllers\Controller;
 use App\Models\TenantCategory;
 use App\Models\TenantCurrency;
 use App\Models\TenantMember;
-use App\Services\FinanceAccessService;
+use App\Services\Finance\FinanceAccessService;
+use App\Services\Finance\Wallet\WalletCashflowService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -18,6 +19,7 @@ class TenantFinanceController extends Controller
     public function __construct(
         private readonly FinanceAccessService $access,
         private readonly SubscriptionEntitlements $entitlements,
+        private readonly WalletCashflowService $cashflow,
     ) {}
 
     public function index(Request $request, string $tenant): Response|HttpResponse
@@ -27,6 +29,17 @@ class TenantFinanceController extends Controller
         $member = $request->attributes->get('currentTenantMember');
         $activeAccounts = $tenantModel->bankAccounts()->active()->count();
         $activeBudgets = $tenantModel->budgets()->active()->count();
+        $accounts = $this->access->accessibleAccountsQuery($tenantModel, $member)
+            ->active()
+            ->orderBy('scope')
+            ->orderBy('name')
+            ->get();
+        $pockets = $this->access->accessiblePocketsQuery($tenantModel, $member)
+            ->active()
+            ->orderBy('scope')
+            ->orderByDesc('is_system')
+            ->orderBy('name')
+            ->get();
 
         return Inertia::render('Tenant/Finance/Page', [
             'categories'      => TenantCategory::forTenant($tenantModel->id)
@@ -46,22 +59,13 @@ class TenantFinanceController extends Controller
                 ->where('profile_status', 'active')
                 ->orderBy('full_name')
                 ->get(['id', 'full_name', 'role_code']),
-            'accounts' => $this->access->accessibleAccountsQuery($tenantModel, $member)
-                ->active()
-                ->orderBy('scope')
-                ->orderBy('name')
-                ->get(),
+            'accounts' => $this->cashflow->enrichAccounts($tenantModel, $member, $accounts),
             'budgets' => $this->access->accessibleBudgetsQuery($tenantModel, $member)
                 ->active()
                 ->orderByDesc('period_month')
                 ->orderBy('name')
                 ->get(),
-            'pockets' => $this->access->accessiblePocketsQuery($tenantModel, $member)
-                ->active()
-                ->orderBy('scope')
-                ->orderByDesc('is_system')
-                ->orderBy('name')
-                ->get(),
+            'pockets' => $this->cashflow->enrichPockets($tenantModel, $member, $pockets),
             'transferDestinationPockets' => $tenantModel->pockets()
                 ->with(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'realAccount:id,name,type,currency_code'])
                 ->active()

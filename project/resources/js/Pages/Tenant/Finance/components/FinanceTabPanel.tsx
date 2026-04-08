@@ -1,6 +1,7 @@
 import React, { Suspense } from "react";
 
 import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceDeleteTarget, FinanceLimits, FinanceMember, FinancePermissions, FinanceTransaction } from "../types";
+
 import TransactionsTab from "./TransactionsTab";
 import { MainTab, MoreView } from "./pwa/types";
 
@@ -88,8 +89,8 @@ const FinanceTabPanel = ({
     canManageFinanceStructures,
     budgetCreateDisabled,
     limits,
-    totalAssets,
-    totalLiabilities,
+    totalAssets: _totalAssets,
+    totalLiabilities: _totalLiabilities,
     setSelectedBudget,
     setBudgetModal,
 }: Props) => {

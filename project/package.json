@@ -11,9 +11,9 @@
     "check:clean": "node scripts/cleanliness-check.mjs",
     "test:e2e": "playwright test",
     "prepare": "husky",
-    "docs:dev": "vitepress dev docs",
-    "docs:build": "vitepress build docs",
-    "docs:preview": "vitepress preview docs"
+    "docs:dev": "vitepress dev ../docs --host 127.0.0.1",
+    "docs:build": "vitepress build ../docs",
+    "docs:preview": "vitepress preview ../docs --host 127.0.0.1 --port 8016"
   },
   "lint-staged": {
     "*.{ts,tsx,js,jsx}": [

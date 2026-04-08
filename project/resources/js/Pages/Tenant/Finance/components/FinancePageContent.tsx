@@ -1,12 +1,13 @@
 import React from "react";
 
 import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceDeleteTarget, FinanceFilterDraft, FinanceLimits, FinanceMember, FinancePermissions, FinancePocket, FinanceTransaction } from "../types";
+
 import FinanceSummaryStrip from "./FinanceSummaryStrip";
 import FinanceTabPanel from "./FinanceTabPanel";
 import FinanceBottomNav from "./pwa/FinanceBottomNav";
 import FinanceComposerFab from "./pwa/FinanceComposerFab";
-import { MainTab, MoreView, SURFACE_BG, TransactionType } from "./pwa/types";
 import FinanceTopbar from "./pwa/FinanceTopbar";
+import { MainTab, MoreView, SURFACE_BG, TransactionType } from "./pwa/types";
 
 type Props = {
     activeTab: MainTab;

@@ -1,7 +1,8 @@
 import React from "react";
 
-import TransactionGroupedList from "./pwa/TransactionGroupedList";
 import { FinanceTransaction } from "../types";
+
+import TransactionGroupedList from "./pwa/TransactionGroupedList";
 
 type TransactionGroupTarget = {
     sourceId: string;

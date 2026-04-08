@@ -46,9 +46,17 @@ class MasterDataQuotaTest extends TestCase
 
         foreach ([
             'master.categories.create',
+            'master.categories.update',
+            'master.categories.delete',
             'master.currencies.create',
+            'master.currencies.update',
+            'master.currencies.delete',
             'master.uom.create',
+            'master.uom.update',
+            'master.uom.delete',
             'master.tags.create',
+            'master.tags.update',
+            'master.tags.delete',
         ] as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
@@ -56,10 +64,181 @@ class MasterDataQuotaTest extends TestCase
         app(PermissionRegistrar::class)->setPermissionsTeamId($this->tenant->id);
         $this->owner->givePermissionTo([
             'master.categories.create',
+            'master.categories.update',
+            'master.categories.delete',
             'master.currencies.create',
+            'master.currencies.update',
+            'master.currencies.delete',
             'master.uom.create',
+            'master.uom.update',
+            'master.uom.delete',
             'master.tags.create',
+            'master.tags.update',
+            'master.tags.delete',
         ]);
+    }
+
+    public function test_master_data_mutations_write_activity_logs(): void
+    {
+        $category = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/master/categories", [
+                'name' => 'Transport',
+                'module' => 'finance',
+                'sub_type' => 'pengeluaran',
+            ])
+            ->assertCreated()
+            ->json('data.category');
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $this->tenant->id,
+            'action' => 'master.category.created',
+            'target_type' => 'tenant_categories',
+            'target_id' => (string) $category['id'],
+        ]);
+
+        $categoryModel = TenantCategory::query()->findOrFail($category['id']);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/master/categories/{$category['id']}", [
+                'name' => 'Transport Updated',
+                'sub_type' => 'pengeluaran',
+                'row_version' => $categoryModel->row_version,
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $this->tenant->id,
+            'action' => 'master.category.updated',
+            'target_type' => 'tenant_categories',
+            'target_id' => (string) $category['id'],
+        ]);
+
+        $categoryB = TenantCategory::create([
+            'tenant_id' => $this->tenant->id,
+            'module' => 'finance',
+            'sub_type' => 'pengeluaran',
+            'name' => 'Bills',
+            'is_default' => false,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/master/categories/bulk-parent", [
+                'ids' => [$category['id'], $categoryB->id],
+                'parent_id' => null,
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $this->tenant->id,
+            'action' => 'master.category.bulk_parent_updated',
+            'target_type' => 'tenants',
+            'target_id' => (string) $this->tenant->id,
+        ]);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/master/categories", [
+                'ids' => [$category['id'], $categoryB->id],
+            ])
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $this->tenant->id,
+            'action' => 'master.category.bulk_deleted',
+            'target_type' => 'tenants',
+            'target_id' => (string) $this->tenant->id,
+        ]);
+
+        $currency = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/master/currencies", [
+                'code' => 'USD',
+                'name' => 'US Dollar',
+                'symbol' => '$',
+                'symbol_position' => 'before',
+                'decimal_places' => 2,
+            ])
+            ->assertCreated()
+            ->json('data');
+        $currencyModel = TenantCurrency::query()->findOrFail($currency['id']);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/master/currencies/{$currency['id']}", [
+                'name' => 'US Dollar Updated',
+                'row_version' => $currencyModel->row_version,
+            ])
+            ->assertOk();
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/master/currencies/{$currency['id']}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', ['tenant_id' => $this->tenant->id, 'action' => 'master.currency.created', 'target_id' => (string) $currency['id']]);
+        $this->assertDatabaseHas('activity_logs', ['tenant_id' => $this->tenant->id, 'action' => 'master.currency.updated', 'target_id' => (string) $currency['id']]);
+        $this->assertDatabaseHas('activity_logs', ['tenant_id' => $this->tenant->id, 'action' => 'master.currency.deleted', 'target_id' => (string) $currency['id']]);
+
+        $uom = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/master/uom", [
+                'code' => 'PCS',
+                'name' => 'Pieces',
+                'abbreviation' => 'pcs',
+                'dimension_type' => 'jumlah',
+                'base_factor' => 1,
+            ])
+            ->assertCreated()
+            ->json('data');
+        $uomModel = TenantUom::query()->findOrFail($uom['id']);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/master/uom/{$uom['id']}", [
+                'name' => 'Piece Unit',
+                'row_version' => $uomModel->row_version,
+            ])
+            ->assertOk();
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/master/uom/{$uom['id']}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', ['tenant_id' => $this->tenant->id, 'action' => 'master.uom.created', 'target_id' => (string) $uom['id']]);
+        $this->assertDatabaseHas('activity_logs', ['tenant_id' => $this->tenant->id, 'action' => 'master.uom.updated', 'target_id' => (string) $uom['id']]);
+        $this->assertDatabaseHas('activity_logs', ['tenant_id' => $this->tenant->id, 'action' => 'master.uom.deleted', 'target_id' => (string) $uom['id']]);
+
+        $tag = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/master/tags", [
+                'name' => 'Bulanan',
+            ])
+            ->assertCreated()
+            ->json('data.tag');
+        $tagModel = TenantTag::query()->findOrFail($tag['id']);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/master/tags/{$tag['id']}", [
+                'name' => 'Bulanan Updated',
+                'row_version' => $tagModel->row_version,
+            ])
+            ->assertOk();
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/master/tags/{$tag['id']}")
+            ->assertOk();
+
+        $this->assertDatabaseHas('activity_logs', ['tenant_id' => $this->tenant->id, 'action' => 'master.tag.created', 'target_id' => (string) $tag['id']]);
+        $this->assertDatabaseHas('activity_logs', ['tenant_id' => $this->tenant->id, 'action' => 'master.tag.updated', 'target_id' => (string) $tag['id']]);
+        $this->assertDatabaseHas('activity_logs', ['tenant_id' => $this->tenant->id, 'action' => 'master.tag.deleted', 'target_id' => (string) $tag['id']]);
     }
 
     public function test_category_quota_is_enforced(): void

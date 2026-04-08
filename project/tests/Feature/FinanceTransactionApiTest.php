@@ -12,9 +12,9 @@ use App\Models\User;
 use App\Models\TenantMember;
 use App\Models\ActivityLog;
 use App\Models\TenantBankAccount;
-use App\Services\FinanceAttachmentService;
-use App\Services\FinanceAccessService;
-use App\Services\WalletPocketService;
+use App\Services\Finance\FinanceAccessService;
+use App\Services\Finance\FinanceAttachmentService;
+use App\Services\Finance\Wallet\WalletPocketService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
@@ -362,7 +362,7 @@ class FinanceTransactionApiTest extends TestCase
             'row_version' => 1,
         ]);
 
-        app(\App\Services\FinanceLedgerService::class)->syncAfterCreate($transaction);
+        app(\App\Services\Finance\FinanceLedgerService::class)->syncAfterCreate($transaction);
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)

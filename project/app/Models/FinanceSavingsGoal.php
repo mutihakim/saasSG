@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 class FinanceSavingsGoal extends Model
@@ -49,5 +50,13 @@ class FinanceSavingsGoal extends Model
     public function ownerMember(): BelongsTo
     {
         return $this->belongsTo(TenantMember::class, 'owner_member_id');
+    }
+
+    public function financialTransactions(): HasMany
+    {
+        return $this->hasMany(FinanceTransaction::class, 'source_id', 'id')
+            ->where('source_type', 'wallet_goal')
+            ->orderByDesc('transaction_date')
+            ->orderByDesc('created_at');
     }
 }

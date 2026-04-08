@@ -3,10 +3,11 @@ import { Badge } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import { FinanceTransaction } from "../../types";
-import { formatAmount } from "./types";
-import { getTransactionAccent, getTransactionTitle, isIncomingTransaction, toSoftAccent } from "./transactionListUtils";
+
 import TransactionAttachmentBadge from "./TransactionAttachmentBadge";
 import TransactionMetaStack from "./TransactionMetaStack";
+import { getTransactionAccent, getTransactionTitle, isIncomingTransaction, toSoftAccent } from "./transactionListUtils";
+import { formatAmount } from "./types";
 
 type Props = {
     transaction: FinanceTransaction;

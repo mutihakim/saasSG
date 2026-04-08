@@ -5,7 +5,7 @@ namespace App\Policies;
 use App\Models\FinanceTransaction;
 use App\Models\TenantMember;
 use App\Models\User;
-use App\Services\FinanceAccessService;
+use App\Services\Finance\FinanceAccessService;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class FinanceTransactionPolicy

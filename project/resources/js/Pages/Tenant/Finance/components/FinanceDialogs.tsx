@@ -2,10 +2,11 @@ import React from "react";
 
 import { useFinanceDialogCloseHandlers } from "../hooks/useFinanceDialogCloseHandlers";
 import { FinanceAccount, FinanceBatchDraft, FinanceBudget, FinanceCategory, FinanceCurrency, FinanceDeleteTarget, FinanceFilterDraft, FinanceMember, FinancePaymentMethodOption, FinancePocket, FinanceTransaction } from "../types";
-import { LockedGroupMeta, TransactionDraftMeta, TransactionDraftPayload } from "./transactionModalTypes";
+
 import FinanceFilterDialog from "./FinanceFilterDialog";
 import FinanceStructureDialogs from "./FinanceStructureDialogs";
 import FinanceTransactionDialogs from "./FinanceTransactionDialogs";
+import { LockedGroupMeta, TransactionDraftMeta, TransactionDraftPayload } from "./transactionModalTypes";
 
 type TenantRouteLike = {
     apiTo: (path?: string) => string;
@@ -15,6 +16,7 @@ type FinanceDialogsProps = {
     deleteModal: boolean;
     isDeleting: boolean;
     deleteTargetType: "transaction" | "transaction_group" | "account" | "budget";
+    deleteTarget: FinanceDeleteTarget | null;
     handleDelete: () => void;
     setDeleteModal: React.Dispatch<React.SetStateAction<boolean>>;
     showDetailSheet: boolean;
@@ -80,6 +82,7 @@ const FinanceDialogs = ({
     deleteModal,
     isDeleting,
     deleteTargetType,
+    deleteTarget,
     handleDelete,
     setDeleteModal,
     showDetailSheet,
@@ -201,6 +204,7 @@ const FinanceDialogs = ({
                 deleteModal={deleteModal}
                 isDeleting={isDeleting}
                 deleteTargetType={deleteTargetType}
+                deleteTarget={deleteTarget}
                 handleDelete={handleDelete}
                 setDeleteModal={setDeleteModal}
                 members={members}

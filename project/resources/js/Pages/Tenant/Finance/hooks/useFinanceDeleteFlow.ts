@@ -3,7 +3,6 @@ import { useCallback } from "react";
 
 import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
-
 import { FinanceAccount, FinanceBudget, FinanceDeleteTarget, FinanceTransaction } from "../types";
 
 type DeleteTargetType = "transaction" | "transaction_group" | "account" | "budget";

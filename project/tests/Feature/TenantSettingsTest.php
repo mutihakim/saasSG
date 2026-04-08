@@ -196,6 +196,107 @@ class TenantSettingsTest extends TestCase
         Storage::disk('public')->assertMissing("tenants/{$tenant->id}/branding/favicon.png");
     }
 
+    public function test_settings_mutations_write_activity_logs(): void
+    {
+        Storage::fake('public');
+        [$owner, $tenant] = $this->provisionTenant();
+        $memberId = TenantMember::query()->where('tenant_id', $tenant->id)->where('user_id', $owner->id)->value('id');
+
+        $this->actingAs($owner)
+            ->patch(route('tenant.settings.profile', $tenant->slug), [
+                'display_name' => 'Cabinet Audit',
+                'legal_name' => 'PT Cabinet Audit',
+                'registration_number' => 'REG-456',
+                'tax_id' => 'TAX-456',
+                'industry' => 'SaaS',
+                'website_url' => 'https://audit.test',
+                'support_email' => 'support@audit.test',
+                'billing_email' => 'billing@audit.test',
+                'phone' => '+62-811-1111-1111',
+                'address_line_1' => 'Jl. Audit',
+                'address_line_2' => 'Suite 1',
+                'city' => 'Jakarta',
+                'state_region' => 'DKI Jakarta',
+                'postal_code' => '10110',
+                'country_code' => 'ID',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $tenant->id,
+            'actor_member_id' => $memberId,
+            'action' => 'tenant.settings.profile.updated',
+            'target_type' => 'tenants',
+            'target_id' => (string) $tenant->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('tenant.settings.branding', $tenant->slug), [
+                'logo_light' => UploadedFile::fake()->image('tenant-light.png', 320, 100),
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $tenant->id,
+            'actor_member_id' => $memberId,
+            'action' => 'tenant.settings.branding.updated',
+            'target_type' => 'tenants',
+            'target_id' => (string) $tenant->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->delete(route('tenant.settings.branding.remove', ['tenant' => $tenant->slug, 'slot' => 'logo_light']))
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $tenant->id,
+            'actor_member_id' => $memberId,
+            'action' => 'tenant.settings.branding.reset',
+            'target_type' => 'tenants',
+            'target_id' => (string) $tenant->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('tenant.settings.localization', $tenant->slug), [
+                'locale' => 'en',
+                'timezone' => 'Asia/Singapore',
+                'currency_code' => 'USD',
+                'country_code' => 'SG',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $tenant->id,
+            'actor_member_id' => $memberId,
+            'action' => 'tenant.settings.localization.updated',
+            'target_type' => 'tenants',
+            'target_id' => (string) $tenant->id,
+        ]);
+
+        $this->actingAs($owner)
+            ->patch(route('tenant.settings.billing', $tenant->slug), [
+                'billing_contact_name' => 'Audit Finance',
+                'billing_email' => 'finance@audit.test',
+                'legal_name' => 'PT Cabinet Audit',
+                'tax_id' => 'TAX-456',
+                'address_line_1' => 'Jl. Audit',
+                'address_line_2' => 'Suite 1',
+                'city' => 'Jakarta',
+                'state_region' => 'DKI Jakarta',
+                'postal_code' => '10110',
+                'country_code' => 'ID',
+            ])
+            ->assertRedirect();
+
+        $this->assertDatabaseHas('activity_logs', [
+            'tenant_id' => $tenant->id,
+            'actor_member_id' => $memberId,
+            'action' => 'tenant.settings.billing.updated',
+            'target_type' => 'tenants',
+            'target_id' => (string) $tenant->id,
+        ]);
+    }
+
     private function provisionTenant(): array
     {
         $owner = User::factory()->create();

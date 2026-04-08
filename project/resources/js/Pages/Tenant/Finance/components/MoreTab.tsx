@@ -2,10 +2,11 @@ import React from "react";
 import { Button, Card } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
+import { notify } from "../../../../common/notify";
+import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceLimits, FinanceMember } from "../types";
+
 import ReportsPanel from "./ReportsPanel";
 import { CARD_RADIUS, formatAmount } from "./pwa/types";
-import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceLimits, FinanceMember } from "../types";
-import { notify } from "../../../../common/notify";
 
 type MoreTabProps = {
     moreView: "menu" | "budgets" | "reports";
@@ -108,7 +109,7 @@ const MoreTab = ({
                                 <div className="fw-semibold text-dark">{budget.name}</div>
                                 <div className="small text-muted mt-1">{budget.period_month} · {budget.scope === "shared" ? t("finance.shared.shared") : t("finance.shared.private")}</div>
                             </div>
-                            {(permissions.manageShared || (budget.scope === "private" && String(budget.owner_member_id || "") === String(activeMemberId || ""))) && (
+                            {(permissions.manageShared || String(budget.owner_member_id || "") === String(activeMemberId || "")) && (
                                 <button
                                     type="button"
                                     data-testid={`finance-budget-edit-${budget.id}`}

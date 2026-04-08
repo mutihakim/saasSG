@@ -1,6 +1,7 @@
 import React from "react";
 
 import { FinanceCategory, FinanceFilterDraft, FinanceMember, FinancePermissions } from "../types";
+
 import FinanceFilterPanel from "./pwa/FinanceFilterPanel";
 
 type Props = {

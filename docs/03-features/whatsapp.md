@@ -6,6 +6,12 @@ Modul WhatsApp memungkinkan tenant untuk menghubungkan nomor WhatsApp bisnis sec
 
 Aplikasi SaaS ini **meninggalkan proses HTTP polling usang** dan beralih ke rute WebSocket berkecepatan tinggi melalui Laravel Reverb.
 
+### Kontrak Ingress Produksi
+* Nginx adalah satu-satunya entrypoint publik untuk `appsah.my.id` dan `*.appsah.my.id`.
+* Reverb wajib bind internal-only di `127.0.0.1:{REVERB_SERVER_PORT}` dan diproxy oleh Nginx melalui `location /app`.
+* Frontend Echo tetap mengarah ke hostname aktif pada port `443`, sehingga handshake browser harus terlihat sebagai `wss://{host}/app/...`, bukan koneksi langsung ke `:8095`.
+* Endpoint auth broadcast tetap `POST /broadcasting/auth`; selama route ini dan proxy `/app` tetap aktif, sinkronisasi WhatsApp realtime tidak perlu perubahan frontend tambahan.
+
 ### 1. Sesi & Penautan QR Code
 * Endpoint React `Settings.tsx` mendengarkan saluran aman `private-tenant.{id}.whatsapp` menggunakan Echo. 
 * Begitu Node.js mengonversi QR *auth* baru, `InternalWhatsappCallbackController` secara asinkron mem-_broadcast_ ping `whatsapp.session.state.updated`. 
@@ -64,10 +70,13 @@ Semua saluran dilindungi berlapis oleh `routes/channels.php` yang secara paksa m
 
 Mengingat skala modul, beberapa ekosistem wajib dinyalakan seiring berjalannya aplikasi SaaS:
 1. `pm2 start ecosystem.config.cjs`
-2. `pm2 start cabinet-web.config.cjs`
-3. `cd ../services/whatsapp && pm2 start pm2.config.js`
-4. `pm2 save`
-5. `pm2 startup`
+2. `cd ../services/whatsapp && pm2 start pm2.config.js`
+3. `pm2 save`
+4. `pm2 startup`
+
+Catatan deployment:
+* App utama tetap diserve oleh Nginx + PHP-FPM, bukan PM2 web server terpisah.
+* Docs site dipublish sebagai static build `../docs/.vitepress/dist` yang diserve langsung oleh Nginx; `vitepress preview` hanya dipakai manual saat diperlukan.
 
 ## Batasan Infrastruktur (Architectural Constraint)
 Secara teknis, _service Node.js_ ini menggunakan strategi `LocalAuth` bawaan dari _whatsapp-web.js_ yang menyimpan berkas data kredensial (_auth artifacts_) dalam satu folder fisik di server host (`WA_AUTH_DIR`).

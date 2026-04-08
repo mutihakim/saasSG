@@ -126,9 +126,39 @@ export const useFinanceData = ({
         setPockets(response.data.data?.pockets || []);
     }, [seededPockets, tenantRoute, walletSubscribed]);
 
+    // Entity-scoped refresh function - only fetches affected data
+    const refreshFinanceEntity = useCallback(async (entityType: 'transaction' | 'account' | 'budget' | 'pocket' | 'all') => {
+        const promises: Promise<unknown>[] = [];
+        
+        // Summary is always needed for most mutations
+        promises.push(fetchSummary());
+        
+        switch (entityType) {
+            case 'transaction':
+                // Transaction mutations affect summary only
+                break;
+            case 'account':
+                promises.push(fetchAccounts());
+                break;
+            case 'budget':
+                promises.push(fetchBudgets());
+                break;
+            case 'pocket':
+                promises.push(fetchPockets());
+                break;
+            case 'all':
+                // Legacy behavior for complex mutations
+                promises.push(fetchAccounts(), fetchBudgets(), fetchPockets());
+                break;
+        }
+        
+        await Promise.all(promises);
+    }, [fetchSummary, fetchAccounts, fetchBudgets, fetchPockets]);
+
+    // Legacy refresh function for backward compatibility
     const refreshFinanceSideData = useCallback(async () => {
-        await Promise.all([fetchSummary(), fetchAccounts(), fetchBudgets(), fetchPockets()]);
-    }, [fetchAccounts, fetchBudgets, fetchPockets, fetchSummary]);
+        await refreshFinanceEntity('all');
+    }, [refreshFinanceEntity]);
 
     const loadFinance = useCallback(async (options?: LoadFinanceOptions) => {
         const preserveTransactions = options?.preserveTransactions ?? false;
@@ -203,6 +233,7 @@ export const useFinanceData = ({
         fetchAccounts,
         fetchBudgets,
         refreshFinanceSideData,
+        refreshFinanceEntity,
         loadFinance,
         loadMoreTransactions,
     };

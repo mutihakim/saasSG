@@ -90,7 +90,7 @@ class SubscriptionEntitlements
     public function assertUnderLimit(Tenant $tenant, string $limitKey, int $currentCount): void
     {
         $limit = $this->limit($tenant, $limitKey);
-        if ($limit === null) {
+        if ($limit === null || $limit === -1) {
             return;
         }
 
@@ -117,4 +117,3 @@ class SubscriptionEntitlements
         return (array) ($plans[$plan]['limits'] ?? []);
     }
 }
-

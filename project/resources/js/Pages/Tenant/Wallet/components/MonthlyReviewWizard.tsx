@@ -12,6 +12,7 @@ import {
     MonthlyReviewStatus,
     MonthlyReviewSweepDraft,
 } from "../types";
+
 import { formatCurrency, monthLabel } from "./pwa/types";
 
 type Props = {
@@ -69,6 +70,7 @@ const MonthlyReviewWizard = ({ show, onHide, monthlyReview, syncAll }: Props) =>
         }
 
         void loadPreview(selectedMonth, budgetMethod);
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [show, selectedMonth, budgetMethod]);
 
     const loadPreview = async (periodMonth: string, method: "copy_last_month" | "average_3_months" | "zero_based") => {

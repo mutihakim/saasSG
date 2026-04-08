@@ -1,6 +1,5 @@
 import React from "react";
 import { Accordion, Col, Form, Row } from "react-bootstrap";
-import Select from "react-select";
 
 import TagsInput from "../../../../Components/Finance/TagsInput";
 
@@ -30,13 +29,17 @@ const TransactionModalOptionalDetails = ({
                 <Row className="g-3">
                     <Col xs={12}>
                         <Form.Label>{t("finance.modals.transaction.fields.payment_method_optional")}</Form.Label>
-                        <Select
-                            options={paymentMethodOptions}
-                            value={paymentMethodOptions.find((option) => option.value === formData.payment_method) ?? null}
-                            onChange={(option) => setFormData((prev) => ({ ...prev, payment_method: option?.value || "" }))}
-                            isClearable
-                            classNamePrefix="react-select"
-                        />
+                        <Form.Select
+                            value={formData.payment_method}
+                            onChange={(e) => setFormData((prev) => ({ ...prev, payment_method: e.target.value }))}
+                        >
+                            <option value="">Pilih metode</option>
+                            {paymentMethodOptions.map((option) => (
+                                <option key={option.value} value={option.value}>
+                                    {option.label}
+                                </option>
+                            ))}
+                        </Form.Select>
                     </Col>
                     <Col xs={12}>
                         <Form.Label>{t("finance.modals.transaction.fields.merchant_name")}</Form.Label>

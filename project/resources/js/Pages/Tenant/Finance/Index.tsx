@@ -190,6 +190,7 @@ const FinanceIndex = ({
                     deleteModal={page.deleteModal}
                     isDeleting={page.isDeleting}
                     deleteTargetType={page.deleteTargetType}
+                    deleteTarget={page.deleteTarget}
                     handleDelete={handleDelete}
                     setDeleteModal={page.setDeleteModal}
                     showDetailSheet={page.showDetailSheet}

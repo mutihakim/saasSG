@@ -1,6 +1,7 @@
 import React from "react";
 
 import { FinanceTransaction } from "../../types";
+
 import { getPrimaryAttachment } from "./transactionListUtils";
 
 type Props = {

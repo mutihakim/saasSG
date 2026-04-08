@@ -117,8 +117,12 @@ Route::prefix('v1')
                     Route::patch('/pockets/{pocket}', [WalletPocketApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
                     Route::delete('/pockets/{pocket}', [WalletPocketApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,delete', 'throttle:tenant.mutation']);
                     Route::get('/goals', [WalletSavingsGoalApiController::class, 'index'])->middleware('tenant.feature:wallet,view');
+                    Route::get('/goals/{goal}', [WalletSavingsGoalApiController::class, 'show'])->middleware('tenant.feature:wallet,view');
+                    Route::get('/goals/{goal}/activities', [WalletSavingsGoalApiController::class, 'activities'])->middleware('tenant.feature:wallet,view');
                     Route::post('/goals', [WalletSavingsGoalApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,create', 'throttle:tenant.mutation']);
                     Route::patch('/goals/{goal}', [WalletSavingsGoalApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
+                    Route::post('/goals/{goal}/fund', [WalletSavingsGoalApiController::class, 'fund'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,create', 'throttle:tenant.mutation']);
+                    Route::post('/goals/{goal}/spend', [WalletSavingsGoalApiController::class, 'spend'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,create', 'throttle:tenant.mutation']);
                     Route::delete('/goals/{goal}', [WalletSavingsGoalApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,delete', 'throttle:tenant.mutation']);
                     Route::get('/wishes', [WalletWishApiController::class, 'index'])->middleware('tenant.feature:wallet,view');
                     Route::post('/wishes', [WalletWishApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,create', 'throttle:tenant.mutation']);

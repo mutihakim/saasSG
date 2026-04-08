@@ -3,9 +3,8 @@ import { useCallback, useEffect } from "react";
 
 import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
-
-import { FinanceBatchDraft, FinanceTransaction } from "../types";
 import { TransactionDraftMeta, TransactionDraftPayload } from "../components/transactionModalTypes";
+import { FinanceBatchDraft, FinanceTransaction } from "../types";
 
 type TenantRouteLike = {
     apiTo: (path?: string) => string;

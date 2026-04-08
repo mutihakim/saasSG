@@ -6,12 +6,14 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant;
 use App\Models\TenantBankAccount;
 use App\Models\TenantMember;
-use App\Services\FinanceAccessService;
-use App\Services\WalletCashflowService;
-use App\Services\WalletPocketService;
+use App\Services\ActivityLogService;
+use App\Services\Finance\FinanceAccessService;
+use App\Services\Finance\Wallet\WalletCashflowService;
+use App\Services\Finance\Wallet\WalletPocketService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\Rule;
 
 class FinanceAccountApiController extends Controller
@@ -21,6 +23,7 @@ class FinanceAccountApiController extends Controller
         private readonly SubscriptionEntitlements $entitlements,
         private readonly WalletPocketService $pockets,
         private readonly WalletCashflowService $cashflow,
+        private readonly ActivityLogService $activityLogs,
     ) {}
 
     public function index(Request $request, Tenant $tenant): JsonResponse
@@ -52,10 +55,14 @@ class FinanceAccountApiController extends Controller
 
         $limit = $this->entitlements->limit($tenant, 'finance.accounts.max') ?? -1;
         if ($limit !== -1) {
-            $activeAccounts = TenantBankAccount::query()
-                ->forTenant($tenant->id)
-                ->active()
-                ->count();
+            // Atomic quota check with pessimistic lock to prevent race conditions
+            $activeAccounts = DB::transaction(function () use ($tenant) {
+                return TenantBankAccount::query()
+                    ->forTenant($tenant->id)
+                    ->active()
+                    ->lockForUpdate()
+                    ->count();
+            });
 
             if ($activeAccounts >= $limit) {
                 return response()->json([
@@ -83,14 +90,15 @@ class FinanceAccountApiController extends Controller
             'opening_balance' => ['nullable', 'numeric', 'min:-999999999.99', 'max:999999999.99'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['nullable', 'boolean'],
-            'member_access_ids' => ['nullable', 'array'],
-            'member_access_ids.*' => [Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id)],
+            'member_access' => ['nullable', 'array'],
+            'member_access.*.id' => ['required', Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id)],
+            'member_access.*.can_view' => ['nullable', 'boolean'],
+            'member_access.*.can_use' => ['nullable', 'boolean'],
+            'member_access.*.can_manage' => ['nullable', 'boolean'],
         ]);
 
         if (! $this->access->isPrivileged($member)) {
-            $data['scope'] = 'private';
             $data['owner_member_id'] = $member?->id;
-            $data['member_access_ids'] = [];
         }
 
         $openingBalance = (float) ($data['opening_balance'] ?? 0);
@@ -115,12 +123,28 @@ class FinanceAccountApiController extends Controller
             'row_version' => 1,
         ]);
 
-        $this->syncAccess($account, $tenant, $data['member_access_ids'] ?? [], $member?->id);
+        $this->syncAccess($account, $tenant, $data['member_access'] ?? []);
         $this->pockets->ensureMainPocket($account);
+        $this->pockets->syncMainPocketAccessFromAccount($account);
+
+        $fresh = $account->load(['ownerMember:id,full_name', 'memberAccess:id,full_name']);
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'finance.account.created',
+            'tenant_bank_accounts',
+            $account->id,
+            null,
+            $this->activityLogs->snapshot($fresh),
+            ['scope' => $account->scope],
+            null,
+            (int) $account->row_version,
+            $member
+        );
 
         return response()->json([
             'ok' => true,
-            'data' => ['account' => $account->load(['ownerMember:id,full_name', 'memberAccess:id,full_name'])],
+            'data' => ['account' => $fresh],
         ], 201);
     }
 
@@ -151,19 +175,32 @@ class FinanceAccountApiController extends Controller
             'opening_balance' => ['nullable', 'numeric', 'min:-999999999.99', 'max:999999999.99'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['nullable', 'boolean'],
-            'member_access_ids' => ['nullable', 'array'],
-            'member_access_ids.*' => [Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id)],
+            'member_access' => ['nullable', 'array'],
+            'member_access.*.id' => ['required', Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id)],
+            'member_access.*.can_view' => ['nullable', 'boolean'],
+            'member_access.*.can_use' => ['nullable', 'boolean'],
+            'member_access.*.can_manage' => ['nullable', 'boolean'],
             'row_version' => ['required', 'integer', 'min:1'],
         ]);
 
         if (! $this->access->isPrivileged($member)) {
-            if ($account->scope !== 'private' || (string) $account->owner_member_id !== (string) $member?->id) {
+            if (! $this->access->canManageAccount($account, $member)) {
                 abort(403);
             }
 
-            $data['scope'] = 'private';
-            $data['owner_member_id'] = $member?->id;
-            $data['member_access_ids'] = [];
+            if (! $this->access->canManageStructureSharing($member, $account->owner_member_id)) {
+                $data['scope'] = $account->scope;
+                $data['owner_member_id'] = $account->owner_member_id;
+                $data['member_access'] = $account->memberAccess()
+                    ->get(['tenant_members.id'])
+                    ->map(fn (TenantMember $sharedMember) => [
+                        'id' => $sharedMember->id,
+                        'can_view' => (bool) $sharedMember->pivot?->can_view,
+                        'can_use' => (bool) $sharedMember->pivot?->can_use,
+                        'can_manage' => (bool) $sharedMember->pivot?->can_manage,
+                    ])
+                    ->all();
+            }
         }
 
         if ((int) $account->row_version !== (int) $data['row_version']) {
@@ -204,6 +241,15 @@ class FinanceAccountApiController extends Controller
             ], 422);
         }
 
+        $before = $this->activityLogs->snapshot($account->load(['memberAccess:id']));
+        $beforeVersion = (int) $account->row_version;
+
+        $previousOwnerMemberId = $account->owner_member_id ? (int) $account->owner_member_id : null;
+        $nextOwnerMemberId = array_key_exists('owner_member_id', $data) && $data['owner_member_id'] !== null
+            ? (int) $data['owner_member_id']
+            : null;
+        $ownerChanged = (string) ($previousOwnerMemberId ?? '') !== (string) ($nextOwnerMemberId ?? '');
+
         $account->update([
             'owner_member_id' => $data['owner_member_id'] ?? null,
             'name' => $data['name'],
@@ -216,13 +262,39 @@ class FinanceAccountApiController extends Controller
             'row_version' => $account->row_version + 1,
         ]);
 
-        $this->syncAccess($account, $tenant, $data['member_access_ids'] ?? [], $member?->id);
+        $this->syncAccess(
+            $account,
+            $tenant,
+            $data['member_access'] ?? [],
+            preserveManagerMemberId: $ownerChanged && $account->scope === 'shared' ? $previousOwnerMemberId : null,
+        );
         $this->pockets->ensureMainPocket($account);
         $this->pockets->applyOpeningBalanceDelta($account, round($nextOpeningBalance - $previousOpeningBalance, 2));
+        $this->pockets->syncInheritedPocketsFromAccount($account->fresh(['memberAccess:id']));
+
+        $fresh = $account->fresh(['ownerMember:id,full_name', 'memberAccess:id,full_name']);
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'finance.account.updated',
+            'tenant_bank_accounts',
+            $account->id,
+            $before,
+            $this->activityLogs->snapshot($fresh),
+            [
+                'scope' => $fresh->scope,
+                'owner_changed' => $ownerChanged,
+                'previous_owner_member_id' => $previousOwnerMemberId,
+                'next_owner_member_id' => $nextOwnerMemberId,
+            ],
+            $beforeVersion,
+            (int) $fresh->row_version,
+            $member
+        );
 
         return response()->json([
             'ok' => true,
-            'data' => ['account' => $account->fresh(['ownerMember:id,full_name', 'memberAccess:id,full_name'])],
+            'data' => ['account' => $fresh],
         ]);
     }
 
@@ -244,23 +316,54 @@ class FinanceAccountApiController extends Controller
             ], 422);
         }
 
+        $before = $this->activityLogs->snapshot($account->load(['ownerMember:id,full_name', 'memberAccess:id,full_name']));
+        $beforeVersion = (int) $account->row_version;
         $account->delete();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'finance.account.deleted',
+            'tenant_bank_accounts',
+            $account->id,
+            $before,
+            null,
+            ['scope' => $account->scope],
+            $beforeVersion,
+            null,
+            $member
+        );
 
         return response()->json(['ok' => true]);
     }
 
-    private function syncAccess(TenantBankAccount $account, Tenant $tenant, array $memberAccessIds, ?int $actorMemberId): void
+    private function syncAccess(
+        TenantBankAccount $account,
+        Tenant $tenant,
+        array $memberAccess,
+        ?int $preserveManagerMemberId = null,
+    ): void
     {
-        $sync = collect($memberAccessIds)
-            ->mapWithKeys(fn ($memberId) => [(int) $memberId => ['can_view' => true, 'can_use' => true, 'can_manage' => false]])
+        $sync = collect($memberAccess)
+            ->mapWithKeys(fn ($access) => [
+                (int) $access['id'] => [
+                    'can_view' => (bool) ($access['can_view'] ?? false),
+                    'can_use' => (bool) ($access['can_use'] ?? false),
+                    'can_manage' => (bool) ($access['can_manage'] ?? false),
+                ]
+            ])
             ->all();
+
+        if ($preserveManagerMemberId) {
+            $sync[(int) $preserveManagerMemberId] = [
+                'can_view' => true,
+                'can_use' => true,
+                'can_manage' => true,
+            ];
+        }
 
         if ($account->owner_member_id) {
             $sync[(int) $account->owner_member_id] = ['can_view' => true, 'can_use' => true, 'can_manage' => true];
-        }
-
-        if ($actorMemberId) {
-            $sync[(int) $actorMemberId] = ['can_view' => true, 'can_use' => true, 'can_manage' => true];
         }
 
         $validIds = TenantMember::query()

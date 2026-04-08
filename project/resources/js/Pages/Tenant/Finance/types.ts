@@ -51,6 +51,8 @@ export type FinanceAccount = {
     currency_code: string;
     opening_balance?: number | string | null;
     current_balance?: number | string | null;
+    available_balance?: number | string | null;
+    goal_reserved_total?: number | string | null;
     allocated_amount?: number | string | null;
     unallocated_amount?: number | string | null;
     wallet_mismatch_amount?: number | string | null;
@@ -83,7 +85,7 @@ export type FinanceBudget = {
     row_version?: number;
 };
 
-export type FinancePocketType = "personal" | "business" | "shared" | "main";
+export type FinancePocketType = string;
 export type FinancePocketPurpose = "spending" | "saving" | "income";
 export type FinanceGoalStatus = "active" | "completed" | "paused";
 
@@ -111,6 +113,9 @@ export type FinancePocket = {
     background_color?: string | null;
     target_amount?: number | string | null;
     current_balance?: number | string | null;
+    available_balance?: number | string | null;
+    goal_reserved_total?: number | string | null;
+    goal_count?: number | null;
     period_inflow?: number | string | null;
     period_outflow?: number | string | null;
     total_inflow?: number | string | null;
@@ -133,6 +138,7 @@ export type FinanceSavingsGoal = {
     target_date?: string | null;
     status: FinanceGoalStatus;
     notes?: string | null;
+    activities_count?: number;
     row_version?: number;
 };
 

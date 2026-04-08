@@ -3,10 +3,11 @@ import { Alert, Card, Spinner } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import { FinanceTransaction } from "../../types";
+
 import BulkTransactionCard from "./BulkTransactionCard";
 import TransactionCard from "./TransactionCard";
-import { CARD_RADIUS, FINANCE_TOPBAR_STICKY_OFFSET, SURFACE_BG, formatAmount, formatDateLabel } from "./types";
 import { buildTransactionEntries, getSignedAmountBase } from "./transactionListUtils";
+import { CARD_RADIUS, FINANCE_TOPBAR_STICKY_OFFSET, SURFACE_BG, formatAmount, formatDateLabel } from "./types";
 
 type TransactionGroupTarget = {
     sourceId: string;

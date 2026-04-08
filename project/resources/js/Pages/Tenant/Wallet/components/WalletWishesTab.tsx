@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import { FinancePocket } from "../../Finance/types";
 import { WalletWish } from "../types";
+
 import { formatCurrency } from "./pwa/types";
 
 type Props = {

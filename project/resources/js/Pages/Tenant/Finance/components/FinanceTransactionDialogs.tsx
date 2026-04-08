@@ -2,11 +2,12 @@ import React from "react";
 
 import { useFinanceWhatsappSubmission } from "../hooks/useFinanceWhatsappSubmission";
 import { FinanceBatchDraft, FinanceDeleteTarget, FinanceTransaction } from "../types";
-import { LockedGroupMeta, TransactionDraftMeta, TransactionDraftPayload } from "./transactionModalTypes";
+
 import TransactionBatchModal from "./TransactionBatchModal";
 import TransactionModal from "./TransactionModal";
 import TransferModal from "./TransferModal";
 import TransactionDetailSheet from "./pwa/TransactionDetailSheet";
+import { LockedGroupMeta, TransactionDraftMeta, TransactionDraftPayload } from "./transactionModalTypes";
 
 type TenantRouteLike = {
     apiTo: (path?: string) => string;

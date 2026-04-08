@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\TenantTag;
 use App\Models\Tenant;
+use App\Services\ActivityLogService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class MasterTagApiController extends Controller
 {
     public function __construct(
         private readonly SubscriptionEntitlements $entitlements,
+        private readonly ActivityLogService $activityLogs,
     ) {}
 
     // GET /master/tags
@@ -89,6 +91,16 @@ class MasterTagApiController extends Controller
             'row_version' => 1,
         ]);
 
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.tag.created',
+            'tenant_tags',
+            $tag->id,
+            null,
+            $this->activityLogs->snapshot($tag)
+        );
+
         return response()->json(['ok' => true, 'data' => ['tag' => $tag]], 201);
     }
 
@@ -119,13 +131,30 @@ class MasterTagApiController extends Controller
             ], 409);
         }
 
+        $before = $this->activityLogs->snapshot($tag);
+        $beforeVersion = (int) $tag->row_version;
+
         $tag->update([
             'name'        => $data['name'],
             'color'       => $data['color'] ?? $tag->color,
             'row_version' => $tag->row_version + 1,
         ]);
 
-        return response()->json(['ok' => true, 'data' => ['tag' => $tag->fresh()]]);
+        $fresh = $tag->fresh();
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.tag.updated',
+            'tenant_tags',
+            $tag->id,
+            $before,
+            $this->activityLogs->snapshot($fresh),
+            [],
+            $beforeVersion,
+            (int) $fresh->row_version
+        );
+
+        return response()->json(['ok' => true, 'data' => ['tag' => $fresh]]);
     }
 
     public function destroy(Request $request, Tenant $tenant, TenantTag $tag): JsonResponse
@@ -142,7 +171,22 @@ class MasterTagApiController extends Controller
             ], 422);
         }
 
+        $before = $this->activityLogs->snapshot($tag);
+        $beforeVersion = (int) $tag->row_version;
         $tag->delete();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.tag.deleted',
+            'tenant_tags',
+            $tag->id,
+            $before,
+            null,
+            [],
+            $beforeVersion,
+            null
+        );
 
         return response()->json(['ok' => true]);
     }

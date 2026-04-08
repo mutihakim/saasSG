@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\TenantCurrency;
 use App\Models\Tenant;
+use App\Services\ActivityLogService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -14,6 +15,7 @@ class MasterCurrencyApiController extends Controller
 {
     public function __construct(
         private readonly SubscriptionEntitlements $entitlements,
+        private readonly ActivityLogService $activityLogs,
     ) {}
 
     // GET /master/currencies
@@ -89,6 +91,16 @@ class MasterCurrencyApiController extends Controller
                 'sort_order' => $validated['sort_order'] ?? 0,
             ]);
 
+            $this->activityLogs->log(
+                $request,
+                $tenant,
+                'master.currency.created',
+                'tenant_currencies',
+                $currency->id,
+                null,
+                $this->activityLogs->snapshot($currency)
+            );
+
             return response()->json([
                 'ok' => true,
                 'data' => $currency,
@@ -133,6 +145,9 @@ class MasterCurrencyApiController extends Controller
         }
 
         try {
+            $before = $this->activityLogs->snapshot($currency);
+            $beforeVersion = (int) $currency->row_version;
+
             $currency->update([
                 'code' => isset($validated['code']) ? strtoupper($validated['code']) : $currency->code,
                 'name' => $validated['name'] ?? $currency->name,
@@ -144,9 +159,23 @@ class MasterCurrencyApiController extends Controller
                 'row_version' => $currency->row_version + 1,
             ]);
 
+            $fresh = $currency->fresh();
+            $this->activityLogs->log(
+                $request,
+                $tenant,
+                'master.currency.updated',
+                'tenant_currencies',
+                $currency->id,
+                $before,
+                $this->activityLogs->snapshot($fresh),
+                [],
+                $beforeVersion,
+                (int) $fresh->row_version
+            );
+
             return response()->json([
                 'ok' => true,
-                'data' => $currency->fresh(),
+                'data' => $fresh,
             ]);
         } catch (\Exception $e) {
             return response()->json([
@@ -171,7 +200,22 @@ class MasterCurrencyApiController extends Controller
             ], 422);
         }
 
+        $before = $this->activityLogs->snapshot($currency);
+        $beforeVersion = (int) $currency->row_version;
         $currency->delete();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'master.currency.deleted',
+            'tenant_currencies',
+            $currency->id,
+            $before,
+            null,
+            [],
+            $beforeVersion,
+            null
+        );
 
         return response()->json([
             'ok' => true,

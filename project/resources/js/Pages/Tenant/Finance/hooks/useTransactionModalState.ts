@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 
-import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceCurrency, FinanceMember, FinancePaymentMethodOption, FinancePocket, FinanceTransaction } from "../types";
 import { LockedGroupMeta, TransactionAttachment, TransactionDraftPayload, TransactionFormData } from "../components/transactionModalTypes";
+import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceCurrency, FinanceMember, FinancePaymentMethodOption, FinancePocket, FinanceTransaction } from "../types";
 
 const normalizeStringId = (value: unknown) => (value === null || value === undefined ? "" : String(value));
 const formatLocalDate = (value: Date) => {
@@ -61,7 +61,7 @@ type Args = {
     pockets: FinancePocket[];
     members: FinanceMember[];
     activeMemberId?: number | null;
-    walletSubscribed?: boolean;
+    _walletSubscribed?: boolean;
     initialType?: "pemasukan" | "pengeluaran";
     initialDraft?: TransactionDraftPayload | null;
     lockedGroupMeta?: LockedGroupMeta;
@@ -79,7 +79,7 @@ export const useTransactionModalState = ({
     pockets,
     members,
     activeMemberId,
-    walletSubscribed = false,
+    _walletSubscribed = false,
     initialType = "pengeluaran",
     initialDraft = null,
     lockedGroupMeta = null,
@@ -217,6 +217,7 @@ export const useTransactionModalState = ({
                     : null;
                 
                 if (walletDefault) {
+                    // eslint-disable-next-line react-hooks/set-state-in-effect
                     setFormData((prev) => ({ ...prev, budget_id: String(walletDefault.id) }));
                 }
             }

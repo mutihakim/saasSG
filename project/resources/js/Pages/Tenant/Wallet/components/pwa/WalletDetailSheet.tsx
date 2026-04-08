@@ -1,6 +1,7 @@
 import React from "react";
-import { Badge, Row, Col } from "react-bootstrap";
+import { Badge } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
+
 import { CARD_RADIUS, formatAmount } from "../../../Finance/components/pwa/types";
 
 type Props = {
@@ -63,6 +64,15 @@ const DetailRow = ({ label, value, muted = false }: { label: string; value: Reac
         <span className={`text-end ${muted ? "text-muted small" : "fw-medium text-dark"}`}>{value || "-"}</span>
     </div>
 );
+
+const formatWalletType = (type?: string | null) => {
+    if (!type) return "-";
+    if (type === "main") return "Main";
+
+    return type
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, (letter) => letter.toUpperCase());
+};
 
 const WalletDetailSheet = ({
     show,
@@ -221,6 +231,18 @@ const WalletDetailSheet = ({
 
                     <SectionCard title="Ringkasan Bulan Berjalan" noPadding>
                         <MetricRowPill 
+                            label="Dana Goal Terkunci" 
+                            value={formatAmount(Number(wallet.goal_reserved_total || 0), wallet.currency_code)} 
+                            icon="ri-flag-2-line" 
+                            tone="warning" 
+                        />
+                        <MetricRowPill 
+                            label="Saldo Tersedia" 
+                            value={formatAmount(Number((wallet.available_balance ?? wallet.current_balance) || 0), wallet.currency_code)} 
+                            icon="ri-safe-2-line" 
+                            tone="success" 
+                        />
+                        <MetricRowPill 
                             label="Total Inflow" 
                             value={formatAmount(Number(wallet.period_inflow), wallet.currency_code)} 
                             icon="ri-arrow-left-down-line" 
@@ -259,7 +281,7 @@ const WalletDetailSheet = ({
 
                     <SectionCard title="Informasi Konfigurasi" noPadding>
                         <div className="pt-2">
-                            <DetailRow label={t("wallet.fields.type")} value={t(`wallet.types.${wallet.type === "main" ? "personal" : wallet.type}`)} />
+                            <DetailRow label={t("wallet.fields.type")} value={formatWalletType(wallet.type)} />
                             <DetailRow label={t("wallet.fields.source_account")} value={wallet.real_account?.name || wallet.realAccount?.name || "-"} />
                             <DetailRow label={t("wallet.fields.owner")} value={wallet.owner_member?.full_name || wallet.ownerMember?.full_name || "-"} />
                             <DetailRow label="Tipe Dompet" value={activePurpose.label} />

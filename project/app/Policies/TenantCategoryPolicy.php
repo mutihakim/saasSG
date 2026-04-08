@@ -20,12 +20,12 @@ class TenantCategoryPolicy
         return $user->hasPermissionTo('master.categories.create');
     }
 
-    public function update(User $user, TenantCategory $category): bool
+    public function update(User $user, ?TenantCategory $category = null): bool
     {
         return $user->hasPermissionTo('master.categories.update');
     }
 
-    public function delete(User $user, TenantCategory $category): bool
+    public function delete(User $user, ?TenantCategory $category = null): bool
     {
         return $user->hasPermissionTo('master.categories.delete');
     }

@@ -48,11 +48,13 @@ GRANT ALL PRIVILEGES ON DATABASE saas_core2 TO saas_user2;
 
 ## 4. Port Services 🚦
 
-Jika instalasi pertama menggunakan port `8015`, `8095` dan `3025`, Anda wajib menggeser seluruh port pada instalasi baru ini agar tidak terjadi *Address already in use*, misalnya:
-- **Port 8016** - App Web Server (PHP Artisan / Octane)
-- **Port 8096** - Reverb (WebSocket server)
+Jika instalasi pertama menggunakan port `8095` dan `3025`, Anda wajib menggeser port internal yang bentrok pada instalasi baru ini agar tidak terjadi *Address already in use*, misalnya:
+- **Port 8096** - Reverb internal-only (diproxy Nginx via `/app`)
 - **Port 3026** - WhatsApp service
-- **Port 8017** - Documentation Site
+
+Untuk hardening produksi:
+- App utama tetap masuk lewat **Nginx + PHP-FPM**, bukan PM2 web server.
+- Docs site dipublish sebagai **static files** hasil `vitepress build`, lalu diserve langsung oleh Nginx.
 
 ---
 
@@ -74,9 +76,13 @@ DB_DATABASE=saas_core2
 DB_USERNAME=saas_user2
 DB_PASSWORD=saas_pass2
 
-# Reverb Connection
+# Reverb Connection (public hostname + internal bind)
 BROADCAST_DRIVER=reverb
-REVERB_PORT=8096
+REVERB_HOST=saas-baru.com
+REVERB_PORT=443
+REVERB_SCHEME=https
+REVERB_SERVER_HOST=127.0.0.1
+REVERB_SERVER_PORT=8096
 
 # Sanctum Domain harus mendaftarkan domain utama dan wildard barunya
 SANCTUM_STATEFUL_DOMAINS="localhost,127.0.0.1,saas-baru.com,*.saas-baru.com"
@@ -97,7 +103,7 @@ Agar layanan WhatsApp internal tidak memutus jalur pengiriman notifikasi instans
 
 ```env
 PORT=3026
-APP_CALLBACK_URL=http://127.0.0.1:8016
+APP_CALLBACK_URL=https://saas-baru.com
 WHATSAPP_INTERNAL_TOKEN=change-me-to-secure-token
 ```
 
@@ -113,30 +119,45 @@ WHATSAPP_INTERNAL_TOKEN=change-me-to-secure-token
 
 ## 8. Web Server Configuration (Nginx) 🌐
 
-Anda harus membuat *Virtual Host* Nginx baru di `/etc/nginx/sites-available/saas-baru.com`. Config Nginx harus secara spesifik me-*redirect* dan mem-*proxy* port `8016` (Web) dan port `8096` (Sockets).
+Anda harus membuat *Virtual Host* Nginx baru di `/etc/nginx/sites-available/saas-baru.com`. Nginx menjadi satu-satunya entrypoint publik untuk domain utama, wildcard tenant, dan docs.
 
 ### Contoh Blok Nginx
 ```nginx
 # Tenant Subdomains - HTTPS (*.saas-baru.com)
 server {
     server_name *.saas-baru.com saas-baru.com;
+    root /var/www/html/apps/saas2/project/public;
+    index index.php index.html;
 
     location / {
-        proxy_pass http://127.0.0.1:8016; # -> PORT BARU
-        proxy_set_header Host $host;
-        # ... header standar proxy ...
+        try_files $uri $uri/ /index.php?$query_string;
     }
 
-    # Proxy WebSocket connection for Reverb
+    location ~ \.php$ {
+        include snippets/fastcgi-php.conf;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        fastcgi_pass unix:/run/php/php8.3-fpm-family.sock;
+    }
+
     location /app {
-        proxy_pass http://127.0.0.1:8096; # -> PORT BARU
+        proxy_pass http://127.0.0.1:8096;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header Host $host;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_cache_bypass $http_upgrade;
     }
-    
-    # ... Inklusi Konfigurasi Sertifikat SSL Certbot Anda ...
+}
+
+server {
+    server_name docs.saas-baru.com;
+    root /var/www/html/apps/saas2/docs/.vitepress/dist;
+    index index.html;
+
+    location / {
+        try_files $uri $uri.html $uri/ =404;
+    }
 }
 ```
 
@@ -150,10 +171,9 @@ Untuk instalasi **Toko (sahstore.my.id)** yang baru saja kita lakukan, berikut a
 | :--- | :--- | :--- |
 | **Domain** | `sahstore.my.id` | Berbeda dari `appsah.my.id` |
 | **DB Name** | `toko_core` | Database PostgreSQL baru |
-| **Port App** | `8016` | Digunakan internal oleh Nginx |
 | **Port Reverb** | `8096` | Port WebSocket Toko |
 | **Port WhatsApp** | `3026` | Port Layanan WhatsApp Toko |
-| **Port Docs** | `8017` | Port Situs Dokumentasi Toko |
+| **Docs Output** | `docs/.vitepress/dist` | Static files untuk Nginx |
 
 ---
 
@@ -177,17 +197,17 @@ npm run docs:build
 Karena PM2 mengabaikan direktori jika mendapati proses dengan *"nama yang sama"*, Anda harus memperjelas penamaan proses (contoh `toko-*`) pada `ecosystem.config.cjs` maupun config lainnya, lalu perbarui *Arguments/Port*-nya:
 
 1. **ecosystem.config.cjs**: Ubah Reverb (`toko-reverb`, `--port=8096`) dan Queue Worker (`toko-queue-worker`).
-2. **toko-web.config.cjs**: Ubah Web Server menjadi `toko-web`: `args: "serve --host=0.0.0.0 --port=8016"`.
-3. **services/whatsapp/pm2.config.js**: Ganti nama `toko-whatsapp`, serta perbarui `PORT=3026` dan `CALLBACK_URL`.
+2. **services/whatsapp/pm2.config.js**: Ganti nama `toko-whatsapp`, serta perbarui `PORT=3026` dan `CALLBACK_URL`.
 
 Jalankan serentak untuk membangkitkan instance Aplikasi Kedua:
 ```bash
 pm2 start ecosystem.config.cjs
-pm2 start toko-web.config.cjs
 cd ../services/whatsapp && pm2 start pm2.config.js
 
 pm2 save
 ```
+
+Setelah `npm run docs:build`, cukup `reload` Nginx agar static docs baru tersaji. Tidak perlu PM2 app tambahan untuk docs.
 
 ---
 
@@ -213,10 +233,11 @@ sudo chmod 664 /path/to/database/database.sqlite
 ```
 
 ### 4. Konfigurasi Reverb (WebSocket)
-Untuk menghindari error "Authentication signature invalid", gunakan konfigurasi **Dual Host**:
-- **Internal (Broadcast)**: `REVERB_HOST=127.0.0.1` dan `REVERB_SCHEME=http`.
-- **External (Vite)**: `VITE_REVERB_HOST=domain.com`, `VITE_REVERB_PORT=443`, `VITE_REVERB_SCHEME=https`.
-Pastikan menjalankan `npm run build` setelah mengubah variabel `VITE_`.
+Untuk hardening ingress, gunakan pemisahan **public hostname** dan **internal bind**:
+- **Public/App config**: `REVERB_HOST=domain.com`, `REVERB_PORT=443`, `REVERB_SCHEME=https`.
+- **Internal server bind**: `REVERB_SERVER_HOST=127.0.0.1`, `REVERB_SERVER_PORT=8096`.
+- Browser harus terkoneksi ke `wss://domain.com/app/...`, bukan ke port publik `:8096`.
+- Setelah mengubah `.env`, jalankan `php artisan config:clear` atau `php artisan config:cache`, lalu restart PM2 Reverb.
 
 ### 5. WhatsApp Service Callback
 Pastikan `WHATSAPP_SERVICE_URL` di `.env` aplikasi utama mengarah ke port yang benar (misal `3026`) dan gunakan IP lokal (`127.0.0.1`) agar lebih cepat dan stabil.

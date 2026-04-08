@@ -23,12 +23,14 @@ Untuk menjalankan situs dokumentasi ini di mesin lokal:
 # Install dependencies (jika belum)
 npm install
 
-# Run development server
+# Run development server / preview internal-only
 npm run docs:dev
 
 # Build for production
 npm run docs:build
 ```
+
+Source docs berada di root repo `../docs`, dan output static production berada di `../docs/.vitepress/dist` untuk diserve langsung oleh Nginx.
 
 ---
 *© 2026 mutihakim*

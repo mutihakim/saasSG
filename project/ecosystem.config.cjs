@@ -4,7 +4,7 @@ module.exports = {
       name: "family2-reverb",
       cwd: __dirname,
       script: "artisan",
-      args: "reverb:start --host=0.0.0.0 --port=8095",
+      args: "reverb:start --host=127.0.0.1 --port=8095",
       interpreter: "php",
       autorestart: true,
       watch: false,

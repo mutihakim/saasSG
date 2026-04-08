@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
-use App\Services\WalletSummaryService;
+use App\Services\Finance\Wallet\WalletSummaryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

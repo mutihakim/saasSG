@@ -4,7 +4,7 @@ namespace App\Jobs;
 
 use App\Models\FinanceTransaction;
 use App\Models\TenantAttachment;
-use App\Services\FinanceAttachmentService;
+use App\Services\Finance\FinanceAttachmentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;

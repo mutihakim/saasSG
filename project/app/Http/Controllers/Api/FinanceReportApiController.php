@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\Tenant;
-use App\Services\FinanceReportService;
+use App\Services\Finance\FinanceReportService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

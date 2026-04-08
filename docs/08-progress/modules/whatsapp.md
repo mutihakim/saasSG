@@ -1,7 +1,7 @@
 # Progress - WhatsApp Integration
 
 Status: `Done`  
-Last updated: `2026-03-31`  
+Last updated: `2026-04-08`  
 Owner: `Integration Team`
 
 ## Tujuan Modul
@@ -23,6 +23,7 @@ Menyediakan kapabilitas integrasi WhatsApp berbasis WebSockets (via Laravel Reve
 - Endpoint pesan chat kini memakai cursor pagination batch 15 (`before_id`, `has_more`, `next_before_id`) dan UI menyediakan tombol **Load more** (EN/ID) dengan posisi scroll stabil.
 - Handling `401` di layar chat diperketat: stop chain request, tampilkan notif sesi expired, dan redirect ke login dengan `intended` URL.
 - Proses `reverb:start` + `queue:work` sudah disiapkan untuk auto-run melalui PM2 profile `ecosystem.config.cjs`.
+- Hardening ingress produksi diselaraskan: Reverb dijalankan internal-only (`127.0.0.1`) dan jalur publik tetap melalui proxy Nginx `/app`, sehingga browser tenant tetap memakai `wss://{host}/app`.
 - Auto-reply command incoming (`/` dan `!`) untuk `ping` dan `help` sudah aktif dari callback Laravel, dengan fallback help untuk command tidak dikenal.
 - UI WhatsApp Settings direfresh: QR/Handshake digabung ke card status sesi, plus card baru `Command Guide` (EN/ID).
 - Guard bisnis lintas tenant aktif: satu `connected_jid` hanya boleh aktif di satu tenant (policy reject newcomer), dengan metadata conflict `jid_conflict` untuk observabilitas UI.
@@ -32,7 +33,7 @@ Menyediakan kapabilitas integrasi WhatsApp berbasis WebSockets (via Laravel Reve
 ## Blocker & Dependency
 
 - Blocker: (Tidak ada)
-- Dependency: PM2 `tenant-whatsapp-service` serta PM2 app `cabinet-reverb` dan `cabinet-queue-worker` wajib jalan di _background production_.
+- Dependency: PM2 `tenant-whatsapp-service` serta PM2 app `family2-reverb` dan `family2-queue-worker` wajib jalan di _background production_; Nginx wajib mempertahankan proxy `/app` dan route `/broadcasting/auth`.
 
 ## Next Actions
 

@@ -7,6 +7,7 @@ use App\Http\Requests\Tenant\TenantBrandingUpdateRequest;
 use App\Http\Requests\Tenant\TenantLocalizationUpdateRequest;
 use App\Http\Requests\Tenant\TenantProfileUpdateRequest;
 use App\Models\Tenant;
+use App\Services\ActivityLogService;
 use App\Support\TenantBranding;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -17,6 +18,11 @@ use Symfony\Component\HttpFoundation\Response as HttpResponse;
 
 class TenantSettingsController extends Controller
 {
+    public function __construct(
+        private readonly ActivityLogService $activityLogs,
+    ) {
+    }
+
     public function profile(Request $request, string $tenant): Response|HttpResponse
     {
         if ($response = $this->ensureViewAccess($request, 'tenant.settings.errors.access_denied')) {
@@ -38,9 +44,24 @@ class TenantSettingsController extends Controller
         }
 
         $tenant = $this->resolveTenant($request);
+        $before = $this->activityLogs->snapshot($tenant);
 
         $tenant->fill($request->validated());
         $tenant->save();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'tenant.settings.profile.updated',
+            'tenants',
+            $tenant->id,
+            $before,
+            $this->activityLogs->snapshot($tenant),
+            ['area' => 'profile'],
+            null,
+            null,
+            $request->attributes->get('currentTenantMember')
+        );
 
         return Redirect::route('tenant.settings.profile', ['tenant' => $tenant->slug])->with('statusKey', 'tenant.settings.status.profile_updated');
     }
@@ -72,6 +93,8 @@ class TenantSettingsController extends Controller
         }
 
         $tenant = $this->resolveTenant($request);
+        $before = $this->activityLogs->snapshot($tenant);
+        $updatedSlots = [];
 
         foreach (TenantBranding::slotKeys() as $slot) {
             if (! $request->hasFile($slot)) {
@@ -81,9 +104,24 @@ class TenantSettingsController extends Controller
             $path = TenantBranding::store($tenant, $slot, $request->file($slot));
             $column = TenantBranding::SLOT_MAP[$slot]['column'];
             $tenant->setAttribute($column, $path);
+            $updatedSlots[] = $slot;
         }
 
         $tenant->save();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'tenant.settings.branding.updated',
+            'tenants',
+            $tenant->id,
+            $before,
+            $this->activityLogs->snapshot($tenant),
+            ['area' => 'branding', 'slots' => $updatedSlots],
+            null,
+            null,
+            $request->attributes->get('currentTenantMember')
+        );
 
         return Redirect::route('tenant.settings.branding', ['tenant' => $tenant->slug])->with('statusKey', 'tenant.settings.status.branding_updated');
     }
@@ -101,8 +139,23 @@ class TenantSettingsController extends Controller
         }
 
         TenantBranding::remove($tenant, $slot);
+        $before = $this->activityLogs->snapshot($tenant);
         $tenant->setAttribute(TenantBranding::SLOT_MAP[$slot]['column'], null);
         $tenant->save();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'tenant.settings.branding.reset',
+            'tenants',
+            $tenant->id,
+            $before,
+            $this->activityLogs->snapshot($tenant),
+            ['area' => 'branding', 'slot' => $slot],
+            null,
+            null,
+            $request->attributes->get('currentTenantMember')
+        );
 
         return Redirect::route('tenant.settings.branding', ['tenant' => $tenant->slug])->with('statusKey', "tenant.settings.status.reset.{$slot}");
     }
@@ -154,9 +207,24 @@ class TenantSettingsController extends Controller
         }
 
         $tenant = $this->resolveTenant($request);
+        $before = $this->activityLogs->snapshot($tenant);
 
         $tenant->fill($request->validated());
         $tenant->save();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'tenant.settings.localization.updated',
+            'tenants',
+            $tenant->id,
+            $before,
+            $this->activityLogs->snapshot($tenant),
+            ['area' => 'localization'],
+            null,
+            null,
+            $request->attributes->get('currentTenantMember')
+        );
 
         return Redirect::route('tenant.settings.localization', ['tenant' => $tenant->slug])->with('statusKey', 'tenant.settings.status.localization_updated');
     }
@@ -182,9 +250,24 @@ class TenantSettingsController extends Controller
         }
 
         $tenant = $this->resolveTenant($request);
+        $before = $this->activityLogs->snapshot($tenant);
 
         $tenant->fill($request->validated());
         $tenant->save();
+
+        $this->activityLogs->log(
+            $request,
+            $tenant,
+            'tenant.settings.billing.updated',
+            'tenants',
+            $tenant->id,
+            $before,
+            $this->activityLogs->snapshot($tenant),
+            ['area' => 'billing'],
+            null,
+            null,
+            $request->attributes->get('currentTenantMember')
+        );
 
         return Redirect::route('tenant.settings.billing', ['tenant' => $tenant->slug])->with('statusKey', 'tenant.settings.status.billing_updated');
     }

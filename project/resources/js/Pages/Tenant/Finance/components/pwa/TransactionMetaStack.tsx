@@ -1,6 +1,7 @@
 import React from "react";
 
 import { FinanceTransaction } from "../../types";
+
 import { getAccountName, getOwnerName } from "./transactionListUtils";
 
 type Props = {

@@ -2,7 +2,6 @@ import axios from "axios";
 import React, { useEffect, useMemo, useState } from "react";
 import { Button, Col, Form, InputGroup, Modal, Row } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
-import Select from "react-select";
 
 import MiniCalculator from "../../../../Components/Common/MiniCalculator";
 import { parseApiError } from "../../../../common/apiError";
@@ -152,37 +151,52 @@ const TransferModal = ({ show, onClose, onSuccess, accounts, pockets, destinatio
                         </Col>
                         <Col xs={12}>
                             <Form.Label>{t("finance.transfers.fields.sender")}</Form.Label>
-                            <Select
-                                options={memberOptions}
-                                value={memberOptions.find((option) => String(option.value) === formData.owner_member_id)}
-                                onChange={(option: any) => setFormData((prev) => ({ ...prev, owner_member_id: String(option.value) }))}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select
+                                value={formData.owner_member_id}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, owner_member_id: e.target.value }))}
+                            >
+                                <option value="">{t("finance.shared.select_placeholder", { defaultValue: "Pilih pengirim" })}</option>
+                                {memberOptions.map((option) => (
+                                    <option key={String(option.value)} value={String(option.value)}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </Form.Select>
                         </Col>
                         {formData.transfer_mode === "member" && (
                             <Col xs={12}>
                                 <Form.Label>{t("finance.transfers.fields.recipient")}</Form.Label>
-                                <Select
-                                    options={memberOptions}
-                                    value={memberOptions.find((option) => String(option.value) === formData.recipient_member_id)}
-                                    onChange={(option: any) => setFormData((prev) => ({ ...prev, recipient_member_id: String(option.value), to_pocket_id: "" }))}
-                                    classNamePrefix="react-select"
-                                />
+                                <Form.Select
+                                    value={formData.recipient_member_id}
+                                    onChange={(e) => setFormData((prev) => ({ ...prev, recipient_member_id: e.target.value, to_pocket_id: "" }))}
+                                >
+                                    <option value="">{t("finance.shared.select_placeholder", { defaultValue: "Pilih penerima" })}</option>
+                                    {memberOptions.map((option) => (
+                                        <option key={String(option.value)} value={String(option.value)}>
+                                            {option.label}
+                                        </option>
+                                    ))}
+                                </Form.Select>
                             </Col>
                         )}
                         <Col xs={12}>
                             <Form.Label>{t("finance.transfers.fields.from_account", { defaultValue: "Wallet Asal" })}</Form.Label>
-                            <Select
-                                options={pocketOptions}
-                                value={pocketOptions.find((option) => option.value === formData.from_pocket_id)}
-                                onChange={(option: any) => setFormData((prev) => ({
+                            <Form.Select
+                                value={formData.from_pocket_id}
+                                onChange={(e) => setFormData((prev) => ({
                                     ...prev,
-                                    from_pocket_id: option.value,
-                                    currency_code: visiblePockets.find((pocket) => pocket.id === option.value)?.currency_code ?? prev.currency_code,
-                                    to_pocket_id: prev.to_pocket_id === option.value ? "" : prev.to_pocket_id,
+                                    from_pocket_id: e.target.value,
+                                    currency_code: visiblePockets.find((pocket) => String(pocket.id) === e.target.value)?.currency_code ?? prev.currency_code,
+                                    to_pocket_id: prev.to_pocket_id === e.target.value ? "" : prev.to_pocket_id,
                                 }))}
-                                classNamePrefix="react-select"
-                            />
+                            >
+                                <option value="">{t("finance.shared.select_placeholder", { defaultValue: "Pilih wallet asal" })}</option>
+                                {pocketOptions.map((option) => (
+                                    <option key={String(option.value)} value={String(option.value)}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </Form.Select>
                             {selectedFromPocket && (
                                 <Form.Text className="text-muted d-block mt-1">
                                     Saldo: {Number(selectedFromPocket.current_balance || 0).toLocaleString("id-ID")}
@@ -196,12 +210,17 @@ const TransferModal = ({ show, onClose, onSuccess, accounts, pockets, destinatio
                         </Col>
                         <Col xs={12}>
                             <Form.Label>{t("finance.transfers.fields.to_account", { defaultValue: "Wallet Tujuan" })}</Form.Label>
-                            <Select
-                                options={toPocketOptions}
-                                value={toPocketOptions.find((option) => option.value === formData.to_pocket_id)}
-                                onChange={(option: any) => setFormData((prev) => ({ ...prev, to_pocket_id: option.value }))}
-                                classNamePrefix="react-select"
-                            />
+                            <Form.Select
+                                value={formData.to_pocket_id}
+                                onChange={(e) => setFormData((prev) => ({ ...prev, to_pocket_id: e.target.value }))}
+                            >
+                                <option value="">{t("finance.shared.select_placeholder", { defaultValue: "Pilih wallet tujuan" })}</option>
+                                {toPocketOptions.map((option) => (
+                                    <option key={String(option.value)} value={String(option.value)}>
+                                        {option.label}
+                                    </option>
+                                ))}
+                            </Form.Select>
                             {selectedToPocket && (
                                 <Form.Text className="text-muted d-block mt-1">
                                     Saldo: {Number(selectedToPocket.current_balance || 0).toLocaleString("id-ID")}
@@ -232,6 +251,8 @@ const TransferModal = ({ show, onClose, onSuccess, accounts, pockets, destinatio
                                 <Form.Control
                                     type="number"
                                     step="0.01"
+                                    inputMode="decimal"
+                                    pattern="[0-9]*"
                                     value={formData.amount}
                                     onChange={(e) => setFormData((prev) => ({ ...prev, amount: e.target.value }))}
                                     readOnly={showCalculator}

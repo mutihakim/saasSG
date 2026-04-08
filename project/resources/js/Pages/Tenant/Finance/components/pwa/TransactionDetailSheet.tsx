@@ -3,6 +3,7 @@ import { Badge } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import { useTenantRoute } from "../../../../../common/tenantRoute";
+
 import { CARD_RADIUS, formatAmount, formatDateLabel } from "./types";
 
 interface TransactionDetailSheetProps {
@@ -34,41 +35,7 @@ const SectionCard = ({ title, children }: { title: string; children: React.React
     </div>
 );
 
-const MetricCard = ({
-    label,
-    value,
-    icon,
-    tone,
-}: {
-    label: string;
-    value: React.ReactNode;
-    icon: string;
-    tone: "info" | "danger" | "success" | "warning";
-}) => {
-    const palette = {
-        info: { bg: "rgba(14, 165, 233, 0.12)", text: "text-info" },
-        danger: { bg: "rgba(239, 68, 68, 0.12)", text: "text-danger" },
-        success: { bg: "rgba(34, 197, 94, 0.12)", text: "text-success" },
-        warning: { bg: "rgba(245, 158, 11, 0.12)", text: "text-warning" },
-    }[tone];
 
-    return (
-        <div className="rounded-4 border h-100 p-3">
-            <div className="d-flex align-items-start justify-content-between gap-3">
-                <div>
-                    <div className="small text-muted">{label}</div>
-                    <div className="fw-semibold text-dark mt-2">{value}</div>
-                </div>
-                <div
-                    className={`rounded-circle d-inline-flex align-items-center justify-content-center ${palette.text}`}
-                    style={{ width: 40, height: 40, background: palette.bg }}
-                >
-                    <i className={`${icon} fs-5`}></i>
-                </div>
-            </div>
-        </div>
-    );
-};
 
 const formatTimeLabel = (value?: string | null) => {
     if (!value) {
@@ -98,6 +65,7 @@ const TransactionDetailSheet = ({
     const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
 
     useEffect(() => {
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setFailedImages({});
     }, [show, transaction?.id]);
 
@@ -124,7 +92,6 @@ const TransactionDetailSheet = ({
         `/finance/transactions/${transaction.id}/attachments/${attachmentId}/preview`
     );
     const budgetMode = transaction.pocket?.budget_lock_enabled ? "Locked" : transaction.pocket?.default_budget_key || transaction.pocket?.default_budget_id ? "Recommended" : "Flexible";
-    const amountTone = transaction.type === "transfer" ? "warning" : incoming ? "info" : "danger";
     const activeBudget = transaction.budget || transaction.pocket?.default_budget || null;
     const budgetRemaining = transaction.budget?.remaining_amount ?? activeBudget?.remaining_amount ?? null;
     const tagLabel = Array.isArray(transaction.tags) && transaction.tags.length > 0

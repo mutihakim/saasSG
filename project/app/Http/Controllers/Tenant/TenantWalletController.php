@@ -8,10 +8,10 @@ use App\Models\TenantCategory;
 use App\Models\TenantCurrency;
 use App\Models\TenantMember;
 use App\Models\WalletWish;
-use App\Services\FinanceAccessService;
-use App\Services\MonthlyReviewService;
-use App\Services\WalletCashflowService;
-use App\Services\WalletSummaryService;
+use App\Services\Finance\FinanceAccessService;
+use App\Services\Finance\MonthlyReviewService;
+use App\Services\Finance\Wallet\WalletCashflowService;
+use App\Services\Finance\Wallet\WalletSummaryService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -57,7 +57,12 @@ class TenantWalletController extends Controller
                 ->get(),
             'goals' => FinanceSavingsGoal::query()
                 ->forTenant($tenantModel->id)
-                ->with(['pocket:id,name,real_account_id,current_balance', 'ownerMember:id,full_name'])
+                ->with([
+                    'pocket:id,name,real_account_id,current_balance,currency_code,scope,icon_key',
+                    'pocket.realAccount:id,name,currency_code,type',
+                    'ownerMember:id,full_name',
+                ])
+                ->withCount('financialTransactions as activities_count')
                 ->whereIn('pocket_id', $accessiblePocketIds)
                 ->orderByDesc('created_at')
                 ->get(),

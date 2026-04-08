@@ -3,9 +3,10 @@ import ReactApexChart from "react-apexcharts";
 import { Card } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
+import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceMember } from "../types";
+
 import ReportsPanel from "./ReportsPanel";
 import { CARD_RADIUS } from "./pwa/types";
-import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceMember } from "../types";
 
 type StatsTabProps = {
     statsMetric: "expense" | "income";

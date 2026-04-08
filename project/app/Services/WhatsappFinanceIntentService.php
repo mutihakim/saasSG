@@ -12,6 +12,7 @@ use App\Models\TenantWhatsappMedia;
 use App\Models\TenantWhatsappMessage;
 use App\Models\TenantWhatsappNotification;
 use App\Models\TenantWhatsappSetting;
+use App\Services\Finance\FinanceAccessService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;

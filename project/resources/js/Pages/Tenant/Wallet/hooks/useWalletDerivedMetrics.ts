@@ -1,9 +1,9 @@
-import { useMemo } from "react";
 import { TFunction } from "i18next";
+import { useMemo } from "react";
 
 import { FinanceAccount, FinancePocket } from "../../Finance/types";
-import { GroupedWalletAccount, WalletMetricsItem, WalletSummary, WalletWish } from "../types";
 import { formatCurrency } from "../components/pwa/types";
+import { GroupedWalletAccount, WalletMetricsItem, WalletSummary, WalletWish } from "../types";
 
 type Props = {
     activeTab: "dashboard" | "accounts" | "wishes" | "goals";
