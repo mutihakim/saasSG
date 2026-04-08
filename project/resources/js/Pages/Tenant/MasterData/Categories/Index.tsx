@@ -31,6 +31,15 @@ interface CategoriesProps {
     };
 }
 
+const truncateText = (value: string | null | undefined, max = 96) => {
+    const normalized = (value || "").trim();
+    if (normalized.length <= max) {
+        return normalized;
+    }
+
+    return `${normalized.slice(0, max - 1)}...`;
+};
+
 const CategoriesIndex = ({ categories: initialCategories, modules, permissions }: CategoriesProps) => {
     const { t } = useTranslation();
     const tenantRoute = useTenantRoute();
@@ -246,6 +255,7 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                                 </div>
                                             </th>
                                             <th className="sort" data-sort="name">{t("master.categories.headers.name")}</th>
+                                            <th className="sort" data-sort="description">{t("master.categories.headers.description")}</th>
                                             <th className="sort" data-sort="module">{t("master.categories.headers.module")}</th>
                                             <th className="sort" data-sort="type">{t("master.categories.headers.type")}</th>
                                             <th className="sort" data-sort="status">{t("master.categories.headers.status")}</th>
@@ -280,6 +290,13 @@ const CategoriesIndex = ({ categories: initialCategories, modules, permissions }
                                                                 </div>
                                                                 {category.is_default && <Badge bg="light" className="text-muted ms-2 px-1">{t("master.categories.badges.system")}</Badge>}
                                                             </div>
+                                                        </td>
+                                                        <td className="description text-muted">
+                                                            {category.description ? (
+                                                                <span title={category.description}>{truncateText(category.description)}</span>
+                                                            ) : (
+                                                                <span className="text-muted">-</span>
+                                                            )}
                                                         </td>
                                                         <td className="module">{category.module}</td>
                                                         <td className="type">

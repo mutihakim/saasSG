@@ -1,0 +1,6 @@
+{
+  "private": true,
+  "dependencies": {
+    "dbgate-serve": "^7.1.6"
+  }
+}

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\TenantUom;
 use App\Models\Tenant;
+use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -12,6 +13,10 @@ use Illuminate\Validation\Rule;
 
 class MasterUomApiController extends Controller
 {
+    public function __construct(
+        private readonly SubscriptionEntitlements $entitlements,
+    ) {}
+
     // GET /master/uom
     public function index(Request $request, Tenant $tenant): JsonResponse
     {
@@ -45,6 +50,23 @@ class MasterUomApiController extends Controller
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
         $this->authorize('create', TenantUom::class);
+
+        $limit = $this->entitlements->limit($tenant, 'master.uom.max');
+        if ($limit !== null && $limit !== -1) {
+            $current = TenantUom::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereNull('deleted_at')
+                ->count();
+
+            if ($current >= $limit) {
+                return response()->json([
+                    'ok' => false,
+                    'error_code' => 'PLAN_QUOTA_EXCEEDED',
+                    'limit_key' => 'master.uom.max',
+                    'message' => "Batas {$limit} satuan tercapai. Upgrade plan untuk menambah satuan.",
+                ], 422);
+            }
+        }
 
         $validated = $request->validate([
             'code' => [
@@ -157,14 +179,19 @@ class MasterUomApiController extends Controller
         ]);
     }
 
-    // DELETE /master/uom/{uom}
     public function destroy(Request $request, Tenant $tenant, TenantUom $uom): JsonResponse
     {
         $this->authorize('delete', $uom);
         abort_if((int) $uom->tenant_id !== (int) $tenant->id, 404);
 
-        // Check if unit is being used (mock logic or actual table check)
-        // For simplicity, we just delete it for now as per current schema
+        $isUsedAsBase = TenantUom::where('tenant_id', $tenant->id)->where('base_unit_code', $uom->code)->exists();
+        if ($isUsedAsBase) {
+            return response()->json([
+                'ok' => false,
+                'error_code' => 'UOM_IN_USE',
+                'message' => 'Satuan ukur tidak dapat dihapus karena digunakan sebagai pengali dasar (base unit) oleh satuan lain.',
+            ], 422);
+        }
         
         $uom->delete();
 

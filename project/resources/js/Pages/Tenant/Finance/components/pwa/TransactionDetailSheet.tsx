@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { Badge } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
+import { useTenantRoute } from "../../../../../common/tenantRoute";
 import { CARD_RADIUS, formatAmount, formatDateLabel } from "./types";
 
 interface TransactionDetailSheetProps {
@@ -13,7 +14,6 @@ interface TransactionDetailSheetProps {
     onDuplicate: () => void;
     onAddToGroup: () => void;
     onDelete: () => void;
-    onPreviewAttachment: (transaction: any, attachment: any) => void;
     canEdit?: boolean;
     canDelete?: boolean;
 }
@@ -26,6 +26,49 @@ const DetailRow = ({ label, value, muted = false }: { label: string; value: Reac
 );
 
 const DottedDivider = () => <div className="my-3" style={{ borderTop: "1px dashed rgba(148, 163, 184, 0.8)" }} />;
+
+const SectionCard = ({ title, children }: { title: string; children: React.ReactNode }) => (
+    <div className="bg-white shadow-sm p-3 mt-4" style={{ borderRadius: CARD_RADIUS }}>
+        <div className="fw-semibold text-dark mb-3">{title}</div>
+        {children}
+    </div>
+);
+
+const MetricCard = ({
+    label,
+    value,
+    icon,
+    tone,
+}: {
+    label: string;
+    value: React.ReactNode;
+    icon: string;
+    tone: "info" | "danger" | "success" | "warning";
+}) => {
+    const palette = {
+        info: { bg: "rgba(14, 165, 233, 0.12)", text: "text-info" },
+        danger: { bg: "rgba(239, 68, 68, 0.12)", text: "text-danger" },
+        success: { bg: "rgba(34, 197, 94, 0.12)", text: "text-success" },
+        warning: { bg: "rgba(245, 158, 11, 0.12)", text: "text-warning" },
+    }[tone];
+
+    return (
+        <div className="rounded-4 border h-100 p-3">
+            <div className="d-flex align-items-start justify-content-between gap-3">
+                <div>
+                    <div className="small text-muted">{label}</div>
+                    <div className="fw-semibold text-dark mt-2">{value}</div>
+                </div>
+                <div
+                    className={`rounded-circle d-inline-flex align-items-center justify-content-center ${palette.text}`}
+                    style={{ width: 40, height: 40, background: palette.bg }}
+                >
+                    <i className={`${icon} fs-5`}></i>
+                </div>
+            </div>
+        </div>
+    );
+};
 
 const formatTimeLabel = (value?: string | null) => {
     if (!value) {
@@ -47,24 +90,46 @@ const TransactionDetailSheet = ({
     onDuplicate,
     onAddToGroup,
     onDelete,
-    onPreviewAttachment,
     canEdit = false,
     canDelete = false,
 }: TransactionDetailSheetProps) => {
     const { t } = useTranslation();
+    const tenantRoute = useTenantRoute();
+    const [failedImages, setFailedImages] = useState<Record<string, boolean>>({});
+
+    useEffect(() => {
+        setFailedImages({});
+    }, [show, transaction?.id]);
 
     if (!transaction) {
         return null;
     }
 
     const incoming = transaction.type === "pemasukan" || transaction.transfer_direction === "in";
-    const amountClass = incoming ? "text-info" : "text-danger";
+    const amountClass = incoming ? "text-info" : transaction.type === "transfer" ? "text-primary" : "text-danger";
     const prefix = incoming ? "+" : "-";
-    const headerColor = transaction.type === "transfer" ? "text-primary" : amountClass;
     const headerIcon = transaction.category?.icon || (transaction.type === "pemasukan" ? "ri-arrow-down-circle-line" : transaction.type === "pengeluaran" ? "ri-arrow-up-circle-line" : "ri-loop-left-line");
     const budgetStatusLabel = transaction.budget_status ? t(`finance.budgets.status.${transaction.budget_status === "within_budget" ? "within" : transaction.budget_status === "over_budget" ? "over" : "unbudgeted"}`) : null;
     const isGrouped = transaction.source_type === "finance_bulk" && !!transaction.source_id;
     const groupLabel = transaction.merchant_name || transaction.notes || transaction.description || "Bulk Entry";
+    const pairedTransaction = transaction.paired_transaction || null;
+    const sourceAccount = transaction.transfer_direction === "out" ? transaction.bank_account : pairedTransaction?.bank_account;
+    const sourcePocket = transaction.transfer_direction === "out" ? transaction.pocket : pairedTransaction?.pocket;
+    const targetAccount = transaction.transfer_direction === "in" ? transaction.bank_account : pairedTransaction?.bank_account;
+    const targetPocket = transaction.transfer_direction === "in" ? transaction.pocket : pairedTransaction?.pocket;
+    const allAttachments = Array.isArray(transaction.attachments) ? transaction.attachments : [];
+    const imageAttachments = allAttachments.filter((attachment: any) => String(attachment.mime_type || "").startsWith("image/"));
+    const fileAttachments = allAttachments.filter((attachment: any) => !String(attachment.mime_type || "").startsWith("image/"));
+    const attachmentPreviewUrl = (attachmentId: string | number) => tenantRoute.apiTo(
+        `/finance/transactions/${transaction.id}/attachments/${attachmentId}/preview`
+    );
+    const budgetMode = transaction.pocket?.budget_lock_enabled ? "Locked" : transaction.pocket?.default_budget_key || transaction.pocket?.default_budget_id ? "Recommended" : "Flexible";
+    const amountTone = transaction.type === "transfer" ? "warning" : incoming ? "info" : "danger";
+    const activeBudget = transaction.budget || transaction.pocket?.default_budget || null;
+    const budgetRemaining = transaction.budget?.remaining_amount ?? activeBudget?.remaining_amount ?? null;
+    const tagLabel = Array.isArray(transaction.tags) && transaction.tags.length > 0
+        ? transaction.tags.map((tag: any) => tag.name || tag).join(", ")
+        : null;
 
     if (!show) {
         return null;
@@ -120,120 +185,268 @@ const TransactionDetailSheet = ({
                 </div>
 
                 <div className="flex-grow-1 overflow-auto px-4 py-4" style={{ paddingBottom: "max(24px, env(safe-area-inset-bottom))" }}>
-                    <div className="text-center">
-                        <div
-                            className="mx-auto d-inline-flex align-items-center justify-content-center rounded-circle mb-3"
-                            style={{
-                                width: 72,
-                                height: 72,
-                                background: incoming ? "rgba(14, 165, 233, 0.12)" : transaction.type === "transfer" ? "rgba(59, 130, 246, 0.12)" : "rgba(239, 68, 68, 0.12)",
-                            }}
-                        >
-                            <i className={`${headerIcon} fs-1 ${headerColor}`}></i>
-                        </div>
-                        <div className="small text-muted">{transaction.type === "transfer" ? t("finance.transactions.types.transfer") : transaction.category?.name || t("finance.shared.uncategorized")}</div>
-                        <div className="fw-semibold text-dark mt-1">{transaction.description || transaction.category?.name || t("finance.shared.untitled")}</div>
-                        <div className={`fw-bold display-6 mt-3 mb-2 ${amountClass}`}>
-                            {prefix} {formatAmount(Number(transaction.amount || 0), transaction.currency_code || defaultCurrency)}
-                        </div>
-                        <div className="small text-muted">
-                            {formatDateLabel(String(transaction.transaction_date).slice(0, 10))} · {formatTimeLabel(transaction.created_at)}
-                        </div>
-                        {transaction.budget_status === "over_budget" && (
-                            <Badge bg="warning-subtle" text="warning" className="rounded-pill px-3 py-2">
-                                {t("finance.budgets.status.over")}
-                            </Badge>
-                        )}
-                        {isGrouped && (
-                            <div className="mt-3">
-                                <Badge bg="secondary-subtle" text="secondary" className="rounded-pill px-3 py-2">
-                                    Bagian dari grup: {groupLabel}
-                                </Badge>
+                    {/* Top Hero Card */}
+                    <div className="card ribbon-box ribbon-fill right overflow-hidden border-0 shadow-sm mx-auto mt-2" style={{ borderRadius: CARD_RADIUS }}>
+                        <div className="card-body text-center p-4">
+                            <div className="ribbon ribbon-success">
+                                {incoming ? "RECORDED" : transaction.type === "transfer" ? "TRANSFER" : "SPENT"}
                             </div>
-                        )}
+
+                            <div
+                                className="mx-auto d-inline-flex align-items-center justify-content-center rounded-4 mb-3 shadow-sm"
+                                style={{
+                                    width: 72,
+                                    height: 72,
+                                    background: incoming ? "rgba(14, 165, 233, 0.05)" : transaction.type === "transfer" ? "rgba(59, 130, 246, 0.05)" : "rgba(239, 68, 68, 0.05)",
+                                    border: `1px solid ${incoming ? "rgba(14, 165, 233, 0.2)" : transaction.type === "transfer" ? "rgba(59, 130, 246, 0.2)" : "rgba(239, 68, 68, 0.2)"}`
+                                }}
+                            >
+                                <i className={`${headerIcon} fs-1 ${amountClass}`}></i>
+                            </div>
+
+                            <div className="fw-semibold text-dark mb-1" style={{ fontSize: "1.1rem" }}>
+                                {transaction.description || transaction.category?.name || t("finance.shared.untitled")}
+                            </div>
+
+                            <div className="fw-bold text-dark" style={{ fontSize: "2rem", letterSpacing: "-0.5px" }}>
+                                {prefix} {formatAmount(Number(transaction.amount || 0), transaction.currency_code || defaultCurrency)}
+                            </div>
+
+                            <div className="small mt-2" style={{ color: "#94a3b8" }}>
+                                <span className="badge bg-light text-dark rounded-pill border px-3 py-1 fw-normal text-muted">
+                                    {formatDateLabel(String(transaction.transaction_date).slice(0, 10))} • {formatTimeLabel(transaction.created_at)}
+                                </span>
+                            </div>
+
+                            <div className="d-flex justify-content-center flex-wrap gap-2 mt-4">
+                                <div className="badge bg-dark rounded-pill px-3 py-2 d-flex align-items-center gap-1 shadow-sm">
+                                    <i className="ri-user-line"></i> {transaction.owner_member?.full_name || "Member"}
+                                </div>
+                                <div className="badge rounded-pill px-3 py-2 d-flex align-items-center gap-1 shadow-sm text-white" style={{ background: '#f59e0b' }}>
+                                    <i className="ri-bank-card-line"></i> {transaction.type === "transfer" ? (sourceAccount?.name || "-") : (transaction.bank_account?.name || "Account")}
+                                </div>
+                                <div className="badge rounded-pill px-3 py-2 d-flex align-items-center gap-1 shadow-sm text-white" style={{ background: '#3b82f6' }}>
+                                    <i className="ri-wallet-3-line"></i> {transaction.type === "transfer" ? (sourcePocket?.name || "-") : (transaction.pocket?.name || "Wallet")}
+                                </div>
+                                {isGrouped && (
+                                    <div className="badge bg-secondary rounded-pill px-3 py-2 d-flex align-items-center gap-1 shadow-sm">
+                                        <i className="ri-links-line"></i> Grouped
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="bg-white shadow-sm p-3 mt-4" style={{ borderRadius: CARD_RADIUS }}>
-                        <DetailRow label={t("finance.modals.transaction.fields.type")} value={t(`finance.transactions.types.${transaction.type}`)} />
-                        <DetailRow label={t("finance.modals.transaction.fields.date")} value={formatDateLabel(String(transaction.transaction_date).slice(0, 10))} />
+                    {/* Middle Cards */}
+                    <div className="row g-3 mt-1">
+                        <div className="col-6">
+                            <div className="card border shadow-sm h-100" style={{ borderRadius: CARD_RADIUS }}>
+                                <div className="card-body p-3 position-relative overflow-hidden">
+                                    <div className="text-muted fw-bold mb-2" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>BUDGET</div>
+                                    <div className="fw-bold fs-5 text-dark" style={{ zIndex: 1, position: 'relative' }}>{activeBudget?.name || t("finance.shared.not_set")}</div>
+                                    <div className="small text-muted mt-1" style={{ zIndex: 1, position: 'relative' }}>
+                                        {budgetRemaining !== null && budgetRemaining !== undefined
+                                            ? `Remaining: ${formatAmount(Number(budgetRemaining || 0), defaultCurrency)}`
+                                            : `Status: ${budgetStatusLabel || "Not set"}`
+                                        }
+                                    </div>
+                                    
+                                    <div className="position-absolute" style={{ right: '-10px', bottom: '-10px', opacity: 0.05, zIndex: 0 }}>
+                                        <i className="ri-focus-3-line" style={{ fontSize: '5rem' }}></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="col-6">
+                            <div className="card border-0 shadow-sm h-100 text-white" style={{ borderRadius: CARD_RADIUS, background: transaction.type === "transfer" ? "#3b82f6" : incoming ? "#10b981" : "#ef4444" }}>
+                                <div className="card-body p-3 position-relative overflow-hidden">
+                                    <div className="text-white-50 fw-bold mb-2" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>TYPE</div>
+                                    <div className="fw-bold fs-5 text-white" style={{ zIndex: 1, position: 'relative' }}>{t(`finance.transactions.types.${transaction.type}`)}</div>
+                                    <div className="small text-white-50 mt-1" style={{ fontSize: '0.75rem', zIndex: 1, position: 'relative' }}>{transaction.category?.name || t("finance.shared.uncategorized")}</div>
+                                    
+                                    <div className="position-absolute" style={{ right: '0', bottom: '0', background: 'rgba(255,255,255,0.2)', width: '40px', height: '40px', borderTopLeftRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <i className={`${transaction.type === "transfer" ? "ri-arrow-left-right-line" : incoming ? "ri-arrow-right-up-line" : "ri-arrow-right-down-line"} fs-4`}></i>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Ringkasan */}
+                    <div className="card shadow-sm mt-3 border-0" style={{ borderRadius: CARD_RADIUS }}>
+                        <div className="card-body p-4">
+                            <div className="text-muted fw-bold mb-3" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>RINGKASAN</div>
+
+                            <div className="d-flex flex-column gap-2 mb-0">
+                                <div className="border border-success rounded-pill px-3 py-2 d-flex justify-content-between text-success fw-medium small" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                                    <span className="text-uppercase">{t("finance.modals.transaction.fields.category")}</span>
+                                    <span className="d-flex align-items-center gap-1"><i className="ri-price-tag-3-line"></i> {transaction.category?.name || t("finance.shared.uncategorized")}</span>
+                                </div>
+                                {transaction.type === "transfer" ? (
+                                    <>
+                                        <div className="border border-success rounded-pill px-3 py-2 d-flex justify-content-between text-success fw-medium small" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                                            <span className="text-uppercase">{t("finance.transfers.fields.from_account")}</span>
+                                            <span className="d-flex align-items-center gap-1"><i className="ri-bank-card-line"></i> {sourceAccount?.name || "-"}</span>
+                                        </div>
+                                        <div className="border border-success rounded-pill px-3 py-2 d-flex justify-content-between text-success fw-medium small" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                                            <span className="text-uppercase">{t("finance.transfers.fields.from_wallet")}</span>
+                                            <span className="d-flex align-items-center gap-1"><i className="ri-wallet-3-line"></i> {sourcePocket?.name || "-"}</span>
+                                        </div>
+                                        <div className="border border-success rounded-pill px-3 py-2 d-flex justify-content-between text-success fw-medium small" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                                            <span className="text-uppercase">{t("finance.transfers.fields.to_account")}</span>
+                                            <span className="d-flex align-items-center gap-1"><i className="ri-bank-card-fill"></i> {targetAccount?.name || "-"}</span>
+                                        </div>
+                                        <div className="border border-success rounded-pill px-3 py-2 d-flex justify-content-between text-success fw-medium small" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                                            <span className="text-uppercase">{t("finance.transfers.fields.to_wallet")}</span>
+                                            <span className="d-flex align-items-center gap-1"><i className="ri-wallet-3-line"></i> {targetPocket?.name || "-"}</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="border border-success rounded-pill px-3 py-2 d-flex justify-content-between text-success fw-medium small" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                                            <span className="text-uppercase">{t("finance.modals.transaction.fields.account")}</span>
+                                            <span className="d-flex align-items-center gap-1"><i className="ri-bank-card-line"></i> {transaction.bank_account?.name || "-"}</span>
+                                        </div>
+                                        <div className="border border-success rounded-pill px-3 py-2 d-flex justify-content-between text-success fw-medium small" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                                            <span className="text-uppercase">{t("finance.pwa.filters.wallet")}</span>
+                                            <span className="d-flex align-items-center gap-1"><i className="ri-wallet-3-line"></i> {transaction.pocket?.name || "-"}</span>
+                                        </div>
+                                    </>
+                                )}
+                                <div className="border border-success rounded-pill px-3 py-2 d-flex justify-content-between text-success fw-medium small" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                                    <span className="text-uppercase">{t("finance.modals.transaction.fields.budget")}</span>
+                                    <span className="d-flex align-items-center gap-1"><i className="ri-focus-3-line"></i> {activeBudget?.name || t("finance.shared.not_set")}</span>
+                                </div>
+                                <div className="border border-success rounded-pill px-3 py-2 d-flex justify-content-between text-success fw-medium small" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                                    <span className="text-uppercase">Budget Mode</span>
+                                    <span className="d-flex align-items-center gap-1"><i className="ri-lock-2-line"></i> {budgetMode}</span>
+                                </div>
+                                {tagLabel && (
+                                    <div className="border border-success rounded-pill px-3 py-2 d-flex justify-content-between text-success fw-medium small" style={{ background: 'rgba(34, 197, 94, 0.05)' }}>
+                                        <span className="text-uppercase">{t("finance.modals.transaction.fields.tags")}</span>
+                                        <span className="d-flex align-items-center gap-1"><i className="ri-price-tag-3-line"></i> {tagLabel}</span>
+                                    </div>
+                                )}
+                            </div>
+                            {transaction.notes && (
+                                <>
+                                    <DottedDivider />
+                                    <div className="text-muted fw-bold mb-1" style={{ fontSize: '0.65rem', letterSpacing: '1px' }}>NOTES</div>
+                                    <p className="fw-medium text-dark mb-0" style={{ fontSize: '0.9rem' }}>
+                                        {transaction.notes}
+                                    </p>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    <SectionCard title="Metadata">
                         <DetailRow label={t("finance.shared.time")} value={formatTimeLabel(transaction.created_at)} muted />
-                        <DetailRow label={t("finance.modals.transaction.fields.category")} value={transaction.category?.name || t("finance.shared.uncategorized")} />
-                        <DetailRow label={t("finance.modals.transaction.fields.account")} value={transaction.bank_account?.name || "-"} />
                         <DetailRow label={t("finance.modals.transaction.fields.owner_member")} value={transaction.owner_member?.full_name || "-"} />
-                        {transaction.budget && (
-                            <DetailRow
-                                label={t("finance.modals.transaction.fields.budget")}
-                                value={`${transaction.budget.name}${budgetStatusLabel ? ` · ${budgetStatusLabel}` : ""}`}
-                            />
-                        )}
-                        {transaction.budget && transaction.budget_delta !== null && transaction.budget_delta !== undefined && (
-                            <DetailRow
-                                label={t("finance.budgets.labels.remaining")}
-                                value={formatAmount(Number(transaction.budget.remaining_amount || 0), defaultCurrency)}
-                                muted
-                            />
-                        )}
-                        <DottedDivider />
-                        <DetailRow label={t("finance.modals.transaction.fields.notes")} value={transaction.notes || t("finance.shared.not_set")} muted />
-                        {transaction.merchant_name && <DetailRow label={t("finance.modals.transaction.fields.merchant_name")} value={transaction.merchant_name} muted />}
-                        {transaction.location && <DetailRow label={t("finance.modals.transaction.fields.location")} value={transaction.location} muted />}
-                        {transaction.reference_number && <DetailRow label={t("finance.modals.transaction.fields.reference_number")} value={transaction.reference_number} muted />}
-                        {transaction.payment_method && <DetailRow label={t("finance.modals.transaction.fields.payment_method_optional")} value={transaction.payment_method} muted />}
+                        <DetailRow label={t("finance.modals.transaction.fields.merchant_name")} value={transaction.merchant_name || t("finance.shared.not_set")} muted={!transaction.merchant_name} />
+                        <DetailRow label={t("finance.modals.transaction.fields.location")} value={transaction.location || t("finance.shared.not_set")} muted={!transaction.location} />
+                        <DetailRow label={t("finance.modals.transaction.fields.reference_number")} value={transaction.reference_number || t("finance.shared.not_set")} muted={!transaction.reference_number} />
+                        <DetailRow label={t("finance.modals.transaction.fields.payment_method_optional")} value={transaction.payment_method || t("finance.shared.not_set")} muted={!transaction.payment_method} />
+                        <DetailRow label={t("finance.shared.created_by")} value={transaction.createdBy?.full_name || transaction.created_by?.full_name || "-"} muted />
+                        <DetailRow label={t("finance.shared.created_at")} value={transaction.created_at ? new Date(transaction.created_at).toLocaleString() : "-"} muted />
+                        {transaction.row_version ? <DetailRow label="Row Version" value={`v${transaction.row_version}`} muted /> : null}
                         {isGrouped && (
-                            <DetailRow label="Bagian dari grup" value={groupLabel} muted />
-                        )}
-                        {Array.isArray(transaction.tags) && transaction.tags.length > 0 && (
-                            <DetailRow
-                                label={t("finance.modals.transaction.fields.tags")}
-                                value={transaction.tags.map((tag: any) => tag.name || tag).join(", ")}
-                                muted
-                            />
-                        )}
-                        {Array.isArray(transaction.attachments) && transaction.attachments.length > 0 && (
                             <>
                                 <DottedDivider />
-                                <div className="py-2">
-                                    <div className="small text-muted mb-2">Lampiran</div>
-                                    <div className="d-grid gap-2">
-                                        {transaction.attachments.map((attachment: any) => (
-                                            <button
-                                                key={attachment.id}
-                                                type="button"
-                                                className="btn btn-light text-start rounded-4 border px-3 py-2"
-                                                onClick={() => onPreviewAttachment(transaction, attachment)}
-                                            >
-                                                <div className="d-flex align-items-center justify-content-between gap-3">
-                                                    <div className="overflow-hidden">
-                                                        <div className="fw-medium text-dark text-truncate">{attachment.file_name || `Lampiran ${attachment.id}`}</div>
-                                                        <div className="small text-muted">
-                                                            {attachment.mime_type || "file"}
-                                                            {attachment.file_size ? ` · ${(Number(attachment.file_size) / 1024).toFixed(0)} KB` : ""}
-                                                        </div>
-                                                    </div>
-                                                    <i className={`${String(attachment.mime_type || "").startsWith("image/") ? "ri-image-line" : "ri-attachment-2"} fs-5 text-muted`}></i>
-                                                </div>
-                                            </button>
-                                        ))}
-                                    </div>
+                                <DetailRow label="Grouped As" value={groupLabel} muted />
+                                <div className="d-grid gap-2 mt-3">
+                                    <button type="button" className="btn btn-light rounded-pill" onClick={onAddToGroup}>
+                                        <i className="ri-add-line me-1"></i>
+                                        Tambah Item ke Grup Ini
+                                    </button>
                                 </div>
                             </>
                         )}
-                        <DottedDivider />
-                        {isGrouped && (
-                            <div className="d-grid gap-2 mb-3">
-                                <button type="button" className="btn btn-light rounded-pill" onClick={onAddToGroup}>
-                                    <i className="ri-add-line me-1"></i>
-                                    Tambah Item ke Grup Ini
-                                </button>
+                    </SectionCard>
+
+                    <SectionCard title="Lampiran">
+                        {(imageAttachments.length > 0 || fileAttachments.length > 0) ? (
+                            <div className="py-2">
+                                <div className="d-grid gap-3">
+                                    {imageAttachments.map((attachment: any) => {
+                                        const attachmentStatus = attachment.status || "ready";
+                                        const previewUrl = attachment.preview_url || attachmentPreviewUrl(attachment.id);
+                                        const imageStateKey = `${String(transaction.id)}:${String(attachment.id)}`;
+                                        const failed = attachmentStatus === "failed" || failedImages[imageStateKey] || !previewUrl;
+                                        const processing = attachmentStatus === "processing";
+
+                                        return (
+                                            <div key={attachment.id} className="rounded-4 border overflow-hidden bg-light">
+                                                {processing ? (
+                                                    <div className="px-3 py-4 text-center">
+                                                        <Badge bg="info-subtle" text="info" className="rounded-pill px-3 py-2">
+                                                            Sedang diproses
+                                                        </Badge>
+                                                    </div>
+                                                ) : failed ? (
+                                                    <div className="px-3 py-4 text-center">
+                                                        <div className="small text-muted">{attachment.processing_error || "Gagal memuat gambar"}</div>
+                                                    </div>
+                                                ) : (
+                                                    <img
+                                                        src={previewUrl}
+                                                        alt={attachment.file_name || `Lampiran ${attachment.id}`}
+                                                        className="w-100 d-block"
+                                                        style={{ maxHeight: 280, objectFit: "cover", background: "#f8fafc" }}
+                                                        onError={() => setFailedImages((prev) => ({ ...prev, [imageStateKey]: true }))}
+                                                    />
+                                                )}
+                                                <div className="px-3 py-2 bg-white border-top">
+                                                    <div className="fw-medium text-dark text-truncate">{attachment.file_name || `Lampiran ${attachment.id}`}</div>
+                                                    <div className="small text-muted">
+                                                        {attachment.mime_type || "image"}
+                                                        {attachment.file_size ? ` · ${(Number(attachment.file_size) / 1024).toFixed(0)} KB` : ""}
+                                                        {processing ? " · sedang diproses" : ""}
+                                                        {attachmentStatus === "failed" ? " · gagal diproses" : ""}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+                                    {fileAttachments.length > 0 && (
+                                        <div className="d-grid gap-2">
+                                            {fileAttachments.map((attachment: any) => (
+                                                <a
+                                                    key={attachment.id}
+                                                    href={attachment.preview_url || attachmentPreviewUrl(attachment.id) || "#"}
+                                                    target="_blank"
+                                                    rel="noreferrer"
+                                                    className={`btn btn-light text-start rounded-4 border px-3 py-2${attachment.status === "processing" || attachment.status === "failed" ? " disabled" : ""}`}
+                                                    aria-disabled={attachment.status === "processing" || attachment.status === "failed"}
+                                                    onClick={(event) => {
+                                                        if (attachment.status === "processing" || attachment.status === "failed") {
+                                                            event.preventDefault();
+                                                        }
+                                                    }}
+                                                >
+                                                    <div className="d-flex align-items-center justify-content-between gap-3">
+                                                        <div className="overflow-hidden">
+                                                            <div className="fw-medium text-dark text-truncate">{attachment.file_name || `Lampiran ${attachment.id}`}</div>
+                                                            <div className="small text-muted">
+                                                                {attachment.mime_type || "file"}
+                                                                {attachment.file_size ? ` · ${(Number(attachment.file_size) / 1024).toFixed(0)} KB` : ""}
+                                                                {attachment.status === "processing" ? " · sedang diproses" : ""}
+                                                                {attachment.status === "failed" ? " · gagal diproses" : ""}
+                                                            </div>
+                                                        </div>
+                                                        <i className="ri-attachment-2 fs-5 text-muted"></i>
+                                                    </div>
+                                                </a>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
+                        ) : (
+                            <div className="small text-muted">Belum ada attachment.</div>
                         )}
-                        <DetailRow label={t("finance.shared.created_by")} value={transaction.created_by?.full_name || transaction.createdBy?.full_name || "-"} muted />
-                        <DetailRow
-                            label={t("finance.shared.created_at")}
-                            value={transaction.created_at ? new Date(transaction.created_at).toLocaleString() : "-"}
-                            muted
-                        />
-                    </div>
+                    </SectionCard>
                 </div>
             </div>
         </div>

@@ -2,9 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\FinanceTransaction;
 use App\Models\Tenant;
 use App\Models\TenantBankAccount;
 use App\Models\TenantBudget;
+use App\Models\TenantCategory;
 use App\Models\TenantCurrency;
 use App\Models\TenantMember;
 use App\Models\User;
@@ -266,6 +268,71 @@ class FinanceStructureAccessTest extends TestCase
         $deleteShared->assertForbidden();
     }
 
+    public function test_account_type_cannot_change_after_transactions_exist(): void
+    {
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Locked Type Account',
+            'scope' => 'private',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 100000,
+            'current_balance' => 100000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $account->memberAccess()->syncWithoutDetaching([
+            $this->ownerMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
+        ]);
+
+        $category = TenantCategory::create([
+            'tenant_id' => $this->tenant->id,
+            'module' => 'finance',
+            'name' => 'Test Expense',
+            'slug' => 'test-expense',
+            'sub_type' => 'pengeluaran',
+            'is_active' => true,
+        ]);
+
+        FinanceTransaction::create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'updated_by' => $this->ownerMembership->id,
+            'type' => 'pengeluaran',
+            'transaction_date' => now()->toDateString(),
+            'amount' => 10000,
+            'exchange_rate' => 1,
+            'amount_base' => 10000,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'category_id' => $category->id,
+            'bank_account_id' => $account->id,
+            'description' => 'Existing transaction',
+            'status' => 'terverifikasi',
+            'row_version' => 1,
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$account->id}", [
+                'name' => 'Locked Type Account',
+                'scope' => 'private',
+                'type' => 'credit_card',
+                'currency_code' => 'IDR',
+                'owner_member_id' => $this->ownerMembership->id,
+                'opening_balance' => 100000,
+                'notes' => '',
+                'is_active' => true,
+                'member_access_ids' => [],
+                'row_version' => 1,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('error_code', 'ACCOUNT_TYPE_LOCKED');
+    }
+
     public function test_budget_update_without_code_preserves_existing_code(): void
     {
         $budget = TenantBudget::create([
@@ -298,6 +365,126 @@ class FinanceStructureAccessTest extends TestCase
 
         $response->assertOk();
         $response->assertJsonPath('data.budget.code', 'HOME-APR');
+    }
+
+    public function test_member_cannot_update_or_delete_shared_transaction_without_manage_scope(): void
+    {
+        $sharedAccount = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Family Wallet',
+            'scope' => 'shared',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 100000,
+            'current_balance' => 100000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $sharedAccount->memberAccess()->syncWithoutDetaching([
+            $this->memberMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => false],
+        ]);
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'bank_account_id' => $sharedAccount->id,
+            'currency_id' => TenantCurrency::query()->where('tenant_id', $this->tenant->id)->value('id'),
+            'description' => 'Shared purchase',
+            'row_version' => 1,
+        ]);
+
+        $category = TenantCategory::create([
+            'tenant_id' => $this->tenant->id,
+            'module' => 'finance',
+            'name' => 'Shared Expense',
+            'slug' => 'shared-expense',
+            'sub_type' => 'pengeluaran',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        $updateResponse = $this->actingAs($this->member)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}", [
+                'type' => 'pengeluaran',
+                'transaction_date' => now()->toDateString(),
+                'amount' => 75000,
+                'currency_code' => 'IDR',
+                'category_id' => $category->id,
+                'description' => 'Unauthorized update',
+                'bank_account_id' => $sharedAccount->id,
+                'owner_member_id' => $this->ownerMembership->id,
+                'row_version' => 1,
+            ]);
+
+        $updateResponse->assertForbidden();
+
+        $deleteResponse = $this->actingAs($this->member)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}");
+
+        $deleteResponse->assertForbidden();
+    }
+
+    public function test_member_can_load_transactions_and_summary_from_shared_access_without_sql_errors(): void
+    {
+        $sharedAccount = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Shared Wallet',
+            'scope' => 'shared',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 150000,
+            'current_balance' => 150000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $sharedAccount->memberAccess()->syncWithoutDetaching([
+            $this->memberMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => false],
+        ]);
+
+        $category = TenantCategory::create([
+            'tenant_id' => $this->tenant->id,
+            'module' => 'finance',
+            'name' => 'Shared Expense',
+            'slug' => 'shared-expense',
+            'sub_type' => 'pengeluaran',
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'bank_account_id' => $sharedAccount->id,
+            'category_id' => $category->id,
+            'currency_id' => TenantCurrency::query()->where('tenant_id', $this->tenant->id)->value('id'),
+            'type' => 'pengeluaran',
+            'amount' => 45000,
+            'amount_base' => 45000,
+            'transaction_date' => '2026-04-06',
+            'description' => 'Shared purchase',
+        ]);
+
+        $transactions = $this->actingAs($this->member)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/transactions");
+
+        $transactions->assertOk()
+            ->assertJsonPath('data.transactions.0.description', 'Shared purchase');
+
+        $summary = $this->actingAs($this->member)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/summary?month=2026-04");
+
+        $summary->assertOk()
+            ->assertJsonPath('data.transaction_count', 1);
     }
 
     private function seedFinanceRolePermissions(): void

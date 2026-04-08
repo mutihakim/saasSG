@@ -5,12 +5,17 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\TenantCurrency;
 use App\Models\Tenant;
+use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class MasterCurrencyApiController extends Controller
 {
+    public function __construct(
+        private readonly SubscriptionEntitlements $entitlements,
+    ) {}
+
     // GET /master/currencies
     public function index(Request $request, Tenant $tenant): JsonResponse
     {
@@ -38,6 +43,23 @@ class MasterCurrencyApiController extends Controller
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
         $this->authorize('create', TenantCurrency::class);
+
+        $limit = $this->entitlements->limit($tenant, 'master.currencies.max');
+        if ($limit !== null && $limit !== -1) {
+            $current = TenantCurrency::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereNull('deleted_at')
+                ->count();
+
+            if ($current >= $limit) {
+                return response()->json([
+                    'ok' => false,
+                    'error_code' => 'PLAN_QUOTA_EXCEEDED',
+                    'limit_key' => 'master.currencies.max',
+                    'message' => "Batas {$limit} mata uang tercapai. Upgrade plan untuk menambah mata uang.",
+                ], 422);
+            }
+        }
 
         $validated = $request->validate([
             'code' => [

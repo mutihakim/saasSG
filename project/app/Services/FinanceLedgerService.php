@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\FinanceTransaction;
+use App\Models\FinancePocket;
 use App\Models\TenantBankAccount;
 use App\Models\TenantBudget;
 use App\Models\TenantBudgetLine;
@@ -12,12 +13,14 @@ class FinanceLedgerService
     public function syncAfterCreate(FinanceTransaction $transaction): void
     {
         $this->applyAccountEffect($transaction, 1);
+        $this->applyPocketEffect($transaction, 1);
         $this->applyBudgetEffect($transaction, 1);
     }
 
     public function syncAfterDelete(FinanceTransaction $transaction): void
     {
         $this->applyBudgetEffect($transaction, -1);
+        $this->applyPocketEffect($transaction, -1);
         $this->applyAccountEffect($transaction, -1);
     }
 
@@ -91,6 +94,26 @@ class FinanceLedgerService
                 ->where('finance_transaction_id', $transaction->id)
                 ->delete();
         }
+    }
+
+    private function applyPocketEffect(FinanceTransaction $transaction, int $multiplier): void
+    {
+        if (! $transaction->pocket_id) {
+            return;
+        }
+
+        /** @var FinancePocket|null $pocket */
+        $pocket = FinancePocket::query()->find($transaction->pocket_id);
+
+        if (! $pocket) {
+            return;
+        }
+
+        $delta = $this->accountDelta($transaction) * $multiplier;
+
+        $pocket->forceFill([
+            'current_balance' => round(((float) $pocket->current_balance) + $delta, 2),
+        ])->save();
     }
 
     private function accountDelta(FinanceTransaction $transaction): float

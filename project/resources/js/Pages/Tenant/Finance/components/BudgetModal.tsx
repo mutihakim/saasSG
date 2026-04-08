@@ -16,12 +16,19 @@ interface BudgetModalProps {
     onDelete?: () => void;
     budget?: any;
     members: any[];
+    pockets: any[];
     activeMemberId?: number | null;
     canManageShared?: boolean;
     canDelete?: boolean;
 }
 
-const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, activeMemberId, canManageShared = false, canDelete = false }: BudgetModalProps) => {
+const canUseForOwner = (item: any, ownerMemberId: string) => {
+    if (!item) return false;
+    if (item.scope === "shared") return true;
+    return String(item.owner_member_id || "") === String(ownerMemberId || "");
+};
+
+const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, pockets, activeMemberId, canManageShared = false, canDelete = false }: BudgetModalProps) => {
     const { t } = useTranslation();
     const tenantRoute = useTenantRoute();
     const isEdit = Boolean(budget);
@@ -33,6 +40,7 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, acti
         period_month: new Date().toISOString().slice(0, 7),
         allocated_amount: "0",
         owner_member_id: "",
+        pocket_id: "",
         member_access_ids: [] as number[],
         notes: "",
         is_active: true,
@@ -53,6 +61,7 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, acti
                 owner_member_id: canManageShared
                     ? (budget.owner_member_id ? String(budget.owner_member_id) : "")
                     : String(budget.owner_member_id ?? activeMemberId ?? ""),
+                pocket_id: budget.pocket_id ? String(budget.pocket_id) : "",
                 member_access_ids: canManageShared ? (budget.member_access || []).map((member: any) => member.id) : [],
                 notes: budget.notes ?? "",
                 is_active: budget.is_active ?? true,
@@ -67,6 +76,7 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, acti
             period_month: new Date().toISOString().slice(0, 7),
             allocated_amount: "0",
             owner_member_id: activeMemberId ? String(activeMemberId) : "",
+            pocket_id: "",
             member_access_ids: [],
             notes: "",
             is_active: true,
@@ -78,6 +88,26 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, acti
         value: member.id,
         label: member.full_name,
     })), [members]);
+
+    const visiblePockets = useMemo(
+        () => pockets.filter((pocket) => canUseForOwner(pocket, formData.owner_member_id)),
+        [formData.owner_member_id, pockets],
+    );
+
+    const pocketOptions = useMemo(() => visiblePockets.map((pocket) => ({
+        value: String(pocket.id),
+        label: `${pocket.name} · ${pocket.real_account?.name || pocket.realAccount?.name || pocket.currency_code}`,
+    })), [visiblePockets]);
+
+    useEffect(() => {
+        if (!show) {
+            return;
+        }
+
+        if (formData.pocket_id && !pocketOptions.some((option) => option.value === formData.pocket_id)) {
+            setFormData((prev) => ({ ...prev, pocket_id: "" }));
+        }
+    }, [formData.pocket_id, pocketOptions, show]);
 
     const handleSubmit = async (event: React.FormEvent) => {
         event.preventDefault();
@@ -92,6 +122,7 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, acti
                 data: {
                     ...formData,
                     owner_member_id: formData.owner_member_id ? parseInt(formData.owner_member_id, 10) : null,
+                    pocket_id: formData.pocket_id || null,
                     member_access_ids: formData.scope === "shared" ? formData.member_access_ids : [],
                     allocated_amount: parseFloat(formData.allocated_amount || "0"),
                 },
@@ -178,6 +209,16 @@ const BudgetModal = ({ show, onClose, onSuccess, onDelete, budget, members, acti
                                 value={memberOptions.find((option) => String(option.value) === formData.owner_member_id)}
                                 onChange={(option: any) => setFormData((prev) => ({ ...prev, owner_member_id: option ? String(option.value) : "" }))}
                                 isDisabled={!canManageShared}
+                                classNamePrefix="react-select"
+                            />
+                        </Col>
+                        <Col md={12}>
+                            <Form.Label>{t("wallet.title", { defaultValue: "Wallet" })}</Form.Label>
+                            <Select
+                                options={pocketOptions}
+                                isClearable
+                                value={pocketOptions.find((option) => option.value === formData.pocket_id) ?? null}
+                                onChange={(option: any) => setFormData((prev) => ({ ...prev, pocket_id: option ? String(option.value) : "" }))}
                                 classNamePrefix="react-select"
                             />
                         </Col>

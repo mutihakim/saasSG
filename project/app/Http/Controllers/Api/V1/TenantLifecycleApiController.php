@@ -9,6 +9,7 @@ use App\Models\TenantInvitation;
 use App\Models\TenantMember;
 use App\Models\User;
 use App\Services\TenantProvisioningService;
+use App\Services\TenantRoleSyncService;
 use App\Support\ApiResponder;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\Request;
@@ -18,8 +19,6 @@ use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
-use Spatie\Permission\Models\Role;
-use Spatie\Permission\PermissionRegistrar;
 
 class TenantLifecycleApiController extends Controller
 {
@@ -397,17 +396,7 @@ class TenantLifecycleApiController extends Controller
                     ]);
                 }
 
-                $role = Role::query()
-                    ->where('tenant_id', $tenant->id)
-                    ->where('name', $invitation->role_code)
-                    ->first();
-
-                if ($role) {
-                    /** @var PermissionRegistrar $permissionRegistrar */
-                    $permissionRegistrar = app(PermissionRegistrar::class);
-                    $permissionRegistrar->setPermissionsTeamId($tenant->id);
-                    $user->syncRoles([$role->name]);
-                }
+                app(TenantRoleSyncService::class)->syncMemberRole($member);
 
                 $invitation->update([
                     'status' => 'accepted',

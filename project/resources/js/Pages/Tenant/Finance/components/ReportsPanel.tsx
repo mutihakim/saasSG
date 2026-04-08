@@ -8,12 +8,13 @@ import Select from "react-select";
 import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
 import { useTenantRoute } from "../../../../common/tenantRoute";
+import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceMember, FinanceReport } from "../types";
 
 interface ReportsPanelProps {
-    accounts: any[];
-    budgets: any[];
-    categories: any[];
-    members: any[];
+    accounts: FinanceAccount[];
+    budgets: FinanceBudget[];
+    categories: FinanceCategory[];
+    members: FinanceMember[];
     compact?: boolean;
 }
 
@@ -21,7 +22,7 @@ const ReportsPanel = ({ accounts, budgets, categories, members, compact = false 
     const { t } = useTranslation();
     const tenantRoute = useTenantRoute();
     const [loading, setLoading] = useState(true);
-    const [report, setReport] = useState<any>(null);
+    const [report, setReport] = useState<FinanceReport | null>(null);
     const [filters, setFilters] = useState({
         date_from: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().slice(0, 10),
         date_to: new Date().toISOString().slice(0, 10),
@@ -37,7 +38,7 @@ const ReportsPanel = ({ accounts, budgets, categories, members, compact = false 
 
         try {
             const response = await axios.get(tenantRoute.apiTo("/finance/reports"), { params: filters });
-            setReport(response.data.data);
+            setReport(response.data.data as FinanceReport);
         } catch (error: any) {
             const parsed = parseApiError(error, t("finance.reports.load_failed"));
             notify.error({ title: parsed.title, detail: parsed.detail });
@@ -53,7 +54,7 @@ const ReportsPanel = ({ accounts, budgets, categories, members, compact = false 
     const trendOptions: ApexCharts.ApexOptions = useMemo(() => ({
         chart: { type: "area", toolbar: { show: false } },
         stroke: { curve: "smooth", width: 2 },
-        xaxis: { categories: (report?.trend || []).map((item: any) => item.bucket) },
+        xaxis: { categories: (report?.trend || []).map((item) => item.bucket) },
         dataLabels: { enabled: false },
         colors: ["#0ab39c", "#f06548", "#405189"],
         fill: { opacity: 0.2 },
@@ -61,19 +62,19 @@ const ReportsPanel = ({ accounts, budgets, categories, members, compact = false 
     }), [report]);
 
     const trendSeries = useMemo(() => ([
-        { name: t("finance.summary.income"), data: (report?.trend || []).map((item: any) => item.income) },
-        { name: t("finance.summary.expense"), data: (report?.trend || []).map((item: any) => item.expense) },
-        { name: t("finance.transactions.types.transfer"), data: (report?.trend || []).map((item: any) => item.transfer) },
+        { name: t("finance.summary.income"), data: (report?.trend || []).map((item) => item.income) },
+        { name: t("finance.summary.expense"), data: (report?.trend || []).map((item) => item.expense) },
+        { name: t("finance.transactions.types.transfer"), data: (report?.trend || []).map((item) => item.transfer) },
     ]), [report, t]);
 
     const expensePie = useMemo(() => ({
         options: {
             chart: { type: "donut", toolbar: { show: false } },
-            labels: (report?.expense_by_category || []).map((item: any) => item.name),
+            labels: (report?.expense_by_category || []).map((item) => item.name),
             legend: { position: "bottom" },
             dataLabels: { enabled: false },
         },
-        series: (report?.expense_by_category || []).map((item: any) => item.amount),
+        series: (report?.expense_by_category || []).map((item) => item.amount),
     }), [report]);
 
     return (
@@ -201,7 +202,7 @@ const ReportsPanel = ({ accounts, budgets, categories, members, compact = false 
                                     <Table hover className="align-middle mb-0">
                                         <thead><tr><th>{t("finance.accounts.title")}</th><th>{t("finance.summary.income")}</th><th>{t("finance.summary.expense")}</th><th>Net</th></tr></thead>
                                         <tbody>
-                                            {(report?.account_breakdown || []).map((item: any) => (
+                                                    {(report?.account_breakdown || []).map((item) => (
                                                 <tr key={item.name}>
                                                     <td>{item.name}</td>
                                                     <td className="text-success">{Number(item.income).toLocaleString()}</td>
@@ -221,7 +222,7 @@ const ReportsPanel = ({ accounts, budgets, categories, members, compact = false 
                                     <Table hover className="align-middle mb-0">
                                         <thead><tr><th>{t("finance.budgets.title")}</th><th>{t("finance.budgets.fields.period")}</th><th>{t("finance.budgets.fields.allocated_amount")}</th><th>{t("finance.budgets.fields.remaining")}</th></tr></thead>
                                         <tbody>
-                                            {(report?.budget_usage || []).map((item: any) => (
+                                            {(report?.budget_usage || []).map((item) => (
                                                 <tr key={item.id}>
                                                     <td>{item.name}</td>
                                                     <td>{item.period_month}</td>

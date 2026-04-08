@@ -388,7 +388,10 @@ class InternalWhatsappCallbackController extends Controller
             return $this->error('UNSUPPORTED_MEDIA_TYPE', 'Unsupported media type.', [], 422);
         }
 
-        $path = $payload['storage_path'] ?? ('whatsapp/media/' . Str::uuid()->toString());
+        $path = $payload['storage_path'] ?? $this->defaultWhatsappDraftMediaPath(
+            tenantId: (int) $payload['tenant_id'],
+            mimeType: (string) $payload['mime_type']
+        );
 
         // Persist the binary from content_base64 to storage BEFORE creating the DB record,
         // so the AI service can load it immediately via Storage::get($storagePath).
@@ -437,6 +440,21 @@ class InternalWhatsappCallbackController extends Controller
         }
 
         return $this->ok(['stored' => true, 'storage_path' => $path, 'stored_to_disk' => $storedToDisk]);
+    }
+
+    private function defaultWhatsappDraftMediaPath(int $tenantId, string $mimeType): string
+    {
+        $extension = Str::lower((string) Str::afterLast($mimeType, '/'));
+        $extension = preg_replace('/[^a-z0-9]+/', '', $extension ?: '') ?: 'bin';
+
+        return sprintf(
+            'tenants/%d/whatsapp/drafts/%s/%s/%s.%s',
+            $tenantId,
+            now()->format('Y'),
+            now()->format('m'),
+            Str::uuid()->toString(),
+            $extension
+        );
     }
 
     private function ensureInternalToken(Request $request): ?\Illuminate\Http\JsonResponse

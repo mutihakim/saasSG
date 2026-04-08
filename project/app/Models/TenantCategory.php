@@ -15,7 +15,7 @@ class TenantCategory extends Model
 
     protected $fillable = [
         'tenant_id', 'module', 'sub_type', 'parent_id',
-        'name', 'icon', 'color', 'is_default', 'is_active', 'sort_order',
+        'name', 'description', 'icon', 'color', 'is_default', 'is_active', 'sort_order',
         'row_version',
     ];
 

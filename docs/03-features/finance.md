@@ -9,17 +9,21 @@ Fokus implementasi saat ini:
 - seluruh kolom polymorphic tetap **`string(100)`**
 - visibilitas transaksi berbasis role + akses akun/budget
 - akun dan budget tenant dapat **private** atau **shared**
+- pocket tenant dapat berdiri di atas **akun riil** sebagai dompet virtual berbasis tujuan
 - member biasa memakai model **Private Only** untuk account dan budget
 - transfer dicatat sebagai **pasangan transaksi internal**
 - shell `/finance` berdiri sebagai **Finance PWA Module**
 - attachment transaksi aktif untuk PWA dan draft WhatsApp
+- preview lampiran transaksi final memakai `preview_url` relatif dari backend agar aman untuk domain tenant aktif
 - bulk entry sekarang bisa dibuat dari WhatsApp dan PWA, lalu ditampilkan sebagai grup ringkas
 
 ## 2) Kapabilitas Utama
 
 - Mencatat `pemasukan`, `pengeluaran`, dan `transfer`
 - Menyimpan transaksi terhadap **akun riil** (`cash`, `bank`, `ewallet`, `credit_card`, `paylater`)
+- Menyimpan pocket/dompet virtual yang selalu terhubung ke satu akun riil
 - Menautkan transaksi ke **budget** secara opsional
+- Mendukung transaksi normal berbasis `pocket`, lalu menurunkan akun riil dari pocket tersebut
 - Mencatat `owner_member_id` untuk audit dan pengalaman multi-member
 - Mendukung **shared access** untuk akun dan budget
 - Mengizinkan member biasa CRUD account/budget **private miliknya sendiri** tanpa menyentuh struktur shared
@@ -39,6 +43,7 @@ Fokus implementasi saat ini:
 | Account | `project/app/Models/TenantBankAccount.php` | Menyimpan saldo dan akses akun |
 | Budget | `project/app/Models/TenantBudget.php` | Menyimpan pagu budget periodik |
 | Budget Line | `project/app/Models/TenantBudgetLine.php` | Ledger pemakaian budget |
+| Pocket | `project/app/Models/FinancePocket.php` | Menyimpan dompet virtual berbasis tujuan di atas akun riil |
 | Access Service | `project/app/Services/FinanceAccessService.php` | Scope akun, budget, dan transaksi per member |
 | Ledger Service | `project/app/Services/FinanceLedgerService.php` | Update saldo akun dan ledger terkait |
 | Summary Service | `project/app/Services/FinanceSummaryService.php` | Agregasi summary + pengecualian transfer internal |
@@ -52,6 +57,7 @@ Fokus implementasi saat ini:
   - mempertahankan `code` lama bila budget existing diedit tanpa mengubah kode
 - `TenantBankAccount` **tidak memiliki field `code`**
 - account diidentifikasi lewat kombinasi `name`, `type`, `currency_code`, `scope`, dan `owner_member_id`
+- `FinancePocket.reference_code` dipakai sebagai identifier virtual ringan untuk UI pocket
 
 ### Prinsip multi-tenant dan multi-member
 
@@ -81,6 +87,7 @@ Fokus implementasi saat ini:
   - `source_type`
   - `source_id`
   - `bank_account_id`
+  - `pocket_id`
   - `budget_id`
   - `owner_member_id`
   - `budget_status`
@@ -125,6 +132,10 @@ $table->string('source_id', 100);
 | `POST` | `/api/v1/tenants/{tenant}/finance/whatsapp-intents/{token}/submitted` | Finalisasi draft WhatsApp yang sudah disimpan dari PWA |
 | `GET` | `/api/v1/tenants/{tenant}/finance/whatsapp-media/{media}/preview` | Preview lampiran WhatsApp untuk draft intent |
 | `GET` | `/api/v1/tenants/{tenant}/finance/accounts` | List akun yang boleh diakses member |
+| `GET` | `/api/v1/tenants/{tenant}/wallet/pockets` | List pocket yang boleh diakses member |
+| `POST` | `/api/v1/tenants/{tenant}/wallet/pockets` | Create pocket |
+| `PATCH` | `/api/v1/tenants/{tenant}/wallet/pockets/{pocket}` | Update pocket |
+| `DELETE` | `/api/v1/tenants/{tenant}/wallet/pockets/{pocket}` | Delete pocket |
 | `POST` | `/api/v1/tenants/{tenant}/finance/accounts` | Create account |
 | `PATCH` | `/api/v1/tenants/{tenant}/finance/accounts/{account}` | Update account |
 | `DELETE` | `/api/v1/tenants/{tenant}/finance/accounts/{account}` | Delete account |
@@ -158,6 +169,7 @@ Aturan penting:
 ### Pola UX
 
 - `/finance` berdiri sebagai **PWA Module** yang dibuka dari `Hub`
+- `/wallet` berdiri sebagai **PWA Module** terpisah untuk mengelola pocket
 - top bar finance ringkas dan khusus modul
 - grouped transaction list per tanggal
 - item bulk dengan `source_type = finance_bulk` dan `source_id` sama diringkas jadi satu row grup
@@ -168,6 +180,7 @@ Aturan penting:
 - form budget disederhanakan:
   - user hanya mengisi field penting seperti `name`, `period`, `allocated_amount`, `scope`, dan `owner`
   - `code` budget menjadi concern backend, bukan field form utama
+- form transaksi normal sekarang memilih `pocket`; akun riil tampil sebagai sumber dana turunan
 
 ### Attachment & Bulk UX
 
@@ -175,11 +188,18 @@ Aturan penting:
 - gambar upload dioptimalkan ke `WebP` pada backend
 - draft WhatsApp dapat membawa banyak media (`media_items`)
 - lampiran WhatsApp yang ikut draft akan ditempel ke transaksi saat draft disubmit
+- media draft WhatsApp sementara disimpan di `storage/app/tenants/{tenant_id}/whatsapp/drafts/{Y}/{m}/...`
+- attachment final finance disimpan di:
+  - `storage/app/tenants/{tenant_id}/finance/attachments/transactions/{transaction_id}/...` untuk transaksi single/manual
+  - `storage/app/tenants/{tenant_id}/finance/attachments/groups/{source_id}/{media_id}.webp` untuk file bersama grup bulk WhatsApp
+- submit draft WhatsApp sekarang mengembalikan transaksi final yang sudah ditempeli attachment, sehingga preview detail tidak bergantung pada refresh manual
+- bulk attachment WhatsApp memakai satu file fisik bersama per `source_id`, lalu direferensikan oleh tiap item transaksi dalam grup
+- cleanup media draft dijalankan oleh command terjadwal `whatsapp:draft-media:cleanup`
 - bulk entry PWA punya modal khusus `Bulk Entry` dengan tombol `Tambah Item`
 - row grup bulk di list utama mendukung:
   - expand/collapse
   - tambah item ke grup
-  - hapus item langsung dari daftar expand
+  - hapus grup sekaligus
 - detail transaksi sekarang mendukung:
   - duplicate transaksi
   - info `Bagian dari grup`

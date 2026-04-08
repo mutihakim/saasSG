@@ -2,30 +2,9 @@ import { Head } from '@inertiajs/react';
 import React from 'react';
 
 import FinanceIndex from './Index';
+import { FinancePageProps } from './types';
 
-interface Props {
-    categories: any[];
-    currencies: any[];
-    defaultCurrency: string;
-    paymentMethods: any[];
-    members: any[];
-    accounts: any[];
-    budgets: any[];
-    activeMemberId?: number | null;
-    permissions: {
-        create: boolean;
-        update: boolean;
-        delete: boolean;
-        manageShared: boolean;
-        managePrivateStructures: boolean;
-    };
-    limits: {
-        accounts: { current: number; limit: number | null };
-        budgets: { current: number; limit: number | null };
-    };
-}
-
-const FinancePage: React.FC<Props> = (props) => {
+const FinancePage: React.FC<FinancePageProps> = (props) => {
     return (
         <>
             <Head title="Finance" />

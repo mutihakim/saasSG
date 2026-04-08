@@ -15,6 +15,7 @@ import enTenantMembers from "./locales/en/tenant/members.json";
 import enTenantRoles from "./locales/en/tenant/roles.json";
 import enTenantSettings from "./locales/en/tenant/settings.json";
 import enTenantShared from "./locales/en/tenant/shared.json";
+import enTenantWallet from "./locales/en/tenant/wallet.json";
 import enTenantWhatsapp from "./locales/en/tenant/whatsapp.json";
 import idAdmin from "./locales/id/admin.json";
 import idAuth from "./locales/id/auth.json";
@@ -29,6 +30,7 @@ import idTenantMembers from "./locales/id/tenant/members.json";
 import idTenantRoles from "./locales/id/tenant/roles.json";
 import idTenantSettings from "./locales/id/tenant/settings.json";
 import idTenantShared from "./locales/id/tenant/shared.json";
+import idTenantWallet from "./locales/id/tenant/wallet.json";
 import idTenantWhatsapp from "./locales/id/tenant/whatsapp.json";
 
 const resources = {
@@ -47,6 +49,7 @@ const resources = {
       ...enTenantSettings,
       ...enTenantWhatsapp,
       ...enTenantFinance,
+      ...enTenantWallet,
       ...enTenantMaster,
     },
   },
@@ -65,6 +68,7 @@ const resources = {
       ...idTenantSettings,
       ...idTenantWhatsapp,
       ...idTenantFinance,
+      ...idTenantWallet,
       ...idTenantMaster,
     },
   },

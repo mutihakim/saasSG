@@ -7,6 +7,8 @@ use App\Models\Tenant;
 use App\Models\TenantBankAccount;
 use App\Models\TenantMember;
 use App\Services\FinanceAccessService;
+use App\Services\WalletCashflowService;
+use App\Services\WalletPocketService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -17,18 +19,24 @@ class FinanceAccountApiController extends Controller
     public function __construct(
         private readonly FinanceAccessService $access,
         private readonly SubscriptionEntitlements $entitlements,
+        private readonly WalletPocketService $pockets,
+        private readonly WalletCashflowService $cashflow,
     ) {}
 
     public function index(Request $request, Tenant $tenant): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('finance.view'), 403);
+        $requiredPermission = str_starts_with($request->path(), 'api/v1/tenants/') && str_contains($request->path(), '/wallet/')
+            ? 'wallet.view'
+            : 'finance.view';
+        abort_unless($request->user()?->hasPermissionTo($requiredPermission), 403);
 
         $accounts = $this->access->accessibleAccountsQuery($tenant, $member)
             ->when($request->boolean('active_only', true), fn ($query) => $query->active())
             ->orderBy('scope')
             ->orderBy('name')
             ->get();
+        $accounts = $this->cashflow->enrichAccounts($tenant, $member, $accounts);
 
         return response()->json(['ok' => true, 'data' => ['accounts' => $accounts]]);
     }
@@ -36,7 +44,10 @@ class FinanceAccountApiController extends Controller
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('finance.create'), 403);
+        $requiredPermission = str_starts_with($request->path(), 'api/v1/tenants/') && str_contains($request->path(), '/wallet/')
+            ? 'wallet.create'
+            : 'finance.create';
+        abort_unless($request->user()?->hasPermissionTo($requiredPermission), 403);
         abort_unless($this->access->canCreatePrivateStructures($member), 403);
 
         $limit = $this->entitlements->limit($tenant, 'finance.accounts.max') ?? -1;
@@ -82,6 +93,14 @@ class FinanceAccountApiController extends Controller
             $data['member_access_ids'] = [];
         }
 
+        $openingBalance = (float) ($data['opening_balance'] ?? 0);
+        if (! $this->isLiabilityType($data['type']) && $openingBalance < 0) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Opening balance akun non-liability tidak boleh negatif.',
+            ], 422);
+        }
+
         $account = TenantBankAccount::create([
             'tenant_id' => $tenant->id,
             'owner_member_id' => $data['owner_member_id'] ?? null,
@@ -89,14 +108,15 @@ class FinanceAccountApiController extends Controller
             'scope' => $data['scope'],
             'type' => $data['type'],
             'currency_code' => $data['currency_code'],
-            'opening_balance' => $data['opening_balance'] ?? 0,
-            'current_balance' => $data['opening_balance'] ?? 0,
+            'opening_balance' => $openingBalance,
+            'current_balance' => $openingBalance,
             'notes' => $data['notes'] ?? null,
             'is_active' => $data['is_active'] ?? true,
             'row_version' => 1,
         ]);
 
         $this->syncAccess($account, $tenant, $data['member_access_ids'] ?? [], $member?->id);
+        $this->pockets->ensureMainPocket($account);
 
         return response()->json([
             'ok' => true,
@@ -107,7 +127,10 @@ class FinanceAccountApiController extends Controller
     public function update(Request $request, Tenant $tenant, TenantBankAccount $account): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('finance.update'), 403);
+        $requiredPermission = str_starts_with($request->path(), 'api/v1/tenants/') && str_contains($request->path(), '/wallet/')
+            ? 'wallet.update'
+            : 'finance.update';
+        abort_unless($request->user()?->hasPermissionTo($requiredPermission), 403);
         abort_if((int) $account->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->access->canManageAccount($account, $member), 403);
 
@@ -125,6 +148,7 @@ class FinanceAccountApiController extends Controller
                 'nullable',
                 Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id),
             ],
+            'opening_balance' => ['nullable', 'numeric', 'min:-999999999.99', 'max:999999999.99'],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['nullable', 'boolean'],
             'member_access_ids' => ['nullable', 'array'],
@@ -150,18 +174,51 @@ class FinanceAccountApiController extends Controller
             ], 409);
         }
 
+        if ($account->transactions()->exists()) {
+            if (($data['type'] ?? $account->type) !== $account->type) {
+                return response()->json([
+                    'ok' => false,
+                    'error_code' => 'ACCOUNT_TYPE_LOCKED',
+                    'message' => 'Tipe akun tidak dapat diubah setelah akun memiliki histori transaksi.',
+                ], 422);
+            }
+
+            if (array_key_exists('currency_code', $data) && $data['currency_code'] !== $account->currency_code) {
+                return response()->json([
+                    'ok' => false,
+                    'error_code' => 'ACCOUNT_CURRENCY_LOCKED',
+                    'message' => 'Mata uang akun tidak dapat diubah setelah akun memiliki histori transaksi.',
+                ], 422);
+            }
+        }
+
+        $previousOpeningBalance = (float) $account->opening_balance;
+        $nextOpeningBalance = array_key_exists('opening_balance', $data)
+            ? (float) ($data['opening_balance'] ?? 0)
+            : $previousOpeningBalance;
+
+        if (! $this->isLiabilityType($data['type']) && $nextOpeningBalance < 0) {
+            return response()->json([
+                'ok' => false,
+                'message' => 'Opening balance akun non-liability tidak boleh negatif.',
+            ], 422);
+        }
+
         $account->update([
             'owner_member_id' => $data['owner_member_id'] ?? null,
             'name' => $data['name'],
             'scope' => $data['scope'],
             'type' => $data['type'],
             'currency_code' => $data['currency_code'],
+            'opening_balance' => $nextOpeningBalance,
             'notes' => $data['notes'] ?? null,
             'is_active' => $data['is_active'] ?? $account->is_active,
             'row_version' => $account->row_version + 1,
         ]);
 
         $this->syncAccess($account, $tenant, $data['member_access_ids'] ?? [], $member?->id);
+        $this->pockets->ensureMainPocket($account);
+        $this->pockets->applyOpeningBalanceDelta($account, round($nextOpeningBalance - $previousOpeningBalance, 2));
 
         return response()->json([
             'ok' => true,
@@ -172,7 +229,10 @@ class FinanceAccountApiController extends Controller
     public function destroy(Request $request, Tenant $tenant, TenantBankAccount $account): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('finance.delete'), 403);
+        $requiredPermission = str_starts_with($request->path(), 'api/v1/tenants/') && str_contains($request->path(), '/wallet/')
+            ? 'wallet.delete'
+            : 'finance.delete';
+        abort_unless($request->user()?->hasPermissionTo($requiredPermission), 403);
         abort_if((int) $account->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->access->canManageAccount($account, $member), 403);
 
@@ -211,5 +271,10 @@ class FinanceAccountApiController extends Controller
             ->all();
 
         $account->memberAccess()->sync(array_intersect_key($sync, array_flip($validIds)));
+    }
+
+    private function isLiabilityType(?string $accountType): bool
+    {
+        return in_array($accountType, ['credit_card', 'paylater'], true);
     }
 }

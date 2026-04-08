@@ -51,7 +51,10 @@ Aplikasi SaaS ini **meninggalkan proses HTTP polling usang** dan beralih ke rute
 ### 7. Finance Draft Media & LID Compatibility
 * Finance intent WhatsApp sekarang mendukung draft dengan banyak media.
 * Jika user mengirim gambar setelah `/tx` atau `/bulk`, media tersebut akan ditempel ke intent aktif/terbaru selama draft belum disubmit.
-* Saat draft disubmit dari PWA, media WhatsApp otomatis disalin menjadi attachment transaksi finance.
+* Saat draft disubmit dari PWA, media WhatsApp otomatis disalin menjadi attachment transaksi finance dan response submit mengembalikan transaksi final yang sudah membawa preview attachment.
+* File draft sementara disimpan di `storage/app/tenants/{tenant_id}/whatsapp/drafts/{Y}/{m}/...`.
+* Untuk bulk finance, satu media WhatsApp disimpan sebagai satu file fisik bersama per grup (`source_id`) agar tidak menduplikasi file yang sama ke setiap item.
+* Media draft yang sudah expired atau sudah dikonsumsi final akan dibersihkan otomatis oleh scheduler `whatsapp:draft-media:cleanup`.
 * JID modern seperti `digits@lid` dan `digits@lid.us` sekarang diterima di jalur auto command dan sinkronisasi finance intent, agar chat dari akun non-`@c.us` tidak lepas dari alur bot.
 
 ## Keamanan Otentikasi Channel

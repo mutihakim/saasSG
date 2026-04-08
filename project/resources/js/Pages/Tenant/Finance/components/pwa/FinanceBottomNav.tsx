@@ -16,9 +16,9 @@ const FinanceBottomNav = ({ activeTab, onChangeTab }: FinanceBottomNavProps) => 
             <div className="bg-white border rounded-pill shadow-sm px-2 py-2 d-flex justify-content-between align-items-center">
                 {[
                     { key: "transactions", icon: "ri-exchange-dollar-line", label: t("finance.pwa.tabs.transactions") },
+                    { key: "budget", icon: "ri-wallet-3-line", label: t("finance.pwa.tabs.budget") },
                     { key: "stats", icon: "ri-bar-chart-box-line", label: t("finance.pwa.tabs.stats") },
-                    { key: "accounts", icon: "ri-bank-card-line", label: t("finance.pwa.tabs.accounts") },
-                    { key: "more", icon: "ri-more-2-line", label: t("finance.pwa.tabs.more") },
+                    { key: "report", icon: "ri-file-chart-line", label: t("finance.pwa.tabs.report") },
                 ].map((item) => (
                     <button
                         key={item.key}

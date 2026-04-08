@@ -1,13 +1,14 @@
-export type MainTab = "transactions" | "stats" | "accounts" | "more";
+export type MainTab = "transactions" | "budget" | "stats" | "report";
 export type MoreView = "menu" | "budgets" | "reports";
 export type TransactionType = "pemasukan" | "pengeluaran" | "transfer";
 export type TransactionKind = "all" | "external" | "internal_transfer";
-export type QuickType = "all" | "pemasukan" | "pengeluaran";
 
 export type FinanceFilters = {
     search: string;
     owner_member_id: string;
     bank_account_id: string;
+    pocket_id: string;
+    type: "" | TransactionType;
     category_id: string;
     transaction_kind: TransactionKind;
     month: string;

@@ -107,6 +107,7 @@ const CategoryModal = ({
 
   const [formData, setFormData] = useState({
     name: "",
+    description: "",
     module: module,
     sub_type: "pengeluaran",
     parent_id: "" as string | number,
@@ -122,6 +123,7 @@ const CategoryModal = ({
     if (category) {
       setFormData({
         name: category.name || "",
+        description: category.description || "",
         module: category.module || module,
         sub_type: category.sub_type || "pengeluaran",
         parent_id: category.parent_id || "",
@@ -133,6 +135,7 @@ const CategoryModal = ({
     } else {
       setFormData({
         name: "",
+        description: "",
         module,
         sub_type: module === 'finance' ? 'pengeluaran' : '',
         parent_id: "",
@@ -198,6 +201,19 @@ const CategoryModal = ({
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                />
+              </Form.Group>
+            </Col>
+
+            <Col lg={12}>
+              <Form.Group className="mb-3">
+                <Form.Label>{t("master.categories.fields.description")}</Form.Label>
+                <Form.Control
+                  as="textarea"
+                  rows={3}
+                  placeholder={t("master.categories.placeholders.description")}
+                  value={formData.description}
+                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                 />
               </Form.Group>
             </Col>

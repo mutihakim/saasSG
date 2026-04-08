@@ -21,6 +21,19 @@ Dokumen ini memetakan halaman UI ke route dan backend contract untuk mempercepat
 | Billing | `Tenant/Settings/Billing` | `https://{tenant}.appsah.my.id/settings/billing` | `tenant.initialize`, `tenant.access`, `permission.team`, controller permission check |
 | Upgrade Required | `Tenant/UpgradeRequired` | `https://{tenant}.appsah.my.id/upgrade-required` | redirect dari `tenant.feature` |
 
+## Member Hub Area
+
+| UI Page | Inertia Page | Web Route | Guard Kunci |
+|---|---|---|---|
+| Finance PWA | `Tenant/Finance/Page` | `https://{tenant}.appsah.my.id/finance` | `tenant.feature:finance,view` |
+| Wallet PWA | `Tenant/Wallet/Page` | `https://{tenant}.appsah.my.id/wallet` | `tenant.feature:wallet,view` |
+
+Wallet UX contract:
+
+1. `/wallet` dipakai sebagai shell mobile-first untuk `Beranda`, `Akun & Wallet`, `Wishes`, dan `Goals`.
+2. Halaman wallet memakai sticky topbar, FAB, dan sticky bottom navbar yang mengikuti pola Finance PWA.
+3. Tiap account selalu memiliki satu Main Wallet sistem; wallet tambahan mengikuti quota subscription.
+
 ## Admin Area
 
 | UI Page | Inertia Page | Route | Guard |

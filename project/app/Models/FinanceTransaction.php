@@ -25,7 +25,7 @@ class FinanceTransaction extends Model
         'exchange_rate', 'base_currency_code', 'amount_base',
         'notes', 'payment_method', 'reference_number',
         'merchant_name', 'location', 'status', 'row_version',
-        'source_type', 'source_id', 'budget_id', 'bank_account_id',
+        'source_type', 'source_id', 'budget_id', 'bank_account_id', 'pocket_id',
         'budget_status', 'budget_delta',
         'is_internal_transfer', 'transfer_direction', 'transfer_pair_id',
     ];
@@ -179,6 +179,11 @@ class FinanceTransaction extends Model
     public function budget(): BelongsTo
     {
         return $this->belongsTo(TenantBudget::class, 'budget_id');
+    }
+
+    public function pocket(): BelongsTo
+    {
+        return $this->belongsTo(FinancePocket::class, 'pocket_id');
     }
 
     // Accessors

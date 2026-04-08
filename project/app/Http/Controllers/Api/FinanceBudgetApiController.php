@@ -3,10 +3,12 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\FinancePocket;
 use App\Models\Tenant;
 use App\Models\TenantBudget;
 use App\Models\TenantMember;
 use App\Services\FinanceAccessService;
+use App\Services\MonthlyReviewService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -18,6 +20,7 @@ class FinanceBudgetApiController extends Controller
     public function __construct(
         private readonly FinanceAccessService $access,
         private readonly SubscriptionEntitlements $entitlements,
+        private readonly MonthlyReviewService $monthlyReview,
     ) {}
 
     public function index(Request $request, Tenant $tenant): JsonResponse
@@ -62,6 +65,7 @@ class FinanceBudgetApiController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'code' => ['nullable', 'string', 'max:50'],
+            'budget_key' => ['nullable', 'string', 'max:120'],
             'scope' => ['required', Rule::in(['private', 'shared'])],
             'period_month' => ['required', 'date_format:Y-m'],
             'allocated_amount' => ['required', 'numeric', 'min:0', 'max:999999999.99'],
@@ -69,11 +73,31 @@ class FinanceBudgetApiController extends Controller
                 'nullable',
                 Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id),
             ],
+            'pocket_id' => ['nullable', 'string', 'size:26', Rule::exists('finance_pockets', 'id')->where('tenant_id', $tenant->id)],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['nullable', 'boolean'],
             'member_access_ids' => ['nullable', 'array'],
             'member_access_ids.*' => [Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id)],
         ]);
+
+        if ($this->monthlyReview->isPlanningBlockedForPeriod($tenant, $data['period_month'])) {
+            return response()->json([
+                'ok' => false,
+                'error_code' => 'MONTHLY_REVIEW_REQUIRED',
+                'message' => $this->monthlyReview->planningBlockedMessage($tenant),
+            ], 422);
+        }
+
+        $pocket = null;
+        if (! empty($data['pocket_id'])) {
+            $pocket = $this->access->usablePocketsQuery($tenant, $member)
+                ->whereKey($data['pocket_id'])
+                ->first();
+
+            if (! $pocket) {
+                return response()->json(['ok' => false, 'message' => 'Wallet budget tidak ditemukan atau tidak bisa diakses.'], 422);
+            }
+        }
 
         if (! $this->access->isPrivileged($member)) {
             $data['scope'] = 'private';
@@ -84,6 +108,7 @@ class FinanceBudgetApiController extends Controller
         $budget = TenantBudget::create([
             'tenant_id' => $tenant->id,
             'owner_member_id' => $data['owner_member_id'] ?? null,
+            'pocket_id' => $pocket?->id,
             'name' => $data['name'],
             'code' => $this->resolveBudgetCode(
                 tenant: $tenant,
@@ -91,6 +116,7 @@ class FinanceBudgetApiController extends Controller
                 name: $data['name'],
                 periodMonth: $data['period_month'],
             ),
+            'budget_key' => $this->resolveBudgetKey($data['budget_key'] ?? null, $data['code'] ?? null, $data['name']),
             'scope' => $data['scope'],
             'period_month' => $data['period_month'],
             'allocated_amount' => $data['allocated_amount'],
@@ -105,7 +131,7 @@ class FinanceBudgetApiController extends Controller
 
         return response()->json([
             'ok' => true,
-            'data' => ['budget' => $budget->load(['ownerMember:id,full_name', 'memberAccess:id,full_name'])],
+            'data' => ['budget' => $budget->load(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'pocket:id,name,real_account_id'])],
         ], 201);
     }
 
@@ -119,6 +145,7 @@ class FinanceBudgetApiController extends Controller
         $data = $request->validate([
             'name' => ['required', 'string', 'max:100'],
             'code' => ['nullable', 'string', 'max:50'],
+            'budget_key' => ['nullable', 'string', 'max:120'],
             'scope' => ['required', Rule::in(['private', 'shared'])],
             'period_month' => ['required', 'date_format:Y-m'],
             'allocated_amount' => ['required', 'numeric', 'min:0', 'max:999999999.99'],
@@ -126,12 +153,21 @@ class FinanceBudgetApiController extends Controller
                 'nullable',
                 Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id),
             ],
+            'pocket_id' => ['nullable', 'string', 'size:26', Rule::exists('finance_pockets', 'id')->where('tenant_id', $tenant->id)],
             'notes' => ['nullable', 'string', 'max:2000'],
             'is_active' => ['nullable', 'boolean'],
             'member_access_ids' => ['nullable', 'array'],
             'member_access_ids.*' => [Rule::exists('tenant_members', 'id')->where('tenant_id', $tenant->id)],
             'row_version' => ['required', 'integer', 'min:1'],
         ]);
+
+        if ($this->monthlyReview->isPlanningBlockedForPeriod($tenant, $data['period_month'])) {
+            return response()->json([
+                'ok' => false,
+                'error_code' => 'MONTHLY_REVIEW_REQUIRED',
+                'message' => $this->monthlyReview->planningBlockedMessage($tenant),
+            ], 422);
+        }
 
         if (! $this->access->isPrivileged($member)) {
             if ($budget->scope !== 'private' || (string) $budget->owner_member_id !== (string) $member?->id) {
@@ -151,8 +187,20 @@ class FinanceBudgetApiController extends Controller
             ], 409);
         }
 
+        $pocket = null;
+        if (! empty($data['pocket_id'])) {
+            $pocket = $this->access->usablePocketsQuery($tenant, $member)
+                ->whereKey($data['pocket_id'])
+                ->first();
+
+            if (! $pocket) {
+                return response()->json(['ok' => false, 'message' => 'Wallet budget tidak ditemukan atau tidak bisa diakses.'], 422);
+            }
+        }
+
         $budget->update([
             'owner_member_id' => $data['owner_member_id'] ?? null,
+            'pocket_id' => $pocket?->id,
             'name' => $data['name'],
             'code' => $this->resolveBudgetCode(
                 tenant: $tenant,
@@ -162,6 +210,7 @@ class FinanceBudgetApiController extends Controller
                 currentBudgetId: $budget->id,
                 existingCode: $budget->code,
             ),
+            'budget_key' => $this->resolveBudgetKey($data['budget_key'] ?? null, $data['code'] ?? null, $data['name']),
             'scope' => $data['scope'],
             'period_month' => $data['period_month'],
             'allocated_amount' => $data['allocated_amount'],
@@ -175,7 +224,7 @@ class FinanceBudgetApiController extends Controller
 
         return response()->json([
             'ok' => true,
-            'data' => ['budget' => $budget->fresh(['ownerMember:id,full_name', 'memberAccess:id,full_name'])],
+            'data' => ['budget' => $budget->fresh(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'pocket:id,name,real_account_id'])],
         ]);
     }
 
@@ -193,6 +242,19 @@ class FinanceBudgetApiController extends Controller
                 'message' => 'Budget masih dipakai transaksi dan tidak dapat dihapus.',
             ], 422);
         }
+
+        FinancePocket::query()
+            ->where('tenant_id', $tenant->id)
+            ->where(function ($query) use ($budget): void {
+                $query
+                    ->where('default_budget_id', $budget->id)
+                    ->orWhere('default_budget_key', $budget->budget_key);
+            })
+            ->update([
+                'default_budget_id' => null,
+                'default_budget_key' => null,
+                'budget_lock_enabled' => false,
+            ]);
 
         $budget->delete();
 
@@ -263,5 +325,16 @@ class FinanceBudgetApiController extends Controller
             ->where('code', $code)
             ->when($ignoreBudgetId, fn ($query) => $query->whereKeyNot($ignoreBudgetId))
             ->exists();
+    }
+
+    private function resolveBudgetKey(?string $providedKey, ?string $code, string $name): string
+    {
+        $candidate = Str::of((string) ($providedKey ?: $code ?: $name))
+            ->lower()
+            ->replaceMatches('/[^a-z0-9]+/', '_')
+            ->trim('_')
+            ->value();
+
+        return $candidate !== '' ? $candidate : 'budget';
     }
 }

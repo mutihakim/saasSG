@@ -11,11 +11,13 @@ class TenantMasterDataSeeder extends Seeder
         $this->call([
             TenantCurrencySeeder::class,
             TenantUomSeeder::class,
-            TenantCategorySeeder::class,
-            TenantTagSeeder::class,
-            TenantBankAccountSeeder::class,
-            TenantBudgetSeeder::class,
-            FinanceTransactionSeeder::class,
+            TenantFinanceCategorySeeder::class,
+            TenantFinanceTagSeeder::class,
+            TenantFinanceAccountSeeder::class,
+            TenantFinancePocketSeeder::class,
+            TenantFinanceBudgetSeeder::class,
+            TenantFinancePlanningSeeder::class,
+            TenantFinanceDemoSeeder::class,
         ]);
     }
 }

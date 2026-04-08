@@ -41,7 +41,7 @@ class MasterCategoryApiController extends Controller
 
         return response()->json([
             'ok'   => true,
-            'data' => ['categories' => $query->get(['id', 'name', 'sub_type', 'icon', 'color', 'is_default', 'is_active', 'module', 'parent_id', 'row_version'])],
+            'data' => ['categories' => $query->get(['id', 'name', 'description', 'sub_type', 'icon', 'color', 'is_default', 'is_active', 'module', 'parent_id', 'row_version'])],
         ]);
     }
 
@@ -49,6 +49,24 @@ class MasterCategoryApiController extends Controller
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
         $this->authorize('create', TenantCategory::class);
+
+        $limit = $this->entitlements->limit($tenant, 'master.categories.max');
+        if ($limit !== null && $limit !== -1) {
+            $current = TenantCategory::query()
+                ->where('tenant_id', $tenant->id)
+                ->where('is_default', false)
+                ->whereNull('deleted_at')
+                ->count();
+
+            if ($current >= $limit) {
+                return response()->json([
+                    'ok' => false,
+                    'error_code' => 'PLAN_QUOTA_EXCEEDED',
+                    'limit_key' => 'master.categories.max',
+                    'message' => "Batas {$limit} kategori master tercapai. Upgrade plan untuk menambah kategori.",
+                ], 422);
+            }
+        }
 
         $data = $request->validate([
             'name'       => [
@@ -66,6 +84,7 @@ class MasterCategoryApiController extends Controller
             'module'     => ['required', 'string', 'max:50'],
             'parent_id'  => ['nullable', 'integer'],
             'sub_type'   => ['nullable', 'string', 'max:50'],
+            'description' => ['nullable', 'string'],
             'icon'       => ['nullable', 'string', 'max:60'],
             'color'      => ['nullable', 'string', 'max:30'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
@@ -77,6 +96,7 @@ class MasterCategoryApiController extends Controller
             'sub_type'   => $data['sub_type'] ?? null,
             'parent_id'  => $data['parent_id'] ?? null,
             'name'       => $data['name'],
+            'description' => $data['description'] ?? null,
             'icon'       => $data['icon'] ?? 'ri-price-tag-3-line',
             'color'      => $data['color'] ?? '#95A5A6',
             'is_default' => false,
@@ -116,6 +136,7 @@ class MasterCategoryApiController extends Controller
             ],
             'parent_id'  => ['nullable', 'integer'],
             'sub_type'   => ['nullable', 'string', 'max:50'],
+            'description' => ['nullable', 'string'],
             'icon'       => ['nullable', 'string', 'max:60'],
             'color'      => ['nullable', 'string', 'max:30'],
             'sort_order' => ['nullable', 'integer', 'min:0'],
@@ -127,6 +148,7 @@ class MasterCategoryApiController extends Controller
             'name'       => $data['name'],
             'sub_type'   => $data['sub_type'] ?? $category->sub_type,
             'parent_id'  => array_key_exists('parent_id', $data) ? $data['parent_id'] : $category->parent_id,
+            'description' => array_key_exists('description', $data) ? $data['description'] : $category->description,
             'icon'       => $data['icon'] ?? $category->icon,
             'color'      => $data['color'] ?? $category->color,
             'sort_order' => $data['sort_order'] ?? $category->sort_order,

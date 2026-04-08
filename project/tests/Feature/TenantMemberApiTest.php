@@ -6,8 +6,10 @@ use App\Models\Tenant;
 use App\Models\TenantMember;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Artisan;
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class TenantMemberApiTest extends TestCase
@@ -148,5 +150,40 @@ class TenantMemberApiTest extends TestCase
             ->assertJsonPath('ok', false)
             ->assertJsonPath('error.code', 'VALIDATION_ERROR')
             ->assertJsonPath('error.details.fields.role_code.0', 'role code yang dipilih tidak valid.');
+    }
+
+    public function test_normalize_roles_command_syncs_effective_role_from_tenant_member_role_code(): void
+    {
+        [$tenant, $member, $user] = $this->seedMemberWithRole('member');
+
+        Role::query()->firstOrCreate([
+            'tenant_id' => $tenant->id,
+            'name' => 'parents',
+            'guard_name' => 'web',
+        ], [
+            'display_name' => 'Parents',
+            'is_system' => false,
+            'row_version' => 1,
+        ]);
+
+        $member->update([
+            'full_name' => 'Umma Muti',
+            'role_code' => 'parents',
+        ]);
+
+        app(PermissionRegistrar::class)->setPermissionsTeamId($tenant->id);
+        $user->syncRoles(['owner']);
+
+        $this->assertTrue($user->hasRole('owner'));
+
+        Artisan::call('tenant:members:normalize-roles', [
+            'tenant' => $tenant->slug,
+        ]);
+
+        app(PermissionRegistrar::class)->setPermissionsTeamId($tenant->id);
+        $user->refresh();
+
+        $this->assertTrue($user->hasRole('parents'));
+        $this->assertFalse($user->hasRole('owner'));
     }
 }

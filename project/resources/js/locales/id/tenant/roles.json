@@ -26,6 +26,7 @@
   "tenant.roles.actions.close": "Tutup",
   "tenant.roles.actions.save_permissions": "Simpan Permission",
   "tenant.roles.permissions_count": "permission",
+  "tenant.roles.member_breakdown": "{{linked}} terhubung, {{pending}} pending",
   "tenant.roles.people.single": "orang",
   "tenant.roles.people.plural": "orang",
   "tenant.roles.badge.default": "Default",

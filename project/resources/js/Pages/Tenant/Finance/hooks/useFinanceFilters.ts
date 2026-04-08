@@ -18,6 +18,8 @@ const buildInitialFilters = ({ activeMemberId, canManageShared }: UseFinanceFilt
     search: "",
     owner_member_id: canManageShared ? "" : String(activeMemberId ?? ""),
     bank_account_id: "",
+    pocket_id: "",
+    type: "",
     category_id: "",
     transaction_kind: "all",
     month: currentMonthValue(),
@@ -35,6 +37,8 @@ export const useFinanceFilters = ({ activeMemberId, canManageShared }: UseFinanc
             search: filters.search,
             owner_member_id: filters.owner_member_id,
             bank_account_id: filters.bank_account_id,
+            pocket_id: filters.pocket_id,
+            type: filters.type,
             category_id: filters.category_id,
             transaction_kind: filters.transaction_kind,
         };

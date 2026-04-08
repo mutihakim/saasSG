@@ -75,6 +75,18 @@ class TenantMember extends Model
             ->withTimestamps();
     }
 
+    public function ownedPockets(): HasMany
+    {
+        return $this->hasMany(FinancePocket::class, 'owner_member_id');
+    }
+
+    public function accessiblePockets(): BelongsToMany
+    {
+        return $this->belongsToMany(FinancePocket::class, 'finance_pocket_member_access', 'member_id', 'finance_pocket_id')
+            ->withPivot(['can_view', 'can_use', 'can_manage'])
+            ->withTimestamps();
+    }
+
     public function financeTransactions(): HasMany
     {
         return $this->hasMany(FinanceTransaction::class, 'owner_member_id');

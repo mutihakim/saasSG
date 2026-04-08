@@ -1,7 +1,7 @@
 # Progress - Finance
 
 Status: `In Progress`  
-Last updated: `2026-04-05`  
+Last updated: `2026-04-06`  
 Owner: `Finance Team`
 
 ## Tujuan Modul
@@ -31,12 +31,16 @@ Menjadikan Finance sebagai modul cashflow tenant yang:
 - auto-mapping kategori tenant mulai didukung secara strict lewat AI `category_id` yang divalidasi ke kategori finance tenant, khusus flow natural language
 - debug payload AI untuk `/tx` dan `/bulk` sekarang disimpan ke intent agar hasil mapping bisa diaudit
 - attachment transaksi finance sekarang aktif untuk upload PWA dan media hasil draft WhatsApp
+- pocket / wallet tenant mulai aktif sebagai lapisan virtual di atas akun riil
+- `/wallet` sekarang dipakai ulang sebagai Wallet PWA untuk pocket management
+- transaksi normal di Finance mulai menerima `pocket_id` dengan fallback kompatibilitas ke `bank_account_id`
 - preview lampiran finance dan WhatsApp sekarang memakai streamed response agar tidak error 500 pada PWA
 - bulk entry sekarang tersedia juga dari PWA, bukan hanya dari WhatsApp
 - transaksi bulk sekarang diringkas sebagai grup berdasarkan `source_type/source_id`
 - detail transaksi sekarang mendukung duplicate, indikator grup, dan add item ke grup
 - item bulk sekarang bisa ditambah atau dihapus langsung dari grouped list
 - upload gambar attachment sekarang dioptimalkan ke WebP pada backend
+- Wallet PWA v1 sudah tersedia untuk CRUD pocket dan template cepat
 - struktur frontend sudah mulai mengikuti pola:
   - `Page.tsx`
   - `Index.tsx`
@@ -110,6 +114,7 @@ Area perubahan utama yang terlihat dari worktree saat ini:
 - [x] Duplicate transaksi dari detail preview aktif
 - [x] Grouped bulk item mendukung add/delete item
 - [x] Preview lampiran finance dan WhatsApp tidak lagi full-buffer raw response
+- [x] Wallet/Pocket v1 terhubung ke akun riil dan tersedia di `/wallet`
 - [ ] Screenshot real device dan QA visual masih perlu dirapikan
 - [ ] Export/report advanced masih bisa diperdalam
 
@@ -123,9 +128,9 @@ Area perubahan utama yang terlihat dari worktree saat ini:
 
 ## Next Actions
 
-1. Tambahkan feature test untuk attachment finance dan grouped bulk lifecycle.
-2. Pecah sisa concern besar di `Finance/Index.tsx` jika modul makin bertambah.
-3. Tambahkan smoke test visual/manual checklist per device profile.
+1. Tambahkan feature test khusus wallet/pocket CRUD dan integrasi transaksi berbasis pocket.
+2. Perluas wallet shared access agar member selector nyata ikut dipakai di UI v1.1.
+3. Tambahkan smoke test visual/manual checklist untuk `/wallet` dan form transaksi berbasis pocket.
 
 ## Referensi
 

@@ -31,6 +31,7 @@ const Hub: React.FC<Props> = ({ tenantName, member, demo: _demo }) => {
     const [isIosSafari, setIsIosSafari] = useState(false);
     const modules = [
         { label: 'Finance', desc: 'Cashflow, budget, transfer', icon: 'ri-wallet-3-line', tone: '#27c3d9', href: '/finance', enabled: entitlements.finance !== false },
+        { label: 'Wallet', desc: 'Pocket & goal-based money', icon: 'ri-safe-2-line', tone: '#21b7b3', href: '/wallet', enabled: entitlements.wallet !== false },
         { label: 'Calendar', desc: 'Agenda keluarga', icon: 'ri-calendar-event-line', tone: '#6f7cff', href: '/calendar', enabled: true },
         { label: 'Shopping', desc: 'Belanja & pantry', icon: 'ri-shopping-bag-3-line', tone: '#ff8a65', href: '/shopping', enabled: true },
         { label: 'Tasks', desc: 'Rutinitas harian', icon: 'ri-checkbox-circle-line', tone: '#5bc58f', href: '/tasks', enabled: true },

@@ -11,6 +11,7 @@ Berikut adalah modul-modul utama yang tersedia:
 - [💳 Subscription](./guide/subscription.md)
 - [💬 WhatsApp Integration](./guide/whatsapp.md)
 - [💸 Finance Module](./03-features/finance.md)
+- [👛 Wallet Module](./03-features/wallet.md)
 - [🎨 Velzon Navbar Reference](./reference/velzon-navbar-reference.md)
 - [📈 Progress Dashboard](./08-progress/index.md)
 

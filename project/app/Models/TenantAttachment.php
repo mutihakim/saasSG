@@ -17,6 +17,7 @@ class TenantAttachment extends Model
         'tenant_id', 'attachable_type', 'attachable_id',
         'file_name', 'file_path', 'mime_type', 'file_size',
         'label', 'sort_order', 'row_version',
+        'status', 'processing_error', 'processed_at',
     ];
 
     protected function casts(): array
@@ -25,6 +26,7 @@ class TenantAttachment extends Model
             'file_size'   => 'integer',
             'sort_order'  => 'integer',
             'row_version' => 'integer',
+            'processed_at' => 'datetime',
         ];
     }
 

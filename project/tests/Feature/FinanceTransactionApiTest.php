@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Jobs\ProcessFinanceAttachmentImage;
 use App\Models\FinanceTransaction;
 use App\Models\TenantCategory;
 use App\Models\TenantCurrency;
@@ -11,9 +12,16 @@ use App\Models\User;
 use App\Models\TenantMember;
 use App\Models\ActivityLog;
 use App\Models\TenantBankAccount;
+use App\Services\FinanceAttachmentService;
 use App\Services\FinanceAccessService;
+use App\Services\WalletPocketService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Queue;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
 use Tests\TestCase;
 
 class FinanceTransactionApiTest extends TestCase
@@ -26,6 +34,7 @@ class FinanceTransactionApiTest extends TestCase
     protected $ownerMembership;
     protected $memberMembership;
     protected $account;
+    protected $mainPocket;
 
     protected function setUp(): void
     {
@@ -37,6 +46,8 @@ class FinanceTransactionApiTest extends TestCase
         $this->tenant = Tenant::factory()->create([
             'slug'          => 'testfam',
             'owner_user_id' => $this->owner->id,
+            'plan_code'     => 'pro',
+            'currency_code' => 'IDR',
         ]);
         $this->member = User::factory()->create();
 
@@ -84,6 +95,15 @@ class FinanceTransactionApiTest extends TestCase
         $this->account->memberAccess()->syncWithoutDetaching([
             $this->ownerMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
         ]);
+
+        $this->mainPocket = app(WalletPocketService::class)->ensureMainPocket($this->account);
+
+        foreach (['finance.view', 'finance.create', 'finance.update', 'finance.delete'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        app(PermissionRegistrar::class)->setPermissionsTeamId($this->tenant->id);
+        $this->owner->givePermissionTo(['finance.view', 'finance.create', 'finance.update', 'finance.delete']);
     }
 
     public function test_can_list_transactions()
@@ -146,6 +166,124 @@ class FinanceTransactionApiTest extends TestCase
         ]);
     }
 
+    public function test_non_liability_transaction_rejects_when_wallet_balance_is_insufficient(): void
+    {
+        $category = TenantCategory::create([
+            'tenant_id'  => $this->tenant->id,
+            'module'     => 'finance',
+            'name'       => 'Food',
+            'slug'       => 'food',
+            'sub_type'   => 'pengeluaran',
+            'is_active'  => true,
+            'sort_order' => 1,
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/transactions", [
+                'type' => 'pengeluaran',
+                'amount' => 1500000,
+                'currency_code' => 'IDR',
+                'exchange_rate' => 1.0,
+                'category_id' => $category->id,
+                'transaction_date' => now()->toDateString(),
+                'bank_account_id' => $this->account->id,
+                'pocket_id' => $this->mainPocket->id,
+                'owner_member_id' => $this->ownerMembership->id,
+                'description' => 'Over limit expense',
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('message', 'Saldo wallet tidak cukup. Transfer dana ke wallet ini terlebih dahulu.');
+    }
+
+    public function test_liability_transaction_can_make_wallet_negative(): void
+    {
+        $category = TenantCategory::create([
+            'tenant_id'  => $this->tenant->id,
+            'module'     => 'finance',
+            'name'       => 'Gadget',
+            'slug'       => 'gadget',
+            'sub_type'   => 'pengeluaran',
+            'is_active'  => true,
+            'sort_order' => 1,
+        ]);
+
+        $liability = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Card',
+            'scope' => 'private',
+            'type' => 'credit_card',
+            'currency_code' => 'IDR',
+            'opening_balance' => 0,
+            'current_balance' => 0,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+        $liability->memberAccess()->syncWithoutDetaching([
+            $this->ownerMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
+        ]);
+        $liabilityPocket = app(WalletPocketService::class)->ensureMainPocket($liability);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/transactions", [
+                'type' => 'pengeluaran',
+                'amount' => 500000,
+                'currency_code' => 'IDR',
+                'exchange_rate' => 1.0,
+                'category_id' => $category->id,
+                'transaction_date' => now()->toDateString(),
+                'pocket_id' => $liabilityPocket->id,
+                'owner_member_id' => $this->ownerMembership->id,
+                'description' => 'Card purchase',
+            ]);
+
+        $response->assertCreated();
+        $this->assertSame(-500000.0, (float) $liability->fresh()->current_balance);
+        $this->assertSame(-500000.0, (float) $liabilityPocket->fresh()->current_balance);
+    }
+
+    public function test_transfer_can_target_other_members_wallet_in_same_tenant(): void
+    {
+        $memberAccount = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->memberMembership->id,
+            'name' => 'Member Cash',
+            'scope' => 'private',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 0,
+            'current_balance' => 0,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+        $memberAccount->memberAccess()->syncWithoutDetaching([
+            $this->memberMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
+        ]);
+        $memberPocket = app(WalletPocketService::class)->ensureMainPocket($memberAccount);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/transactions", [
+                'type' => 'transfer',
+                'transaction_date' => now()->toDateString(),
+                'amount' => 200000,
+                'currency_code' => 'IDR',
+                'exchange_rate' => 1,
+                'description' => 'Transfer lintas member',
+                'owner_member_id' => $this->ownerMembership->id,
+                'recipient_member_id' => $this->memberMembership->id,
+                'from_pocket_id' => $this->mainPocket->id,
+                'to_pocket_id' => $memberPocket->id,
+            ]);
+
+        $response->assertCreated();
+        $this->assertSame(800000.0, (float) $this->account->fresh()->current_balance);
+        $this->assertSame(200000.0, (float) $memberAccount->fresh()->current_balance);
+    }
+
     public function test_can_update_transaction()
     {
         $transaction = FinanceTransaction::factory()->create([
@@ -194,6 +332,57 @@ class FinanceTransactionApiTest extends TestCase
         ]);
     }
 
+    public function test_update_non_liability_transaction_rejects_when_wallet_balance_would_be_negative(): void
+    {
+        $category = TenantCategory::create([
+            'tenant_id' => $this->tenant->id,
+            'module' => 'finance',
+            'name' => 'Food',
+            'slug' => 'food',
+            'sub_type' => 'pengeluaran',
+            'is_active' => true,
+        ]);
+
+        $transaction = FinanceTransaction::create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'updated_by' => $this->ownerMembership->id,
+            'type' => 'pengeluaran',
+            'transaction_date' => now()->toDateString(),
+            'amount' => 200000,
+            'exchange_rate' => 1,
+            'amount_base' => 200000,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'category_id' => $category->id,
+            'bank_account_id' => $this->account->id,
+            'pocket_id' => $this->mainPocket->id,
+            'description' => 'Initial expense',
+            'status' => 'terverifikasi',
+            'row_version' => 1,
+        ]);
+
+        app(\App\Services\FinanceLedgerService::class)->syncAfterCreate($transaction);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}", [
+                'type' => 'pengeluaran',
+                'amount' => 1200000,
+                'currency_code' => 'IDR',
+                'exchange_rate' => 1.0,
+                'category_id' => $category->id,
+                'transaction_date' => now()->toDateString(),
+                'pocket_id' => $this->mainPocket->id,
+                'owner_member_id' => $this->ownerMembership->id,
+                'description' => 'Too large expense',
+                'row_version' => 1,
+            ]);
+
+        $response->assertStatus(422);
+        $response->assertJsonPath('message', 'Saldo akun tidak cukup untuk perubahan transaksi ini.');
+    }
+
     public function test_can_delete_transaction_and_log_activity()
     {
         $transaction = FinanceTransaction::factory()->create([
@@ -219,6 +408,15 @@ class FinanceTransactionApiTest extends TestCase
     {
         // Placeholder — quota enforcement tested via entitlements mock
         $this->assertTrue(true);
+    }
+
+    public function test_reports_reject_ranges_longer_than_366_days(): void
+    {
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/reports?date_from=2025-01-01&date_to=2026-02-01");
+
+        $response->assertStatus(422);
     }
 
     public function test_member_access_query_handles_shared_account_access_without_sql_error(): void
@@ -368,6 +566,279 @@ class FinanceTransactionApiTest extends TestCase
         $response->assertStreamed();
         $response->assertHeader('Content-Type', 'image/jpeg');
         $response->assertStreamedContent('legacy-image');
+    }
+
+    public function test_can_preview_attachment_with_stale_path_when_basename_matches_final_path(): void
+    {
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $path = sprintf('tenants/%d/finance/attachments/transactions/%s/receipt.webp', $this->tenant->id, $transaction->id);
+        Storage::put($path, 'final-image');
+
+        $attachment = TenantAttachment::create([
+            'tenant_id' => $this->tenant->id,
+            'attachable_type' => 'finance_transaction',
+            'attachable_id' => (string) $transaction->id,
+            'file_name' => 'receipt.webp',
+            'file_path' => 'stale/path/receipt.webp',
+            'mime_type' => 'image/webp',
+            'file_size' => strlen('final-image'),
+            'sort_order' => 1,
+            'row_version' => 1,
+            'status' => 'ready',
+            'processed_at' => now(),
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->get("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}/attachments/{$attachment->id}/preview");
+
+        $response->assertOk();
+        $response->assertStreamed();
+        $response->assertStreamedContent('final-image');
+    }
+
+    public function test_preview_attachment_returns_conflict_while_processing(): void
+    {
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $path = sprintf('tenants/%d/finance/attachments/transactions/%s/staging/source.jpg', $this->tenant->id, $transaction->id);
+        Storage::put($path, 'raw-image');
+
+        $attachment = TenantAttachment::create([
+            'tenant_id' => $this->tenant->id,
+            'attachable_type' => 'finance_transaction',
+            'attachable_id' => (string) $transaction->id,
+            'file_name' => 'receipt.jpg',
+            'file_path' => $path,
+            'mime_type' => 'image/jpeg',
+            'file_size' => strlen('raw-image'),
+            'sort_order' => 1,
+            'row_version' => 1,
+            'status' => 'processing',
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}/attachments/{$attachment->id}/preview");
+
+        $response->assertStatus(409);
+    }
+
+    public function test_upload_image_attachment_creates_processing_record_and_dispatches_job(): void
+    {
+        Queue::fake();
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $file = UploadedFile::fake()->image('receipt.jpg', 1600, 1200);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->post("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}/attachments", [
+                'attachments' => [$file],
+            ]);
+
+        $response->assertCreated();
+        $response->assertJsonPath('data.attachments.0.status', 'processing');
+        $response->assertJsonPath('data.attachments.0.preview_url', null);
+        $response->assertJsonPath('data.background_processing_warning', true);
+
+        $attachment = TenantAttachment::query()->latest('id')->first();
+
+        $this->assertNotNull($attachment);
+        $this->assertSame('processing', $attachment->status);
+        $this->assertStringContainsString('/staging/', (string) $attachment->file_path);
+        $this->assertTrue(Storage::exists((string) $attachment->file_path));
+
+        Queue::assertPushed(ProcessFinanceAttachmentImage::class, function (ProcessFinanceAttachmentImage $job) use ($attachment) {
+            return $job->attachmentId === (int) $attachment->id
+                && $job->connection === 'redis'
+                && $job->queue === 'finance-media';
+        });
+    }
+
+    public function test_upload_attachment_returns_operational_error_when_async_schema_is_missing(): void
+    {
+        Storage::fake(config('filesystems.default', 'local'));
+
+        Schema::table('tenant_attachments', function ($table) {
+            $table->dropIndex('tenant_attachments_tenant_id_status_index');
+            $table->dropColumn(['status', 'processing_error', 'processed_at']);
+        });
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $file = UploadedFile::fake()->image('receipt.jpg', 1600, 1200);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->post("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}/attachments", [
+                'attachments' => [$file],
+            ]);
+
+        $response->assertStatus(503);
+        $response->assertJsonPath('ok', false);
+        $response->assertJsonPath('message', 'Attachment async schema is not ready. Run the latest tenant_attachments migration first.');
+        $this->assertSame([], Storage::allFiles(sprintf('tenants/%d/finance/attachments/transactions/%s', $this->tenant->id, $transaction->id)));
+    }
+
+    public function test_process_finance_attachment_image_job_finalizes_image(): void
+    {
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $file = UploadedFile::fake()->image('receipt.jpg', 1600, 1200);
+        $stagingPath = sprintf('tenants/%d/finance/attachments/transactions/%s/staging/source.jpg', $this->tenant->id, $transaction->id);
+        Storage::put($stagingPath, file_get_contents($file->getRealPath()));
+
+        $attachment = TenantAttachment::create([
+            'tenant_id' => $this->tenant->id,
+            'attachable_type' => 'finance_transaction',
+            'attachable_id' => (string) $transaction->id,
+            'file_name' => 'receipt.jpg',
+            'file_path' => $stagingPath,
+            'mime_type' => 'image/jpeg',
+            'file_size' => (int) $file->getSize(),
+            'sort_order' => 1,
+            'row_version' => 1,
+            'status' => 'processing',
+        ]);
+
+        $job = new ProcessFinanceAttachmentImage((int) $attachment->id);
+        $job->handle(app(FinanceAttachmentService::class));
+
+        $attachment->refresh();
+
+        $this->assertSame('ready', $attachment->status);
+        $this->assertSame('image/webp', $attachment->mime_type);
+        $this->assertStringEndsWith('.webp', (string) $attachment->file_name);
+        $this->assertStringNotContainsString('/staging/', (string) $attachment->file_path);
+        $this->assertNotNull($attachment->processed_at);
+        $this->assertTrue(Storage::exists((string) $attachment->file_path));
+        $this->assertFalse(Storage::exists($stagingPath));
+    }
+
+    public function test_process_finance_attachment_image_job_marks_failed_when_image_is_invalid(): void
+    {
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $stagingPath = sprintf('tenants/%d/finance/attachments/transactions/%s/staging/broken.jpg', $this->tenant->id, $transaction->id);
+        Storage::put($stagingPath, 'not-a-real-image');
+
+        $attachment = TenantAttachment::create([
+            'tenant_id' => $this->tenant->id,
+            'attachable_type' => 'finance_transaction',
+            'attachable_id' => (string) $transaction->id,
+            'file_name' => 'broken.jpg',
+            'file_path' => $stagingPath,
+            'mime_type' => 'image/jpeg',
+            'file_size' => strlen('not-a-real-image'),
+            'sort_order' => 1,
+            'row_version' => 1,
+            'status' => 'processing',
+        ]);
+
+        $job = new ProcessFinanceAttachmentImage((int) $attachment->id);
+        $job->handle(app(FinanceAttachmentService::class));
+
+        $attachment->refresh();
+
+        $this->assertSame('failed', $attachment->status);
+        $this->assertNotNull($attachment->processing_error);
+        $this->assertTrue(Storage::exists($stagingPath));
+    }
+
+    public function test_same_original_file_name_across_transactions_keeps_unique_storage_paths(): void
+    {
+        Queue::fake();
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $firstTransaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $secondTransaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
+            'bank_account_id' => $this->account->id,
+        ]);
+
+        $firstFile = UploadedFile::fake()->image('rk3326s vs t100.png', 1600, 1200);
+        $secondFile = UploadedFile::fake()->image('rk3326s vs t100.png', 1600, 1200);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->post("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$firstTransaction->id}/attachments", [
+                'attachments' => [$firstFile],
+            ])
+            ->assertCreated();
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->post("/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$secondTransaction->id}/attachments", [
+                'attachments' => [$secondFile],
+            ])
+            ->assertCreated();
+
+        $attachments = TenantAttachment::query()->orderBy('id')->get();
+
+        $this->assertCount(2, $attachments);
+        $this->assertSame('rk3326s vs t100.png', $attachments[0]->file_name);
+        $this->assertSame('rk3326s vs t100.png', $attachments[1]->file_name);
+        $this->assertNotSame($attachments[0]->file_path, $attachments[1]->file_path);
+        $this->assertStringContainsString((string) $firstTransaction->id, (string) $attachments[0]->file_path);
+        $this->assertStringContainsString((string) $secondTransaction->id, (string) $attachments[1]->file_path);
     }
 
     public function test_preview_attachment_returns_not_found_for_attachment_from_other_transaction(): void

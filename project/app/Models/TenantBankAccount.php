@@ -9,7 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 
 class TenantBankAccount extends Model
 {
@@ -69,5 +71,35 @@ class TenantBankAccount extends Model
     public function transactions(): HasMany
     {
         return $this->hasMany(FinanceTransaction::class, 'bank_account_id');
+    }
+
+    public function pockets(): HasMany
+    {
+        return $this->hasMany(FinancePocket::class, 'real_account_id');
+    }
+
+    public function mainPocket(): HasOne
+    {
+        return $this->hasOne(FinancePocket::class, 'real_account_id')->where('is_system', true);
+    }
+
+    public function allocatedAmount(): float
+    {
+        $pockets = $this->relationLoaded('pockets')
+            ? $this->getRelation('pockets')
+            : $this->pockets()->get(['current_balance', 'is_system']);
+
+        if (! $pockets instanceof Collection) {
+            return 0.0;
+        }
+
+        return round((float) $pockets
+            ->filter(fn (FinancePocket $pocket) => ! (bool) $pocket->is_system)
+            ->sum(fn (FinancePocket $pocket) => (float) $pocket->current_balance), 2);
+    }
+
+    public function unallocatedAmount(): float
+    {
+        return round((float) $this->current_balance - $this->allocatedAmount(), 2);
     }
 }

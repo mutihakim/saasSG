@@ -56,6 +56,19 @@ class TenantFinanceController extends Controller
                 ->orderByDesc('period_month')
                 ->orderBy('name')
                 ->get(),
+            'pockets' => $this->access->accessiblePocketsQuery($tenantModel, $member)
+                ->active()
+                ->orderBy('scope')
+                ->orderByDesc('is_system')
+                ->orderBy('name')
+                ->get(),
+            'transferDestinationPockets' => $tenantModel->pockets()
+                ->with(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'realAccount:id,name,type,currency_code'])
+                ->active()
+                ->orderBy('scope')
+                ->orderByDesc('is_system')
+                ->orderBy('name')
+                ->get(),
             'activeMemberId' => $member?->id,
             'permissions' => [
                 'create' => $request->user()?->can('finance.create') ?? false,
@@ -64,6 +77,7 @@ class TenantFinanceController extends Controller
                 'manageShared' => $this->access->canManageSharedStructures($member),
                 'managePrivateStructures' => $this->access->canCreatePrivateStructures($member),
             ],
+            'walletSubscribed' => $this->entitlements->can($tenantModel, 'wallet', 'view'),
             'limits' => [
                 'accounts' => [
                     'current' => $activeAccounts,

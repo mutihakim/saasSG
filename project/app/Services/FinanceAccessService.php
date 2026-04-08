@@ -3,11 +3,13 @@
 namespace App\Services;
 
 use App\Models\FinanceTransaction;
+use App\Models\FinancePocket;
 use App\Models\Tenant;
 use App\Models\TenantBankAccount;
 use App\Models\TenantBudget;
 use App\Models\TenantMember;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 
 class FinanceAccessService
 {
@@ -70,7 +72,7 @@ class FinanceAccessService
     {
         $query = TenantBudget::query()
             ->forTenant($tenant->id)
-            ->with(['ownerMember:id,full_name', 'memberAccess:id,full_name']);
+            ->with(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'pocket:id,name,real_account_id']);
 
         if (! $member) {
             return $query->whereRaw('1 = 0');
@@ -86,6 +88,51 @@ class FinanceAccessService
                 ->orWhereHas('memberAccess', fn (Builder $access) => $access
                     ->where('tenant_members.id', $member->id)
                     ->where('tenant_budget_member_access.can_view', true));
+        });
+    }
+
+    public function accessiblePocketsQuery(Tenant $tenant, ?TenantMember $member): Builder
+    {
+        $query = FinancePocket::query()
+            ->forTenant($tenant->id)
+            ->with([
+                'ownerMember:id,full_name',
+                'memberAccess:id,full_name',
+                'realAccount:id,name,type,currency_code',
+                'defaultBudget:id,name,period_month,pocket_id,budget_key',
+            ]);
+
+        if (! $member) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($this->isPrivileged($member)) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $nested) use ($member) {
+            $nested
+                ->where('owner_member_id', $member->id)
+                ->orWhereHas('memberAccess', fn (Builder $access) => $access
+                    ->where('tenant_members.id', $member->id)
+                    ->where('finance_pocket_member_access.can_view', true));
+        });
+    }
+
+    public function usablePocketsQuery(Tenant $tenant, ?TenantMember $member): Builder
+    {
+        $query = $this->accessiblePocketsQuery($tenant, $member);
+
+        if (! $member || $this->isPrivileged($member)) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $nested) use ($member) {
+            $nested
+                ->where('owner_member_id', $member->id)
+                ->orWhereHas('memberAccess', fn (Builder $access) => $access
+                    ->where('tenant_members.id', $member->id)
+                    ->where('finance_pocket_member_access.can_use', true));
         });
     }
 
@@ -140,6 +187,33 @@ class FinanceAccessService
             ->exists();
     }
 
+    public function canUsePocket(FinancePocket $pocket, Tenant $tenant, ?TenantMember $member): bool
+    {
+        return $this->usablePocketsQuery($tenant, $member)
+            ->whereKey($pocket->id)
+            ->exists();
+    }
+
+    public function canManagePocket(FinancePocket $pocket, ?TenantMember $member): bool
+    {
+        if (! $member) {
+            return false;
+        }
+
+        if ($this->isPrivileged($member)) {
+            return true;
+        }
+
+        if ($pocket->scope === 'private' && (string) $pocket->owner_member_id === (string) $member->id) {
+            return true;
+        }
+
+        return $pocket->memberAccess()
+            ->where('tenant_members.id', $member->id)
+            ->where('finance_pocket_member_access.can_manage', true)
+            ->exists();
+    }
+
     public function canManageBudget(TenantBudget $budget, ?TenantMember $member): bool
     {
         if (! $member) {
@@ -172,15 +246,44 @@ class FinanceAccessService
             return $query;
         }
 
-        $accountIds = $this->accessibleAccountsQuery($tenant, $member)->pluck('tenant_bank_accounts.id');
-        $budgetIds = $this->accessibleBudgetsQuery($tenant, $member)->pluck('tenant_budgets.id');
-
-        return $query->where(function (Builder $nested) use ($member, $accountIds, $budgetIds) {
+        return $query->where(function (Builder $nested) use ($tenant, $member) {
             $nested
                 ->where('owner_member_id', $member->id)
                 ->orWhere('created_by', $member->id)
-                ->orWhereIn('bank_account_id', $accountIds)
-                ->orWhereIn('budget_id', $budgetIds);
+                ->orWhereExists(function ($accountAccess) use ($tenant, $member) {
+                    $accountAccess
+                        ->select(DB::raw(1))
+                        ->from('tenant_bank_accounts')
+                        ->leftJoin('tenant_bank_account_member_access', 'tenant_bank_account_member_access.tenant_bank_account_id', '=', 'tenant_bank_accounts.id')
+                        ->whereColumn('tenant_bank_accounts.id', 'finance_transactions.bank_account_id')
+                        ->where('tenant_bank_accounts.tenant_id', $tenant->id)
+                        ->where(function ($scopedAccount) use ($member) {
+                            $scopedAccount
+                                ->where('tenant_bank_accounts.owner_member_id', $member->id)
+                                ->orWhere(function ($sharedAccess) use ($member) {
+                                    $sharedAccess
+                                        ->where('tenant_bank_account_member_access.member_id', $member->id)
+                                        ->where('tenant_bank_account_member_access.can_view', true);
+                                });
+                        });
+                })
+                ->orWhereExists(function ($budgetAccess) use ($tenant, $member) {
+                    $budgetAccess
+                        ->select(DB::raw(1))
+                        ->from('tenant_budgets')
+                        ->leftJoin('tenant_budget_member_access', 'tenant_budget_member_access.tenant_budget_id', '=', 'tenant_budgets.id')
+                        ->whereColumn('tenant_budgets.id', 'finance_transactions.budget_id')
+                        ->where('tenant_budgets.tenant_id', $tenant->id)
+                        ->where(function ($scopedBudget) use ($member) {
+                            $scopedBudget
+                                ->where('tenant_budgets.owner_member_id', $member->id)
+                                ->orWhere(function ($sharedAccess) use ($member) {
+                                    $sharedAccess
+                                        ->where('tenant_budget_member_access.member_id', $member->id)
+                                        ->where('tenant_budget_member_access.can_view', true);
+                                });
+                        });
+                });
         });
     }
 

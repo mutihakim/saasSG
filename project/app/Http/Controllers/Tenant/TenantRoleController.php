@@ -33,41 +33,40 @@ class TenantRoleController extends Controller
         $roleIds              = $roles->pluck('id')->all();
         $visiblePermissions   = PermissionCatalog::matrixPermissions();
         $visiblePermissionSet = array_flip($visiblePermissions);
-
-        $memberCounts = DB::table('model_has_roles')
-            ->join('tenant_members', function ($join) use ($tenant) {
-                $join->on('tenant_members.user_id', '=', 'model_has_roles.model_id')
-                    ->where('tenant_members.tenant_id', '=', $tenant->id)
-                    ->whereNull('tenant_members.deleted_at')
-                    ->where('tenant_members.profile_status', '=', 'active');
+        $tenantMemberCounts = DB::table('tenant_members')
+            ->join('roles', function ($join) use ($tenant) {
+                $join->on('roles.name', '=', 'tenant_members.role_code')
+                    ->where('roles.tenant_id', '=', $tenant->id);
             })
-            ->whereIn('model_has_roles.role_id', $roleIds)
-            ->where('model_has_roles.model_type', 'App\\Models\\User')
-            ->where('model_has_roles.tenant_id', $tenant->id)
-            ->groupBy('model_has_roles.role_id')
-            ->select('model_has_roles.role_id', DB::raw('COUNT(DISTINCT model_has_roles.model_id) as count'))
-            ->pluck('count', 'role_id')
-            ->all();
+            ->where('tenant_members.tenant_id', $tenant->id)
+            ->whereNull('tenant_members.deleted_at')
+            ->where('tenant_members.profile_status', 'active')
+            ->whereIn('roles.id', $roleIds)
+            ->groupBy('roles.id')
+            ->select(
+                'roles.id as role_id',
+                DB::raw('COUNT(*) FILTER (WHERE tenant_members.user_id IS NOT NULL) as linked_members_count'),
+                DB::raw('COUNT(*) FILTER (WHERE tenant_members.user_id IS NULL) as pending_members_count')
+            )
+            ->get()
+            ->keyBy('role_id');
 
         $previews = [];
         foreach ($roles as $role) {
-            $previews[$role->id] = DB::table('model_has_roles')
-                ->join('users', 'users.id', '=', 'model_has_roles.model_id')
-                ->join('tenant_members', function ($join) use ($tenant) {
-                    $join->on('tenant_members.user_id', '=', 'users.id')
-                        ->where('tenant_members.tenant_id', $tenant->id)
-                        ->whereNull('tenant_members.deleted_at')
-                        ->where('tenant_members.profile_status', '=', 'active');
-                })
-                ->where('model_has_roles.role_id', $role->id)
-                ->where('model_has_roles.model_type', 'App\\Models\\User')
-                ->where('model_has_roles.tenant_id', $tenant->id)
+            $previews[$role->id] = DB::table('tenant_members')
+                ->join('users', 'users.id', '=', 'tenant_members.user_id')
+                ->where('tenant_members.tenant_id', $tenant->id)
+                ->where('tenant_members.role_code', $role->name)
+                ->whereNull('tenant_members.deleted_at')
+                ->where('tenant_members.profile_status', 'active')
                 ->select('users.id', 'users.name', 'users.avatar_url')
                 ->limit(5)
                 ->get();
         }
 
-        $rolesPayload = $roles->map(function (Role $role) use ($visiblePermissionSet, $memberCounts, $previews) {
+        $rolesPayload = $roles->map(function (Role $role) use ($visiblePermissionSet, $tenantMemberCounts, $previews) {
+            $counts = $tenantMemberCounts->get($role->id);
+
             return [
                 'id'           => $role->id,
                 'name'         => $role->name,
@@ -79,7 +78,9 @@ class TenantRoleController extends Controller
                     ->filter(fn (string $p) => isset($visiblePermissionSet[$p]))
                     ->values()
                     ->all(),
-                'members_count'   => $memberCounts[$role->id] ?? 0,
+                'members_count'   => (int) (($counts->linked_members_count ?? 0) + ($counts->pending_members_count ?? 0)),
+                'linked_members_count' => (int) ($counts->linked_members_count ?? 0),
+                'pending_members_count' => (int) ($counts->pending_members_count ?? 0),
                 'members_preview' => $previews[$role->id] ?? [],
             ];
         })->values();

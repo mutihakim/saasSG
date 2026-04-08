@@ -26,6 +26,7 @@
   "tenant.roles.actions.close": "Close",
   "tenant.roles.actions.save_permissions": "Save Permissions",
   "tenant.roles.permissions_count": "permissions",
+  "tenant.roles.member_breakdown": "{{linked}} linked, {{pending}} pending",
   "tenant.roles.people.single": "person",
   "tenant.roles.people.plural": "people",
   "tenant.roles.badge.default": "Default",

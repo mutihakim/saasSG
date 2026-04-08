@@ -42,6 +42,10 @@ class FinanceTransactionPolicy
 
     public function update(User $user, FinanceTransaction $transaction): bool
     {
+        if (! $user->hasPermissionTo('finance.update')) {
+            return false;
+        }
+
         $member = $this->getMember($user);
         if (! $member) {
             return false;
@@ -59,11 +63,15 @@ class FinanceTransactionPolicy
             return $this->access()->canManageAccount($transaction->bankAccount, $member);
         }
 
-        return $user->hasPermissionTo('finance.update');
+        return false;
     }
 
     public function delete(User $user, FinanceTransaction $transaction): bool
     {
+        if (! $user->hasPermissionTo('finance.delete')) {
+            return false;
+        }
+
         $member = $this->getMember($user);
         if (! $member) {
             return false;
@@ -81,7 +89,7 @@ class FinanceTransactionPolicy
             return $this->access()->canManageAccount($transaction->bankAccount, $member);
         }
 
-        return $user->hasPermissionTo('finance.delete');
+        return false;
     }
 
     public function restore(User $user, FinanceTransaction $transaction): bool

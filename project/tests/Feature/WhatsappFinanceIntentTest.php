@@ -2,13 +2,19 @@
 
 namespace Tests\Feature;
 
+use App\Models\FinanceTransaction;
 use App\Models\Tenant;
+use App\Models\TenantAttachment;
+use App\Models\TenantBankAccount;
 use App\Models\TenantCategory;
+use App\Models\TenantCurrency;
 use App\Models\TenantMember;
 use App\Models\TenantWhatsappIntent;
+use App\Models\TenantWhatsappMedia;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -347,6 +353,197 @@ class WhatsappFinanceIntentTest extends TestCase
         $this->assertStringContainsString('3 transaksi', (string) data_get($message->payload, 'text', ''));
     }
 
+    public function test_mark_submitted_returns_single_transaction_with_final_attachment_preview_url(): void
+    {
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $currency = TenantCurrency::create([
+            'tenant_id' => $this->tenant->id,
+            'code' => 'IDR',
+            'name' => 'Rupiah',
+            'symbol' => 'Rp',
+            'decimal_places' => 0,
+            'is_active' => true,
+            'is_default' => true,
+            'row_version' => 1,
+        ]);
+
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => null,
+            'scope' => 'shared',
+            'name' => 'Cash',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'current_balance' => 100000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $transaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'currency_id' => $currency->id,
+            'owner_member_id' => $this->member->id,
+            'created_by' => $this->ownerMember->id,
+            'bank_account_id' => $account->id,
+            'base_currency_code' => 'IDR',
+        ]);
+
+        $mediaPath = sprintf('tenants/%d/whatsapp/drafts/2026/04/receipt.jpg', $this->tenant->id);
+        $imageBytes = $this->makeJpegBytes();
+        Storage::put($mediaPath, $imageBytes);
+
+        $media = TenantWhatsappMedia::query()->create([
+            'tenant_id' => $this->tenant->id,
+            'sender_jid' => $this->member->whatsapp_jid,
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => strlen($imageBytes),
+            'storage_path' => $mediaPath,
+            'meta' => ['stored_to_disk' => true],
+        ]);
+
+        $intent = TenantWhatsappIntent::query()->create([
+            'tenant_id' => $this->tenant->id,
+            'member_id' => $this->member->id,
+            'sender_jid' => $this->member->whatsapp_jid,
+            'media_id' => $media->id,
+            'token' => 'intent-submit-attachment-single',
+            'command' => 'tx',
+            'intent_type' => 'single_transaction',
+            'status' => 'parsed',
+            'raw_input' => ['media_ids' => [$media->id]],
+            'expires_at' => now()->addHour(),
+        ]);
+
+        Sanctum::actingAs($this->owner);
+
+        $response = $this->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/whatsapp-intents/{$intent->token}/submitted", [
+                'linked_resource_type' => 'finance_transaction',
+                'submitted_count' => 1,
+                'transaction_ids' => [(string) $transaction->id],
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.transactions.0.id', (string) $transaction->id);
+
+        $attachment = TenantAttachment::query()
+            ->where('tenant_id', $this->tenant->id)
+            ->where('attachable_id', (string) $transaction->id)
+            ->first();
+
+        $this->assertNotNull($attachment);
+        $this->assertStringStartsWith(
+            "/api/v1/tenants/{$this->tenant->slug}/finance/transactions/{$transaction->id}/attachments/{$attachment->id}/preview",
+            (string) data_get($response->json(), 'data.transactions.0.attachments.0.preview_url')
+        );
+        $this->assertStringStartsWith(
+            sprintf('tenants/%d/finance/attachments/transactions/%s/', $this->tenant->id, $transaction->id),
+            (string) $attachment->file_path
+        );
+        $this->assertNotNull($media->fresh()->consumed_at);
+    }
+
+    public function test_mark_submitted_reuses_one_physical_file_for_bulk_group_attachments(): void
+    {
+        Storage::fake(config('filesystems.default', 'local'));
+
+        $currency = TenantCurrency::create([
+            'tenant_id' => $this->tenant->id,
+            'code' => 'IDR',
+            'name' => 'Rupiah',
+            'symbol' => 'Rp',
+            'decimal_places' => 0,
+            'is_active' => true,
+            'is_default' => true,
+            'row_version' => 1,
+        ]);
+
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => null,
+            'scope' => 'shared',
+            'name' => 'Cash',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'current_balance' => 100000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $sourceId = 'bulk-group-1';
+        $first = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'currency_id' => $currency->id,
+            'owner_member_id' => $this->member->id,
+            'created_by' => $this->ownerMember->id,
+            'bank_account_id' => $account->id,
+            'base_currency_code' => 'IDR',
+            'source_type' => 'finance_bulk',
+            'source_id' => $sourceId,
+        ]);
+        $second = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'currency_id' => $currency->id,
+            'owner_member_id' => $this->member->id,
+            'created_by' => $this->ownerMember->id,
+            'bank_account_id' => $account->id,
+            'base_currency_code' => 'IDR',
+            'source_type' => 'finance_bulk',
+            'source_id' => $sourceId,
+        ]);
+
+        $mediaPath = sprintf('tenants/%d/whatsapp/drafts/2026/04/bulk.jpg', $this->tenant->id);
+        $imageBytes = $this->makeJpegBytes();
+        Storage::put($mediaPath, $imageBytes);
+
+        $media = TenantWhatsappMedia::query()->create([
+            'tenant_id' => $this->tenant->id,
+            'sender_jid' => $this->member->whatsapp_jid,
+            'mime_type' => 'image/jpeg',
+            'size_bytes' => strlen($imageBytes),
+            'storage_path' => $mediaPath,
+            'meta' => ['stored_to_disk' => true],
+        ]);
+
+        $intent = TenantWhatsappIntent::query()->create([
+            'tenant_id' => $this->tenant->id,
+            'member_id' => $this->member->id,
+            'sender_jid' => $this->member->whatsapp_jid,
+            'media_id' => $media->id,
+            'token' => 'intent-submit-attachment-bulk',
+            'command' => 'bulk',
+            'intent_type' => 'bulk_shopping',
+            'status' => 'parsed',
+            'raw_input' => ['media_ids' => [$media->id]],
+            'expires_at' => now()->addHour(),
+        ]);
+
+        Sanctum::actingAs($this->owner);
+
+        $response = $this->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/whatsapp-intents/{$intent->token}/submitted", [
+                'linked_resource_type' => 'finance_transaction_batch',
+                'submitted_count' => 2,
+                'transaction_ids' => [(string) $first->id, (string) $second->id],
+            ]);
+
+        $response->assertOk()
+            ->assertJsonCount(2, 'data.transactions');
+
+        $attachments = TenantAttachment::query()
+            ->where('tenant_id', $this->tenant->id)
+            ->whereIn('attachable_id', [(string) $first->id, (string) $second->id])
+            ->get();
+
+        $this->assertCount(2, $attachments);
+        $this->assertCount(1, $attachments->pluck('file_path')->unique());
+        $this->assertStringStartsWith(
+            sprintf('tenants/%d/finance/attachments/groups/%s/', $this->tenant->id, $sourceId),
+            (string) $attachments->first()->file_path
+        );
+    }
+
     public function test_ai_category_mapping_accepts_only_valid_tenant_finance_category_ids(): void
     {
         $expenseCategory = TenantCategory::query()->create([
@@ -408,5 +605,19 @@ class WhatsappFinanceIntentTest extends TestCase
         $invalidResult = $service->extract($this->tenant, $this->member, 'tx', 'jajan 12rb');
 
         $this->assertNull(data_get($invalidResult, 'payload.category_id'));
+    }
+
+    private function makeJpegBytes(): string
+    {
+        $image = imagecreatetruecolor(64, 64);
+        $background = imagecolorallocate($image, 240, 240, 240);
+        imagefill($image, 0, 0, $background);
+
+        ob_start();
+        imagejpeg($image, null, 85);
+        $bytes = (string) ob_get_clean();
+        imagedestroy($image);
+
+        return $bytes;
     }
 }

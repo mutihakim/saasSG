@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\FinancePocket;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -18,8 +19,10 @@ class TenantBudget extends Model
     protected $fillable = [
         'tenant_id',
         'owner_member_id',
+        'pocket_id',
         'name',
         'code',
+        'budget_key',
         'scope',
         'period_month',
         'allocated_amount',
@@ -64,6 +67,11 @@ class TenantBudget extends Model
     public function ownerMember(): BelongsTo
     {
         return $this->belongsTo(TenantMember::class, 'owner_member_id');
+    }
+
+    public function pocket(): BelongsTo
+    {
+        return $this->belongsTo(FinancePocket::class, 'pocket_id');
     }
 
     public function memberAccess(): BelongsToMany

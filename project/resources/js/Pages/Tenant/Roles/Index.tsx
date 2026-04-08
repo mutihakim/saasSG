@@ -18,6 +18,8 @@ type RoleItem = {
     row_version: number;
     permissions: string[];
     members_count: number;
+    linked_members_count: number;
+    pending_members_count: number;
     members_preview: { id: number; name: string; avatar_url: string | null }[];
 };
 
@@ -52,6 +54,13 @@ function humanizeCode(value: string) {
         .split(".")
         .map((segment) => segment.charAt(0).toUpperCase() + segment.slice(1))
         .join(" ");
+}
+
+function formatMemberBreakdown(role: RoleItem, t: (key: string, options?: any) => string) {
+    return t("tenant.roles.member_breakdown", {
+        linked: role.linked_members_count,
+        pending: role.pending_members_count,
+    });
 }
 
 export default function RolesIndex({ roles: initialRoles, permissionModules }: Props) {
@@ -321,9 +330,12 @@ export default function RolesIndex({ roles: initialRoles, permissionModules }: P
                                                     </Dropdown>
                                                 </div>
                                                 <p className="text-muted mb-3">{roleSummary(role)}</p>
-                                                <p className="mb-3">
+                                                <p className="mb-1">
                                                     {role.members_count} {role.members_count === 1 ? t("tenant.roles.people.single") : t("tenant.roles.people.plural")}
                                                 </p>
+                                                <small className="text-muted d-block mb-3">
+                                                    {formatMemberBreakdown(role, t)}
+                                                </small>
                                                 <div className="d-flex gap-2 align-items-center">
                                                     <Button size="sm" variant="soft-primary" onClick={() => openRoleMatrix(role)}>
                                                         {t("tenant.roles.actions.open")}
@@ -385,7 +397,10 @@ export default function RolesIndex({ roles: initialRoles, permissionModules }: P
                                                             {role.is_system ? t("tenant.roles.badge.default") : t("tenant.roles.badge.custom")}
                                                         </Badge>
                                                     </td>
-                                                    <td>{role.members_count}</td>
+                                                    <td>
+                                                        <div>{role.members_count}</div>
+                                                        <small className="text-muted">{formatMemberBreakdown(role, t)}</small>
+                                                    </td>
                                                     <td>{role.permissions.length}</td>
                                                     <td className="text-end">
                                                         <Button size="sm" variant="soft-primary" className="me-2" onClick={() => openRoleMatrix(role)}>

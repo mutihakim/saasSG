@@ -19,7 +19,7 @@ class TenantMasterCategoryController extends Controller
                 ->with('children')
                 ->roots()
                 ->ordered()
-                ->get(['id', 'parent_id', 'module', 'sub_type', 'name', 'icon', 'color', 'is_active', 'created_at']),
+                ->get(['id', 'parent_id', 'module', 'sub_type', 'name', 'description', 'icon', 'color', 'is_default', 'is_active', 'row_version', 'created_at']),
             'modules'     => ['finance', 'grocery', 'inventory', 'task', 'medical', 'wishlist'],
             'permissions' => [
                 'create' => $request->user()?->can('master.categories.create') ?? false,

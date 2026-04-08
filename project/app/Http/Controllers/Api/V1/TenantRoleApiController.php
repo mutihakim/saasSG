@@ -27,35 +27,38 @@ class TenantRoleApiController extends Controller
             ->orderBy('name')
             ->get();
 
-        $mapped = $roles->map(function (Role $role) use ($tenant) {
-            $visiblePermissionSet = array_flip(PermissionCatalog::matrixPermissions());
-            $memberUsers = DB::table('model_has_roles')
-                ->join('users', 'users.id', '=', 'model_has_roles.model_id')
-                ->join('tenant_members', function ($join) use ($tenant) {
-                    $join->on('tenant_members.user_id', '=', 'users.id')
-                        ->where('tenant_members.tenant_id', '=', $tenant->id)
-                        ->whereNull('tenant_members.deleted_at')
-                        ->where('tenant_members.profile_status', '=', 'active');
-                })
-                ->where('model_has_roles.role_id', $role->id)
-                ->where('model_has_roles.model_type', 'App\\Models\\User')
-                ->where('model_has_roles.tenant_id', $tenant->id)
+        $roleIds = $roles->pluck('id')->all();
+        $visiblePermissionSet = array_flip(PermissionCatalog::matrixPermissions());
+        $tenantMemberCounts = DB::table('tenant_members')
+            ->join('roles', function ($join) use ($tenant) {
+                $join->on('roles.name', '=', 'tenant_members.role_code')
+                    ->where('roles.tenant_id', '=', $tenant->id);
+            })
+            ->where('tenant_members.tenant_id', $tenant->id)
+            ->whereNull('tenant_members.deleted_at')
+            ->where('tenant_members.profile_status', 'active')
+            ->whereIn('roles.id', $roleIds)
+            ->groupBy('roles.id')
+            ->select(
+                'roles.id as role_id',
+                DB::raw('COUNT(*) FILTER (WHERE tenant_members.user_id IS NOT NULL) as linked_members_count'),
+                DB::raw('COUNT(*) FILTER (WHERE tenant_members.user_id IS NULL) as pending_members_count')
+            )
+            ->get()
+            ->keyBy('role_id');
+
+        $mapped = $roles->map(function (Role $role) use ($tenant, $tenantMemberCounts, $visiblePermissionSet) {
+            $memberUsers = DB::table('tenant_members')
+                ->join('users', 'users.id', '=', 'tenant_members.user_id')
+                ->where('tenant_members.tenant_id', $tenant->id)
+                ->where('tenant_members.role_code', $role->name)
+                ->whereNull('tenant_members.deleted_at')
+                ->where('tenant_members.profile_status', 'active')
                 ->select('users.id', 'users.name', 'users.avatar_url')
                 ->limit(5)
                 ->get();
 
-            $memberCount = DB::table('model_has_roles')
-                ->join('tenant_members', function ($join) use ($tenant) {
-                    $join->on('tenant_members.user_id', '=', 'model_has_roles.model_id')
-                        ->where('tenant_members.tenant_id', '=', $tenant->id)
-                        ->whereNull('tenant_members.deleted_at')
-                        ->where('tenant_members.profile_status', '=', 'active');
-                })
-                ->where('model_has_roles.role_id', $role->id)
-                ->where('model_has_roles.model_type', 'App\\Models\\User')
-                ->where('model_has_roles.tenant_id', $tenant->id)
-                ->distinct('model_has_roles.model_id')
-                ->count('model_has_roles.model_id');
+            $counts = $tenantMemberCounts->get($role->id);
 
             return [
                 'id' => $role->id,
@@ -68,7 +71,9 @@ class TenantRoleApiController extends Controller
                     ->filter(fn (string $permission) => isset($visiblePermissionSet[$permission]))
                     ->values()
                     ->all(),
-                'members_count' => $memberCount,
+                'members_count' => (int) (($counts->linked_members_count ?? 0) + ($counts->pending_members_count ?? 0)),
+                'linked_members_count' => (int) ($counts->linked_members_count ?? 0),
+                'pending_members_count' => (int) ($counts->pending_members_count ?? 0),
                 'members_preview' => $memberUsers,
             ];
         })->values();
@@ -134,6 +139,8 @@ class TenantRoleApiController extends Controller
                 'row_version' => (int) $role->row_version,
                 'permissions' => [],
                 'members_count' => 0,
+                'linked_members_count' => 0,
+                'pending_members_count' => 0,
                 'members_preview' => [],
             ],
         ], 201);

@@ -61,6 +61,9 @@ Finance WhatsApp Draft:
 Finance PWA / Attachment:
 
 - `GET /finance/transactions/{transaction}/attachments/{attachment}/preview` harus terbuka tanpa `500`
+- preview attachment transaksi final harus memakai `preview_url` dari backend, bukan URL rakitan frontend
+- submit draft WhatsApp harus mengembalikan transaksi final yang sudah memuat attachment final
+- bulk attachment WhatsApp harus mereuse satu file fisik per grup, bukan menduplikasi file yang sama untuk tiap item
 - grouped bulk list harus tetap stabil saat:
   - duplicate item bulk
   - add item ke grup

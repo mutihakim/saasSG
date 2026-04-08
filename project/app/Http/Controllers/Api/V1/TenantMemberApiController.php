@@ -7,7 +7,7 @@ use App\Http\Requests\Tenant\StoreTenantMemberRequest;
 use App\Http\Requests\Tenant\UpdateTenantMemberRequest;
 use App\Models\ActivityLog;
 use App\Models\TenantMember;
-use App\Models\User;
+use App\Services\TenantRoleSyncService;
 use App\Support\ApiResponder;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\Request;
@@ -15,7 +15,6 @@ use Illuminate\Validation\ValidationException;
 use Illuminate\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
-use Spatie\Permission\PermissionRegistrar;
 
 class TenantMemberApiController extends Controller
 {
@@ -125,7 +124,7 @@ class TenantMemberApiController extends Controller
                 'row_version' => 1,
             ]);
 
-            $this->syncUserRoleForTenant($tenant->id, $member);
+            app(TenantRoleSyncService::class)->syncMemberRole($member);
 
             ActivityLog::create([
                 'tenant_id' => $tenant->id,
@@ -217,7 +216,7 @@ class TenantMemberApiController extends Controller
             }
 
             $fresh = TenantMember::query()->with(['user:id,email,email_verified_at'])->findOrFail($target->id);
-            $this->syncUserRoleForTenant($currentTenant->id, $fresh);
+            app(TenantRoleSyncService::class)->syncMemberRole($fresh);
 
             ActivityLog::create([
                 'tenant_id' => $currentTenant->id,
@@ -324,7 +323,7 @@ class TenantMemberApiController extends Controller
                 return null;
             }
 
-            $this->clearUserRoleForTenant($currentTenant->id, $target->user_id);
+            app(TenantRoleSyncService::class)->clearUserRolesForTenant($currentTenant->id, $target->user_id);
 
             $fresh = TenantMember::query()->withTrashed()->findOrFail($target->id);
 
@@ -362,40 +361,6 @@ class TenantMemberApiController extends Controller
         }
 
         return $this->ok(['deleted' => true]);
-    }
-
-    private function syncUserRoleForTenant(int $tenantId, TenantMember $member): void
-    {
-        if (!$member->user_id) {
-            return;
-        }
-
-        $user = User::query()->find($member->user_id);
-        if (!$user) {
-            return;
-        }
-
-        /** @var PermissionRegistrar $permissionRegistrar */
-        $permissionRegistrar = app(PermissionRegistrar::class);
-        $permissionRegistrar->setPermissionsTeamId($tenantId);
-        $user->syncRoles([$member->role_code]);
-    }
-
-    private function clearUserRoleForTenant(int $tenantId, ?int $userId): void
-    {
-        if (!$userId) {
-            return;
-        }
-
-        $user = User::query()->find($userId);
-        if (!$user) {
-            return;
-        }
-
-        /** @var PermissionRegistrar $permissionRegistrar */
-        $permissionRegistrar = app(PermissionRegistrar::class);
-        $permissionRegistrar->setPermissionsTeamId($tenantId);
-        $user->syncRoles([]);
     }
 
     private function normalizeJidOrNull(?string $input): ?string

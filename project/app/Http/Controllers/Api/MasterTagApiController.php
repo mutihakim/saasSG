@@ -5,12 +5,17 @@ namespace App\Http\Controllers\Api;
 use App\Http\Controllers\Controller;
 use App\Models\TenantTag;
 use App\Models\Tenant;
+use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class MasterTagApiController extends Controller
 {
+    public function __construct(
+        private readonly SubscriptionEntitlements $entitlements,
+    ) {}
+
     // GET /master/tags
     public function index(Request $request, Tenant $tenant): JsonResponse
     {
@@ -47,6 +52,23 @@ class MasterTagApiController extends Controller
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
         $this->authorize('create', TenantTag::class);
+
+        $limit = $this->entitlements->limit($tenant, 'master.tags.max');
+        if ($limit !== null && $limit !== -1) {
+            $current = TenantTag::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereNull('deleted_at')
+                ->count();
+
+            if ($current >= $limit) {
+                return response()->json([
+                    'ok' => false,
+                    'error_code' => 'PLAN_QUOTA_EXCEEDED',
+                    'limit_key' => 'master.tags.max',
+                    'message' => "Batas {$limit} tag tercapai. Upgrade plan untuk menambah tag.",
+                ], 422);
+            }
+        }
 
         $data = $request->validate([
             'name'  => [
@@ -106,11 +128,19 @@ class MasterTagApiController extends Controller
         return response()->json(['ok' => true, 'data' => ['tag' => $tag->fresh()]]);
     }
 
-    // DELETE /master/tags/{tag}
     public function destroy(Request $request, Tenant $tenant, TenantTag $tag): JsonResponse
     {
         $this->authorize('delete', $tag);
         abort_if((int) $tag->tenant_id !== (int) $tenant->id, 404);
+
+        $isUsed = \Illuminate\Support\Facades\DB::table('tenant_taggables')->where('tenant_tag_id', $tag->id)->exists();
+        if ($isUsed) {
+            return response()->json([
+                'ok' => false,
+                'error_code' => 'TAG_IN_USE',
+                'message' => 'Tag tidak dapat dihapus karena masih digunakan pada transaksi atau entitas lain.',
+            ], 422);
+        }
 
         $tag->delete();
 

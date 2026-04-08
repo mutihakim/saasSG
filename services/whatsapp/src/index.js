@@ -17,6 +17,7 @@ const INTERNAL_TOKEN = process.env.WHATSAPP_INTERNAL_TOKEN || '';
 const AUTH_DIR = process.env.WA_AUTH_DIR || path.join(__dirname, '..', 'wa-auth');
 const REQUEST_TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS || 8000);
 const CONNECTING_TIMEOUT_MS = Number(process.env.CONNECTING_TIMEOUT_MS || 60000);
+const SESSION_HEALTHCHECK_INTERVAL_MS = Number(process.env.SESSION_HEALTHCHECK_INTERVAL_MS || 60000);
 const CALLBACK_RETRY_DELAYS_MS = [1000, 2000, 4000, 8000, 15000];
 const CALLBACK_MAX_ATTEMPTS = Number(process.env.CALLBACK_RETRY_ATTEMPTS || 5);
 
@@ -304,10 +305,27 @@ async function postSessionState(tenantId, patch) {
 async function postMessage(payload) {
     try {
         await callbackHttp.post('/internal/v1/whatsapp/messages', payload);
+        logEvent('info', 'message.callback.sent', {
+            tenant_id: payload.tenant_id,
+            meta: {
+                direction: payload.direction,
+                whatsapp_message_id: payload.whatsapp_message_id,
+            },
+        });
+        return true;
     } catch (error) {
         const detail = error.response?.data || error.message;
-        // eslint-disable-next-line no-console
-        console.error('[DEBUG] Failed to send messages callback', payload.tenant_id, detail);
+        logEvent('error', 'message.callback.failed', {
+            tenant_id: payload.tenant_id,
+            reason: 'callback_error',
+            meta: {
+                direction: payload.direction,
+                whatsapp_message_id: payload.whatsapp_message_id,
+                status: error.response?.status || null,
+                error: detail,
+            },
+        });
+        return false;
     }
 }
 
@@ -365,7 +383,9 @@ function ensureRuntime(tenantId, sessionName) {
         client: null,
         initializing: false,
         connectTimeoutRef: null,
+        healthcheckIntervalRef: null,
         isStopping: false,
+        lastActivityAt: null,
     };
 
     runtimes.set(key, runtime);
@@ -377,6 +397,89 @@ function clearConnectTimeout(runtime) {
         clearTimeout(runtime.connectTimeoutRef);
         runtime.connectTimeoutRef = null;
     }
+}
+
+function clearHealthcheck(runtime) {
+    if (runtime.healthcheckIntervalRef) {
+        clearInterval(runtime.healthcheckIntervalRef);
+        runtime.healthcheckIntervalRef = null;
+    }
+}
+
+function touchRuntimeActivity(runtime) {
+    runtime.lastActivityAt = nowIso();
+}
+
+function startHealthcheck(runtime) {
+    clearHealthcheck(runtime);
+
+    runtime.healthcheckIntervalRef = setInterval(async () => {
+        if (!runtime.client || runtime.initializing || runtime.isStopping) {
+            return;
+        }
+
+        try {
+            const state = typeof runtime.client.getState === 'function'
+                ? await runtime.client.getState()
+                : null;
+            const normalizedState = String(state || '').toUpperCase();
+
+            if (normalizedState === '' || ['CONNECTED', 'OPENING', 'PAIRING'].includes(normalizedState)) {
+                return;
+            }
+
+            logEvent('warn', 'session.healthcheck.unhealthy', {
+                tenant_id: runtime.tenantId,
+                session_name: runtime.sessionName,
+                connection_status: runtime.status,
+                reason: 'unexpected_client_state',
+                meta: {
+                    client_state: normalizedState,
+                    last_activity_at: runtime.lastActivityAt,
+                },
+            });
+        } catch (error) {
+            logEvent('warn', 'session.healthcheck.unhealthy', {
+                tenant_id: runtime.tenantId,
+                session_name: runtime.sessionName,
+                connection_status: runtime.status,
+                reason: 'client_state_failed',
+                meta: {
+                    error: String(error?.message || error || 'unknown'),
+                    last_activity_at: runtime.lastActivityAt,
+                },
+            });
+        }
+
+        clearHealthcheck(runtime);
+        try {
+            await safeDestroyClient(runtime);
+        } finally {
+            runtime.status = 'disconnected';
+            runtime.connectedJid = null;
+            await postSessionState(runtime.tenantId, {
+                connection_status: 'disconnected',
+                connected_jid: null,
+                auto_connect: true,
+                meta: {
+                    disconnect_reason: 'healthcheck_restart',
+                    lifecycle_state: 'healthcheck_restart',
+                    restore_eligible: true,
+                    disconnected_at: nowIso(),
+                },
+            });
+            startSession(runtime.tenantId, runtime.sessionName).catch((restartError) => {
+                logEvent('error', 'session.healthcheck.restart_failed', {
+                    tenant_id: runtime.tenantId,
+                    session_name: runtime.sessionName,
+                    reason: 'healthcheck_restart_failed',
+                    meta: {
+                        error: String(restartError?.message || restartError || 'unknown'),
+                    },
+                });
+            });
+        }
+    }, SESSION_HEALTHCHECK_INTERVAL_MS);
 }
 
 function scheduleConnectTimeout(runtime) {
@@ -471,6 +574,7 @@ function registerClientHandlers(runtime) {
 
     client.on('authenticated', async () => {
         runtime.status = 'connecting';
+        touchRuntimeActivity(runtime);
         logEvent('info', 'session.authenticated', {
             tenant_id: tenantId,
             session_name: runtime.sessionName,
@@ -489,7 +593,9 @@ function registerClientHandlers(runtime) {
     client.on('ready', async () => {
         runtime.status = 'connected';
         runtime.connectedJid = client.info?.wid?._serialized || null;
+        touchRuntimeActivity(runtime);
         clearConnectTimeout(runtime);
+        startHealthcheck(runtime);
         logEvent('info', 'session.ready', {
             tenant_id: tenantId,
             session_name: runtime.sessionName,
@@ -512,6 +618,7 @@ function registerClientHandlers(runtime) {
         runtime.status = 'disconnected';
         runtime.connectedJid = null;
         clearConnectTimeout(runtime);
+        clearHealthcheck(runtime);
         const authPurged = purgeAuthArtifacts(runtime.sessionName);
         if (authPurged) {
             logEvent('warn', 'session.auth.purged', {
@@ -552,6 +659,7 @@ function registerClientHandlers(runtime) {
         runtime.status = 'disconnected';
         runtime.connectedJid = null;
         clearConnectTimeout(runtime);
+        clearHealthcheck(runtime);
         const logoutLike = isLogoutLikeReason(reason);
         if (logoutLike) {
             const authPurged = purgeAuthArtifacts(runtime.sessionName);
@@ -590,10 +698,12 @@ function registerClientHandlers(runtime) {
             return;
         }
 
+        touchRuntimeActivity(runtime);
+
         const whatsappMessageId = message.id?._serialized || `incoming-${Date.now()}`;
         const senderJid = message.from || null;
 
-        await postMessage({
+        postMessage({
             tenant_id: tenantId,
             direction: 'incoming',
             whatsapp_message_id: whatsappMessageId,
@@ -685,6 +795,7 @@ async function startSession(tenantId, sessionName) {
     runtime.initializing = true;
     runtime.isStopping = false;
     runtime.status = 'connecting';
+    touchRuntimeActivity(runtime);
     logEvent('info', 'session.connect.starting', {
         tenant_id: runtime.tenantId,
         session_name: runtime.sessionName,
@@ -840,6 +951,7 @@ async function stopSession(tenantId, options = {}) {
         }
     }
 
+    clearHealthcheck(runtime);
     runtime.client = null;
     runtime.status = 'disconnected';
     runtime.connectedJid = null;
@@ -1036,8 +1148,49 @@ app.post('/api/v1/tenants/:tenantId/whatsapp/messages/send', asyncRoute(async (r
         });
     }
 
+    if (typeof runtime.client.getState === 'function') {
+        try {
+            const state = await runtime.client.getState();
+            if (String(state || '').toUpperCase() !== 'CONNECTED') {
+                runtime.status = 'disconnected';
+                runtime.connectedJid = null;
+
+                await postSessionState(tenantId, {
+                    connection_status: 'disconnected',
+                    connected_jid: null,
+                    auto_connect: true,
+                    meta: {
+                        disconnect_reason: 'send_preflight_not_connected',
+                        lifecycle_state: 'send_preflight_not_connected',
+                        restore_eligible: true,
+                        disconnected_at: nowIso(),
+                    },
+                });
+
+                return res.status(422).json({
+                    ok: false,
+                    error: {
+                        code: 'WHATSAPP_NOT_CONNECTED',
+                        message: 'Session is not connected.',
+                    },
+                });
+            }
+        } catch (error) {
+            logEvent('warn', 'message.send.preflight_failed', {
+                tenant_id: tenantId,
+                session_name: runtime.sessionName,
+                connection_status: runtime.status,
+                reason: 'client_state_failed',
+                meta: {
+                    error: String(error?.message || error || 'unknown'),
+                },
+            });
+        }
+    }
+
     try {
         const sent = await runtime.client.sendMessage(to, message);
+        touchRuntimeActivity(runtime);
         const messageId = sent.id?._serialized || `outgoing-${Date.now()}`;
 
         // Run asynchronously without awaiting to prevent deadlocking PHP workers and to avoid exceeding Laravel's UI timeout.

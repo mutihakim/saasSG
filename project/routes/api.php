@@ -9,6 +9,11 @@ use App\Http\Controllers\Api\FinanceBudgetApiController;
 use App\Http\Controllers\Api\FinanceReportApiController;
 use App\Http\Controllers\Api\FinanceTransactionApiController;
 use App\Http\Controllers\Api\FinanceWhatsappIntentApiController;
+use App\Http\Controllers\Api\WalletPocketApiController;
+use App\Http\Controllers\Api\WalletMonthlyReviewApiController;
+use App\Http\Controllers\Api\WalletSavingsGoalApiController;
+use App\Http\Controllers\Api\WalletSummaryApiController;
+use App\Http\Controllers\Api\WalletWishApiController;
 use App\Http\Controllers\Api\V1\TenantMemberApiController;
 use App\Http\Controllers\Api\V1\TenantMemberProfileApiController;
 use App\Http\Controllers\Api\V1\TenantLifecycleApiController;
@@ -86,11 +91,42 @@ Route::prefix('v1')
                     Route::get('/transactions/{transaction}', [FinanceTransactionApiController::class, 'show'])->middleware('tenant.feature:finance,view');
                     Route::patch('/transactions/{transaction}', [FinanceTransactionApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
                     Route::post('/transactions/{transaction}/attachments', [FinanceTransactionApiController::class, 'uploadAttachments'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
-                    Route::get('/transactions/{transaction}/attachments/{attachment}/preview', [FinanceTransactionApiController::class, 'previewAttachment'])->middleware('tenant.feature:finance,view');
+                    Route::get('/transactions/{transaction}/attachments/{attachment}/preview', [FinanceTransactionApiController::class, 'previewAttachment'])->middleware('tenant.feature:finance,view')->name('api.finance.transactions.attachments.preview');
                     Route::delete('/transactions/{transaction}/attachments/{attachment}', [FinanceTransactionApiController::class, 'destroyAttachment'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
                     Route::delete('/transactions/groups/{sourceId}', [FinanceTransactionApiController::class, 'destroyGroup'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
                     Route::delete('/transactions', [FinanceTransactionApiController::class, 'bulkDestroy'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
                     Route::delete('/transactions/{transaction}', [FinanceTransactionApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
+                });
+
+                Route::prefix('wallet')->group(function () {
+                    Route::get('/summary', [WalletSummaryApiController::class, 'show'])->middleware('tenant.feature:wallet,view');
+                    Route::get('/monthly-review/status', [WalletMonthlyReviewApiController::class, 'status'])->middleware('tenant.feature:wallet,view');
+                    Route::get('/monthly-review/preview', [WalletMonthlyReviewApiController::class, 'preview'])->middleware('tenant.feature:wallet,view');
+                    Route::post('/monthly-review/auto-generate', [WalletMonthlyReviewApiController::class, 'autoGenerate'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
+                    Route::post('/monthly-review/submit', [WalletMonthlyReviewApiController::class, 'submit'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
+                    Route::get('/accounts', [FinanceAccountApiController::class, 'index'])->middleware('tenant.feature:wallet,view');
+                    Route::post('/accounts', [FinanceAccountApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,create', 'throttle:tenant.mutation']);
+                    Route::patch('/accounts/{account}', [FinanceAccountApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
+                    Route::delete('/accounts/{account}', [FinanceAccountApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,delete', 'throttle:tenant.mutation']);
+                    Route::get('/wallets', [WalletPocketApiController::class, 'index'])->middleware('tenant.feature:wallet,view');
+                    Route::post('/wallets', [WalletPocketApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,create', 'throttle:tenant.mutation']);
+                    Route::patch('/wallets/{pocket}', [WalletPocketApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
+                    Route::delete('/wallets/{pocket}', [WalletPocketApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,delete', 'throttle:tenant.mutation']);
+                    Route::get('/pockets', [WalletPocketApiController::class, 'index'])->middleware('tenant.feature:wallet,view');
+                    Route::post('/pockets', [WalletPocketApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,create', 'throttle:tenant.mutation']);
+                    Route::patch('/pockets/{pocket}', [WalletPocketApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
+                    Route::delete('/pockets/{pocket}', [WalletPocketApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,delete', 'throttle:tenant.mutation']);
+                    Route::get('/goals', [WalletSavingsGoalApiController::class, 'index'])->middleware('tenant.feature:wallet,view');
+                    Route::post('/goals', [WalletSavingsGoalApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,create', 'throttle:tenant.mutation']);
+                    Route::patch('/goals/{goal}', [WalletSavingsGoalApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
+                    Route::delete('/goals/{goal}', [WalletSavingsGoalApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,delete', 'throttle:tenant.mutation']);
+                    Route::get('/wishes', [WalletWishApiController::class, 'index'])->middleware('tenant.feature:wallet,view');
+                    Route::post('/wishes', [WalletWishApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,create', 'throttle:tenant.mutation']);
+                    Route::patch('/wishes/{wish}', [WalletWishApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
+                    Route::delete('/wishes/{wish}', [WalletWishApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,delete', 'throttle:tenant.mutation']);
+                    Route::post('/wishes/{wish}/approve', [WalletWishApiController::class, 'approve'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
+                    Route::post('/wishes/{wish}/reject', [WalletWishApiController::class, 'reject'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,update', 'throttle:tenant.mutation']);
+                    Route::post('/wishes/{wish}/convert', [WalletWishApiController::class, 'convert'])->middleware(['superadmin.impersonation', 'tenant.feature:wallet,create', 'throttle:tenant.mutation']);
                 });
 
                 // ── Master Data ────────────────────────────────────────────────────────

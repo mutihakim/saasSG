@@ -20,9 +20,10 @@ interface AccountModalProps {
     activeMemberId?: number | null;
     canManageShared?: boolean;
     canDelete?: boolean;
+    endpointBase?: string;
 }
 
-const AccountModal = ({ show, onClose, onSuccess, onDelete, account, currencies, members, activeMemberId, canManageShared = false, canDelete = false }: AccountModalProps) => {
+const AccountModal = ({ show, onClose, onSuccess, onDelete, account, currencies, members, activeMemberId, canManageShared = false, canDelete = false, endpointBase = "/wallet/accounts" }: AccountModalProps) => {
     const { t } = useTranslation();
     const tenantRoute = useTenantRoute();
     const isEdit = Boolean(account);
@@ -104,8 +105,8 @@ const AccountModal = ({ show, onClose, onSuccess, onDelete, account, currencies,
             const response = await axios({
                 method: isEdit ? "patch" : "post",
                 url: isEdit
-                    ? tenantRoute.apiTo(`/finance/accounts/${account.id}`)
-                    : tenantRoute.apiTo("/finance/accounts"),
+                    ? tenantRoute.apiTo(`${endpointBase}/${account.id}`)
+                    : tenantRoute.apiTo(endpointBase),
                 data: {
                     ...formData,
                     owner_member_id: formData.owner_member_id ? parseInt(formData.owner_member_id, 10) : null,
@@ -149,6 +150,11 @@ const AccountModal = ({ show, onClose, onSuccess, onDelete, account, currencies,
                                 onChange={(option: any) => setFormData((prev) => ({ ...prev, type: option.value }))}
                                 classNamePrefix="react-select"
                             />
+                            <Form.Text className="text-muted d-block mt-1">
+                                {["credit_card", "paylater"].includes(formData.type)
+                                    ? "Tipe ini boleh memiliki saldo negatif sebagai outstanding liability."
+                                    : "Tipe ini tidak boleh memiliki saldo negatif pada akun maupun wallet."}
+                            </Form.Text>
                         </Col>
                         <Col md={6}>
                             <Form.Label>{t("finance.accounts.fields.scope")}</Form.Label>

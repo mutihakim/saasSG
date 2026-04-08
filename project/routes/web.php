@@ -17,6 +17,7 @@ use App\Http\Controllers\Auth\AuthenticatedSessionController;
 // ── Tenant Controllers ──────────────────────────────────────────────────────
 use App\Http\Controllers\Tenant\TenantDashboardController;
 use App\Http\Controllers\Tenant\TenantFinanceController;
+use App\Http\Controllers\Tenant\TenantWalletController;
 use App\Http\Controllers\Tenant\TenantMemberController;
 use App\Http\Controllers\Tenant\TenantRoleController;
 use App\Http\Controllers\Tenant\TenantInvitationController;
@@ -101,7 +102,9 @@ Route::middleware([
             Route::get('/projects',  [TenantHubController::class, 'projects'])->name('tenant.projects');
             Route::get('/tasks',     [TenantHubController::class, 'tasks'])->name('tenant.tasks');
             Route::get('/rewards',   [TenantHubController::class, 'rewards'])->name('tenant.rewards');
-            Route::get('/wallet',    [TenantHubController::class, 'wallet'])->name('tenant.wallet');
+            Route::get('/wallet',    [TenantWalletController::class, 'index'])
+                ->name('tenant.wallet')
+                ->middleware('tenant.feature:wallet,view');
             Route::get('/finance',   [TenantFinanceController::class, 'index'])
                 ->name('tenant.finance')
                 ->middleware('tenant.feature:finance,view');

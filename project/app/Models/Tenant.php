@@ -116,6 +116,11 @@ class Tenant extends Model implements TenantContract
         return $this->hasMany(TenantBudget::class);
     }
 
+    public function pockets(): HasMany
+    {
+        return $this->hasMany(FinancePocket::class);
+    }
+
     public function presentableName(): string
     {
         return Str::of((string) ($this->display_name ?: $this->name))->trim()->value() ?: $this->name;

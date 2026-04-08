@@ -144,8 +144,29 @@ Semua endpoint master data ada di bawah `/api/v1/tenants/{tenant}/master/`
 - `GET /api/v1/tenants/{tenant}/finance/whatsapp-intents/{token}`
 - `POST /api/v1/tenants/{tenant}/finance/whatsapp-intents/{token}/submitted`
 - `GET /api/v1/tenants/{tenant}/finance/whatsapp-media/{media}/preview`
+- `GET /api/v1/tenants/{tenant}/wallet/accounts`
+- `POST /api/v1/tenants/{tenant}/wallet/accounts`
+- `PATCH /api/v1/tenants/{tenant}/wallet/accounts/{account}`
+- `DELETE /api/v1/tenants/{tenant}/wallet/accounts/{account}`
+- `GET /api/v1/tenants/{tenant}/wallet/wallets`
+- `POST /api/v1/tenants/{tenant}/wallet/wallets`
+- `PATCH /api/v1/tenants/{tenant}/wallet/wallets/{wallet}`
+- `DELETE /api/v1/tenants/{tenant}/wallet/wallets/{wallet}`
+- `GET /api/v1/tenants/{tenant}/wallet/goals`
+- `POST /api/v1/tenants/{tenant}/wallet/goals`
+- `PATCH /api/v1/tenants/{tenant}/wallet/goals/{goal}`
+- `DELETE /api/v1/tenants/{tenant}/wallet/goals/{goal}`
+- `GET /api/v1/tenants/{tenant}/wallet/wishes`
+- `POST /api/v1/tenants/{tenant}/wallet/wishes`
+- `PATCH /api/v1/tenants/{tenant}/wallet/wishes/{wish}`
+- `DELETE /api/v1/tenants/{tenant}/wallet/wishes/{wish}`
+- `POST /api/v1/tenants/{tenant}/wallet/wishes/{wish}/approve`
+- `POST /api/v1/tenants/{tenant}/wallet/wishes/{wish}/reject`
+- `POST /api/v1/tenants/{tenant}/wallet/wishes/{wish}/convert`
 
 Catatan:
+- payload wallet minimal memuat `id`, `name`, `type`, `scope`, `reference_code`, `real_account_id`, `current_balance`, dan relation `real_account`.
+- metadata target disimpan di `finance_savings_goals`, bukan di tabel wallet.
 - `POST /finance/whatsapp-intents/{token}/submitted` menerima `linked_resource_type?`, `submitted_count?`, dan `transaction_ids[]`.
 - Endpoint tersebut bersifat idempotent untuk draft yang sudah `submitted`.
 - Attachment image upload akan dinormalisasi ke `image/webp` di backend bila file sumber berupa gambar.
