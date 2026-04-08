@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
 import { useTenantRoute } from "../../../../common/tenantRoute";
 import { FinanceAccount, FinanceBudget, FinancePocket, FinanceSavingsGoal } from "../../Finance/types";
@@ -49,6 +49,83 @@ const useWalletData = ({ seededAccounts, seededPockets, seededBudgets, seededGoa
     const [monthlyReview, setMonthlyReview] = useState<MonthlyReviewStatus>(seededMonthlyReview);
     const [syncing, setSyncing] = useState(false);
 
+    // Tab-scoped sync function - only fetches data relevant to current tab
+    const syncForTab = useCallback(async (tab: string) => {
+        setSyncing(true);
+        try {
+            // Summary is always needed
+            const summaryPromise = axios.get(tenantRoute.apiTo("/wallet/summary"));
+            
+            let promises: Promise<any>[] = [summaryPromise];
+
+            switch (tab) {
+                case 'dashboard':
+                    // Dashboard needs accounts, wallets, goals, wishes, and monthly review
+                    promises.push(
+                        axios.get(tenantRoute.apiTo("/wallet/accounts")),
+                        axios.get(tenantRoute.apiTo("/wallet/wallets")),
+                        axios.get(tenantRoute.apiTo("/wallet/goals")),
+                        axios.get(tenantRoute.apiTo("/wallet/wishes")),
+                        axios.get(tenantRoute.apiTo("/wallet/monthly-review/status")),
+                    );
+                    break;
+                case 'accounts':
+                    // Accounts tab needs accounts, wallets, and budgets
+                    promises.push(
+                        axios.get(tenantRoute.apiTo("/wallet/accounts")),
+                        axios.get(tenantRoute.apiTo("/wallet/wallets")),
+                        axios.get(tenantRoute.apiTo("/finance/budgets"), { params: { period_month: new Date().toISOString().slice(0, 7) } }),
+                    );
+                    break;
+                case 'goals':
+                    // Goals tab only needs goals
+                    promises.push(
+                        axios.get(tenantRoute.apiTo("/wallet/goals")),
+                        axios.get(tenantRoute.apiTo("/wallet/wallets")), // For wallet dropdown
+                    );
+                    break;
+                case 'wishes':
+                    // Wishes tab only needs wishes
+                    promises.push(
+                        axios.get(tenantRoute.apiTo("/wallet/wishes")),
+                        axios.get(tenantRoute.apiTo("/wallet/wallets")), // For wallet dropdown
+                    );
+                    break;
+                default:
+                    // Fallback to minimal
+                    break;
+            }
+
+            const responses = await Promise.all(promises);
+            
+            // Always update summary
+            const summaryResponse = responses[0];
+            setSummary(normalizeSummary(summaryResponse.data?.data?.summary ?? seededSummary));
+
+            // Update tab-specific data
+            if (tab === 'dashboard') {
+                setAccounts(responses[1]?.data?.data?.accounts ?? []);
+                setWallets(responses[2]?.data?.data?.wallets ?? responses[2]?.data?.data?.pockets ?? []);
+                setGoals(responses[3]?.data?.data?.goals ?? []);
+                setWishes(responses[4]?.data?.data?.wishes ?? []);
+                setMonthlyReview(responses[5]?.data?.data?.monthly_review ?? seededMonthlyReview);
+            } else if (tab === 'accounts') {
+                setAccounts(responses[1]?.data?.data?.accounts ?? []);
+                setWallets(responses[2]?.data?.data?.wallets ?? responses[2]?.data?.data?.pockets ?? []);
+                setBudgets(responses[3]?.data?.data?.budgets ?? []);
+            } else if (tab === 'goals') {
+                setGoals(responses[1]?.data?.data?.goals ?? []);
+                setWallets(responses[2]?.data?.data?.wallets ?? responses[2]?.data?.data?.pockets ?? []);
+            } else if (tab === 'wishes') {
+                setWishes(responses[1]?.data?.data?.wishes ?? []);
+                setWallets(responses[2]?.data?.data?.wallets ?? responses[2]?.data?.data?.pockets ?? []);
+            }
+        } finally {
+            setSyncing(false);
+        }
+    }, [tenantRoute, seededSummary, seededMonthlyReview]);
+
+    // Legacy syncAll for backward compatibility (used in mutations that affect all data)
     const syncAll = async () => {
         setSyncing(true);
         try {
@@ -101,6 +178,7 @@ const useWalletData = ({ seededAccounts, seededPockets, seededBudgets, seededGoa
         filteredGoals,
         filteredWishes,
         syncAll,
+        syncForTab, // New scoped sync function
     };
 };
 

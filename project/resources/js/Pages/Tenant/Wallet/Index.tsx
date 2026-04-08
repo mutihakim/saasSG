@@ -71,6 +71,7 @@ const WalletIndex = ({
         filteredWishes,
         monthlyReview,
         syncAll,
+        syncForTab,
     } = useWalletData({
         seededAccounts,
         seededPockets,
@@ -242,7 +243,7 @@ const WalletIndex = ({
             setWallets((prev) => [savedWallet, ...prev.filter((item) => item.id !== savedWallet.id)]);
             notify.success(t(page.selectedWallet ? "wallet.messages.wallet_updated" : "wallet.messages.wallet_created"));
             page.setShowWalletModal(false);
-            await syncAll();
+            await syncForTab(page.activeTab);
         } catch (error: any) {
             const parsed = parseApiError(error, t("wallet.messages.wallet_save_failed"));
             notify.error({ title: parsed.title, detail: parsed.detail });
@@ -260,7 +261,7 @@ const WalletIndex = ({
             await axios.delete(tenantRoute.apiTo(`/wallet/accounts/${page.selectedAccount.id}`));
             page.setShowAccountModal(false);
             notify.success(t("finance.accounts.messages.deleted"));
-            await syncAll();
+            await syncForTab(page.activeTab);
         } catch (error: any) {
             const parsed = parseApiError(error, t("finance.accounts.messages.delete_failed"));
             notify.error({ title: parsed.title, detail: parsed.detail });
@@ -275,7 +276,7 @@ const WalletIndex = ({
         try {
             await axios.delete(tenantRoute.apiTo(`/wallet/wallets/${wallet.id}`));
             notify.success(t("wallet.messages.wallet_deleted"));
-            await syncAll();
+            await syncForTab(page.activeTab);
         } catch (error: any) {
             const parsed = parseApiError(error, t("wallet.messages.wallet_delete_failed"));
             notify.error({ title: parsed.title, detail: parsed.detail });
@@ -314,7 +315,7 @@ const WalletIndex = ({
             setGoals((prev) => [savedGoal, ...prev.filter((item) => item.id !== savedGoal.id)]);
             notify.success(t(page.selectedGoal ? "wallet.messages.goal_updated" : "wallet.messages.goal_created"));
             page.setShowGoalModal(false);
-            await syncAll();
+            await syncForTab(page.activeTab);
         } catch (error: any) {
             const parsed = parseApiError(error, t("wallet.messages.goal_save_failed"));
             notify.error({ title: parsed.title, detail: parsed.detail });
@@ -331,7 +332,7 @@ const WalletIndex = ({
         try {
             await axios.delete(tenantRoute.apiTo(`/wallet/goals/${goal.id}`));
             notify.success(t("wallet.messages.goal_deleted"));
-            await syncAll();
+            await syncForTab(page.activeTab);
         } catch (error: any) {
             const parsed = parseApiError(error, t("wallet.messages.goal_delete_failed"));
             notify.error({ title: parsed.title, detail: parsed.detail });
@@ -354,7 +355,7 @@ const WalletIndex = ({
             setWishes((prev) => [savedWish, ...prev.filter((item) => item.id !== savedWish.id)]);
             notify.success(t(page.selectedWish ? "wallet.messages.wish_updated" : "wallet.messages.wish_created"));
             page.setShowWishModal(false);
-            await syncAll();
+            await syncForTab(page.activeTab);
         } catch (error: any) {
             const parsed = parseApiError(error, t("wallet.messages.wish_save_failed"));
             notify.error({ title: parsed.title, detail: parsed.detail });
@@ -371,7 +372,7 @@ const WalletIndex = ({
         try {
             await axios.delete(tenantRoute.apiTo(`/wallet/wishes/${wish.id}`));
             notify.success(t("wallet.messages.wish_deleted"));
-            await syncAll();
+            await syncForTab(page.activeTab);
         } catch (error: any) {
             const parsed = parseApiError(error, t("wallet.messages.wish_delete_failed"));
             notify.error({ title: parsed.title, detail: parsed.detail });
@@ -382,7 +383,7 @@ const WalletIndex = ({
         try {
             await axios.post(tenantRoute.apiTo(`/wallet/wishes/${wish.id}/${action}`));
             notify.success(t(action === "approve" ? "wallet.messages.wish_approved" : "wallet.messages.wish_rejected"));
-            await syncAll();
+            await syncForTab(page.activeTab);
         } catch (error: any) {
             const parsed = parseApiError(error, t("wallet.messages.wish_save_failed"));
             notify.error({ title: parsed.title, detail: parsed.detail });
@@ -404,7 +405,7 @@ const WalletIndex = ({
             });
             notify.success(t("wallet.messages.wish_converted"));
             page.setShowConvertModal(false);
-            await syncAll();
+            await syncForTab(page.activeTab);
         } catch (error: any) {
             const parsed = parseApiError(error, t("wallet.messages.wish_convert_failed"));
             notify.error({ title: parsed.title, detail: parsed.detail });
@@ -610,7 +611,7 @@ const WalletIndex = ({
                 show={page.transactionModal}
                 onClose={() => page.setTransactionModal(false)}
                 onSuccess={async () => {
-                    await syncAll();
+                    await syncForTab(page.activeTab);
                     page.setTransactionModal(false);
                 }}
                 categories={categories}
