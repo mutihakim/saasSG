@@ -37,6 +37,21 @@ class FinanceTransactionPresenter
         ];
     }
 
+    public function relationsForList(): array
+    {
+        return [
+            'category:id,name,icon,color',
+            'currency:id,code,symbol,decimal_places',
+            'ownerMember:id,full_name',
+            'bankAccount:id,name',
+        ];
+    }
+
+    public function transactionForList(FinanceTransaction $transaction): array
+    {
+        return $transaction->toArray();
+    }
+
     public function transaction(Tenant $tenant, FinanceTransaction $transaction): array
     {
         $payload = $transaction->toArray();

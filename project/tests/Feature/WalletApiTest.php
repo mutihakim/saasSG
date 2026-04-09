@@ -67,19 +67,19 @@ class WalletApiTest extends TestCase
             'sort_order' => 1,
         ]);
 
-        foreach (['finance.view', 'finance.create', 'wallet.view', 'wallet.create', 'wallet.update', 'wallet.delete'] as $permission) {
+        foreach (['finance.view', 'finance.create', 'finance.update', 'finance.delete'] as $permission) {
             Permission::findOrCreate($permission, 'web');
         }
 
         app(PermissionRegistrar::class)->setPermissionsTeamId($this->tenant->id);
-        $this->owner->givePermissionTo(['finance.view', 'finance.create', 'wallet.view', 'wallet.create', 'wallet.update', 'wallet.delete']);
+        $this->owner->givePermissionTo(['finance.view', 'finance.create', 'finance.update', 'finance.delete']);
     }
 
     public function test_wallet_account_creation_creates_main_pocket(): void
     {
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/accounts", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts", [
                 'name' => 'BCA',
                 'scope' => 'private',
                 'type' => 'bank',
@@ -151,6 +151,98 @@ class WalletApiTest extends TestCase
         ]);
     }
 
+    public function test_account_and_pocket_show_endpoints_return_full_detail_metrics(): void
+    {
+        $currencyId = TenantCurrency::query()
+            ->where('tenant_id', $this->tenant->id)
+            ->value('id');
+
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Cash Detail',
+            'scope' => 'private',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 100000,
+            'current_balance' => 160000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($account);
+        $mainPocket = FinancePocket::query()
+            ->where('tenant_id', $this->tenant->id)
+            ->where('real_account_id', $account->id)
+            ->where('is_system', true)
+            ->firstOrFail();
+
+        FinanceSavingsGoal::create([
+            'tenant_id' => $this->tenant->id,
+            'pocket_id' => $mainPocket->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Emergency',
+            'target_amount' => 300000,
+            'current_amount' => 25000,
+            'status' => 'active',
+            'row_version' => 1,
+        ]);
+
+        FinanceTransaction::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'created_by' => $this->ownerMembership->id,
+            'bank_account_id' => $account->id,
+            'pocket_id' => $mainPocket->id,
+            'type' => 'pemasukan',
+            'transaction_date' => now()->toDateString(),
+            'currency_id' => $currencyId,
+            'currency_code' => 'IDR',
+            'exchange_rate' => 1,
+            'amount' => 60000,
+            'amount_base' => 60000,
+            'description' => 'Salary topup',
+            'tags' => [],
+        ]);
+
+        FinanceTransaction::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'created_by' => $this->ownerMembership->id,
+            'bank_account_id' => $account->id,
+            'pocket_id' => $mainPocket->id,
+            'type' => 'pengeluaran',
+            'transaction_date' => now()->toDateString(),
+            'currency_id' => $currencyId,
+            'currency_code' => 'IDR',
+            'exchange_rate' => 1,
+            'amount' => 15000,
+            'amount_base' => 15000,
+            'description' => 'Groceries',
+            'tags' => [],
+        ]);
+
+        $accountResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$account->id}");
+
+        $accountResponse->assertOk()
+            ->assertJsonPath('data.account.id', $account->id)
+            ->assertJsonPath('data.account.total_inflow', 60000)
+            ->assertJsonPath('data.account.total_outflow', 15000)
+            ->assertJsonPath('data.account.goal_reserved_total', 25000);
+
+        $pocketResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets/{$mainPocket->id}");
+
+        $pocketResponse->assertOk()
+            ->assertJsonPath('data.wallet.id', $mainPocket->id)
+            ->assertJsonPath('data.wallet.total_inflow', 60000)
+            ->assertJsonPath('data.wallet.total_outflow', 15000)
+            ->assertJsonPath('data.wallet.goal_reserved_total', 25000);
+    }
+
     public function test_free_plan_cannot_create_additional_wallet_beyond_default(): void
     {
         $this->tenant->update(['plan_code' => 'free']);
@@ -172,7 +264,7 @@ class WalletApiTest extends TestCase
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wallets", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets", [
                 'name' => 'Dana Umroh',
                 'type' => 'personal',
                 'scope' => 'private',
@@ -246,7 +338,7 @@ class WalletApiTest extends TestCase
 
         $walletResponse = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wallets", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets", [
                 'name' => 'Wallet Unlimited',
                 'type' => 'project',
                 'scope' => 'private',
@@ -260,7 +352,7 @@ class WalletApiTest extends TestCase
 
         $goalResponse = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/goals", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/goals", [
                 'pocket_id' => $walletId,
                 'name' => 'Goal Unlimited',
                 'target_amount' => 250000,
@@ -269,7 +361,7 @@ class WalletApiTest extends TestCase
 
         $wishResponse = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wishes", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wishes", [
                 'title' => 'Wish Unlimited',
                 'priority' => 'high',
             ]);
@@ -357,7 +449,7 @@ class WalletApiTest extends TestCase
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wishes/{$wish->id}/convert", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wishes/{$wish->id}/convert", [
                 'wallet_id' => $wallet->id,
                 'target_amount' => 35000000,
             ]);
@@ -408,7 +500,7 @@ class WalletApiTest extends TestCase
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/goals", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/goals", [
                 'pocket_id' => $wallet->id,
                 'name' => 'Modal Booth Baru',
                 'target_amount' => 1500000,
@@ -505,7 +597,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/goals/{$goal->id}/fund", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/goals/{$goal->id}/fund", [
                 'source_pocket_id' => $sourceWallet->id,
                 'amount' => 300000,
                 'transaction_date' => now()->toDateString(),
@@ -516,7 +608,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/goals/{$goal->id}/spend", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/goals/{$goal->id}/spend", [
                 'amount' => 125000,
                 'transaction_date' => now()->toDateString(),
                 'category_id' => $category->id,
@@ -561,7 +653,7 @@ class WalletApiTest extends TestCase
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/wallet/accounts/{$account->id}", [
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$account->id}", [
                 'name' => 'Shared Ops',
                 'scope' => 'shared',
                 'type' => 'bank',
@@ -614,7 +706,7 @@ class WalletApiTest extends TestCase
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wallets", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets", [
                 'name' => 'Tim Operasional',
                 'type' => 'family',
                 'purpose_type' => 'spending',
@@ -648,7 +740,7 @@ class WalletApiTest extends TestCase
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wallets", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets", [
                 'name' => 'Dana Sekolah',
                 'type' => 'school fund',
                 'purpose_type' => 'saving',
@@ -723,7 +815,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/wallet/accounts/{$account->id}", [
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$account->id}", [
                 'name' => 'Shared Parent',
                 'scope' => 'private',
                 'type' => 'bank',
@@ -784,7 +876,7 @@ class WalletApiTest extends TestCase
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wallets/{$mainPocket->id}", [
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets/{$mainPocket->id}", [
                 'name' => 'Hacked Name',
                 'type' => 'personal',
                 'purpose_type' => 'spending',
@@ -841,7 +933,7 @@ class WalletApiTest extends TestCase
 
         $wallet = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wallets", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets", [
                 'name' => 'Audit Wallet',
                 'type' => 'personal',
                 'purpose_type' => 'saving',
@@ -860,7 +952,7 @@ class WalletApiTest extends TestCase
 
         $updatedWallet = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wallets/{$wallet['id']}", [
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets/{$wallet['id']}", [
                 'name' => 'Audit Wallet Updated',
                 'type' => 'personal',
                 'purpose_type' => 'saving',
@@ -886,7 +978,7 @@ class WalletApiTest extends TestCase
 
         $wish = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wishes", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wishes", [
                 'title' => 'Audit Wish',
                 'priority' => 'medium',
             ])
@@ -901,7 +993,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wishes/{$wish['id']}", [
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/wishes/{$wish['id']}", [
                 'title' => 'Audit Wish Updated',
                 'description' => '',
                 'estimated_amount' => 1000000,
@@ -920,7 +1012,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wishes/{$wish['id']}/approve")
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wishes/{$wish['id']}/approve")
             ->assertOk();
 
         $this->assertDatabaseHas('activity_logs', [
@@ -931,7 +1023,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wishes/{$wish['id']}/convert", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wishes/{$wish['id']}/convert", [
                 'wallet_id' => $updatedWallet['id'],
                 'target_amount' => 1000000,
             ])
@@ -954,7 +1046,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wishes/{$rejectWish->id}/reject")
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wishes/{$rejectWish->id}/reject")
             ->assertOk();
 
         $this->assertDatabaseHas('activity_logs', [
@@ -974,7 +1066,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wishes/{$deleteWish->id}")
+            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/finance/wishes/{$deleteWish->id}")
             ->assertOk();
 
         $this->assertDatabaseHas('activity_logs', [
@@ -1016,7 +1108,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/wallet/monthly-review/submit", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/monthly-review/submit", [
                 'period_month' => $periodMonth,
                 'budget_method' => 'zero_based',
             ])
@@ -1031,7 +1123,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/wallet/wallets/{$updatedWallet['id']}")
+            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets/{$updatedWallet['id']}")
             ->assertOk();
 
         $this->assertDatabaseHas('activity_logs', [

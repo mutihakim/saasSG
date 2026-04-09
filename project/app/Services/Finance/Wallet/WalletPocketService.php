@@ -150,7 +150,7 @@ class WalletPocketService
 
     public function walletSubscribed(Tenant $tenant): bool
     {
-        return app(\App\Support\SubscriptionEntitlements::class)->can($tenant, 'wallet', 'view');
+        return app(\App\Support\SubscriptionEntitlements::class)->can($tenant, 'finance', 'view');
     }
 
     private function nextReferenceCode(int $tenantId): string

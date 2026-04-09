@@ -2,10 +2,11 @@ import { Head } from "@inertiajs/react";
 import React from "react";
 
 import WalletIndex from "./Index";
+import { WalletPageProps } from "./types";
 
-const WalletPage = (props: any) => (
+const WalletPage = (props: WalletPageProps) => (
     <>
-        <Head title="Wallet" />
+        <Head title={props.financeRoute?.title ?? "Wallet"} />
         <div
             style={{
                 minHeight: "100vh",

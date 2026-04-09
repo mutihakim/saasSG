@@ -41,7 +41,7 @@ class WalletSavingsGoalApiController extends Controller
     public function index(Request $request, Tenant $tenant): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.view'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.view'), 403);
         $accessiblePocketIds = $this->access->accessiblePocketsQuery($tenant, $member)->pluck('finance_pockets.id');
 
         $goals = FinanceSavingsGoal::query()
@@ -62,7 +62,7 @@ class WalletSavingsGoalApiController extends Controller
     public function show(Request $request, Tenant $tenant, FinanceSavingsGoal $goal): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.view'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.view'), 403);
         abort_if((int) $goal->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->canViewGoal($goal, $tenant, $member), 404);
 
@@ -78,7 +78,7 @@ class WalletSavingsGoalApiController extends Controller
     public function activities(Request $request, Tenant $tenant, FinanceSavingsGoal $goal): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.view'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.view'), 403);
         abort_if((int) $goal->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->canViewGoal($goal, $tenant, $member), 404);
 
@@ -88,7 +88,7 @@ class WalletSavingsGoalApiController extends Controller
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.create'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.create'), 403);
 
         $data = $request->validate([
             'pocket_id' => ['required', 'string', 'size:26', Rule::exists('finance_pockets', 'id')->where('tenant_id', $tenant->id)],
@@ -101,7 +101,7 @@ class WalletSavingsGoalApiController extends Controller
         try {
             $this->entitlements->assertUnderLimit(
                 $tenant,
-                'wallet.goals.max',
+                'finance.goals.max',
                 FinanceSavingsGoal::query()->where('tenant_id', $tenant->id)->count()
             );
         } catch (RuntimeException $exception) {
@@ -148,7 +148,7 @@ class WalletSavingsGoalApiController extends Controller
     public function update(Request $request, Tenant $tenant, FinanceSavingsGoal $goal): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.update'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.update'), 403);
         abort_if((int) $goal->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->canManageGoal($goal, $member), 403);
 
@@ -199,7 +199,7 @@ class WalletSavingsGoalApiController extends Controller
     public function fund(Request $request, Tenant $tenant, FinanceSavingsGoal $goal): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.create'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.create'), 403);
         abort_if((int) $goal->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->canUseGoal($goal, $tenant, $member), 403);
 
@@ -375,7 +375,7 @@ class WalletSavingsGoalApiController extends Controller
     public function spend(Request $request, Tenant $tenant, FinanceSavingsGoal $goal): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.create'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.create'), 403);
         abort_if((int) $goal->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->canUseGoal($goal, $tenant, $member), 403);
 
@@ -511,7 +511,7 @@ class WalletSavingsGoalApiController extends Controller
     public function destroy(Request $request, Tenant $tenant, FinanceSavingsGoal $goal): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.delete'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.delete'), 403);
         abort_if((int) $goal->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->canManageGoal($goal, $member), 403);
 

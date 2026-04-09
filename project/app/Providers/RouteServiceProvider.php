@@ -35,6 +35,12 @@ class RouteServiceProvider extends ServiceProvider
             ];
         });
 
+        RateLimiter::for('mobile.auth.login', function (Request $request) {
+            return [
+                Limit::perMinute(8)->by(Str::lower((string) $request->input('email')).'|'.$request->ip()),
+            ];
+        });
+
         RateLimiter::for('auth.password', function (Request $request) {
             return [
                 Limit::perMinute(5)->by(Str::lower((string) $request->input('email')).'|'.$request->ip()),

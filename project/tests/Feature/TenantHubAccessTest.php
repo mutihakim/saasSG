@@ -73,6 +73,83 @@ class TenantHubAccessTest extends TestCase
             );
     }
 
+    public function test_finance_entry_redirects_to_finance_home_and_wallet_route_is_removed(): void
+    {
+        [$user, $tenant] = $this->provisionTenant();
+
+        $this->actingAs($user)
+            ->get("https://{$tenant->slug}.appsah.my.id/finance")
+            ->assertRedirect("https://{$tenant->slug}.appsah.my.id/finance/home");
+
+        $this->actingAs($user)
+            ->get("https://{$tenant->slug}.appsah.my.id/wallet")
+            ->assertNotFound();
+
+        $this->actingAs($user)
+            ->get("https://{$tenant->slug}.appsah.my.id/finance/budgets")
+            ->assertRedirect("https://{$tenant->slug}.appsah.my.id/finance/planning?view=budgets");
+    }
+
+    public function test_authenticated_user_can_access_finance_subroutes(): void
+    {
+        [$user, $tenant] = $this->provisionTenant();
+
+        $this->actingAs($user)
+            ->get("https://{$tenant->slug}.appsah.my.id/finance/home")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tenant/Wallet/Page')
+                ->where('financeRoute.section', 'home')
+                ->where('financeRoute.initial_tab', 'dashboard')
+            );
+
+        $this->actingAs($user)
+            ->get("https://{$tenant->slug}.appsah.my.id/finance/accounts")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tenant/Wallet/Page')
+                ->where('financeRoute.section', 'accounts')
+                ->where('financeRoute.initial_tab', 'accounts')
+            );
+
+        $this->actingAs($user)
+            ->get("https://{$tenant->slug}.appsah.my.id/finance/transactions")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tenant/Finance/Page')
+                ->where('financeRoute.section', 'transactions')
+                ->where('financeRoute.initial_tab', 'transactions')
+            );
+
+        $this->actingAs($user)
+            ->get("https://{$tenant->slug}.appsah.my.id/finance/planning?view=budgets&period_month=2026-04")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tenant/Wallet/Page')
+                ->where('financeRoute.section', 'planning')
+                ->where('financeRoute.initial_tab', 'budgets')
+                ->where('financeRoute.period_month', '2026-04')
+            );
+
+        $this->actingAs($user)
+            ->get("https://{$tenant->slug}.appsah.my.id/finance/planning?view=wishes")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tenant/Wallet/Page')
+                ->where('financeRoute.section', 'planning')
+                ->where('financeRoute.initial_tab', 'wishes')
+            );
+
+        $this->actingAs($user)
+            ->get("https://{$tenant->slug}.appsah.my.id/finance/reports?view=stats")
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('Tenant/Finance/Page')
+                ->where('financeRoute.section', 'reports')
+                ->where('financeRoute.initial_tab', 'stats')
+            );
+    }
+
     public function test_guest_is_shown_landing_page_at_root(): void
     {
         [$user, $tenant] = $this->provisionTenant();

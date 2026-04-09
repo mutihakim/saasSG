@@ -4,8 +4,8 @@ import { MainTab, MoreView } from "../components/pwa/types";
 import { LockedGroupMeta, TransactionDraftMeta, TransactionDraftPayload } from "../components/transactionModalTypes";
 import { FinanceAccount, FinanceBatchDraft, FinanceBudget, FinanceDeleteTarget, FinanceTransaction } from "../types";
 
-export const useFinancePageState = () => {
-    const [activeTab, setActiveTab] = useState<MainTab>("transactions");
+export const useFinancePageState = (initialTab: MainTab = "transactions") => {
+    const [activeTab, setActiveTab] = useState<MainTab>(initialTab);
     const [moreView, setMoreView] = useState<MoreView>("menu");
     const [showComposer, setShowComposer] = useState(false);
     const [transactionModal, setTransactionModal] = useState(false);

@@ -26,7 +26,7 @@ class WalletWishApiController extends Controller
 
     public function index(Request $request, Tenant $tenant): JsonResponse
     {
-        abort_unless($request->user()?->hasPermissionTo('wallet.view'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.view'), 403);
 
         $wishes = WalletWish::query()
             ->forTenant($tenant->id)
@@ -41,7 +41,7 @@ class WalletWishApiController extends Controller
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.create'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.create'), 403);
 
         $data = $request->validate([
             'title' => ['required', 'string', 'max:140'],
@@ -55,7 +55,7 @@ class WalletWishApiController extends Controller
         try {
             $this->entitlements->assertUnderLimit(
                 $tenant,
-                'wallet.wishes.max',
+                'finance.wishes.max',
                 WalletWish::query()->where('tenant_id', $tenant->id)->count()
             );
         } catch (RuntimeException $exception) {
@@ -99,7 +99,7 @@ class WalletWishApiController extends Controller
 
     public function update(Request $request, Tenant $tenant, WalletWish $wish): JsonResponse
     {
-        abort_unless($request->user()?->hasPermissionTo('wallet.update'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.update'), 403);
         abort_if((int) $wish->tenant_id !== (int) $tenant->id, 404);
 
         $data = $request->validate([
@@ -153,7 +153,7 @@ class WalletWishApiController extends Controller
 
     public function destroy(Request $request, Tenant $tenant, WalletWish $wish): JsonResponse
     {
-        abort_unless($request->user()?->hasPermissionTo('wallet.delete'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.delete'), 403);
         abort_if((int) $wish->tenant_id !== (int) $tenant->id, 404);
 
         $actorMember = $request->attributes->get('currentTenantMember');
@@ -181,7 +181,7 @@ class WalletWishApiController extends Controller
     public function approve(Request $request, Tenant $tenant, WalletWish $wish): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.update'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.update'), 403);
         abort_if((int) $wish->tenant_id !== (int) $tenant->id, 404);
 
         $before = $this->activityLogs->snapshot($wish);
@@ -214,7 +214,7 @@ class WalletWishApiController extends Controller
 
     public function reject(Request $request, Tenant $tenant, WalletWish $wish): JsonResponse
     {
-        abort_unless($request->user()?->hasPermissionTo('wallet.update'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.update'), 403);
         abort_if((int) $wish->tenant_id !== (int) $tenant->id, 404);
 
         $actorMember = $request->attributes->get('currentTenantMember');
@@ -247,7 +247,7 @@ class WalletWishApiController extends Controller
     public function convert(Request $request, Tenant $tenant, WalletWish $wish): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.create'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.create'), 403);
         abort_if((int) $wish->tenant_id !== (int) $tenant->id, 404);
 
         $data = $request->validate([
@@ -260,7 +260,7 @@ class WalletWishApiController extends Controller
         try {
             $this->entitlements->assertUnderLimit(
                 $tenant,
-                'wallet.goals.max',
+                'finance.goals.max',
                 FinanceSavingsGoal::query()->where('tenant_id', $tenant->id)->count()
             );
         } catch (RuntimeException $exception) {

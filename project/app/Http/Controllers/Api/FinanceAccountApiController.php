@@ -29,38 +29,60 @@ class FinanceAccountApiController extends Controller
     public function index(Request $request, Tenant $tenant): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        $requiredPermission = str_starts_with($request->path(), 'api/v1/tenants/') && str_contains($request->path(), '/wallet/')
-            ? 'wallet.view'
-            : 'finance.view';
-        abort_unless($request->user()?->hasPermissionTo($requiredPermission), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.view'), 403);
+        $detailLevel = $request->string('detail')->toString() === WalletCashflowService::DETAIL_FULL
+            ? WalletCashflowService::DETAIL_FULL
+            : WalletCashflowService::DETAIL_SUMMARY;
 
         $accounts = $this->access->accessibleAccountsQuery($tenant, $member)
             ->when($request->boolean('active_only', true), fn ($query) => $query->active())
             ->orderBy('scope')
             ->orderBy('name')
             ->get();
-        $accounts = $this->cashflow->enrichAccounts($tenant, $member, $accounts);
+        $accounts = $this->cashflow->enrichAccounts($tenant, $member, $accounts, detailLevel: $detailLevel);
 
         return response()->json(['ok' => true, 'data' => ['accounts' => $accounts]]);
+    }
+
+    public function show(Request $request, Tenant $tenant, TenantBankAccount $account): JsonResponse
+    {
+        $member = $request->attributes->get('currentTenantMember');
+        abort_unless($request->user()?->hasPermissionTo('finance.view'), 403);
+        abort_if((int) $account->tenant_id !== (int) $tenant->id, 404);
+
+        $record = $this->access->accessibleAccountsQuery($tenant, $member)
+            ->whereKey($account->id)
+            ->first();
+
+        abort_if(! $record, 404);
+
+        $enriched = $this->cashflow->enrichAccounts(
+            $tenant,
+            $member,
+            collect([$record]),
+            detailLevel: WalletCashflowService::DETAIL_FULL,
+        )->first();
+
+        return response()->json(['ok' => true, 'data' => ['account' => $enriched]]);
     }
 
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        $requiredPermission = str_starts_with($request->path(), 'api/v1/tenants/') && str_contains($request->path(), '/wallet/')
-            ? 'wallet.create'
-            : 'finance.create';
-        abort_unless($request->user()?->hasPermissionTo($requiredPermission), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.create'), 403);
         abort_unless($this->access->canCreatePrivateStructures($member), 403);
 
         $limit = $this->entitlements->limit($tenant, 'finance.accounts.max') ?? -1;
         if ($limit !== -1) {
-            // Atomic quota check with pessimistic lock to prevent race conditions
+            // PostgreSQL does not allow FOR UPDATE on aggregate queries, so lock the
+            // active account rows first and count them in memory for the quota check.
             $activeAccounts = DB::transaction(function () use ($tenant) {
                 return TenantBankAccount::query()
                     ->forTenant($tenant->id)
                     ->active()
+                    ->select('id')
                     ->lockForUpdate()
+                    ->get()
                     ->count();
             });
 
@@ -151,10 +173,7 @@ class FinanceAccountApiController extends Controller
     public function update(Request $request, Tenant $tenant, TenantBankAccount $account): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        $requiredPermission = str_starts_with($request->path(), 'api/v1/tenants/') && str_contains($request->path(), '/wallet/')
-            ? 'wallet.update'
-            : 'finance.update';
-        abort_unless($request->user()?->hasPermissionTo($requiredPermission), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.update'), 403);
         abort_if((int) $account->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->access->canManageAccount($account, $member), 403);
 
@@ -301,10 +320,7 @@ class FinanceAccountApiController extends Controller
     public function destroy(Request $request, Tenant $tenant, TenantBankAccount $account): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        $requiredPermission = str_starts_with($request->path(), 'api/v1/tenants/') && str_contains($request->path(), '/wallet/')
-            ? 'wallet.delete'
-            : 'finance.delete';
-        abort_unless($request->user()?->hasPermissionTo($requiredPermission), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.delete'), 403);
         abort_if((int) $account->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->access->canManageAccount($account, $member), 403);
 

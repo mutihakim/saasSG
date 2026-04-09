@@ -6,7 +6,7 @@ import { formatCurrency } from "../components/pwa/types";
 import { GroupedWalletAccount, WalletMetricsItem, WalletSummary, WalletWish } from "../types";
 
 type Props = {
-    activeTab: "dashboard" | "accounts" | "wishes" | "goals";
+    activeTab: "dashboard" | "accounts" | "budgets" | "wishes" | "goals";
     filteredAccounts: FinanceAccount[];
     filteredWallets: FinancePocket[];
     wishes: WalletWish[];

@@ -1,22 +1,25 @@
+import { Link } from "@inertiajs/react";
 import React from "react";
 
 import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceDeleteTarget, FinanceFilterDraft, FinanceLimits, FinanceMember, FinancePermissions, FinancePocket, FinanceTransaction } from "../types";
 
 import FinanceSummaryStrip from "./FinanceSummaryStrip";
 import FinanceTabPanel from "./FinanceTabPanel";
-import FinanceBottomNav from "./pwa/FinanceBottomNav";
 import FinanceComposerFab from "./pwa/FinanceComposerFab";
+import FinanceModuleBottomNav from "./pwa/FinanceModuleBottomNav";
 import FinanceTopbar from "./pwa/FinanceTopbar";
 import { MainTab, MoreView, SURFACE_BG, TransactionType } from "./pwa/types";
 
 type Props = {
+    activeSection: "transactions" | "budgets" | "reports";
     activeTab: MainTab;
-    setActiveTab: React.Dispatch<React.SetStateAction<MainTab>>;
     moreView: MoreView;
     setMoreView: React.Dispatch<React.SetStateAction<MoreView>>;
     showComposer: boolean;
     setShowComposer: React.Dispatch<React.SetStateAction<boolean>>;
     permissions: FinancePermissions;
+    title?: string;
+    routeViewHref?: string | null;
     subtitle: string;
     searchOpen: boolean;
     setSearchOpen: React.Dispatch<React.SetStateAction<boolean>>;
@@ -46,12 +49,10 @@ type Props = {
     loadingMoreTransactions: boolean;
     loadMoreRef: React.RefObject<HTMLDivElement | null>;
     openCreateFromGroupedTransaction: (transaction: FinanceTransaction | null, options?: { duplicate?: boolean }) => void;
+    onTransactionClick: (transaction: FinanceTransaction) => void;
     setDeleteTarget: React.Dispatch<React.SetStateAction<FinanceDeleteTarget | null>>;
     setDeleteTargetType: React.Dispatch<React.SetStateAction<"transaction" | "transaction_group" | "account" | "budget">>;
     setDeleteModal: React.Dispatch<React.SetStateAction<boolean>>;
-    setSelectedTransaction: React.Dispatch<React.SetStateAction<FinanceTransaction | null>>;
-    setFocusedTransactionId: React.Dispatch<React.SetStateAction<string | null>>;
-    setShowDetailSheet: React.Dispatch<React.SetStateAction<boolean>>;
     statsMetric: "expense" | "income";
     setStatsMetric: React.Dispatch<React.SetStateAction<"expense" | "income">>;
     categoryBreakdown: Array<{ name: string; amount: number }>;
@@ -74,13 +75,15 @@ type Props = {
 };
 
 const FinancePageContent = ({
+    activeSection,
     activeTab,
-    setActiveTab,
     moreView,
     setMoreView,
     showComposer,
     setShowComposer,
     permissions,
+    title,
+    routeViewHref,
     subtitle,
     searchOpen,
     setSearchOpen,
@@ -106,12 +109,10 @@ const FinancePageContent = ({
     loadingMoreTransactions,
     loadMoreRef,
     openCreateFromGroupedTransaction,
+    onTransactionClick,
     setDeleteTarget,
     setDeleteTargetType,
     setDeleteModal,
-    setSelectedTransaction,
-    setFocusedTransactionId,
-    setShowDetailSheet,
     statsMetric,
     setStatsMetric,
     categoryBreakdown,
@@ -135,11 +136,11 @@ const FinancePageContent = ({
     <div style={{ minHeight: "100vh" }}>
         <div className="position-relative d-flex flex-column" style={{ minHeight: "100vh", background: SURFACE_BG }}>
             <FinanceTopbar
-                title={activeTab === "budget"
+                title={title ?? (activeTab === "budget"
                     ? t("finance.budgets.title")
                     : activeTab === "report"
                         ? t("finance.reports.title")
-                        : t(`finance.pwa.headers.${activeTab}`)}
+                        : t(`finance.pwa.headers.${activeTab}`))}
                 subtitle={subtitle}
                 searchOpen={searchOpen}
                 draftSearch={draftFilters.search}
@@ -161,62 +162,81 @@ const FinancePageContent = ({
                         : "calc(128px + env(safe-area-inset-bottom))",
                 }}
             >
-                <FinanceSummaryStrip
-                    errorState={errorState}
-                    loading={loading}
-                    summaryLoading={summaryLoading}
-                    loadFinance={loadFinance}
-                    summary={summary}
-                    defaultCurrency={defaultCurrency}
-                    filters={draftFilters}
-                    setDraftFilters={setDraftFilters}
-                    setFilters={setFilters}
-                    pockets={pockets}
-                    t={t}
-                />
+                {activeSection !== "reports" ? (
+                    <FinanceSummaryStrip
+                        errorState={errorState}
+                        loading={loading}
+                        summaryLoading={summaryLoading}
+                        loadFinance={loadFinance}
+                        summary={summary}
+                        defaultCurrency={defaultCurrency}
+                        filters={draftFilters}
+                        setDraftFilters={setDraftFilters}
+                        setFilters={setFilters}
+                        pockets={pockets}
+                        t={t}
+                    />
+                ) : null}
 
                 {!errorState && !loading && (
-                    <FinanceTabPanel
-                        activeTab={activeTab}
-                        moreView={moreView}
-                        setMoreView={setMoreView}
-                        defaultCurrency={defaultCurrency}
-                        transactions={transactions}
-                        showTransferHint={showTransferHint}
-                        focusedTransactionId={focusedTransactionId}
-                        transactionsMeta={transactionsMeta}
-                        loadingMoreTransactions={loadingMoreTransactions}
-                        loadMoreRef={loadMoreRef}
-                        openCreateFromGroupedTransaction={openCreateFromGroupedTransaction}
-                        setDeleteTarget={setDeleteTarget}
-                        setDeleteTargetType={setDeleteTargetType}
-                        setDeleteModal={setDeleteModal}
-                        setSelectedTransaction={setSelectedTransaction}
-                        setFocusedTransactionId={setFocusedTransactionId}
-                        setShowDetailSheet={setShowDetailSheet}
-                        statsMetric={statsMetric}
-                        setStatsMetric={setStatsMetric}
-                        categoryBreakdown={categoryBreakdown}
-                        categoryChartOptions={categoryChartOptions}
-                        categoryChartSeries={categoryChartSeries}
-                        accounts={accounts}
-                        budgets={budgets}
-                        categories={categories}
-                        members={members}
-                        activeMemberId={activeMemberId}
-                        permissions={permissions}
-                        canManageFinanceStructures={canManageFinanceStructures}
-                        budgetCreateDisabled={budgetCreateDisabled}
-                        limits={limits}
-                        totalAssets={totalAssets}
-                        totalLiabilities={totalLiabilities}
-                        setSelectedBudget={setSelectedBudget}
-                        setBudgetModal={setBudgetModal}
-                    />
+                    <>
+                        {activeSection === "reports" && routeViewHref ? (
+                            <div className="d-flex gap-2 mb-3">
+                                <Link
+                                    href={`${routeViewHref}?view=stats`}
+                                    className={`btn flex-fill rounded-pill ${activeTab === "stats" ? "btn-info text-white" : "btn-light"}`}
+                                >
+                                    {t("finance.pwa.tabs.stats")}
+                                </Link>
+                                <Link
+                                    href={`${routeViewHref}?view=report`}
+                                    className={`btn flex-fill rounded-pill ${activeTab === "report" ? "btn-info text-white" : "btn-light"}`}
+                                >
+                                    {t("finance.pwa.tabs.report")}
+                                </Link>
+                            </div>
+                        ) : null}
+
+                        <FinanceTabPanel
+                            activeTab={activeTab}
+                            moreView={moreView}
+                            setMoreView={setMoreView}
+                            defaultCurrency={defaultCurrency}
+                            transactions={transactions}
+                            showTransferHint={showTransferHint}
+                            focusedTransactionId={focusedTransactionId}
+                            transactionsMeta={transactionsMeta}
+                            loadingMoreTransactions={loadingMoreTransactions}
+                            loadMoreRef={loadMoreRef}
+                            openCreateFromGroupedTransaction={openCreateFromGroupedTransaction}
+                            onTransactionClick={onTransactionClick}
+                            setDeleteTarget={setDeleteTarget}
+                            setDeleteTargetType={setDeleteTargetType}
+                            setDeleteModal={setDeleteModal}
+                            statsMetric={statsMetric}
+                            setStatsMetric={setStatsMetric}
+                            categoryBreakdown={categoryBreakdown}
+                            categoryChartOptions={categoryChartOptions}
+                            categoryChartSeries={categoryChartSeries}
+                            accounts={accounts}
+                            budgets={budgets}
+                            categories={categories}
+                            members={members}
+                            activeMemberId={activeMemberId}
+                            permissions={permissions}
+                            canManageFinanceStructures={canManageFinanceStructures}
+                            budgetCreateDisabled={budgetCreateDisabled}
+                            limits={limits}
+                            totalAssets={totalAssets}
+                            totalLiabilities={totalLiabilities}
+                            setSelectedBudget={setSelectedBudget}
+                            setBudgetModal={setBudgetModal}
+                        />
+                    </>
                 )}
             </div>
 
-            {permissions.create && (
+            {permissions.create && activeSection === "transactions" && (
                 <FinanceComposerFab
                     showComposer={showComposer}
                     onToggle={() => setShowComposer((prev) => !prev)}
@@ -224,11 +244,8 @@ const FinancePageContent = ({
                 />
             )}
 
-            <FinanceBottomNav
-                activeTab={activeTab}
-                onChangeTab={(tab) => {
-                    setActiveTab(tab);
-                }}
+            <FinanceModuleBottomNav
+                activeSection={activeSection === "budgets" ? "planning" : activeSection}
             />
         </div>
     </div>

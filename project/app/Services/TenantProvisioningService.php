@@ -57,9 +57,6 @@ class TenantProvisioningService
             $adminPermissions = collect(PermissionCatalog::matrixPermissions())
                 ->filter(fn (string $permission) => str_ends_with($permission, '.create') || str_ends_with($permission, '.view') || str_ends_with($permission, '.update') || str_ends_with($permission, '.manage'))
                 ->reject(fn (string $permission) => str_starts_with($permission, 'whatsapp.settings.'))
-                ->merge([
-                    'wallet.delete',
-                ])
                 ->unique()
                 ->values()
                 ->all();
@@ -71,9 +68,6 @@ class TenantProvisioningService
                     'finance.create',
                     'finance.update',
                     'finance.delete',
-                    'wallet.create',
-                    'wallet.update',
-                    'wallet.delete',
                 ])
                 ->unique()
                 ->values()

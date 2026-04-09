@@ -1,5 +1,24 @@
 import { FinanceAccount, FinanceBudget, FinanceCurrency, FinanceMember, FinancePocket, FinanceSavingsGoal, FinanceTransaction } from "../Finance/types";
 
+export type WalletRouteMeta = {
+    section: "home" | "accounts" | "planning" | "review";
+    initial_tab: "dashboard" | "accounts" | "budgets" | "wishes" | "goals";
+    title: string;
+    entity_label: string;
+    back_href?: string | null;
+    open_monthly_review?: boolean;
+    period_month?: string | null;
+    preloaded?: {
+        accounts?: boolean;
+        pockets?: boolean;
+        budgets?: boolean;
+        goals?: boolean;
+        wishes?: boolean;
+        summary?: boolean;
+        monthly_review?: boolean;
+    };
+};
+
 export type WalletWish = {
     id: string;
     title: string;
@@ -45,6 +64,7 @@ export type WalletPageProps = {
         goals: number | null;
         wishes: number | null;
     };
+    financeRoute?: WalletRouteMeta;
 };
 
 export type WalletFormState = {

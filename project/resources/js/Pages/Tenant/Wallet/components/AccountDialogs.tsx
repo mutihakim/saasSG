@@ -16,7 +16,7 @@ type Props = {
     setShowAccountModal: (show: boolean) => void;
     seedAccount: FinanceAccount | null;
     setSeedAccount: (account: FinanceAccount | null) => void;
-    syncAll: () => Promise<void>;
+    syncAccounts: () => Promise<void>;
     currencies: FinanceCurrency[];
     members: FinanceMember[];
     activeMemberId?: number | null;
@@ -33,7 +33,7 @@ const AccountDialogs = ({
     setShowAccountModal,
     seedAccount,
     setSeedAccount,
-    syncAll,
+    syncAccounts,
     currencies,
     members,
     activeMemberId,
@@ -72,7 +72,7 @@ const AccountDialogs = ({
                 }}
                 onSuccess={async () => {
                     setSeedAccount(null);
-                    await syncAll();
+                    await syncAccounts();
                 }}
                 onDelete={handleDeleteAccount}
                 account={selectedAccount || undefined}

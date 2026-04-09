@@ -1,3 +1,4 @@
+import axios from "axios";
 import React, { Suspense, useCallback, useEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -14,7 +15,7 @@ import { useFinanceListSync } from "./hooks/useFinanceListSync";
 import { useFinancePageState } from "./hooks/useFinancePageState";
 import { useFinanceTransactionEntry } from "./hooks/useFinanceTransactionEntry";
 import { useFinanceWhatsappIntent } from "./hooks/useFinanceWhatsappIntent";
-import { FinancePageProps } from "./types";
+import { FinancePageProps, FinanceTransaction } from "./types";
 
 // LAZY: Dialogs only opened on-demand
 const FinanceDialogs = React.lazy(() => import("./components/FinanceDialogs"));
@@ -33,11 +34,14 @@ const FinanceIndex = ({
     permissions,
     walletSubscribed,
     limits,
+    financeRoute,
 }: FinancePageProps) => {
     const { t } = useTranslation();
     const tenantRoute = useTenantRoute();
-    const page = useFinancePageState();
+    const activeSection = financeRoute?.section ?? "transactions";
+    const page = useFinancePageState(financeRoute?.initial_tab ?? "transactions");
     const hasLoadedFinanceRef = useRef(false);
+    const detailRequestRef = useRef(0);
 
     const { filters, setFilters, draftFilters, setDraftFilters, apiParams } = useFinanceFilters({
         activeMemberId,
@@ -65,10 +69,12 @@ const FinanceIndex = ({
         seededBudgets,
         seededPockets,
         walletSubscribed,
+        activeSection,
         filters,
         apiParams,
         tenantRoute,
         loadErrorMessage: t("finance.notifications.transaction_load_failed"),
+        preloaded: financeRoute?.preloaded,
     });
 
     const clearWhatsappQuery = useCallback(() => {
@@ -93,6 +99,17 @@ const FinanceIndex = ({
             hasLoadedFinanceRef.current = true;
         });
     }, [loadFinance]);
+
+    const shouldMountDialogs = Boolean(
+        page.deleteModal
+        || page.showDetailSheet
+        || page.transactionModal
+        || page.batchEntryModal
+        || page.batchModal
+        || page.transferModal
+        || page.budgetModal
+        || page.showFilters,
+    );
 
     useEffect(() => {
         if (page.activeTab !== "transactions" || !transactionsMeta.hasMore || !page.loadMoreRef.current) {
@@ -183,80 +200,109 @@ const FinanceIndex = ({
         t,
     });
 
+    const handleTransactionClick = useCallback((transaction: FinanceTransaction) => {
+        detailRequestRef.current += 1;
+        const requestId = detailRequestRef.current;
+
+        page.setFocusedTransactionId(String(transaction.id));
+        page.setSelectedTransaction(transaction);
+        page.setShowDetailSheet(true);
+
+        void axios
+            .get(tenantRoute.apiTo(`/finance/transactions/${transaction.id}`))
+            .then((response) => {
+                if (detailRequestRef.current !== requestId) {
+                    return;
+                }
+
+                const hydrated = response.data?.data?.transaction;
+                if (hydrated) {
+                    page.setSelectedTransaction(hydrated);
+                }
+            })
+            .catch(() => {
+                // Keep the list payload if detail hydration fails.
+            });
+    }, [page, tenantRoute]);
+
     return (
         <>
-            <Suspense fallback={null}>
-                <FinanceDialogs
-                    deleteModal={page.deleteModal}
-                    isDeleting={page.isDeleting}
-                    deleteTargetType={page.deleteTargetType}
-                    deleteTarget={page.deleteTarget}
-                    handleDelete={handleDelete}
-                    setDeleteModal={page.setDeleteModal}
-                    showDetailSheet={page.showDetailSheet}
-                    selectedTransaction={page.selectedTransaction}
-                    defaultCurrency={defaultCurrency}
-                    closeDetailSheet={transactionEntry.closeDetailSheet}
-                    editFromDetailSheet={transactionEntry.editFromDetailSheet}
-                    openCreateFromGroupedTransaction={transactionEntry.openCreateFromGroupedTransaction}
-                    permissions={permissions}
-                    setDeleteTarget={page.setDeleteTarget}
-                    setDeleteTargetType={page.setDeleteTargetType}
-                    setSelectedTransaction={page.setSelectedTransaction}
-                    setShowDetailSheet={page.setShowDetailSheet}
-                    transactionModal={page.transactionModal}
-                    setTransactionModal={page.setTransactionModal}
-                    setTransactionDraft={page.setTransactionDraft}
-                    setTransactionDraftMeta={page.setTransactionDraftMeta}
-                    setTransactionGroupLock={page.setTransactionGroupLock}
-                    clearWhatsappQuery={clearWhatsappQuery}
-                    transactionDraft={page.transactionDraft}
-                    transactionDraftMeta={page.transactionDraftMeta}
-                    transactionGroupLock={page.transactionGroupLock}
-                    categories={categories}
-                    currencies={currencies}
-                    paymentMethods={paymentMethods}
-                    accounts={accounts}
-                    budgets={budgets}
-                    pockets={pockets}
-                    transferDestinationPockets={transferDestinationPockets}
-                    members={members}
-                    activeMemberId={activeMemberId}
-                    walletSubscribed={walletSubscribed}
-                    transactionPresetType={page.transactionPresetType}
-                    upsertTransactionInList={listSync.upsertTransactionInList}
-                    refreshFinanceSideData={refreshFinanceSideData}
-                    tenantRoute={tenantRoute}
-                    batchEntryModal={page.batchEntryModal}
-                    setBatchEntryModal={page.setBatchEntryModal}
-                    batchModal={page.batchModal}
-                    setBatchModal={page.setBatchModal}
-                    batchDraft={page.batchDraft}
-                    setBatchDraft={page.setBatchDraft}
-                    transferModal={page.transferModal}
-                    setTransferModal={page.setTransferModal}
-                    budgetModal={page.budgetModal}
-                    setBudgetModal={page.setBudgetModal}
-                    selectedBudget={page.selectedBudget}
-                    setSelectedBudget={page.setSelectedBudget}
-                    upsertBudgetInList={listSync.upsertBudgetInList}
-                    showFilters={page.showFilters}
-                    setShowFilters={page.setShowFilters}
-                    draftFilters={draftFilters}
-                    setDraftFilters={setDraftFilters}
-                    setFilters={setFilters}
-                    categoriesForFilters={categories}
-                />
-            </Suspense>
+            {shouldMountDialogs ? (
+                <Suspense fallback={null}>
+                    <FinanceDialogs
+                        deleteModal={page.deleteModal}
+                        isDeleting={page.isDeleting}
+                        deleteTargetType={page.deleteTargetType}
+                        deleteTarget={page.deleteTarget}
+                        handleDelete={handleDelete}
+                        setDeleteModal={page.setDeleteModal}
+                        showDetailSheet={page.showDetailSheet}
+                        selectedTransaction={page.selectedTransaction}
+                        defaultCurrency={defaultCurrency}
+                        closeDetailSheet={transactionEntry.closeDetailSheet}
+                        editFromDetailSheet={transactionEntry.editFromDetailSheet}
+                        openCreateFromGroupedTransaction={transactionEntry.openCreateFromGroupedTransaction}
+                        permissions={permissions}
+                        setDeleteTarget={page.setDeleteTarget}
+                        setDeleteTargetType={page.setDeleteTargetType}
+                        setSelectedTransaction={page.setSelectedTransaction}
+                        setShowDetailSheet={page.setShowDetailSheet}
+                        transactionModal={page.transactionModal}
+                        setTransactionModal={page.setTransactionModal}
+                        setTransactionDraft={page.setTransactionDraft}
+                        setTransactionDraftMeta={page.setTransactionDraftMeta}
+                        setTransactionGroupLock={page.setTransactionGroupLock}
+                        clearWhatsappQuery={clearWhatsappQuery}
+                        transactionDraft={page.transactionDraft}
+                        transactionDraftMeta={page.transactionDraftMeta}
+                        transactionGroupLock={page.transactionGroupLock}
+                        categories={categories}
+                        currencies={currencies}
+                        paymentMethods={paymentMethods}
+                        accounts={accounts}
+                        budgets={budgets}
+                        pockets={pockets}
+                        transferDestinationPockets={transferDestinationPockets}
+                        members={members}
+                        activeMemberId={activeMemberId}
+                        walletSubscribed={walletSubscribed}
+                        transactionPresetType={page.transactionPresetType}
+                        upsertTransactionInList={listSync.upsertTransactionInList}
+                        refreshFinanceSideData={refreshFinanceSideData}
+                        tenantRoute={tenantRoute}
+                        batchEntryModal={page.batchEntryModal}
+                        setBatchEntryModal={page.setBatchEntryModal}
+                        batchModal={page.batchModal}
+                        setBatchModal={page.setBatchModal}
+                        batchDraft={page.batchDraft}
+                        setBatchDraft={page.setBatchDraft}
+                        transferModal={page.transferModal}
+                        setTransferModal={page.setTransferModal}
+                        budgetModal={page.budgetModal}
+                        setBudgetModal={page.setBudgetModal}
+                        selectedBudget={page.selectedBudget}
+                        setSelectedBudget={page.setSelectedBudget}
+                        upsertBudgetInList={listSync.upsertBudgetInList}
+                        showFilters={page.showFilters}
+                        setShowFilters={page.setShowFilters}
+                        draftFilters={draftFilters}
+                        setDraftFilters={setDraftFilters}
+                        setFilters={setFilters}
+                        categoriesForFilters={categories}
+                    />
+                </Suspense>
+            ) : null}
 
             <FinancePageContent
+                activeSection={activeSection}
                 activeTab={page.activeTab}
-                setActiveTab={page.setActiveTab}
                 moreView={page.moreView}
                 setMoreView={page.setMoreView}
                 showComposer={page.showComposer}
                 setShowComposer={page.setShowComposer}
                 permissions={permissions}
+                title={financeRoute?.title}
+                routeViewHref={financeRoute?.section === "reports" ? "/finance/reports" : null}
                 subtitle={metrics.subtitle}
                 searchOpen={page.searchOpen}
                 setSearchOpen={page.setSearchOpen}
@@ -294,12 +340,10 @@ const FinanceIndex = ({
                 loadingMoreTransactions={loadingMoreTransactions}
                 loadMoreRef={page.loadMoreRef}
                 openCreateFromGroupedTransaction={transactionEntry.openCreateFromGroupedTransaction}
+                onTransactionClick={handleTransactionClick}
                 setDeleteTarget={page.setDeleteTarget}
                 setDeleteTargetType={page.setDeleteTargetType}
                 setDeleteModal={page.setDeleteModal}
-                setSelectedTransaction={page.setSelectedTransaction}
-                setFocusedTransactionId={page.setFocusedTransactionId}
-                setShowDetailSheet={page.setShowDetailSheet}
                 statsMetric={page.statsMetric}
                 setStatsMetric={page.setStatsMetric}
                 categoryBreakdown={metrics.categoryBreakdown}

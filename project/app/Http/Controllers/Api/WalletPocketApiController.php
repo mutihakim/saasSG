@@ -31,7 +31,10 @@ class WalletPocketApiController extends Controller
     public function index(Request $request, Tenant $tenant): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.view'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.view'), 403);
+        $detailLevel = $request->string('detail')->toString() === WalletCashflowService::DETAIL_FULL
+            ? WalletCashflowService::DETAIL_FULL
+            : WalletCashflowService::DETAIL_SUMMARY;
 
         $pockets = $this->access->accessiblePocketsQuery($tenant, $member)
             ->when($request->boolean('active_only', true), fn ($query) => $query->active())
@@ -40,15 +43,37 @@ class WalletPocketApiController extends Controller
             ->orderByDesc('is_system')
             ->orderBy('name')
             ->get();
-        $pockets = $this->cashflow->enrichPockets($tenant, $member, $pockets);
+        $pockets = $this->cashflow->enrichPockets($tenant, $member, $pockets, detailLevel: $detailLevel);
 
         return response()->json(['ok' => true, 'data' => ['wallets' => $pockets, 'pockets' => $pockets]]);
+    }
+
+    public function show(Request $request, Tenant $tenant, FinancePocket $pocket): JsonResponse
+    {
+        $member = $request->attributes->get('currentTenantMember');
+        abort_unless($request->user()?->hasPermissionTo('finance.view'), 403);
+        abort_if((int) $pocket->tenant_id !== (int) $tenant->id, 404);
+
+        $record = $this->access->accessiblePocketsQuery($tenant, $member)
+            ->whereKey($pocket->id)
+            ->first();
+
+        abort_if(! $record, 404);
+
+        $enriched = $this->cashflow->enrichPockets(
+            $tenant,
+            $member,
+            collect([$record]),
+            detailLevel: WalletCashflowService::DETAIL_FULL,
+        )->first();
+
+        return response()->json(['ok' => true, 'data' => ['wallet' => $enriched, 'pocket' => $enriched]]);
     }
 
     public function store(Request $request, Tenant $tenant): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.create'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.create'), 403);
         abort_unless($this->access->canCreatePrivateStructures($member), 403);
 
         $data = $request->validate([
@@ -75,7 +100,7 @@ class WalletPocketApiController extends Controller
         try {
             $this->entitlements->assertUnderLimit(
                 $tenant,
-                'wallet.pockets.max',
+                'finance.pockets.max',
                 FinancePocket::query()
                     ->where('tenant_id', $tenant->id)
                     ->where('is_system', false)
@@ -204,7 +229,7 @@ class WalletPocketApiController extends Controller
     public function update(Request $request, Tenant $tenant, FinancePocket $pocket): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.update'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.update'), 403);
         abort_if((int) $pocket->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->access->canManagePocket($pocket, $member), 403);
 
@@ -393,7 +418,7 @@ class WalletPocketApiController extends Controller
     public function destroy(Request $request, Tenant $tenant, FinancePocket $pocket): JsonResponse
     {
         $member = $request->attributes->get('currentTenantMember');
-        abort_unless($request->user()?->hasPermissionTo('wallet.delete'), 403);
+        abort_unless($request->user()?->hasPermissionTo('finance.delete'), 403);
         abort_if((int) $pocket->tenant_id !== (int) $tenant->id, 404);
         abort_unless($this->access->canManagePocket($pocket, $member), 403);
 

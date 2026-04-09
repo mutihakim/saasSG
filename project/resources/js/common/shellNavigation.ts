@@ -156,16 +156,13 @@ export function buildShellNavigation(props: SharedPageProps): ShellNavSection[] 
                         children: [
                             { id: 'member-tasks',   labelKey: 'layout.shell.nav.items.member_tasks',   href: '/tasks',   icon: 'ri-checkbox-multiple-line', match: startsWith('/tasks') },
                             { id: 'member-rewards', labelKey: 'layout.shell.nav.items.member_rewards', href: '/rewards', icon: 'ri-trophy-line', match: startsWith('/rewards') },
-                            ...(entitlements.wallet === false
-                                ? []
-                                : [{ id: 'member-wallet', labelKey: 'layout.shell.nav.items.member_wallet', href: '/wallet', icon: 'ri-wallet-3-line', match: startsWith('/wallet') }]),
                         ],
                     },
                     // Modul C — Keuangan
                     {
                         id: 'member-finance',
                         labelKey: 'layout.shell.nav.items.member_finance',
-                        href: '/finance',
+                        href: '/finance/home',
                         icon: 'ri-money-dollar-circle-line',
                         match: startsWith('/finance'),
                     },

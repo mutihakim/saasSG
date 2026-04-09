@@ -36,6 +36,8 @@ const findPocketForAccount = (pockets: FinancePocket[], ownerMemberId: string, a
 };
 
 const toPeriodMonth = (value: string) => String(value || "").slice(0, 7);
+const isLiabilityType = (accountType?: string | null) => ["credit_card", "paylater"].includes(String(accountType || ""));
+const transactionDelta = (type: "pemasukan" | "pengeluaran", amount: number) => (type === "pemasukan" ? amount : -amount);
 
 export const canUseForOwner = (item: FinanceAccount | FinanceBudget | FinancePocket | undefined | null, ownerMemberId: string) => {
     if (!item) {
@@ -145,7 +147,7 @@ export const useTransactionModalState = ({
         }
 
         const initializationKey = transaction
-            ? `edit:${transaction.id}:${transaction.row_version || 1}`
+            ? `edit:${transaction.id}:${transaction.row_version || 1}:${Array.isArray(transaction.tags) ? transaction.tags.length : -1}:${Array.isArray(transaction.attachments) ? transaction.attachments.length : -1}:${normalizeStringId(transaction.pocket_id)}:${normalizeStringId(transaction.budget_id)}`
             : `create:${JSON.stringify({
                 draft: initialDraft,
                 activeMemberId,
@@ -250,22 +252,38 @@ export const useTransactionModalState = ({
         [formData.pocket_id, pockets],
     );
     const visibleBudgets = useMemo(() => budgets.filter((budget) => canUseForOwner(budget, formData.owner_member_id)), [budgets, formData.owner_member_id]);
+    const transactionPeriodMonth = toPeriodMonth(formData.transaction_date);
+    const monthScopedBudgets = useMemo(
+        () => visibleBudgets.filter((budget) => String(budget.period_month) === transactionPeriodMonth && budget.is_active !== false),
+        [transactionPeriodMonth, visibleBudgets],
+    );
     const filteredBudgets = useMemo(
         () => {
+            const prioritizedBudgets = monthScopedBudgets;
+
             if (!selectedPocket) {
-                return visibleBudgets;
+                return prioritizedBudgets;
             }
 
             const lockedDefault = selectedPocket.default_budget_key
-                ? visibleBudgets.find((budget) => String(budget.budget_key || budget.code || budget.id) === String(selectedPocket.default_budget_key))
+                ? prioritizedBudgets.find((budget) => String(budget.budget_key || budget.code || budget.id) === String(selectedPocket.default_budget_key))
                 : null;
-            const mapped = visibleBudgets.filter((budget) => budget.pocket_id && String(budget.pocket_id) === String(selectedPocket.id));
-            const unallocated = visibleBudgets.filter((budget) => !budget.pocket_id);
-            const remaining = visibleBudgets.filter((budget) => budget !== lockedDefault && !mapped.includes(budget) && !unallocated.includes(budget));
+            const mapped = prioritizedBudgets.filter((budget) => budget.pocket_id && String(budget.pocket_id) === String(selectedPocket.id));
+            const unallocated = prioritizedBudgets.filter((budget) => !budget.pocket_id);
+            const remaining = prioritizedBudgets.filter((budget) => budget !== lockedDefault && !mapped.includes(budget) && !unallocated.includes(budget));
 
-            return [lockedDefault, ...mapped, ...unallocated, ...remaining].filter(Boolean) as FinanceBudget[];
+            const ordered = [lockedDefault, ...mapped, ...unallocated, ...remaining].filter(Boolean) as FinanceBudget[];
+            const selectedExistingBudget = formData.budget_id
+                ? visibleBudgets.find((budget) => String(budget.id) === String(formData.budget_id))
+                : null;
+
+            if (isEdit && selectedExistingBudget && !ordered.some((budget) => String(budget.id) === String(selectedExistingBudget.id))) {
+                return [selectedExistingBudget, ...ordered];
+            }
+
+            return ordered;
         },
-        [selectedPocket, visibleBudgets],
+        [formData.budget_id, isEdit, monthScopedBudgets, selectedPocket, visibleBudgets],
     );
 
     const accountOptions = useMemo(() => visibleAccounts.map((account) => ({
@@ -335,6 +353,7 @@ export const useTransactionModalState = ({
             next.bank_account_id = resolvedPocket?.real_account_id ? String(resolvedPocket.real_account_id) : "";
 
             const budgetCandidates = budgets.filter((budget) => canUseForOwner(budget, next.owner_member_id));
+            const monthBudgetCandidates = budgetCandidates.filter((budget) => String(budget.period_month) === toPeriodMonth(next.transaction_date) && budget.is_active !== false);
             const selectedBudgetCandidate = budgetCandidates.find((budget) => String(budget.id) === String(next.budget_id));
             const lockedBudgetPocket = selectedBudgetCandidate?.pocket_id
                 ? pockets.find((pocket) => String(pocket.id) === String(selectedBudgetCandidate.pocket_id) && pocket.budget_lock_enabled)
@@ -346,9 +365,15 @@ export const useTransactionModalState = ({
             }
 
             const syncedResolvedPocket = pockets.find((pocket) => String(pocket.id) === String(next.pocket_id));
-            const budgetStillValid = budgetCandidates.some((budget) => String(budget.id) === String(next.budget_id));
+            const selectedBudgetStillValidForMonth = monthBudgetCandidates.some((budget) => String(budget.id) === String(next.budget_id));
+            const preserveExistingEditBudget = Boolean(
+                isEdit
+                && transaction
+                && selectedBudgetCandidate
+                && String(transaction.budget_id || "") === String(next.budget_id),
+            );
             const walletDefaultBudget = syncedResolvedPocket?.default_budget_key
-                ? budgetCandidates.find((budget) =>
+                ? monthBudgetCandidates.find((budget) =>
                     String(budget.budget_key || budget.code || budget.id) === String(syncedResolvedPocket.default_budget_key)
                     && String(budget.period_month) === toPeriodMonth(next.transaction_date)
                     && budget.is_active !== false
@@ -361,7 +386,7 @@ export const useTransactionModalState = ({
                 next.budget_id = String(walletDefaultBudget.id);
             } else if (walletDefaultBudget && !next.budget_id) {
                 next.budget_id = String(walletDefaultBudget.id);
-            } else if (!budgetStillValid) {
+            } else if (!selectedBudgetStillValidForMonth && !preserveExistingEditBudget) {
                 next.budget_id = walletDefaultBudget ? String(walletDefaultBudget.id) : "";
             }
 
@@ -378,9 +403,43 @@ export const useTransactionModalState = ({
     }, [accounts, budgets, categories, categoryOptions, defaultCurrency, memberOptions, pockets, show]);
 
     const selectedBudget = budgets.find((budget) => String(budget.id) === String(formData.budget_id));
+    const selectedAccount = accounts.find((account) => String(account.id) === String(selectedPocket?.real_account_id || formData.bank_account_id)) ?? null;
+    const walletDefaultBudgetForMonth = selectedPocket?.default_budget_key
+        ? monthScopedBudgets.find((budget) => String(budget.budget_key || budget.code || budget.id) === String(selectedPocket.default_budget_key))
+        : null;
+    const budgetLockMissingForMonth = Boolean(
+        formData.type === "pengeluaran"
+        && selectedPocket?.budget_lock_enabled
+        && !walletDefaultBudgetForMonth,
+    );
     const budgetDelta = selectedBudget
         ? Number(selectedBudget.remaining_amount || 0) - (Number(formData.amount || 0) * Number(formData.exchange_rate || 1))
         : 0;
+    const parsedAmount = Number(formData.amount || 0);
+    const currentPocketBalance = Number(selectedPocket?.current_balance || 0);
+    const originalPocketId = transaction?.pocket_id ? String(transaction.pocket_id) : "";
+    const originalTransactionAmount = Number(transaction?.amount || 0);
+    const originalTransactionDelta = transaction?.type === "pemasukan"
+        ? originalTransactionAmount
+        : transaction?.type === "pengeluaran"
+            ? -originalTransactionAmount
+            : 0;
+    const newTransactionDelta = transactionDelta(formData.type, parsedAmount);
+    const projectedPocketBalance = selectedPocket
+        ? (
+            String(selectedPocket.id) === originalPocketId
+                ? currentPocketBalance - originalTransactionDelta + newTransactionDelta
+                : currentPocketBalance + newTransactionDelta
+        )
+        : 0;
+    const insufficientPocketBalance = Boolean(
+        formData.type === "pengeluaran"
+        && selectedPocket
+        && selectedAccount
+        && !isLiabilityType(selectedAccount.type)
+        && parsedAmount > 0
+        && projectedPocketBalance < 0,
+    );
 
     const handleAttachmentPick = (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(event.target.files ?? []);
@@ -419,11 +478,13 @@ export const useTransactionModalState = ({
         categoryOptions,
         currencyOptions,
         paymentMethodOptions,
-        selectedAccount: accounts.find((account) => String(account.id) === String(selectedPocket?.real_account_id || formData.bank_account_id)) ?? null,
+        selectedAccount,
         selectedPocket,
         selectedBudget,
         budgetLocked: Boolean(selectedPocket?.budget_lock_enabled && selectedPocket?.default_budget_key && formData.type === "pengeluaran"),
+        budgetLockMissingForMonth,
         budgetDelta,
+        insufficientPocketBalance,
         handleAttachmentPick,
         handleRemoveExistingAttachment,
         handleRemovePendingFile,

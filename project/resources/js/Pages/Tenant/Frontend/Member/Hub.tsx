@@ -30,8 +30,7 @@ const Hub: React.FC<Props> = ({ tenantName, member, demo: _demo }) => {
     const [showInstallHelp, setShowInstallHelp] = useState(false);
     const [isIosSafari, setIsIosSafari] = useState(false);
     const modules = [
-        { label: 'Finance', desc: 'Cashflow, budget, transfer', icon: 'ri-wallet-3-line', tone: '#27c3d9', href: '/finance', enabled: entitlements.finance !== false },
-        { label: 'Wallet', desc: 'Pocket & goal-based money', icon: 'ri-safe-2-line', tone: '#21b7b3', href: '/wallet', enabled: entitlements.wallet !== false },
+        { label: 'Finance', desc: 'Accounts, pocket, transaksi, planning, dan laporan', icon: 'ri-wallet-3-line', tone: '#27c3d9', href: '/finance/home', enabled: entitlements.finance !== false },
         { label: 'Calendar', desc: 'Agenda keluarga', icon: 'ri-calendar-event-line', tone: '#6f7cff', href: '/calendar', enabled: true },
         { label: 'Shopping', desc: 'Belanja & pantry', icon: 'ri-shopping-bag-3-line', tone: '#ff8a65', href: '/shopping', enabled: true },
         { label: 'Tasks', desc: 'Rutinitas harian', icon: 'ri-checkbox-circle-line', tone: '#5bc58f', href: '/tasks', enabled: true },
@@ -48,7 +47,7 @@ const Hub: React.FC<Props> = ({ tenantName, member, demo: _demo }) => {
     ];
 
     const teaserCards = [
-        { title: 'Family Savings Sprint', body: 'Naik 12% dari bulan lalu. Pertahankan ritme minggu ini.', action: 'Buka Finance', href: '/finance' },
+        { title: 'Family Savings Sprint', body: 'Naik 12% dari bulan lalu. Pertahankan ritme minggu ini.', action: 'Buka Finance', href: '/finance/home' },
         { title: 'Weekend Plan', body: 'Ada 3 agenda dan 1 wishlist yang cocok untuk akhir pekan ini.', action: 'Lihat Kalender', href: '/calendar' },
     ];
 
@@ -174,7 +173,7 @@ const Hub: React.FC<Props> = ({ tenantName, member, demo: _demo }) => {
                                     <div className="fw-semibold text-dark">Siap untuk hari yang produktif</div>
                                     <div className="small text-muted mt-1">Hook singkat yang hangat, bukan dashboard panjang.</div>
                                 </div>
-                                <Link href="/finance" className="btn btn-light btn-sm rounded-pill">Explore</Link>
+                                <Link href="/finance/home" className="btn btn-light btn-sm rounded-pill">Explore</Link>
                             </div>
                             <div className="row g-2 mt-2">
                                 <div className="col-6">
@@ -230,7 +229,7 @@ const Hub: React.FC<Props> = ({ tenantName, member, demo: _demo }) => {
                                 );
 
                                 return (
-                                    <div className="col-3" key={mod.label}>
+                                    <div className="col-4" key={mod.label}>
                                         {mod.enabled ? (
                                             <Link href={mod.href} className="text-decoration-none d-block">{content}</Link>
                                         ) : (
@@ -292,7 +291,7 @@ const Hub: React.FC<Props> = ({ tenantName, member, demo: _demo }) => {
                             {[
                                 { icon: 'ri-home-5-line', label: 'Home', active: true, href: '/hub' },
                                 { icon: 'ri-pulse-line', label: 'Activity', active: false, href: '/hub#activity' },
-                                { icon: 'ri-add-circle-fill', label: '', active: false, href: '/finance' },
+                                { icon: 'ri-add-circle-fill', label: '', active: false, href: '/finance/home' },
                                 { icon: 'ri-gift-line', label: 'Rewards', active: false, href: '/rewards' },
                                 { icon: 'ri-user-3-line', label: 'Account', active: false, href: '/me' },
                             ].map((item) => (

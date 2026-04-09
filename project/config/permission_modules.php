@@ -10,7 +10,6 @@ return [
     'whatsapp.settings' => ['view', 'update'],
     'whatsapp.chats' => ['view', 'update'],
     'finance' => ['view', 'create', 'update', 'delete'],
-    'wallet' => ['view', 'create', 'update', 'delete'],
     'master.categories' => ['view', 'create', 'update', 'delete'],
     'master.tags' => ['view', 'create', 'update', 'delete'],
     'master.currencies' => ['view', 'create', 'update', 'delete'],

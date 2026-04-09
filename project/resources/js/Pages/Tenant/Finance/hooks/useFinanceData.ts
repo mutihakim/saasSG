@@ -1,5 +1,5 @@
 import axios from "axios";
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { parseApiError } from "../../../../common/apiError";
 import { notify } from "../../../../common/notify";
@@ -17,10 +17,16 @@ type UseFinanceDataArgs = {
     seededBudgets: FinanceBudget[];
     seededPockets: FinancePocket[];
     walletSubscribed: boolean;
+    activeSection: "transactions" | "reports";
     filters: FinanceFilters;
     apiParams: Record<string, string>;
     tenantRoute: TenantRouteLike;
     loadErrorMessage: string;
+    preloaded?: {
+        accounts?: boolean;
+        budgets?: boolean;
+        pockets?: boolean;
+    };
 };
 
 type LoadFinanceOptions = {
@@ -34,18 +40,20 @@ export const useFinanceData = ({
     seededBudgets,
     seededPockets,
     walletSubscribed,
+    activeSection,
     filters,
     apiParams,
     tenantRoute,
     loadErrorMessage,
+    preloaded,
 }: UseFinanceDataArgs) => {
     const [transactions, setTransactions] = useState<FinanceTransaction[]>([]);
     const [summary, setSummary] = useState<FinanceSummary | null>(null);
     const [accounts, setAccounts] = useState<FinanceAccount[]>(seededAccounts ?? []);
     const [budgets, setBudgets] = useState<FinanceBudget[]>(seededBudgets ?? []);
     const [pockets, setPockets] = useState<FinancePocket[]>(seededPockets ?? []);
-    const [loading, setLoading] = useState(true);
-    const [summaryLoading, setSummaryLoading] = useState(true);
+    const [loading, setLoading] = useState(activeSection !== "reports");
+    const [summaryLoading, setSummaryLoading] = useState(activeSection !== "reports");
     const [errorState, setErrorState] = useState<string | null>(null);
     const [transactionsMeta, setTransactionsMeta] = useState({
         currentPage: 1,
@@ -54,6 +62,16 @@ export const useFinanceData = ({
         hasMore: false,
     });
     const [loadingMoreTransactions, setLoadingMoreTransactions] = useState(false);
+    const loadedRef = useRef({
+        accounts: Boolean(preloaded?.accounts),
+        budgets: Boolean(preloaded?.budgets),
+        pockets: Boolean(preloaded?.pockets),
+    });
+    const dataRef = useRef({
+        accounts: seededAccounts ?? [],
+        budgets: seededBudgets ?? [],
+        pockets: seededPockets ?? [],
+    });
 
     const mergeTransactionPage = useCallback((pageItems: FinanceTransaction[], replace: boolean) => {
         setTransactions((prev) => {
@@ -104,26 +122,55 @@ export const useFinanceData = ({
         }
     }, [apiParams, tenantRoute]);
 
-    const fetchAccounts = useCallback(async () => {
+    const fetchAccounts = useCallback(async (force = false) => {
+        if (!force && loadedRef.current.accounts) {
+            return dataRef.current.accounts;
+        }
+
         const response = await axios.get(tenantRoute.apiTo("/finance/accounts"));
-        setAccounts(response.data.data?.accounts || []);
+        const nextAccounts = response.data.data?.accounts || [];
+        setAccounts(nextAccounts);
+        dataRef.current.accounts = nextAccounts;
+        loadedRef.current.accounts = true;
+
+        return nextAccounts;
     }, [tenantRoute]);
 
-    const fetchBudgets = useCallback(async () => {
+    const fetchBudgets = useCallback(async (force = false) => {
+        if (!force && loadedRef.current.budgets) {
+            return dataRef.current.budgets;
+        }
+
         const response = await axios.get(tenantRoute.apiTo("/finance/budgets"), {
             params: filters.use_custom_range ? undefined : { period_month: filters.month },
         });
-        setBudgets(response.data.data?.budgets || []);
+        const nextBudgets = response.data.data?.budgets || [];
+        setBudgets(nextBudgets);
+        dataRef.current.budgets = nextBudgets;
+        loadedRef.current.budgets = true;
+
+        return nextBudgets;
     }, [filters.month, filters.use_custom_range, tenantRoute]);
 
-    const fetchPockets = useCallback(async () => {
+    const fetchPockets = useCallback(async (force = false) => {
         if (!walletSubscribed) {
             setPockets(seededPockets ?? []);
-            return;
+            dataRef.current.pockets = seededPockets ?? [];
+            loadedRef.current.pockets = true;
+            return seededPockets ?? [];
         }
 
-        const response = await axios.get(tenantRoute.apiTo("/wallet/pockets"));
-        setPockets(response.data.data?.pockets || []);
+        if (!force && loadedRef.current.pockets) {
+            return dataRef.current.pockets;
+        }
+
+        const response = await axios.get(tenantRoute.apiTo("/finance/pockets"));
+        const nextPockets = response.data.data?.pockets || [];
+        setPockets(nextPockets);
+        dataRef.current.pockets = nextPockets;
+        loadedRef.current.pockets = true;
+
+        return nextPockets;
     }, [seededPockets, tenantRoute, walletSubscribed]);
 
     // Entity-scoped refresh function - only fetches affected data
@@ -138,17 +185,17 @@ export const useFinanceData = ({
                 // Transaction mutations affect summary only
                 break;
             case 'account':
-                promises.push(fetchAccounts());
+                promises.push(fetchAccounts(true));
                 break;
             case 'budget':
-                promises.push(fetchBudgets());
+                promises.push(fetchBudgets(true));
                 break;
             case 'pocket':
-                promises.push(fetchPockets());
+                promises.push(fetchPockets(true));
                 break;
             case 'all':
                 // Legacy behavior for complex mutations
-                promises.push(fetchAccounts(), fetchBudgets(), fetchPockets());
+                promises.push(fetchAccounts(true), fetchBudgets(true), fetchPockets(true));
                 break;
         }
         
@@ -161,9 +208,17 @@ export const useFinanceData = ({
     }, [refreshFinanceEntity]);
 
     const loadFinance = useCallback(async (options?: LoadFinanceOptions) => {
+        if (activeSection === "reports") {
+            setErrorState(null);
+            setLoading(false);
+            setSummaryLoading(false);
+            return;
+        }
+
         const preserveTransactions = options?.preserveTransactions ?? false;
         const silentSummary = options?.silentSummary ?? false;
         const silentLoading = options?.silentLoading ?? false;
+        const forceSideData = preserveTransactions;
 
         if (!silentLoading) {
             setLoading(true);
@@ -182,9 +237,9 @@ export const useFinanceData = ({
             await Promise.all([
                 fetchTransactions(1, { replace: true }),
                 fetchSummary({ silent: silentSummary }),
-                fetchAccounts(),
-                fetchBudgets(),
-                fetchPockets(),
+                fetchAccounts(forceSideData),
+                fetchBudgets(forceSideData),
+                fetchPockets(forceSideData),
             ]);
         } catch (error: any) {
             const parsed = parseApiError(error, loadErrorMessage);
@@ -195,7 +250,7 @@ export const useFinanceData = ({
                 setLoading(false);
             }
         }
-    }, [fetchAccounts, fetchBudgets, fetchPockets, fetchSummary, fetchTransactions, loadErrorMessage]);
+    }, [activeSection, fetchAccounts, fetchBudgets, fetchPockets, fetchSummary, fetchTransactions, loadErrorMessage]);
 
     const loadMoreTransactions = useCallback(async () => {
         if (loading || loadingMoreTransactions || !transactionsMeta.hasMore) {

@@ -7,7 +7,7 @@ import { FinancePageProps } from './types';
 const FinancePage: React.FC<FinancePageProps> = (props) => {
     return (
         <>
-            <Head title="Finance" />
+            <Head title={props.financeRoute?.title ?? "Finance"} />
             <div
                 style={{
                     minHeight: "100vh",

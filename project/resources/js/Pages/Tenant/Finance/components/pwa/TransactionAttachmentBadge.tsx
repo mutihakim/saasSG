@@ -11,7 +11,9 @@ type Props = {
 
 const TransactionAttachmentBadge = ({ transaction, compact = false }: Props) => {
     const attachment = getPrimaryAttachment(transaction);
-    if (!attachment) {
+    const hasAttachments = attachment || Number(transaction.attachments_count || 0) > 0;
+
+    if (!hasAttachments) {
         return null;
     }
 

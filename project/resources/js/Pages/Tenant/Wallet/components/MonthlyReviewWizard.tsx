@@ -18,7 +18,7 @@ import { formatCurrency, monthLabel } from "./pwa/types";
 type Props = {
     show: boolean;
     onHide: () => void;
-    monthlyReview: MonthlyReviewStatus;
+    monthlyReview: MonthlyReviewStatus | null;
     syncAll: () => Promise<void>;
 };
 
@@ -35,7 +35,7 @@ const MonthlyReviewWizard = ({ show, onHide, monthlyReview, syncAll }: Props) =>
     const [activeStep, setActiveStep] = useState<number>(1);
     const [loading, setLoading] = useState(false);
     const [submitting, setSubmitting] = useState(false);
-    const [selectedMonth, setSelectedMonth] = useState<string>(monthlyReview.suggested_period_month || monthlyReview.previous_month || "");
+    const [selectedMonth, setSelectedMonth] = useState<string>(monthlyReview?.suggested_period_month || monthlyReview?.previous_month || "");
     const [budgetMethod, setBudgetMethod] = useState<"copy_last_month" | "average_3_months" | "zero_based">("copy_last_month");
     const [preview, setPreview] = useState<MonthlyReviewPreview | null>(null);
     const [sweepDrafts, setSweepDrafts] = useState<MonthlyReviewSweepDraft[]>([]);
@@ -57,7 +57,7 @@ const MonthlyReviewWizard = ({ show, onHide, monthlyReview, syncAll }: Props) =>
         }
 
         setActiveStep(1);
-        setSelectedMonth(monthlyReview.suggested_period_month || monthlyReview.previous_month || "");
+        setSelectedMonth(monthlyReview?.suggested_period_month || monthlyReview?.previous_month || "");
         setBudgetMethod("copy_last_month");
         setPreview(null);
         setSweepDrafts([]);
@@ -80,7 +80,7 @@ const MonthlyReviewWizard = ({ show, onHide, monthlyReview, syncAll }: Props) =>
 
         setLoading(true);
         try {
-            const response = await axios.get(tenantRoute.apiTo("/wallet/monthly-review/preview"), {
+            const response = await axios.get(tenantRoute.apiTo("/finance/monthly-review/preview"), {
                 params: { period_month: periodMonth, budget_method: method },
             });
             const payload = response.data?.data?.preview as MonthlyReviewPreview;
@@ -107,7 +107,7 @@ const MonthlyReviewWizard = ({ show, onHide, monthlyReview, syncAll }: Props) =>
 
         setSubmitting(true);
         try {
-            await axios.post(tenantRoute.apiTo("/wallet/monthly-review/submit"), {
+            await axios.post(tenantRoute.apiTo("/finance/monthly-review/submit"), {
                 period_month: preview.period_month,
                 budget_method: budgetMethod,
                 sweep_actions: sweepDrafts,
@@ -169,7 +169,7 @@ const MonthlyReviewWizard = ({ show, onHide, monthlyReview, syncAll }: Props) =>
                                 <Form.Group>
                                     <Form.Label className="small fw-semibold">Periode Ditutup</Form.Label>
                                     <Form.Select value={selectedMonth} onChange={(event) => setSelectedMonth(event.target.value)}>
-                                        {(monthlyReview.eligible_months || []).map((month) => (
+                                        {(monthlyReview?.eligible_months || []).map((month) => (
                                             <option key={month.period_month} value={month.period_month}>
                                                 {month.period_month}
                                             </option>
@@ -196,7 +196,7 @@ const MonthlyReviewWizard = ({ show, onHide, monthlyReview, syncAll }: Props) =>
                     </Card.Body>
                 </Card>
 
-                {monthlyReview.planning_blocked && (
+                {monthlyReview?.planning_blocked && (
                     <Alert variant="warning" className="rounded-4">
                         Budget bulan ini dan transfer wallet masih dikunci sampai review bulan sebelumnya selesai. Expense dan income harian tetap bisa dicatat.
                     </Alert>

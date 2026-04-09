@@ -60,7 +60,9 @@ const TransactionModal = ({
         selectedPocket,
         selectedBudget,
         budgetLocked,
+        budgetLockMissingForMonth,
         budgetDelta,
+        insufficientPocketBalance,
         handleAttachmentPick,
         handleRemoveExistingAttachment,
         handleRemovePendingFile,
@@ -138,7 +140,9 @@ const TransactionModal = ({
                                 budgetOptions={budgetOptions}
                                 selectedBudget={selectedBudget}
                                 budgetLocked={budgetLocked}
+                                budgetLockMissingForMonth={budgetLockMissingForMonth}
                                 budgetDelta={budgetDelta}
+                                insufficientPocketBalance={insufficientPocketBalance}
                                 setFormData={setFormData}
                                 setShowCalculator={setShowCalculator}
                                 showCalculator={showCalculator}
@@ -179,7 +183,12 @@ const TransactionModal = ({
                 </Modal.Body>
                 <Modal.Footer className="border-top bg-white position-sticky bottom-0">
                     <Button variant="light" onClick={onClose} disabled={loading}>{t("finance.modals.transaction.buttons.cancel")}</Button>
-                    <Button variant="primary" type="submit" disabled={loading} data-testid="finance-transaction-save">
+                    <Button
+                        variant="primary"
+                        type="submit"
+                        disabled={loading || insufficientPocketBalance || budgetLockMissingForMonth}
+                        data-testid="finance-transaction-save"
+                    >
                         {loading
                             ? t("finance.shared.processing")
                             : t(isEdit ? "finance.modals.transaction.buttons.update" : "finance.modals.transaction.buttons.save")}

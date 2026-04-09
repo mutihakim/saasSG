@@ -1,4 +1,4 @@
-export type WalletTab = "dashboard" | "accounts" | "wishes" | "goals";
+export type WalletTab = "dashboard" | "accounts" | "budgets" | "wishes" | "goals";
 
 export const WALLET_SURFACE_BG = "#F6F8FB";
 

@@ -18,7 +18,9 @@ type Props = {
     budgetOptions: TransactionSelectOption[];
     selectedBudget?: FinanceBudget | null;
     budgetLocked: boolean;
+    budgetLockMissingForMonth: boolean;
     budgetDelta: number;
+    insufficientPocketBalance: boolean;
     setFormData: React.Dispatch<React.SetStateAction<TransactionFormData>>;
     setShowCalculator: React.Dispatch<React.SetStateAction<boolean>>;
     showCalculator: boolean;
@@ -38,7 +40,9 @@ const TransactionModalMainFields = ({
     budgetOptions,
     selectedBudget,
     budgetLocked,
+    budgetLockMissingForMonth,
     budgetDelta,
+    insufficientPocketBalance,
     setFormData,
     setShowCalculator,
     showCalculator,
@@ -97,6 +101,13 @@ const TransactionModalMainFields = ({
                             </Form.Text>
                         )}
                     </div>
+                )}
+                {insufficientPocketBalance && (
+                    <Alert variant="danger" className="mt-2 mb-0 rounded-4">
+                        {t("finance.modals.transaction.wallet_insufficient_hint", {
+                            defaultValue: "Saldo wallet tidak cukup untuk transaksi ini. Transfer dana ke wallet ini terlebih dahulu.",
+                        })}
+                    </Alert>
                 )}
             </Col>
             <Col xs={5} className="d-flex flex-column justify-content-end">
@@ -192,6 +203,13 @@ const TransactionModalMainFields = ({
                         <Form.Text className="text-muted">
                             {t("finance.modals.transaction.budget_locked_hint", { defaultValue: "Budget dikunci oleh wallet ini dan tidak bisa diganti." })}
                         </Form.Text>
+                    )}
+                    {budgetLockMissingForMonth && (
+                        <Alert variant="warning" className="mt-2 mb-0 rounded-4">
+                            {t("finance.modals.transaction.budget_month_unavailable_hint", {
+                                defaultValue: "Wallet ini memakai budget lock, tetapi belum ada budget yang valid untuk bulan transaksi yang dipilih.",
+                            })}
+                        </Alert>
                     )}
                     {!formData.budget_id && (
                         <Form.Text className="text-muted">{t("finance.modals.transaction.budget_unset_hint")}</Form.Text>

@@ -25,7 +25,7 @@ export interface AccountFormWizardProps {
     endpointBase?: string;
 }
 
-export const AccountFormWizard = ({ show, onClose, onSuccess, onDelete, account, seedAccount, currencies, members, activeMemberId, canManageShared = false, canDelete = false, endpointBase = "/wallet/accounts" }: AccountFormWizardProps) => {
+export const AccountFormWizard = ({ show, onClose, onSuccess, onDelete, account, seedAccount, currencies, members, activeMemberId, canManageShared = false, canDelete = false, endpointBase = "/finance/accounts" }: AccountFormWizardProps) => {
     const { t } = useTranslation();
     const tenantRoute = useTenantRoute();
     const isEdit = Boolean(account);

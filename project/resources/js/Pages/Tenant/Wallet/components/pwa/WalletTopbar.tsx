@@ -10,6 +10,9 @@ type Props = {
     searchValue: string;
     onToggleSearch: () => void;
     onSearchChange: (value: string) => void;
+    periodLabel?: string | null;
+    onPrevMonth?: (() => void) | null;
+    onNextMonth?: (() => void) | null;
 };
 
 const WalletTopbar = ({
@@ -19,6 +22,9 @@ const WalletTopbar = ({
     searchValue,
     onToggleSearch,
     onSearchChange,
+    periodLabel,
+    onPrevMonth,
+    onNextMonth,
 }: Props) => {
     const { t } = useTranslation();
 
@@ -106,6 +112,35 @@ const WalletTopbar = ({
                     )}
                 </div>
             </div>
+            {periodLabel && onPrevMonth && onNextMonth && (
+                <div
+                    style={{
+                        background: "rgba(255, 255, 255, 0.94)",
+                        backdropFilter: "blur(14px)",
+                        WebkitBackdropFilter: "blur(14px)",
+                        borderBottom: "1px solid rgba(226, 232, 240, 0.9)",
+                        borderBottomLeftRadius: 24,
+                        borderBottomRightRadius: 24,
+                        minHeight: 52,
+                        marginInline: 12,
+                    }}
+                >
+                    <div className="px-3 py-2">
+                        <div className="d-flex align-items-center justify-content-between gap-2">
+                            <div className="d-flex align-items-center gap-2 flex-shrink-0">
+                                <button type="button" className="btn btn-light rounded-circle border-0 shadow-sm d-inline-flex align-items-center justify-content-center" style={{ width: 34, height: 34 }} onClick={onPrevMonth}>
+                                    <i className="ri-arrow-left-s-line"></i>
+                                </button>
+                                <button type="button" className="btn btn-light rounded-circle border-0 shadow-sm d-inline-flex align-items-center justify-content-center" style={{ width: 34, height: 34 }} onClick={onNextMonth}>
+                                    <i className="ri-arrow-right-s-line"></i>
+                                </button>
+                            </div>
+                            <div className="text-center flex-grow-1 fw-semibold text-dark text-truncate">{periodLabel}</div>
+                            <div style={{ width: 84 }} />
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

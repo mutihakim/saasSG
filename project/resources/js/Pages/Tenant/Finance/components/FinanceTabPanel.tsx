@@ -31,12 +31,10 @@ type Props = {
     loadingMoreTransactions: boolean;
     loadMoreRef: React.RefObject<HTMLDivElement | null>;
     openCreateFromGroupedTransaction: (transaction: FinanceTransaction | null, options?: { duplicate?: boolean }) => void;
+    onTransactionClick: (transaction: FinanceTransaction) => void;
     setDeleteTarget: React.Dispatch<React.SetStateAction<FinanceDeleteTarget | null>>;
     setDeleteTargetType: React.Dispatch<React.SetStateAction<"transaction" | "transaction_group" | "account" | "budget">>;
     setDeleteModal: React.Dispatch<React.SetStateAction<boolean>>;
-    setSelectedTransaction: React.Dispatch<React.SetStateAction<FinanceTransaction | null>>;
-    setFocusedTransactionId: React.Dispatch<React.SetStateAction<string | null>>;
-    setShowDetailSheet: React.Dispatch<React.SetStateAction<boolean>>;
     statsMetric: "expense" | "income";
     setStatsMetric: React.Dispatch<React.SetStateAction<"expense" | "income">>;
     categoryBreakdown: Array<{ name: string; amount: number }>;
@@ -69,12 +67,10 @@ const FinanceTabPanel = ({
     loadingMoreTransactions,
     loadMoreRef,
     openCreateFromGroupedTransaction,
+    onTransactionClick,
     setDeleteTarget,
     setDeleteTargetType,
     setDeleteModal,
-    setSelectedTransaction,
-    setFocusedTransactionId,
-    setShowDetailSheet,
     statsMetric,
     setStatsMetric,
     categoryBreakdown,
@@ -110,11 +106,7 @@ const FinanceTabPanel = ({
                     setDeleteTargetType("transaction_group");
                     setDeleteModal(true);
                 }}
-                onTransactionClick={(transaction) => {
-                    setFocusedTransactionId(String(transaction.id));
-                    setSelectedTransaction(transaction);
-                    setShowDetailSheet(true);
-                }}
+                onTransactionClick={onTransactionClick}
             />
         );
     }

@@ -51,7 +51,8 @@ class FinanceTransactionQueryService
     public function paginatedTransactions(Request $request, Tenant $tenant, ?TenantMember $member): array
     {
         $query = $this->visibleQuery($tenant, $member)
-            ->with($this->presenter->relations());
+            ->with($this->presenter->relationsForList())
+            ->withCount('attachments');
 
         $this->applyFilters($query, $request);
 
@@ -73,7 +74,7 @@ class FinanceTransactionQueryService
 
         return [
             'transactions' => collect($paginator->items())
-                ->map(fn (FinanceTransaction $transaction) => $this->presenter->transaction($tenant, $transaction))
+                ->map(fn (FinanceTransaction $transaction) => $this->presenter->transactionForList($transaction))
                 ->values()
                 ->all(),
             'meta' => [
@@ -95,8 +96,19 @@ class FinanceTransactionQueryService
             && $this->access->isPrivileged($member)
             && (($validated['transaction_kind'] ?? 'all') !== 'internal_transfer');
 
+        // Build a stable cache key from the active filter params
+        $filterPayload = array_filter($validated, fn ($v) => $v !== null && $v !== '');
+        ksort($filterPayload);
+        $cacheKey = sprintf(
+            'finance_summary_filtered:%d:%d:%s',
+            $tenant->id,
+            $member?->id ?? 0,
+            md5(json_encode($filterPayload) . ($excludeInternalTransfers ? '1' : '0')),
+        );
+
         return $this->summary->getFilteredSummary($query, $tenant, [
             'exclude_internal_transfers' => $excludeInternalTransfers,
+            'cache_key' => $cacheKey,
         ]);
     }
 

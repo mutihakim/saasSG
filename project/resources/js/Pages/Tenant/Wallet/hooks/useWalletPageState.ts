@@ -3,8 +3,11 @@ import { useState } from "react";
 import { FinanceAccount, FinancePocket, FinanceSavingsGoal } from "../../Finance/types";
 import { ConvertWishFormState, WalletWish } from "../types";
 
-const useWalletPageState = (initialAccountId?: string | null) => {
-    const [activeTab, setActiveTab] = useState<"dashboard" | "accounts" | "wishes" | "goals">("dashboard");
+const useWalletPageState = (
+    initialAccountId?: string | null,
+    initialTab: "dashboard" | "accounts" | "budgets" | "wishes" | "goals" = "dashboard"
+) => {
+    const [activeTab, setActiveTab] = useState<"dashboard" | "accounts" | "budgets" | "wishes" | "goals">(initialTab);
     const [searchOpen, setSearchOpen] = useState(false);
     const [search, setSearch] = useState("");
     const [expandedAccountId, setExpandedAccountId] = useState<string | null>(initialAccountId ?? null);

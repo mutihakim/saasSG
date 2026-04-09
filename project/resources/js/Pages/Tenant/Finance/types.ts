@@ -1,3 +1,5 @@
+import { MainTab } from "./components/pwa/types";
+
 export type FinanceScope = "private" | "shared";
 export type FinanceAccountType = "cash" | "bank" | "ewallet" | "credit_card" | "paylater";
 export type FinanceTransactionType = "pemasukan" | "pengeluaran" | "transfer";
@@ -207,6 +209,7 @@ export type FinanceTransaction = {
     transfer_direction?: "in" | "out" | null;
     transfer_pair_id?: string | null;
     row_version?: number;
+    attachments_count?: number;
     tags: Array<FinanceTag | string>;
     attachments?: FinanceAttachment[];
     recurringRule?: FinanceRecurringRule | null;
@@ -294,6 +297,18 @@ export type FinanceLimits = {
     budgets: { current: number; limit: number | null };
 };
 
+export type FinanceRouteMeta = {
+    section: "transactions" | "reports";
+    initial_tab: MainTab;
+    title: string;
+    back_href?: string | null;
+    preloaded?: {
+        accounts?: boolean;
+        budgets?: boolean;
+        pockets?: boolean;
+    };
+};
+
 export type FinancePageProps = {
     categories: FinanceCategory[];
     currencies: FinanceCurrency[];
@@ -308,6 +323,7 @@ export type FinancePageProps = {
     permissions: FinancePermissions;
     walletSubscribed: boolean;
     limits: FinanceLimits;
+    financeRoute?: FinanceRouteMeta;
 };
 
 export type FinanceBatchDraft = {

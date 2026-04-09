@@ -102,11 +102,29 @@ Route::middleware([
             Route::get('/projects',  [TenantHubController::class, 'projects'])->name('tenant.projects');
             Route::get('/tasks',     [TenantHubController::class, 'tasks'])->name('tenant.tasks');
             Route::get('/rewards',   [TenantHubController::class, 'rewards'])->name('tenant.rewards');
-            Route::get('/wallet',    [TenantWalletController::class, 'index'])
-                ->name('tenant.wallet')
-                ->middleware('tenant.feature:wallet,view');
             Route::get('/finance',   [TenantFinanceController::class, 'index'])
                 ->name('tenant.finance')
+                ->middleware('tenant.feature:finance,view');
+            Route::get('/finance/home', [TenantWalletController::class, 'home'])
+                ->name('tenant.finance.home')
+                ->middleware('tenant.feature:finance,view');
+            Route::get('/finance/accounts', [TenantWalletController::class, 'accounts'])
+                ->name('tenant.finance.accounts')
+                ->middleware('tenant.feature:finance,view');
+            Route::get('/finance/planning', [TenantWalletController::class, 'planning'])
+                ->name('tenant.finance.planning')
+                ->middleware('tenant.feature:finance,view');
+            Route::get('/finance/review', [TenantWalletController::class, 'review'])
+                ->name('tenant.finance.review')
+                ->middleware('tenant.feature:finance,view');
+            Route::get('/finance/transactions', [TenantFinanceController::class, 'transactions'])
+                ->name('tenant.finance.transactions')
+                ->middleware('tenant.feature:finance,view');
+            Route::get('/finance/reports', [TenantFinanceController::class, 'reports'])
+                ->name('tenant.finance.reports')
+                ->middleware('tenant.feature:finance,view');
+            Route::get('/finance/budgets', [TenantFinanceController::class, 'budgets'])
+                ->name('tenant.finance.budgets')
                 ->middleware('tenant.feature:finance,view');
             Route::get('/kitchen',   [TenantHubController::class, 'kitchen'])->name('tenant.kitchen');
             Route::get('/shopping',  [TenantHubController::class, 'kitchen'])->name('tenant.shopping');

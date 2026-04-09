@@ -12,6 +12,7 @@ use App\Models\User;
 use App\Models\TenantMember;
 use App\Models\ActivityLog;
 use App\Models\TenantBankAccount;
+use App\Models\TenantBudget;
 use App\Services\Finance\FinanceAccessService;
 use App\Services\Finance\FinanceAttachmentService;
 use App\Services\Finance\Wallet\WalletPocketService;
@@ -436,6 +437,120 @@ class FinanceTransactionApiTest extends TestCase
 
         $this->assertCount(1, $accounts);
         $this->assertSame($this->account->id, $accounts->first()?->id);
+    }
+
+    public function test_visible_transactions_query_keeps_member_visibility_semantics_after_scope_resolution(): void
+    {
+        $currencyId = TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id;
+
+        $sharedAccount = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Shared Savings',
+            'scope' => 'shared',
+            'type' => 'bank',
+            'currency_code' => 'IDR',
+            'opening_balance' => 200000,
+            'current_balance' => 200000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+        $sharedAccount->memberAccess()->syncWithoutDetaching([
+            $this->ownerMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
+            $this->memberMembership->id => ['can_view' => true, 'can_use' => false, 'can_manage' => false],
+        ]);
+        $sharedAccountPocket = app(WalletPocketService::class)->ensureMainPocket($sharedAccount);
+
+        $this->mainPocket->memberAccess()->syncWithoutDetaching([
+            $this->memberMembership->id => ['can_view' => true, 'can_use' => false, 'can_manage' => false],
+        ]);
+
+        $sharedBudget = TenantBudget::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'pocket_id' => $this->mainPocket->id,
+            'name' => 'Shared Household Budget',
+            'code' => 'HOME-APR',
+            'budget_key' => 'shared-household-budget',
+            'scope' => 'shared',
+            'period_month' => now()->format('Y-m'),
+            'allocated_amount' => 500000,
+            'spent_amount' => 0,
+            'remaining_amount' => 500000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+        $sharedBudget->memberAccess()->syncWithoutDetaching([
+            $this->memberMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => false],
+        ]);
+
+        $hiddenAccount = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Private Reserve',
+            'scope' => 'private',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 100000,
+            'current_balance' => 100000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+        $hiddenAccount->memberAccess()->syncWithoutDetaching([
+            $this->ownerMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
+        ]);
+        $hiddenPocket = app(WalletPocketService::class)->ensureMainPocket($hiddenAccount);
+
+        $visibleBySharedAccount = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => $currencyId,
+            'bank_account_id' => $sharedAccount->id,
+            'pocket_id' => $sharedAccountPocket->id,
+            'description' => 'Visible via shared account',
+        ]);
+
+        $visibleBySharedBudget = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => $currencyId,
+            'bank_account_id' => $this->account->id,
+            'pocket_id' => $this->mainPocket->id,
+            'budget_id' => $sharedBudget->id,
+            'description' => 'Visible via shared budget',
+        ]);
+
+        $visibleBySharedPocket = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => $currencyId,
+            'bank_account_id' => $this->account->id,
+            'pocket_id' => $this->mainPocket->id,
+            'description' => 'Visible via shared pocket',
+        ]);
+
+        $hiddenTransaction = FinanceTransaction::factory()->create([
+            'tenant_id' => $this->tenant->id,
+            'created_by' => $this->ownerMembership->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'currency_id' => $currencyId,
+            'bank_account_id' => $hiddenAccount->id,
+            'pocket_id' => $hiddenPocket->id,
+            'description' => 'Hidden private transaction',
+        ]);
+
+        $visibleIds = app(FinanceAccessService::class)
+            ->visibleTransactionsQuery($this->tenant, $this->memberMembership)
+            ->pluck('id')
+            ->all();
+
+        $this->assertContains($visibleBySharedAccount->id, $visibleIds);
+        $this->assertContains($visibleBySharedBudget->id, $visibleIds);
+        $this->assertContains($visibleBySharedPocket->id, $visibleIds);
+        $this->assertNotContains($hiddenTransaction->id, $visibleIds);
     }
 
     public function test_family_summary_excludes_internal_transfers_from_income_and_expense(): void
