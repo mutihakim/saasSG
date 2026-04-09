@@ -13,7 +13,7 @@ const FamilyFooter: React.FC<Props> = ({ tenantName }) => {
     // All links are relative — Inertia Link handles SPA navigation (no refresh)
     const featureLinks = [
         { label: 'Kalender Bersama', href: '/calendar' },
-        { label: 'Keuangan Keluarga', href: '/finance/home' },
+        { label: 'Keuangan Keluarga', href: '/finance' },
         { label: 'Tugas & Rutinitas', href: '/tasks' },
         { label: 'Reward Store', href: '/rewards' },
         { label: 'Growth Tracker', href: '/health' },

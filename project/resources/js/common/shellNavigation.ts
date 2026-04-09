@@ -162,7 +162,7 @@ export function buildShellNavigation(props: SharedPageProps): ShellNavSection[] 
                     {
                         id: 'member-finance',
                         labelKey: 'layout.shell.nav.items.member_finance',
-                        href: '/finance/home',
+                        href: '/finance',
                         icon: 'ri-money-dollar-circle-line',
                         match: startsWith('/finance'),
                     },

@@ -51,7 +51,7 @@ const FamilyNavbar: React.FC<Props> = ({ tenantName, mode, memberName }) => {
             icon: 'ri-trophy-line',
             children: [
                 { label: 'Reward Store', href: '/rewards', icon: 'ri-gift-2-line', desc: 'Toko hadiah & leaderboard' },
-                { label: 'Keuangan Keluarga', href: '/finance/home', icon: 'ri-wallet-3-line', desc: 'Account, pocket, transaksi, dan planning' },
+                { label: 'Keuangan Keluarga', href: '/finance', icon: 'ri-wallet-3-line', desc: 'Account, pocket, transaksi, dan planning' },
             ],
         },
         {

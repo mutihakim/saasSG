@@ -64,6 +64,9 @@ const FinanceIndex = ({
         refreshFinanceSideData,
         loadFinance,
         loadMoreTransactions,
+        fetchAccounts,
+        fetchBudgets,
+        fetchPockets,
     } = useFinanceData({
         seededAccounts,
         seededBudgets,
@@ -225,6 +228,61 @@ const FinanceIndex = ({
             });
     }, [page, tenantRoute]);
 
+    const ensureTransactionDialogData = useCallback(async (options?: {
+        includeAccounts?: boolean;
+        includeBudgets?: boolean;
+        includePockets?: boolean;
+    }) => {
+        const promises: Promise<unknown>[] = [];
+
+        if (options?.includeAccounts ?? true) {
+            promises.push(fetchAccounts());
+        }
+
+        if (options?.includeBudgets ?? true) {
+            promises.push(fetchBudgets());
+        }
+
+        if (options?.includePockets ?? true) {
+            promises.push(fetchPockets());
+        }
+
+        await Promise.all(promises);
+    }, [fetchAccounts, fetchBudgets, fetchPockets]);
+
+    const handleOpenFilters = useCallback(() => {
+        void ensureTransactionDialogData({ includeAccounts: true, includeBudgets: false, includePockets: false })
+            .then(() => {
+                page.setShowFilters(true);
+            });
+    }, [ensureTransactionDialogData, page]);
+
+    const handleOpenCreateFromGroupedTransaction = useCallback((transaction: FinanceTransaction | null, options?: {
+        duplicate?: boolean;
+    }) => {
+        void ensureTransactionDialogData().then(() => {
+            transactionEntry.openCreateFromGroupedTransaction(transaction, options);
+        });
+    }, [ensureTransactionDialogData, transactionEntry]);
+
+    const handleEditFromDetailSheet = useCallback(() => {
+        void ensureTransactionDialogData().then(() => {
+            transactionEntry.editFromDetailSheet();
+        });
+    }, [ensureTransactionDialogData, transactionEntry]);
+
+    const handleOpenNewTransaction = useCallback((type: "pemasukan" | "pengeluaran" | "transfer" | "bulk") => {
+        const preload = type === "bulk"
+            ? Promise.resolve()
+            : type === "transfer"
+                ? ensureTransactionDialogData({ includeAccounts: true, includeBudgets: false, includePockets: true })
+                : ensureTransactionDialogData();
+
+        void preload.then(() => {
+            transactionEntry.openNewTransaction(type);
+        });
+    }, [ensureTransactionDialogData, transactionEntry]);
+
     return (
         <>
             {shouldMountDialogs ? (
@@ -240,8 +298,8 @@ const FinanceIndex = ({
                         selectedTransaction={page.selectedTransaction}
                         defaultCurrency={defaultCurrency}
                         closeDetailSheet={transactionEntry.closeDetailSheet}
-                        editFromDetailSheet={transactionEntry.editFromDetailSheet}
-                        openCreateFromGroupedTransaction={transactionEntry.openCreateFromGroupedTransaction}
+                        editFromDetailSheet={handleEditFromDetailSheet}
+                        openCreateFromGroupedTransaction={handleOpenCreateFromGroupedTransaction}
                         permissions={permissions}
                         setDeleteTarget={page.setDeleteTarget}
                         setDeleteTargetType={page.setDeleteTargetType}
@@ -321,7 +379,7 @@ const FinanceIndex = ({
                 }}
                 ownerLabel={metrics.ownerLabel}
                 kindLabel={metrics.kindLabel}
-                setShowFilters={page.setShowFilters}
+                onOpenFilters={handleOpenFilters}
                 errorState={errorState}
                 loading={loading}
                 summaryLoading={summaryLoading}
@@ -339,7 +397,7 @@ const FinanceIndex = ({
                 transactionsMeta={transactionsMeta}
                 loadingMoreTransactions={loadingMoreTransactions}
                 loadMoreRef={page.loadMoreRef}
-                openCreateFromGroupedTransaction={transactionEntry.openCreateFromGroupedTransaction}
+                openCreateFromGroupedTransaction={handleOpenCreateFromGroupedTransaction}
                 onTransactionClick={handleTransactionClick}
                 setDeleteTarget={page.setDeleteTarget}
                 setDeleteTargetType={page.setDeleteTargetType}
@@ -361,7 +419,7 @@ const FinanceIndex = ({
                 totalLiabilities={metrics.totalLiabilities}
                 setSelectedBudget={page.setSelectedBudget}
                 setBudgetModal={page.setBudgetModal}
-                openNewTransaction={transactionEntry.openNewTransaction}
+                openNewTransaction={handleOpenNewTransaction}
                 t={t}
             />
         </>

@@ -275,6 +275,7 @@ const useWalletData = ({ seededAccounts, seededPockets, seededBudgets, seededGoa
         filteredWishes,
         syncAll,
         syncForTab, // New scoped sync function
+        fetchBudgets,
     };
 };
 

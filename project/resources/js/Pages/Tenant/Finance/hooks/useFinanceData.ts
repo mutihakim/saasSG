@@ -237,10 +237,15 @@ export const useFinanceData = ({
             await Promise.all([
                 fetchTransactions(1, { replace: true }),
                 fetchSummary({ silent: silentSummary }),
-                fetchAccounts(forceSideData),
-                fetchBudgets(forceSideData),
                 fetchPockets(forceSideData),
             ]);
+
+            if (activeSection !== "transactions") {
+                await Promise.all([
+                    fetchAccounts(forceSideData),
+                    fetchBudgets(forceSideData),
+                ]);
+            }
         } catch (error: any) {
             const parsed = parseApiError(error, loadErrorMessage);
             setErrorState(parsed.detail || parsed.title);
@@ -287,6 +292,7 @@ export const useFinanceData = ({
         fetchSummary,
         fetchAccounts,
         fetchBudgets,
+        fetchPockets,
         refreshFinanceSideData,
         refreshFinanceEntity,
         loadFinance,

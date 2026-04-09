@@ -73,9 +73,9 @@ class TenantWalletController extends Controller
         /** @var TenantMember|null $member */
         $member = $request->attributes->get('currentTenantMember');
         $selectedPeriodMonth = $periodMonth ?: now()->format('Y-m');
-        $loadAccounts = $section === 'accounts';
-        $loadPockets = in_array($section, ['home', 'accounts', 'planning'], true);
-        $loadBudgets = $section === 'accounts' || ($section === 'planning' && $initialTab === 'budgets');
+        $loadAccounts = false;
+        $loadPockets = in_array($section, ['home', 'planning'], true);
+        $loadBudgets = $section === 'planning' && $initialTab === 'budgets';
         $loadGoals = $section === 'home' || ($section === 'planning' && $initialTab === 'goals');
         $loadWishes = $section === 'home' || ($section === 'planning' && $initialTab === 'wishes');
         $loadSummary = in_array($section, ['home', 'review'], true);

@@ -12,7 +12,7 @@ const FinanceModuleBottomNav = ({ activeSection }: Props) => {
     const { t } = useTranslation();
 
     const items: Array<{ key: FinanceModuleSection; href: string; icon: string; label: string }> = [
-        { key: "home", href: "/finance/home", icon: "ri-home-5-line", label: t("layout.shell.nav.items.overview", { defaultValue: "Home" }) },
+        { key: "home", href: "/finance", icon: "ri-home-5-line", label: t("layout.shell.nav.items.overview", { defaultValue: "Home" }) },
         { key: "accounts", href: "/finance/accounts", icon: "ri-bank-card-line", label: t("wallet.tabs.accounts", { defaultValue: "Wallets" }) },
         { key: "transactions", href: "/finance/transactions", icon: "ri-exchange-dollar-line", label: t("finance.pwa.tabs.transactions") },
         { key: "planning", href: "/finance/planning", icon: "ri-flag-2-line", label: "Planning" },

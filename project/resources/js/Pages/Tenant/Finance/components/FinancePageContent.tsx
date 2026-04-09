@@ -30,7 +30,7 @@ type Props = {
     onNextMonth: () => void;
     ownerLabel?: string | null;
     kindLabel?: string | null;
-    setShowFilters: React.Dispatch<React.SetStateAction<boolean>>;
+    onOpenFilters: () => void;
     errorState: string | null;
     loading: boolean;
     summaryLoading: boolean;
@@ -94,7 +94,7 @@ const FinancePageContent = ({
     onNextMonth,
     ownerLabel,
     kindLabel,
-    setShowFilters,
+    onOpenFilters,
     errorState,
     loading,
     summaryLoading,
@@ -147,7 +147,7 @@ const FinancePageContent = ({
                 onToggleSearch={() => setSearchOpen((prev) => !prev)}
                 onDraftSearchChange={(value) => setDraftFilters((prev) => ({ ...prev, search: value }))}
                 onApplySearch={() => setFilters((prev) => ({ ...prev, search: draftFilters.search }))}
-                onOpenFilter={() => setShowFilters(true)}
+                onOpenFilter={onOpenFilters}
                 onPrevMonth={onPrevMonth}
                 onNextMonth={onNextMonth}
                 filterOwnerLabel={ownerLabel}

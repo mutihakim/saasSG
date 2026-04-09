@@ -10,7 +10,6 @@ use App\Services\Finance\FinanceAccessService;
 use App\Services\Finance\Wallet\WalletCashflowService;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\Request;
-use Illuminate\Http\RedirectResponse;
 use Inertia\Inertia;
 use Inertia\Response;
 use Symfony\Component\HttpFoundation\Response as HttpResponse;
@@ -23,9 +22,9 @@ class TenantFinanceController extends Controller
         private readonly WalletCashflowService $cashflow,
     ) {}
 
-    public function index(Request $request, string $tenant): RedirectResponse
+    public function index(Request $request, string $tenant): Response
     {
-        return redirect()->route('tenant.finance.home', ['tenant' => $tenant]);
+        return app(TenantWalletController::class)->home($request, $tenant);
     }
 
     public function transactions(Request $request, string $tenant): Response|HttpResponse
@@ -64,9 +63,9 @@ class TenantFinanceController extends Controller
         $member = $request->attributes->get('currentTenantMember');
         $activeAccounts = $tenantModel->bankAccounts()->active()->count();
         $activeBudgets = $tenantModel->budgets()->active()->count();
-        $shouldPreloadAccounts = in_array($section, ['transactions', 'reports'], true);
-        $shouldPreloadBudgets = in_array($section, ['transactions', 'reports'], true);
-        $shouldPreloadPockets = $section === 'transactions';
+        $shouldPreloadAccounts = $section === 'reports';
+        $shouldPreloadBudgets = $section === 'reports';
+        $shouldPreloadPockets = false;
         $accounts = $shouldPreloadAccounts
             ? $this->access->accessibleAccountsQuery($tenantModel, $member)
                 ->active()

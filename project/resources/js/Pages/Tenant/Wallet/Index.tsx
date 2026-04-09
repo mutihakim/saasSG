@@ -2,12 +2,9 @@ import axios from "axios";
 import React, { Suspense, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import DangerDeleteModal from "../../../Components/Common/DangerDeleteModal";
 import { currentMonthValue, shiftMonthValue } from "../../../common/month";
 import { parseApiError } from "../../../common/apiError";
 import { notify } from "../../../common/notify";
-import BudgetModal from "../Finance/components/BudgetModal";
-import TransactionModal from "../Finance/components/TransactionModal";
 import { FinanceAccount, FinanceBudget, FinancePocket, FinanceSavingsGoal } from "../Finance/types";
 
 // EAGER: Route shell + accounts surface
@@ -30,6 +27,9 @@ const GoalActionModal = React.lazy(() => import("./components/GoalActionModal"))
 const WishDialogs = React.lazy(() => import("./components/WishDialogs"));
 const MonthlyReviewWizard = React.lazy(() => import("./components/MonthlyReviewWizard"));
 const GoalDetailSheet = React.lazy(() => import("./components/pwa/GoalDetailSheet"));
+const DangerDeleteModal = React.lazy(() => import("../../../Components/Common/DangerDeleteModal"));
+const BudgetModal = React.lazy(() => import("../Finance/components/BudgetModal"));
+const TransactionModal = React.lazy(() => import("../Finance/components/TransactionModal"));
 
 // Loading fallback component
 const TabLoadingFallback = () => (
@@ -85,6 +85,7 @@ const WalletIndex = ({
         monthlyReview,
         syncAll,
         syncForTab,
+        fetchBudgets,
     } = useWalletData({
         seededAccounts,
         seededPockets,
@@ -126,6 +127,16 @@ const WalletIndex = ({
 
         page.setShowMonthlyReviewWizard(true);
     }, [page.setShowMonthlyReviewWizard, shouldOpenMonthlyReview]);
+
+    const shouldMountAccountDialogs = page.showAccountDetailSheet || page.showAccountModal;
+    const shouldMountWalletDialogs = page.showWalletDetailSheet || page.showWalletModal;
+    const shouldMountGoalDialogs = page.showGoalModal;
+    const shouldMountGoalDetail = page.showGoalDetailSheet;
+    const shouldMountGoalActionDialogs = page.showGoalFundModal || page.showGoalSpendModal;
+    const shouldMountWishDialogs = page.showWishModal || page.showConvertModal;
+    const shouldMountBudgetDialog = showBudgetModal;
+    const shouldMountMonthlyReview = Boolean(monthlyReview) && page.showMonthlyReviewWizard;
+    const shouldMountTransactionModal = page.transactionModal;
 
     useEffect(() => {
         const activeSection = financeRoute?.section ?? "home";
@@ -181,7 +192,10 @@ const WalletIndex = ({
         const activeSection = financeRoute?.section ?? "home";
 
         if (activeSection === "accounts") {
-            return syncing && (!financeRoute?.preloaded?.accounts || !financeRoute?.preloaded?.pockets) && accounts.length === 0 && wallets.length === 0;
+            return syncing
+                && (!financeRoute?.preloaded?.accounts || !financeRoute?.preloaded?.pockets)
+                && accounts.length === 0
+                && wallets.length === 0;
         }
 
         if (activeSection === "planning" && page.activeTab === "budgets") {
@@ -255,6 +269,7 @@ const WalletIndex = ({
     });
     const [deleteIntent, setDeleteIntent] = useState<{ kind: "account" | "wallet" | "budget"; id: string; name: string } | null>(null);
     const [deletingEntity, setDeletingEntity] = useState(false);
+    const shouldMountDeleteDialog = Boolean(deleteIntent);
 
     const resetWalletForm = (wallet?: any | null, accountId?: string) => {
         page.setSelectedWallet(wallet ?? null);
@@ -344,7 +359,8 @@ const WalletIndex = ({
         page.setShowAccountModal(true);
     };
 
-    const openWalletModal = (wallet?: any | null, accountId?: string) => {
+    const openWalletModal = async (wallet?: any | null, accountId?: string) => {
+        await fetchBudgets(planningMonth);
         resetWalletForm(wallet ?? null, accountId);
         page.setShowWalletModal(true);
     };
@@ -931,196 +947,228 @@ const WalletIndex = ({
                 )}
             </WalletPageContent>
 
-            <Suspense fallback={null}>
-                <AccountDialogs
-                    showAccountDetailSheet={page.showAccountDetailSheet}
-                    selectedAccount={page.selectedAccount}
-                    setShowAccountDetailSheet={page.setShowAccountDetailSheet}
-                    openAccountModal={openAccountModal}
-                    handleDeleteAccount={requestDeleteAccount}
-                    permissions={permissions}
-                    showAccountModal={page.showAccountModal}
-                    setShowAccountModal={page.setShowAccountModal}
-                    seedAccount={page.seedAccount}
-                    setSeedAccount={page.setSeedAccount}
-                    syncAccounts={() => syncForTab("accounts", { force: true })}
-                    currencies={currencies}
-                    members={members}
-                    activeMemberId={activeMemberId}
-                />
-                
-                <WalletEntityDialogs
-                    showWalletDetailSheet={page.showWalletDetailSheet}
-                    selectedWallet={page.selectedWallet}
-                    setShowWalletDetailSheet={page.setShowWalletDetailSheet}
-                    openWalletModal={openWalletModal}
-                    setSelectedWallet={page.setSelectedWallet}
-                    setWalletForm={setWalletForm}
-                    handleDeleteWallet={requestDeleteWallet}
-                    permissions={permissions}
-                    showWalletModal={page.showWalletModal}
-                    setShowWalletModal={page.setShowWalletModal}
-                    accounts={accounts}
-                    budgets={budgets}
-                    currencies={currencies}
-                    members={members}
-                    activeMemberId={activeMemberId}
-                    handleSaveWallet={handleSaveWallet}
-                    savingWallet={page.savingWallet}
-                    onAddMoney={() => page.selectedWallet && openAddMoney(page.selectedWallet)}
-                    onMoveMoney={() => page.selectedWallet && openMoveMoney(page.selectedWallet)}
-                    onPaySend={() => page.selectedWallet && openPaySend(page.selectedWallet)}
-                />
+            {shouldMountAccountDialogs && (
+                <Suspense fallback={null}>
+                    <AccountDialogs
+                        showAccountDetailSheet={page.showAccountDetailSheet}
+                        selectedAccount={page.selectedAccount}
+                        setShowAccountDetailSheet={page.setShowAccountDetailSheet}
+                        openAccountModal={openAccountModal}
+                        handleDeleteAccount={requestDeleteAccount}
+                        permissions={permissions}
+                        showAccountModal={page.showAccountModal}
+                        setShowAccountModal={page.setShowAccountModal}
+                        seedAccount={page.seedAccount}
+                        setSeedAccount={page.setSeedAccount}
+                        syncAccounts={() => syncForTab("accounts", { force: true })}
+                        currencies={currencies}
+                        members={members}
+                        activeMemberId={activeMemberId}
+                    />
+                </Suspense>
+            )}
 
-                <GoalDialogs
-                    selectedGoal={page.selectedGoal}
-                    showGoalModal={page.showGoalModal}
-                    setShowGoalModal={page.setShowGoalModal}
-                    goalForm={goalForm}
-                    setGoalForm={setGoalForm}
-                    handleSaveGoal={handleSaveGoal}
-                    savingGoal={page.savingGoal}
-                    wallets={wallets}
-                />
+            {shouldMountWalletDialogs && (
+                <Suspense fallback={null}>
+                    <WalletEntityDialogs
+                        showWalletDetailSheet={page.showWalletDetailSheet}
+                        selectedWallet={page.selectedWallet}
+                        setShowWalletDetailSheet={page.setShowWalletDetailSheet}
+                        openWalletModal={openWalletModal}
+                        setSelectedWallet={page.setSelectedWallet}
+                        setWalletForm={setWalletForm}
+                        handleDeleteWallet={requestDeleteWallet}
+                        permissions={permissions}
+                        showWalletModal={page.showWalletModal}
+                        setShowWalletModal={page.setShowWalletModal}
+                        accounts={accounts}
+                        budgets={budgets}
+                        currencies={currencies}
+                        members={members}
+                        activeMemberId={activeMemberId}
+                        handleSaveWallet={handleSaveWallet}
+                        savingWallet={page.savingWallet}
+                        onAddMoney={() => page.selectedWallet && openAddMoney(page.selectedWallet)}
+                        onMoveMoney={() => page.selectedWallet && openMoveMoney(page.selectedWallet)}
+                        onPaySend={() => page.selectedWallet && openPaySend(page.selectedWallet)}
+                    />
+                </Suspense>
+            )}
 
-                <GoalDetailSheet
-                    show={page.showGoalDetailSheet}
-                    goal={page.selectedGoal}
-                    activities={goalActivities}
-                    onClose={() => page.setShowGoalDetailSheet(false)}
-                    onEdit={() => {
-                        if (!page.selectedGoal) return;
-                        resetGoalForm(page.selectedGoal);
-                        page.setShowGoalDetailSheet(false);
-                        page.setShowGoalModal(true);
-                    }}
-                    onDelete={() => {
-                        if (!page.selectedGoal) return;
-                        page.setShowGoalDetailSheet(false);
-                        void handleDeleteGoal(page.selectedGoal);
-                    }}
-                    onFund={() => page.selectedGoal && openGoalFundModal(page.selectedGoal)}
-                    onSpend={() => page.selectedGoal && openGoalSpendModal(page.selectedGoal)}
-                    canManage={permissions.manageShared || String(page.selectedGoal?.owner_member_id || "") === String(activeMemberId || "")}
-                />
+            {shouldMountGoalDialogs && (
+                <Suspense fallback={null}>
+                    <GoalDialogs
+                        selectedGoal={page.selectedGoal}
+                        showGoalModal={page.showGoalModal}
+                        setShowGoalModal={page.setShowGoalModal}
+                        goalForm={goalForm}
+                        setGoalForm={setGoalForm}
+                        handleSaveGoal={handleSaveGoal}
+                        savingGoal={page.savingGoal}
+                        wallets={wallets}
+                    />
+                </Suspense>
+            )}
 
-                <GoalActionModal
-                    mode="fund"
-                    show={page.showGoalFundModal}
-                    onHide={() => page.setShowGoalFundModal(false)}
-                    goal={page.selectedGoal}
-                    wallets={wallets}
-                    form={goalFundForm}
-                    setForm={setGoalFundForm}
-                    onSubmit={handleFundGoal}
-                    loading={page.fundingGoal}
-                />
+            {shouldMountGoalDetail && (
+                <Suspense fallback={null}>
+                    <GoalDetailSheet
+                        show={page.showGoalDetailSheet}
+                        goal={page.selectedGoal}
+                        activities={goalActivities}
+                        onClose={() => page.setShowGoalDetailSheet(false)}
+                        onEdit={() => {
+                            if (!page.selectedGoal) return;
+                            resetGoalForm(page.selectedGoal);
+                            page.setShowGoalDetailSheet(false);
+                            page.setShowGoalModal(true);
+                        }}
+                        onDelete={() => {
+                            if (!page.selectedGoal) return;
+                            page.setShowGoalDetailSheet(false);
+                            void handleDeleteGoal(page.selectedGoal);
+                        }}
+                        onFund={() => page.selectedGoal && openGoalFundModal(page.selectedGoal)}
+                        onSpend={() => page.selectedGoal && openGoalSpendModal(page.selectedGoal)}
+                        canManage={permissions.manageShared || String(page.selectedGoal?.owner_member_id || "") === String(activeMemberId || "")}
+                    />
+                </Suspense>
+            )}
 
-                <GoalActionModal
-                    mode="spend"
-                    show={page.showGoalSpendModal}
-                    onHide={() => page.setShowGoalSpendModal(false)}
-                    goal={page.selectedGoal}
-                    wallets={wallets}
-                    budgets={budgets}
-                    categories={categories}
-                    paymentMethods={paymentMethods}
-                    form={goalSpendForm}
-                    setForm={setGoalSpendForm}
-                    onSubmit={handleSpendGoal}
-                    loading={page.spendingGoal}
-                />
+            {shouldMountGoalActionDialogs && (
+                <Suspense fallback={null}>
+                    <>
+                        <GoalActionModal
+                            mode="fund"
+                            show={page.showGoalFundModal}
+                            onHide={() => page.setShowGoalFundModal(false)}
+                            goal={page.selectedGoal}
+                            wallets={wallets}
+                            form={goalFundForm}
+                            setForm={setGoalFundForm}
+                            onSubmit={handleFundGoal}
+                            loading={page.fundingGoal}
+                        />
 
-                <WishDialogs
-                    selectedWish={page.selectedWish}
-                    showWishModal={page.showWishModal}
-                    setShowWishModal={page.setShowWishModal}
-                    wishForm={wishForm}
-                    setWishForm={setWishForm}
-                    handleSaveWish={handleSaveWish}
-                    savingWish={page.savingWish}
-                    showConvertModal={page.showConvertModal}
-                    setShowConvertModal={page.setShowConvertModal}
-                    convertForm={page.convertForm}
-                    setConvertForm={page.setConvertForm}
-                    handleConvertWish={handleConvertWish}
-                    convertingWish={page.convertingWish}
-                    wallets={wallets}
-                />
+                        <GoalActionModal
+                            mode="spend"
+                            show={page.showGoalSpendModal}
+                            onHide={() => page.setShowGoalSpendModal(false)}
+                            goal={page.selectedGoal}
+                            wallets={wallets}
+                            budgets={budgets}
+                            categories={categories}
+                            paymentMethods={paymentMethods}
+                            form={goalSpendForm}
+                            setForm={setGoalSpendForm}
+                            onSubmit={handleSpendGoal}
+                            loading={page.spendingGoal}
+                        />
+                    </>
+                </Suspense>
+            )}
 
-                <BudgetModal
-                    show={showBudgetModal}
-                    onClose={() => {
-                        setShowBudgetModal(false);
-                        setSelectedBudget(null);
-                    }}
-                    onSuccess={(budget) => void handleSaveBudget(budget)}
-                    onDelete={() => {
-                        if (!selectedBudget) return;
-                        setDeleteIntent({
-                            kind: "budget",
-                            id: selectedBudget.id,
-                            name: selectedBudget.name,
-                        });
-                    }}
-                    budget={selectedBudget}
-                    members={members}
-                    pockets={wallets}
-                    activeMemberId={activeMemberId}
-                    canManageShared={permissions.manageShared}
-                    canDelete={permissions.delete}
-                />
+            {shouldMountWishDialogs && (
+                <Suspense fallback={null}>
+                    <WishDialogs
+                        selectedWish={page.selectedWish}
+                        showWishModal={page.showWishModal}
+                        setShowWishModal={page.setShowWishModal}
+                        wishForm={wishForm}
+                        setWishForm={setWishForm}
+                        handleSaveWish={handleSaveWish}
+                        savingWish={page.savingWish}
+                        showConvertModal={page.showConvertModal}
+                        setShowConvertModal={page.setShowConvertModal}
+                        convertForm={page.convertForm}
+                        setConvertForm={page.setConvertForm}
+                        handleConvertWish={handleConvertWish}
+                        convertingWish={page.convertingWish}
+                        wallets={wallets}
+                    />
+                </Suspense>
+            )}
 
-                <DangerDeleteModal
-                    key={deleteIntent ? `${deleteIntent.kind}-${deleteIntent.id}` : "wallet-delete"}
-                    show={Boolean(deleteIntent)}
-                    onClose={() => !deletingEntity && setDeleteIntent(null)}
-                    onConfirm={() => {
-                        if (!deleteIntent) return;
-                        if (deleteIntent.kind === "account") {
-                            void handleDeleteAccount();
-                            return;
-                        }
-                        if (deleteIntent.kind === "budget") {
-                            void handleDeleteBudget();
-                            return;
-                        }
-                        const wallet = wallets.find((item) => item.id === deleteIntent.id) || page.selectedWallet;
-                        if (wallet) {
-                            void handleDeleteWallet(wallet);
-                        }
-                    }}
-                    loading={deletingEntity}
-                    title={deleteIntent?.kind === "account" ? "Hapus akun ini?" : deleteIntent?.kind === "budget" ? "Hapus budget ini?" : "Hapus wallet ini?"}
-                    entityLabel={deleteIntent?.kind === "account" ? "Akun" : deleteIntent?.kind === "budget" ? "Budget" : "Wallet"}
-                    entityName={deleteIntent?.name || ""}
-                    message={deleteIntent?.kind === "account"
-                        ? "Akun hanya bisa dihapus jika backend mengizinkan. Pastikan Anda benar-benar ingin menghapus struktur ini."
-                        : deleteIntent?.kind === "budget"
-                            ? "Budget hanya bisa dihapus jika backend mengizinkan. Pastikan histori bulanan yang terkait sudah tidak dibutuhkan."
-                        : "Wallet hanya bisa dihapus jika backend mengizinkan. Pastikan tidak ada konteks operasional yang masih dibutuhkan."}
-                    warnings={deleteIntent?.kind === "account"
-                        ? [
-                            "Wallet turunan, goal, dan konteks struktur account bisa ikut terdampak secara operasional.",
-                            "Jika account sudah dipakai transaksi, backend akan menolak penghapusan ini.",
-                            "Aksi ini tidak dapat dipulihkan dari UI biasa.",
-                        ]
-                        : deleteIntent?.kind === "budget"
+            {shouldMountBudgetDialog && (
+                <Suspense fallback={null}>
+                    <BudgetModal
+                        show={showBudgetModal}
+                        onClose={() => {
+                            setShowBudgetModal(false);
+                            setSelectedBudget(null);
+                        }}
+                        onSuccess={(budget) => void handleSaveBudget(budget)}
+                        onDelete={() => {
+                            if (!selectedBudget) return;
+                            setDeleteIntent({
+                                kind: "budget",
+                                id: selectedBudget.id,
+                                name: selectedBudget.name,
+                            });
+                        }}
+                        budget={selectedBudget}
+                        members={members}
+                        pockets={wallets}
+                        activeMemberId={activeMemberId}
+                        canManageShared={permissions.manageShared}
+                        canDelete={permissions.delete}
+                    />
+                </Suspense>
+            )}
+
+            {shouldMountDeleteDialog && (
+                <Suspense fallback={null}>
+                    <DangerDeleteModal
+                        key={deleteIntent ? `${deleteIntent.kind}-${deleteIntent.id}` : "wallet-delete"}
+                        show={Boolean(deleteIntent)}
+                        onClose={() => !deletingEntity && setDeleteIntent(null)}
+                        onConfirm={() => {
+                            if (!deleteIntent) return;
+                            if (deleteIntent.kind === "account") {
+                                void handleDeleteAccount();
+                                return;
+                            }
+                            if (deleteIntent.kind === "budget") {
+                                void handleDeleteBudget();
+                                return;
+                            }
+                            const wallet = wallets.find((item) => item.id === deleteIntent.id) || page.selectedWallet;
+                            if (wallet) {
+                                void handleDeleteWallet(wallet);
+                            }
+                        }}
+                        loading={deletingEntity}
+                        title={deleteIntent?.kind === "account" ? "Hapus akun ini?" : deleteIntent?.kind === "budget" ? "Hapus budget ini?" : "Hapus wallet ini?"}
+                        entityLabel={deleteIntent?.kind === "account" ? "Akun" : deleteIntent?.kind === "budget" ? "Budget" : "Wallet"}
+                        entityName={deleteIntent?.name || ""}
+                        message={deleteIntent?.kind === "account"
+                            ? "Akun hanya bisa dihapus jika backend mengizinkan. Pastikan Anda benar-benar ingin menghapus struktur ini."
+                            : deleteIntent?.kind === "budget"
+                                ? "Budget hanya bisa dihapus jika backend mengizinkan. Pastikan histori bulanan yang terkait sudah tidak dibutuhkan."
+                                : "Wallet hanya bisa dihapus jika backend mengizinkan. Pastikan tidak ada konteks operasional yang masih dibutuhkan."}
+                        warnings={deleteIntent?.kind === "account"
                             ? [
-                                "Transaksi yang sudah mereferensikan budget ini bisa kehilangan konteks pelacakan anggarannya.",
-                                "Jika backend menemukan relasi yang harus dipertahankan, penghapusan akan ditolak.",
+                                "Wallet turunan, goal, dan konteks struktur account bisa ikut terdampak secara operasional.",
+                                "Jika account sudah dipakai transaksi, backend akan menolak penghapusan ini.",
                                 "Aksi ini tidak dapat dipulihkan dari UI biasa.",
                             ]
-                        : [
-                            "Goal dan alokasi yang menempel pada wallet ini bisa kehilangan konteks operasionalnya.",
-                            "Jika wallet sudah dipakai transaksi, backend akan menolak penghapusan ini.",
-                            "Aksi ini tidak dapat dipulihkan dari UI biasa.",
-                        ]}
-                    confirmLabel={deleteIntent?.kind === "account" ? "Ya, Hapus Akun" : deleteIntent?.kind === "budget" ? "Ya, Hapus Budget" : "Ya, Hapus Wallet"}
-                />
-            </Suspense>
+                            : deleteIntent?.kind === "budget"
+                                ? [
+                                    "Transaksi yang sudah mereferensikan budget ini bisa kehilangan konteks pelacakan anggarannya.",
+                                    "Jika backend menemukan relasi yang harus dipertahankan, penghapusan akan ditolak.",
+                                    "Aksi ini tidak dapat dipulihkan dari UI biasa.",
+                                ]
+                                : [
+                                    "Goal dan alokasi yang menempel pada wallet ini bisa kehilangan konteks operasionalnya.",
+                                    "Jika wallet sudah dipakai transaksi, backend akan menolak penghapusan ini.",
+                                    "Aksi ini tidak dapat dipulihkan dari UI biasa.",
+                                ]}
+                        confirmLabel={deleteIntent?.kind === "account" ? "Ya, Hapus Akun" : deleteIntent?.kind === "budget" ? "Ya, Hapus Budget" : "Ya, Hapus Wallet"}
+                    />
+                </Suspense>
+            )}
 
-            {monthlyReview && (
+            {shouldMountMonthlyReview && (
                 <Suspense fallback={null}>
                     <MonthlyReviewWizard
                         show={page.showMonthlyReviewWizard}
@@ -1130,28 +1178,32 @@ const WalletIndex = ({
                     />
                 </Suspense>
             )}
-            
-            <TransactionModal
-                show={page.transactionModal}
-                onClose={() => page.setTransactionModal(false)}
-                onSuccess={async () => {
-                    await syncForTab(page.activeTab, { force: true });
-                    page.setTransactionModal(false);
-                }}
-                categories={categories}
-                currencies={currencies}
-                defaultCurrency={defaultCurrency}
-                paymentMethods={paymentMethods}
-                accounts={accounts}
-                budgets={budgets}
-                pockets={wallets}
-                members={members}
-                activeMemberId={activeMemberId}
-                walletSubscribed={walletSubscribed}
-                initialType={page.transactionPresetType as any}
-                initialDraft={page.transactionDraft}
-                draftMeta={page.transactionDraftMeta}
-            />
+
+            {shouldMountTransactionModal && (
+                <Suspense fallback={null}>
+                    <TransactionModal
+                        show={page.transactionModal}
+                        onClose={() => page.setTransactionModal(false)}
+                        onSuccess={async () => {
+                            await syncForTab(page.activeTab, { force: true });
+                            page.setTransactionModal(false);
+                        }}
+                        categories={categories}
+                        currencies={currencies}
+                        defaultCurrency={defaultCurrency}
+                        paymentMethods={paymentMethods}
+                        accounts={accounts}
+                        budgets={budgets}
+                        pockets={wallets}
+                        members={members}
+                        activeMemberId={activeMemberId}
+                        walletSubscribed={walletSubscribed}
+                        initialType={page.transactionPresetType as any}
+                        initialDraft={page.transactionDraft}
+                        draftMeta={page.transactionDraftMeta}
+                    />
+                </Suspense>
+            )}
         </>
     );
 };
