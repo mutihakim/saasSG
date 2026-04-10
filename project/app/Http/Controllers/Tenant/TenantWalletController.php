@@ -3,11 +3,11 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\FinanceSavingsGoal;
-use App\Models\TenantCategory;
-use App\Models\TenantCurrency;
-use App\Models\TenantMember;
-use App\Models\WalletWish;
+use App\Models\Finance\FinanceSavingsGoal;
+use App\Models\Master\TenantCategory;
+use App\Models\Master\TenantCurrency;
+use App\Models\Tenant\TenantMember;
+use App\Models\Finance\WalletWish;
 use App\Services\Finance\FinanceAccessService;
 use App\Services\Finance\MonthlyReviewService;
 use App\Services\Finance\Wallet\WalletCashflowService;
@@ -73,13 +73,17 @@ class TenantWalletController extends Controller
         /** @var TenantMember|null $member */
         $member = $request->attributes->get('currentTenantMember');
         $selectedPeriodMonth = $periodMonth ?: now()->format('Y-m');
-        $loadAccounts = false;
-        $loadPockets = in_array($section, ['home', 'planning'], true);
+        // Keep home payload eager by default to stay compatible with clients that
+        // still expect finance props to exist on first render.
+        $deferHomePayload = $section === 'home'
+            && (bool) config('inertia.finance.defer_home_payload', false);
+        $loadAccounts = ! $deferHomePayload && in_array($section, ['home', 'accounts'], true);
+        $loadWallets = ! $deferHomePayload && in_array($section, ['home', 'accounts', 'planning'], true);
         $loadBudgets = $section === 'planning' && $initialTab === 'budgets';
-        $loadGoals = $section === 'home' || ($section === 'planning' && $initialTab === 'goals');
-        $loadWishes = $section === 'home' || ($section === 'planning' && $initialTab === 'wishes');
-        $loadSummary = in_array($section, ['home', 'review'], true);
-        $loadMonthlyReview = in_array($section, ['home', 'review'], true);
+        $loadGoals = ! $deferHomePayload && ($section === 'home' || ($section === 'planning' && $initialTab === 'goals'));
+        $loadWishes = ! $deferHomePayload && ($section === 'home' || ($section === 'planning' && $initialTab === 'wishes'));
+        $loadSummary = ! $deferHomePayload && in_array($section, ['home', 'review', 'accounts'], true);
+        $loadMonthlyReview = ! $deferHomePayload && in_array($section, ['home', 'review'], true);
 
         $accounts = collect();
         if ($loadAccounts) {
@@ -90,39 +94,74 @@ class TenantWalletController extends Controller
                 ->get();
         }
 
-        $pockets = collect();
+        $wallets = collect();
         $accessiblePocketIds = collect();
-        if ($loadPockets || $loadGoals) {
-            $pockets = $this->access->accessiblePocketsQuery($tenantModel, $member)
+        if ($loadWallets || $loadGoals) {
+            $wallets = $this->access->accessiblePocketsQuery($tenantModel, $member)
                 ->active()
                 ->orderBy('scope')
                 ->orderByDesc('is_system')
                 ->orderBy('name')
                 ->get();
-            $accessiblePocketIds = $pockets->pluck('id');
+            $accessiblePocketIds = $wallets->pluck('id');
         }
 
-        return Inertia::render('Tenant/Wallet/Page', [
-            'accounts' => $loadAccounts
-                ? $this->cashflow->enrichAccounts(
+        $component = match ($section) {
+            'home', 'review' => 'Tenant/Finance/OverviewPage',
+            'accounts' => 'Tenant/Finance/AccountsPage',
+            'planning' => match ($initialTab) {
+                'budgets' => 'Tenant/Finance/Planning/BudgetsPage',
+                'goals' => 'Tenant/Finance/Planning/GoalsPage',
+                'wishes' => 'Tenant/Finance/Planning/WishesPage',
+                default => 'Tenant/Finance/Planning/GoalsPage',
+            },
+            default => 'Tenant/Finance/OverviewPage',
+        };
+
+        return Inertia::render($component, [
+            'accounts' => $deferHomePayload
+                ? Inertia::lazy(fn () => $this->cashflow->enrichAccounts(
                     $tenantModel,
                     $member,
-                    $accounts,
-                    detailLevel: $section === 'accounts'
-                        ? WalletCashflowService::DETAIL_SUMMARY
-                        : WalletCashflowService::DETAIL_FULL,
-                )
-                : collect(),
-            'pockets' => $loadPockets
-                ? $this->cashflow->enrichPockets(
+                    $this->access->accessibleAccountsQuery($tenantModel, $member)
+                        ->active()
+                        ->orderBy('scope')
+                        ->orderBy('name')
+                        ->get(),
+                    detailLevel: WalletCashflowService::DETAIL_FULL,
+                ))
+                : ($loadAccounts
+                    ? $this->cashflow->enrichAccounts(
+                        $tenantModel,
+                        $member,
+                        $accounts,
+                        detailLevel: $section === 'accounts'
+                            ? WalletCashflowService::DETAIL_SUMMARY
+                            : WalletCashflowService::DETAIL_FULL,
+                    )
+                    : collect()),
+            'wallets' => $deferHomePayload
+                ? Inertia::lazy(fn () => $this->cashflow->enrichPockets(
                     $tenantModel,
                     $member,
-                    $pockets,
-                    detailLevel: $section === 'accounts'
-                        ? WalletCashflowService::DETAIL_SUMMARY
-                        : WalletCashflowService::DETAIL_FULL,
-                )
-                : collect(),
+                    $this->access->accessiblePocketsQuery($tenantModel, $member)
+                        ->active()
+                        ->orderBy('scope')
+                        ->orderByDesc('is_system')
+                        ->orderBy('name')
+                        ->get(),
+                    detailLevel: WalletCashflowService::DETAIL_FULL,
+                ))
+                : ($loadWallets
+                    ? $this->cashflow->enrichPockets(
+                        $tenantModel,
+                        $member,
+                        $wallets,
+                        detailLevel: $section === 'accounts'
+                            ? WalletCashflowService::DETAIL_SUMMARY
+                            : WalletCashflowService::DETAIL_FULL,
+                    )
+                    : collect()),
             'budgets' => $loadBudgets
                 ? $this->access->accessibleBudgetsQuery($tenantModel, $member)
                     ->active()
@@ -130,25 +169,54 @@ class TenantWalletController extends Controller
                     ->orderBy('name')
                     ->get()
                 : [],
-            'goals' => ($loadGoals ? FinanceSavingsGoal::query()
-                ->forTenant($tenantModel->id)
-                ->with([
-                    'pocket:id,name,real_account_id,current_balance,currency_code,scope,icon_key',
-                    'pocket.realAccount:id,name,currency_code,type',
-                    'ownerMember:id,full_name',
-                ])
-                ->withCount('financialTransactions as activities_count')
-                ->whereIn('pocket_id', $accessiblePocketIds)
-                ->orderByDesc('created_at')
-                ->get() : collect()),
-            'wishes' => ($loadWishes ? WalletWish::query()
-                ->forTenant($tenantModel->id)
-                ->with(['ownerMember:id,full_name', 'approvedByMember:id,full_name', 'goal:id,name,pocket_id'])
-                ->orderByRaw("case when status = 'pending' then 0 when status = 'approved' then 1 when status = 'converted' then 2 else 3 end")
-                ->orderByDesc('created_at')
-                ->get() : collect()),
-            'summary' => $loadSummary ? $this->summary->build($tenantModel, $member) : null,
-            'monthlyReview' => $loadMonthlyReview ? $this->monthlyReview->buildStatus($tenantModel, $member) : null,
+            'goals' => $deferHomePayload
+                ? Inertia::lazy(function () use ($tenantModel, $member) {
+                    $walletIds = $this->access->accessiblePocketsQuery($tenantModel, $member)
+                        ->active()
+                        ->pluck('finance_wallets.id');
+
+                    return FinanceSavingsGoal::query()
+                        ->forTenant($tenantModel->id)
+                        ->with([
+                            'pocket:id,name,real_account_id,current_balance,currency_code,scope,icon_key',
+                            'pocket.realAccount:id,name,currency_code,type',
+                            'ownerMember:id,full_name',
+                        ])
+                        ->withCount('financialTransactions as activities_count')
+                        ->whereIn('wallet_id', $walletIds)
+                        ->orderByDesc('created_at')
+                        ->get();
+                })
+                : ($loadGoals ? FinanceSavingsGoal::query()
+                    ->forTenant($tenantModel->id)
+                    ->with([
+                        'pocket:id,name,real_account_id,current_balance,currency_code,scope,icon_key',
+                        'pocket.realAccount:id,name,currency_code,type',
+                        'ownerMember:id,full_name',
+                    ])
+                    ->withCount('financialTransactions as activities_count')
+                    ->whereIn('wallet_id', $accessiblePocketIds)
+                    ->orderByDesc('created_at')
+                    ->get() : collect()),
+            'wishes' => $deferHomePayload
+                ? Inertia::lazy(fn () => WalletWish::query()
+                    ->forTenant($tenantModel->id)
+                    ->with(['ownerMember:id,full_name', 'approvedByMember:id,full_name', 'goal:id,name,wallet_id'])
+                    ->orderByRaw("case when status = 'pending' then 0 when status = 'approved' then 1 when status = 'converted' then 2 else 3 end")
+                    ->orderByDesc('created_at')
+                    ->get())
+                : ($loadWishes ? WalletWish::query()
+                    ->forTenant($tenantModel->id)
+                    ->with(['ownerMember:id,full_name', 'approvedByMember:id,full_name', 'goal:id,name,wallet_id'])
+                    ->orderByRaw("case when status = 'pending' then 0 when status = 'approved' then 1 when status = 'converted' then 2 else 3 end")
+                    ->orderByDesc('created_at')
+                    ->get() : collect()),
+            'summary' => $deferHomePayload
+                ? Inertia::lazy(fn () => $this->summary->build($tenantModel, $member))
+                : ($loadSummary ? $this->summary->build($tenantModel, $member) : null),
+            'monthlyReview' => $deferHomePayload
+                ? Inertia::lazy(fn () => $this->monthlyReview->buildStatus($tenantModel, $member))
+                : ($loadMonthlyReview ? $this->monthlyReview->buildStatus($tenantModel, $member) : null),
             'members' => $tenantModel->members()
                 ->where('profile_status', 'active')
                 ->orderBy('full_name')
@@ -178,7 +246,7 @@ class TenantWalletController extends Controller
             ],
             'limits' => [
                 'accounts' => $this->entitlements->limit($tenantModel, 'finance.accounts.max'),
-                'pockets' => $this->entitlements->limit($tenantModel, 'finance.pockets.max'),
+                'wallets' => $this->entitlements->limit($tenantModel, 'finance.pockets.max'),
                 'goals' => $this->entitlements->limit($tenantModel, 'finance.goals.max'),
                 'wishes' => $this->entitlements->limit($tenantModel, 'finance.wishes.max'),
             ],
@@ -192,13 +260,14 @@ class TenantWalletController extends Controller
                 'period_month' => $selectedPeriodMonth,
                 'preloaded' => [
                     'accounts' => $loadAccounts,
-                    'pockets' => $loadPockets,
+                    'wallets' => $loadWallets,
                     'budgets' => $loadBudgets,
                     'goals' => $loadGoals,
                     'wishes' => $loadWishes,
                     'summary' => $loadSummary,
                     'monthly_review' => $loadMonthlyReview,
                 ],
+                'payload_strategy' => $deferHomePayload ? 'deferred' : 'eager',
             ],
         ]);
     }

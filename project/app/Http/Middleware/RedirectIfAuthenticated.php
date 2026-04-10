@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\TenantMember;
+use App\Models\Tenant\TenantMember;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -23,7 +23,7 @@ class RedirectIfAuthenticated
             if (Auth::guard($guard)->check()) {
                 $user = Auth::guard($guard)->user();
 
-                $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'appsah.my.id';
+                $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'sanjo.my.id';
                 $protocol = parse_url(config('app.url'), PHP_URL_SCHEME) ?: 'https';
 
                 if ($user?->is_superadmin) {

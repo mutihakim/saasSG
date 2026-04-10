@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\TenantInvitation;
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Tenant\TenantInvitation;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 use App\Services\TenantProvisioningService;
 use App\Services\TurnstileService;
 use Illuminate\Auth\Events\Registered;

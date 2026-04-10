@@ -2,7 +2,7 @@
 
 namespace App\Services\Finance\Transactions;
 
-use App\Models\FinanceTransaction;
+use App\Models\Finance\FinanceTransaction;
 use Illuminate\Http\Request;
 use Illuminate\Support\Arr;
 

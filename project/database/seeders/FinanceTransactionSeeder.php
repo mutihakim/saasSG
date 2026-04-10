@@ -13,7 +13,7 @@ use App\Models\Tenant;
 use App\Models\TenantCategory;
 use App\Models\TenantCurrency;
 use App\Models\TenantMember;
-use App\Services\FinanceLedgerService;
+use App\Services\Finance\FinanceLedgerService;
 use Illuminate\Database\Seeder;
 
 class FinanceTransactionSeeder extends Seeder

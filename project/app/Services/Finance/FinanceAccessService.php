@@ -2,12 +2,12 @@
 
 namespace App\Services\Finance;
 
-use App\Models\FinanceTransaction;
-use App\Models\FinancePocket;
-use App\Models\Tenant;
-use App\Models\TenantBankAccount;
-use App\Models\TenantBudget;
-use App\Models\TenantMember;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Finance\TenantBudget;
+use App\Models\Tenant\TenantMember;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -50,10 +50,29 @@ class FinanceAccessService
 
     public function accessibleAccountsQuery(Tenant $tenant, ?TenantMember $member): Builder
     {
+        return $this->accessibleAccountsFullQuery($tenant, $member);
+    }
+
+    public function accessibleAccountsSummaryQuery(Tenant $tenant, ?TenantMember $member): Builder
+    {
+        $query = TenantBankAccount::query()
+            ->forTenant($tenant->id)
+            ->with(['ownerMember:id,full_name']);
+
+        return $this->applyAccountVisibilityFilter($query, $member);
+    }
+
+    public function accessibleAccountsFullQuery(Tenant $tenant, ?TenantMember $member): Builder
+    {
         $query = TenantBankAccount::query()
             ->forTenant($tenant->id)
             ->with(['ownerMember:id,full_name', 'memberAccess:id,full_name']);
 
+        return $this->applyAccountVisibilityFilter($query, $member);
+    }
+
+    private function applyAccountVisibilityFilter(Builder $query, ?TenantMember $member): Builder
+    {
         if (! $member) {
             return $query->whereRaw('1 = 0');
         }
@@ -73,7 +92,7 @@ class FinanceAccessService
 
     public function usableAccountsQuery(Tenant $tenant, ?TenantMember $member): Builder
     {
-        $query = $this->accessibleAccountsQuery($tenant, $member);
+        $query = $this->accessibleAccountsFullQuery($tenant, $member);
 
         if (! $member || $this->isPrivileged($member)) {
             return $query;
@@ -113,14 +132,76 @@ class FinanceAccessService
 
     public function accessiblePocketsQuery(Tenant $tenant, ?TenantMember $member): Builder
     {
-        $query = FinancePocket::query()
+        return $this->accessiblePocketsFullQuery($tenant, $member);
+    }
+
+    public function accessiblePocketsSummaryQuery(Tenant $tenant, ?TenantMember $member): Builder
+    {
+        $query = FinanceWallet::query()
+            ->forTenant($tenant->id)
+            ->with([
+                'ownerMember:id,full_name',
+                'realAccount:id,name,type,currency_code',
+            ]);
+
+        return $this->applyPocketVisibilityFilter($query, $member);
+    }
+
+    public function accessiblePocketsFullQuery(Tenant $tenant, ?TenantMember $member): Builder
+    {
+        $query = FinanceWallet::query()
             ->forTenant($tenant->id)
             ->with([
                 'ownerMember:id,full_name',
                 'memberAccess:id,full_name',
                 'realAccount:id,name,type,currency_code',
-                'defaultBudget:id,name,period_month,pocket_id,budget_key',
+                'defaultBudget:id,name,period_month,wallet_id,budget_key',
             ]);
+
+        return $this->applyPocketVisibilityFilter($query, $member);
+    }
+
+    private function applyPocketVisibilityFilter(Builder $query, ?TenantMember $member): Builder
+    {
+        if (! $member) {
+            return $query->whereRaw('1 = 0');
+        }
+
+        if ($this->isPrivileged($member)) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $nested) use ($member) {
+            $nested
+                ->where('owner_member_id', $member->id)
+                ->orWhereHas('memberAccess', fn (Builder $access) => $access
+                    ->where('tenant_members.id', $member->id)
+                    ->where('finance_wallet_member_access.can_view', true));
+        });
+    }
+
+    public function usablePocketsQuery(Tenant $tenant, ?TenantMember $member): Builder
+    {
+        $query = $this->accessiblePocketsFullQuery($tenant, $member);
+
+        if (! $member || $this->isPrivileged($member)) {
+            return $query;
+        }
+
+        return $query->where(function (Builder $nested) use ($member) {
+            $nested
+                ->where('owner_member_id', $member->id)
+                ->orWhereHas('memberAccess', fn (Builder $access) => $access
+                    ->where('tenant_members.id', $member->id)
+                    ->where('finance_wallet_member_access.can_use', true));
+        });
+    }
+
+    public function usableBudgetsQuery(Tenant $tenant, ?TenantMember $member): Builder
+    {
+        $query = TenantBudget::query()
+            ->forTenant($tenant->id)
+            ->with(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'pocket:id,name,real_account_id']);
 
         if (! $member) {
             return $query->whereRaw('1 = 0');
@@ -135,42 +216,22 @@ class FinanceAccessService
                 ->where('owner_member_id', $member->id)
                 ->orWhereHas('memberAccess', fn (Builder $access) => $access
                     ->where('tenant_members.id', $member->id)
-                    ->where('finance_pocket_member_access.can_view', true));
-        });
-    }
-
-    public function usablePocketsQuery(Tenant $tenant, ?TenantMember $member): Builder
-    {
-        $query = $this->accessiblePocketsQuery($tenant, $member);
-
-        if (! $member || $this->isPrivileged($member)) {
-            return $query;
-        }
-
-        return $query->where(function (Builder $nested) use ($member) {
-            $nested
-                ->where('owner_member_id', $member->id)
-                ->orWhereHas('memberAccess', fn (Builder $access) => $access
-                    ->where('tenant_members.id', $member->id)
-                    ->where('finance_pocket_member_access.can_use', true));
-        });
-    }
-
-    public function usableBudgetsQuery(Tenant $tenant, ?TenantMember $member): Builder
-    {
-        $query = $this->accessibleBudgetsQuery($tenant, $member);
-
-        if (! $member || $this->isPrivileged($member)) {
-            return $query;
-        }
-
-        return $query->where(function (Builder $nested) use ($member) {
-            $nested
-                ->where('owner_member_id', $member->id)
-                ->orWhereHas('memberAccess', fn (Builder $access) => $access
-                    ->where('tenant_members.id', $member->id)
                     ->where('tenant_budget_member_access.can_use', true));
         });
+    }
+
+    public function isBudgetWalletCrossoverValid(FinanceWallet $pocket, TenantBudget $budget): bool
+    {
+        // Rule: Jika Pocket adalah SHARED, maka Budget HARUS SHARED.
+        // Uang bersama tidak boleh digunakan untuk budget pribadi.
+        if ($pocket->scope === 'shared' && $budget->scope === 'private') {
+            return false;
+        }
+
+        // Jika Pocket PRIVATE, Budget boleh PRIVATE (milik sendiri) atau SHARED (di mana member punya akses).
+        // Catatan: Akses ke budget sudah divalidasi oleh query builder (usableBudgetsQuery).
+        
+        return true;
     }
 
     public function canUseAccount(TenantBankAccount $account, Tenant $tenant, ?TenantMember $member): bool
@@ -207,14 +268,14 @@ class FinanceAccessService
             ->exists();
     }
 
-    public function canUsePocket(FinancePocket $pocket, Tenant $tenant, ?TenantMember $member): bool
+    public function canUsePocket(FinanceWallet $pocket, Tenant $tenant, ?TenantMember $member): bool
     {
         return $this->usablePocketsQuery($tenant, $member)
             ->whereKey($pocket->id)
             ->exists();
     }
 
-    public function canManagePocket(FinancePocket $pocket, ?TenantMember $member): bool
+    public function canManagePocket(FinanceWallet $pocket, ?TenantMember $member): bool
     {
         if (! $member) {
             return false;
@@ -230,7 +291,7 @@ class FinanceAccessService
 
         return $pocket->memberAccess()
             ->where('tenant_members.id', $member->id)
-            ->where('finance_pocket_member_access.can_manage', true)
+            ->where('finance_wallet_member_access.can_manage', true)
             ->exists();
     }
 
@@ -281,14 +342,14 @@ class FinanceAccessService
                 $nested->orWhereIn('budget_id', $visibleScope['budget_ids']);
             }
 
-            if ($visibleScope['pocket_ids'] !== []) {
-                $nested->orWhereIn('pocket_id', $visibleScope['pocket_ids']);
+            if ($visibleScope['wallet_ids'] !== []) {
+                $nested->orWhereIn('wallet_id', $visibleScope['wallet_ids']);
             }
         });
     }
 
     /**
-     * @return array{account_ids: array<int, int|string>, budget_ids: array<int, int|string>, pocket_ids: array<int, int|string>}
+     * @return array{account_ids: array<int, int|string>, budget_ids: array<int, int|string>, wallet_ids: array<int, int|string>}
      */
     private function resolveVisibleStructureScope(Tenant $tenant, TenantMember $member): array
     {
@@ -311,11 +372,11 @@ class FinanceAccessService
                 $tenant,
                 $member,
             ),
-            'pocket_ids' => $this->resolveVisibleEntityIds(
-                'finance_pockets',
+            'wallet_ids' => $this->resolveVisibleEntityIds(
+                'finance_wallets',
                 'owner_member_id',
-                'finance_pocket_member_access',
-                'finance_pocket_id',
+                'finance_wallet_member_access',
+                'finance_wallet_id',
                 $tenant,
                 $member,
             ),

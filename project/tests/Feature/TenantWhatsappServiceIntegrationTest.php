@@ -2,11 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
-use App\Models\TenantMember;
-use App\Models\TenantWhatsappMessage;
-use App\Models\TenantWhatsappSetting;
-use App\Models\User;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
+use App\Models\Whatsapp\TenantWhatsappMessage;
+use App\Models\Whatsapp\TenantWhatsappSetting;
+use App\Models\Identity\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\Http;

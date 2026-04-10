@@ -6,14 +6,14 @@ use App\Models\FinanceSavingsGoal;
 use App\Models\Tenant;
 use App\Models\TenantMember;
 use App\Models\WalletWish;
-use App\Services\WalletPocketService;
+use App\Services\Finance\Wallet\FinanceWalletService;
 use Illuminate\Database\Seeder;
 
 class WalletPlanningSeeder extends Seeder
 {
     public function run(): void
     {
-        $pockets = app(WalletPocketService::class);
+        $pockets = app(FinanceWalletService::class);
 
         Tenant::query()->each(function (Tenant $tenant) use ($pockets) {
             $members = TenantMember::query()
@@ -48,7 +48,7 @@ class WalletPlanningSeeder extends Seeder
                     'name' => 'Tabungan Umroh',
                 ],
                 [
-                    'pocket_id' => $primaryWallet->id,
+                    'wallet_id' => $primaryWallet->id,
                     'owner_member_id' => $owner->id,
                     'target_amount' => 35000000,
                     'current_amount' => 12500000,
@@ -65,7 +65,7 @@ class WalletPlanningSeeder extends Seeder
                     'name' => 'Dana Darurat Keluarga',
                 ],
                 [
-                    'pocket_id' => $primaryWallet->id,
+                    'wallet_id' => $primaryWallet->id,
                     'owner_member_id' => $owner->id,
                     'target_amount' => 18000000,
                     'current_amount' => 9200000,

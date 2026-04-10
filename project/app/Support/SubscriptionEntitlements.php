@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-use App\Models\Tenant;
+use App\Models\Tenant\Tenant;
 use RuntimeException;
 
 class SubscriptionEntitlements

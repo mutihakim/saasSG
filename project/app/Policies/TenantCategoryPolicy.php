@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\TenantCategory;
-use App\Models\User;
+use App\Models\Master\TenantCategory;
+use App\Models\Identity\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class TenantCategoryPolicy

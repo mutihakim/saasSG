@@ -2,11 +2,11 @@
 
 namespace App\Services\Finance\Transactions;
 
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantBudget;
-use App\Models\TenantCurrency;
-use App\Models\TenantRecurringRule;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Finance\TenantBudget;
+use App\Models\Master\TenantCurrency;
+use App\Models\Misc\TenantRecurringRule;
 
 class FinanceTransactionPayloadService
 {
@@ -47,7 +47,7 @@ class FinanceTransactionPayloadService
             'budget_status' => $data['budget_status'] ?? 'unbudgeted',
             'budget_delta' => $data['budget_delta'] ?? 0,
             'bank_account_id' => $data['bank_account_id'] ?? null,
-            'pocket_id' => $data['pocket_id'] ?? null,
+            'wallet_id' => $data['wallet_id'] ?? null,
             'is_internal_transfer' => (bool) ($data['is_internal_transfer'] ?? $data['type'] === 'transfer'),
             'transfer_direction' => $data['transfer_direction'] ?? null,
             'transfer_pair_id' => $data['transfer_pair_id'] ?? null,

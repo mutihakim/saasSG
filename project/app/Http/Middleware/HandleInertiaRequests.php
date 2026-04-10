@@ -2,9 +2,9 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Tenant;
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 use App\Support\SubscriptionEntitlements;
 use App\Support\TenantBranding;
 use Illuminate\Http\Request;
@@ -249,7 +249,7 @@ class HandleInertiaRequests extends Middleware
             ->where('is_system', false)
             ->count();
 
-        $invitationsCount = \App\Models\TenantInvitation::query()
+        $invitationsCount = \App\Models\Tenant\TenantInvitation::query()
             ->where('tenant_id', $tenant->id)
             ->where('status', 'pending')
             ->count();

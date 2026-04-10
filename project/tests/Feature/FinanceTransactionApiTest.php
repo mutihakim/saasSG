@@ -3,19 +3,19 @@
 namespace Tests\Feature;
 
 use App\Jobs\ProcessFinanceAttachmentImage;
-use App\Models\FinanceTransaction;
-use App\Models\TenantCategory;
-use App\Models\TenantCurrency;
-use App\Models\Tenant;
-use App\Models\TenantAttachment;
-use App\Models\User;
-use App\Models\TenantMember;
-use App\Models\ActivityLog;
-use App\Models\TenantBankAccount;
-use App\Models\TenantBudget;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Master\TenantCategory;
+use App\Models\Master\TenantCurrency;
+use App\Models\Tenant\Tenant;
+use App\Models\Misc\TenantAttachment;
+use App\Models\Identity\User;
+use App\Models\Tenant\TenantMember;
+use App\Models\Misc\ActivityLog;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Finance\TenantBudget;
 use App\Services\Finance\FinanceAccessService;
 use App\Services\Finance\FinanceAttachmentService;
-use App\Services\Finance\Wallet\WalletPocketService;
+use App\Services\Finance\Wallet\FinanceWalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Queue;
@@ -97,7 +97,7 @@ class FinanceTransactionApiTest extends TestCase
             $this->ownerMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
         ]);
 
-        $this->mainPocket = app(WalletPocketService::class)->ensureMainPocket($this->account);
+        $this->mainPocket = app(FinanceWalletService::class)->ensureMainPocket($this->account);
 
         foreach (['finance.view', 'finance.create', 'finance.update', 'finance.delete'] as $permission) {
             Permission::findOrCreate($permission, 'web');
@@ -189,7 +189,7 @@ class FinanceTransactionApiTest extends TestCase
                 'category_id' => $category->id,
                 'transaction_date' => now()->toDateString(),
                 'bank_account_id' => $this->account->id,
-                'pocket_id' => $this->mainPocket->id,
+                'wallet_id' => $this->mainPocket->id,
                 'owner_member_id' => $this->ownerMembership->id,
                 'description' => 'Over limit expense',
             ]);
@@ -225,7 +225,7 @@ class FinanceTransactionApiTest extends TestCase
         $liability->memberAccess()->syncWithoutDetaching([
             $this->ownerMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
         ]);
-        $liabilityPocket = app(WalletPocketService::class)->ensureMainPocket($liability);
+        $liabilityPocket = app(FinanceWalletService::class)->ensureMainPocket($liability);
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
@@ -236,7 +236,7 @@ class FinanceTransactionApiTest extends TestCase
                 'exchange_rate' => 1.0,
                 'category_id' => $category->id,
                 'transaction_date' => now()->toDateString(),
-                'pocket_id' => $liabilityPocket->id,
+                'wallet_id' => $liabilityPocket->id,
                 'owner_member_id' => $this->ownerMembership->id,
                 'description' => 'Card purchase',
             ]);
@@ -263,7 +263,7 @@ class FinanceTransactionApiTest extends TestCase
         $memberAccount->memberAccess()->syncWithoutDetaching([
             $this->memberMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
         ]);
-        $memberPocket = app(WalletPocketService::class)->ensureMainPocket($memberAccount);
+        $memberPocket = app(FinanceWalletService::class)->ensureMainPocket($memberAccount);
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
@@ -276,8 +276,8 @@ class FinanceTransactionApiTest extends TestCase
                 'description' => 'Transfer lintas member',
                 'owner_member_id' => $this->ownerMembership->id,
                 'recipient_member_id' => $this->memberMembership->id,
-                'from_pocket_id' => $this->mainPocket->id,
-                'to_pocket_id' => $memberPocket->id,
+                'from_wallet_id' => $this->mainPocket->id,
+                'to_wallet_id' => $memberPocket->id,
             ]);
 
         $response->assertCreated();
@@ -357,7 +357,7 @@ class FinanceTransactionApiTest extends TestCase
             'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
             'category_id' => $category->id,
             'bank_account_id' => $this->account->id,
-            'pocket_id' => $this->mainPocket->id,
+            'wallet_id' => $this->mainPocket->id,
             'description' => 'Initial expense',
             'status' => 'terverifikasi',
             'row_version' => 1,
@@ -374,7 +374,7 @@ class FinanceTransactionApiTest extends TestCase
                 'exchange_rate' => 1.0,
                 'category_id' => $category->id,
                 'transaction_date' => now()->toDateString(),
-                'pocket_id' => $this->mainPocket->id,
+                'wallet_id' => $this->mainPocket->id,
                 'owner_member_id' => $this->ownerMembership->id,
                 'description' => 'Too large expense',
                 'row_version' => 1,
@@ -459,7 +459,7 @@ class FinanceTransactionApiTest extends TestCase
             $this->ownerMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
             $this->memberMembership->id => ['can_view' => true, 'can_use' => false, 'can_manage' => false],
         ]);
-        $sharedAccountPocket = app(WalletPocketService::class)->ensureMainPocket($sharedAccount);
+        $sharedAccountPocket = app(FinanceWalletService::class)->ensureMainPocket($sharedAccount);
 
         $this->mainPocket->memberAccess()->syncWithoutDetaching([
             $this->memberMembership->id => ['can_view' => true, 'can_use' => false, 'can_manage' => false],
@@ -468,7 +468,7 @@ class FinanceTransactionApiTest extends TestCase
         $sharedBudget = TenantBudget::create([
             'tenant_id' => $this->tenant->id,
             'owner_member_id' => $this->ownerMembership->id,
-            'pocket_id' => $this->mainPocket->id,
+            'wallet_id' => $this->mainPocket->id,
             'name' => 'Shared Household Budget',
             'code' => 'HOME-APR',
             'budget_key' => 'shared-household-budget',
@@ -499,7 +499,7 @@ class FinanceTransactionApiTest extends TestCase
         $hiddenAccount->memberAccess()->syncWithoutDetaching([
             $this->ownerMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
         ]);
-        $hiddenPocket = app(WalletPocketService::class)->ensureMainPocket($hiddenAccount);
+        $hiddenPocket = app(FinanceWalletService::class)->ensureMainPocket($hiddenAccount);
 
         $visibleBySharedAccount = FinanceTransaction::factory()->create([
             'tenant_id' => $this->tenant->id,
@@ -507,7 +507,7 @@ class FinanceTransactionApiTest extends TestCase
             'owner_member_id' => $this->ownerMembership->id,
             'currency_id' => $currencyId,
             'bank_account_id' => $sharedAccount->id,
-            'pocket_id' => $sharedAccountPocket->id,
+            'wallet_id' => $sharedAccountPocket->id,
             'description' => 'Visible via shared account',
         ]);
 
@@ -517,7 +517,7 @@ class FinanceTransactionApiTest extends TestCase
             'owner_member_id' => $this->ownerMembership->id,
             'currency_id' => $currencyId,
             'bank_account_id' => $this->account->id,
-            'pocket_id' => $this->mainPocket->id,
+            'wallet_id' => $this->mainPocket->id,
             'budget_id' => $sharedBudget->id,
             'description' => 'Visible via shared budget',
         ]);
@@ -528,7 +528,7 @@ class FinanceTransactionApiTest extends TestCase
             'owner_member_id' => $this->ownerMembership->id,
             'currency_id' => $currencyId,
             'bank_account_id' => $this->account->id,
-            'pocket_id' => $this->mainPocket->id,
+            'wallet_id' => $this->mainPocket->id,
             'description' => 'Visible via shared pocket',
         ]);
 
@@ -538,7 +538,7 @@ class FinanceTransactionApiTest extends TestCase
             'owner_member_id' => $this->ownerMembership->id,
             'currency_id' => $currencyId,
             'bank_account_id' => $hiddenAccount->id,
-            'pocket_id' => $hiddenPocket->id,
+            'wallet_id' => $hiddenPocket->id,
             'description' => 'Hidden private transaction',
         ]);
 

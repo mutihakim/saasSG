@@ -1,9 +1,7 @@
 declare module 'reselect';
 declare module 'react-table';
 declare module 'prismjs';
-declare module 'react-flatpickr';
 declare module 'react-csv';
-declare module 'feather-icons-react';
 declare module 'react-countup';
 declare module 'react-masonry-css';
 declare module 'react-dual-listbox';

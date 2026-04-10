@@ -2,7 +2,7 @@ import { expect, test, type Page } from '@playwright/test';
 import { URL } from 'node:url';
 
 const tenantSlug = process.env.E2E_TENANT_SLUG ?? 'keluarga-cemara';
-const financeUrl = process.env.E2E_FINANCE_URL ?? `https://${tenantSlug}.appsah.my.id/finance`;
+const financeUrl = process.env.E2E_FINANCE_URL ?? `https://${tenantSlug}.sanjo.my.id/finance`;
 const ownerEmail = process.env.E2E_FINANCE_OWNER_EMAIL ?? `owner@${tenantSlug}.com`;
 const ownerPassword = process.env.E2E_FINANCE_OWNER_PASSWORD ?? 'password';
 const memberEmail = process.env.E2E_FINANCE_MEMBER_EMAIL ?? `member@${tenantSlug}.com`;

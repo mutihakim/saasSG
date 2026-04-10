@@ -7,7 +7,7 @@ use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\TenantDirectoryController;
 use App\Http\Controllers\Admin\TenantSubscriptionController;
 use App\Http\Controllers\InvitationAcceptanceController;
-use App\Http\Controllers\Api\V1\InternalWhatsappCallbackController;
+use App\Http\Controllers\Api\V1\Whatsapp\InternalWhatsappCallbackController;
 use App\Http\Controllers\TenantSettingsController;
 use App\Http\Controllers\TenantWorkspaceController;
 use App\Http\Controllers\ThemePreferenceController;
@@ -94,7 +94,7 @@ Route::middleware([
     })->name('landing');
 
     // --- TENANT FAMILY HUB MEMBER PAGES (PRD Modules A-I) ---
-    Route::domain('{tenant}.appsah.my.id')
+    Route::domain('{tenant}.sanjo.my.id')
         ->middleware(['auth', 'verified', 'tenant.resolve'])
         ->group(function () {
             Route::get('/hub',       [TenantHubController::class, 'hub'])->name('tenant.hub');
@@ -189,14 +189,14 @@ Route::middleware([
     });
 
     // --- TENANT MANAGEMENT AREA (Tenant Subdomains Only) ---
-    Route::domain('{tenant}.appsah.my.id')->group(function () {
+    Route::domain('{tenant}.sanjo.my.id')->group(function () {
         Route::middleware('guest')->prefix('admin')->group(function () {
             Route::get('login', [AuthenticatedSessionController::class, 'create'])->name('tenant.admin.login');
             Route::post('login', [AuthenticatedSessionController::class, 'store'])->name('tenant.admin.login.store');
         });
     });
 
-    Route::domain('{tenant}.appsah.my.id')->middleware(['auth', 'verified'])->group(function () {
+    Route::domain('{tenant}.sanjo.my.id')->middleware(['auth', 'verified'])->group(function () {
         Route::prefix('admin')->group(function () {
             Route::get('/dashboard', [TenantDashboardController::class, 'index'])->name('tenant.dashboard');
 

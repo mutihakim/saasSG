@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Tenant\Master;
 
 use App\Http\Controllers\Controller;
-use App\Models\TenantCurrency;
+use App\Models\Master\TenantCurrency;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

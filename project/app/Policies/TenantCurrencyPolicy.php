@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\TenantCurrency;
-use App\Models\User;
+use App\Models\Master\TenantCurrency;
+use App\Models\Identity\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class TenantCurrencyPolicy

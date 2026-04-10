@@ -3,16 +3,16 @@
 namespace App\Services\Finance\Transactions;
 
 use App\Http\Requests\StoreFinanceTransactionRequest;
-use App\Models\ActivityLog;
-use App\Models\FinancePocket;
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantBankAccount;
-use App\Models\TenantMember;
+use App\Models\Misc\ActivityLog;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Tenant\TenantMember;
 use App\Services\Finance\FinanceAccessService;
 use App\Services\Finance\FinanceLedgerService;
 use App\Services\Finance\MonthlyReviewService;
-use App\Services\Finance\Wallet\WalletPocketService;
+use App\Services\Finance\Wallet\FinanceWalletService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\DB;
 
@@ -25,7 +25,7 @@ class FinanceTransferService
         private readonly FinanceTransactionPayloadService $payloads,
         private readonly FinanceTransactionPresenter $presenter,
         private readonly FinanceTransactionResourceResolverService $resolver,
-        private readonly WalletPocketService $walletPockets,
+        private readonly FinanceWalletService $walletPockets,
         private readonly MonthlyReviewService $monthlyReview,
     ) {
     }
@@ -55,8 +55,8 @@ class FinanceTransferService
             return response()->json(['ok' => false, 'message' => 'Mata uang tidak ditemukan.'], 422);
         }
 
-        $fromPocket = $this->resolver->resolveUsablePocket($tenant, $member, $data['from_pocket_id'] ?? null);
-        $toPocket = $this->resolver->resolveTenantActivePocket($tenant, $data['to_pocket_id'] ?? null);
+        $fromPocket = $this->resolver->resolveUsablePocket($tenant, $member, $data['from_wallet_id'] ?? null);
+        $toPocket = $this->resolver->resolveTenantActivePocket($tenant, $data['to_wallet_id'] ?? null);
 
         if (! $fromPocket && ! empty($data['from_account_id'])) {
             $fromAccount = $this->resolver->resolveUsableAccount($tenant, $member, $data['from_account_id']);
@@ -99,7 +99,7 @@ class FinanceTransferService
                     ->get()
                     ->keyBy('id');
 
-                $lockedPockets = FinancePocket::query()
+                $lockedPockets = FinanceWallet::query()
                     ->whereIn('id', array_values(array_unique([$fromPocket->id, $toPocket->id])))
                     ->orderBy('id')
                     ->lockForUpdate()
@@ -110,9 +110,9 @@ class FinanceTransferService
                 $lockedFromAccount = $lockedAccounts->get($fromAccount->id);
                 /** @var TenantBankAccount|null $lockedToAccount */
                 $lockedToAccount = $lockedAccounts->get($toAccount->id);
-                /** @var FinancePocket|null $lockedFromPocket */
+                /** @var FinanceWallet|null $lockedFromPocket */
                 $lockedFromPocket = $lockedPockets->get($fromPocket->id);
-                /** @var FinancePocket|null $lockedToPocket */
+                /** @var FinanceWallet|null $lockedToPocket */
                 $lockedToPocket = $lockedPockets->get($toPocket->id);
 
                 if (! $lockedFromAccount || ! $lockedToAccount || ! $lockedFromPocket || ! $lockedToPocket) {
@@ -129,7 +129,7 @@ class FinanceTransferService
                     ownerMemberId: $sourceOwner?->id,
                     data: array_merge($data, [
                         'bank_account_id' => $lockedFromAccount->id,
-                        'pocket_id' => $lockedFromPocket->id,
+                        'wallet_id' => $lockedFromPocket->id,
                         'budget_id' => null,
                         'budget_status' => 'unbudgeted',
                         'budget_delta' => 0,
@@ -146,7 +146,7 @@ class FinanceTransferService
                     ownerMemberId: $targetOwner?->id,
                     data: array_merge($data, [
                         'bank_account_id' => $lockedToAccount->id,
-                        'pocket_id' => $lockedToPocket->id,
+                        'wallet_id' => $lockedToPocket->id,
                         'budget_id' => null,
                         'budget_status' => 'unbudgeted',
                         'budget_delta' => 0,

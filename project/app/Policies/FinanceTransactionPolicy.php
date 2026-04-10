@@ -2,9 +2,9 @@
 
 namespace App\Policies;
 
-use App\Models\FinanceTransaction;
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 use App\Services\Finance\FinanceAccessService;
 use Illuminate\Auth\Access\HandlesAuthorization;
 

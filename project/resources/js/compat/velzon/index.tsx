@@ -1,4 +1,4 @@
-import React from 'react';
+import React from "react";
 
 type SectionProps = {
     title?: React.ReactNode;
@@ -8,7 +8,7 @@ type SectionProps = {
     className?: string;
 };
 
-export function CompatPageSection({ title, description, actions, children, className = '' }: SectionProps) {
+export function CompatPageSection({ title, description, actions, children, className = "" }: SectionProps) {
     return (
         <section className={`card border-0 shadow-sm ${className}`.trim()}>
             <div className="card-body">

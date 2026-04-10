@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\FinancePocket;
+use App\Models\FinanceWallet;
 use App\Models\FinanceSavingsGoal;
 use App\Models\Tenant;
 use App\Models\TenantMember;
@@ -23,7 +23,7 @@ class TenantFinancePlanningSeeder extends Seeder
                 ->get()
                 ->keyBy(fn (TenantMember $member) => strtolower($member->full_name));
 
-            $pockets = FinancePocket::query()
+            $pockets = FinanceWallet::query()
                 ->where('tenant_id', $tenant->id)
                 ->where('is_system', false)
                 ->get()
@@ -44,7 +44,7 @@ class TenantFinancePlanningSeeder extends Seeder
                         'name' => $seed['name'],
                     ],
                     [
-                        'pocket_id' => $pocket->id,
+                        'wallet_id' => $pocket->id,
                         'owner_member_id' => $owner?->id,
                         'target_amount' => $seed['amount'],
                         'current_amount' => $seed['current'],

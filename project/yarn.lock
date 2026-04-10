@@ -693,33 +693,6 @@
   resolved "https://registry.npmjs.org/@floating-ui/utils/-/utils-0.2.11.tgz"
   integrity sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==
 
-"@fullcalendar/bootstrap@^6.1.20":
-  version "6.1.20"
-  resolved "https://registry.npmjs.org/@fullcalendar/bootstrap/-/bootstrap-6.1.20.tgz"
-  integrity sha512-WLMt4SQTrVnE19aQi54csIDIplVDew/eQ9f0iMRJqSGZqEYbH2Ea11LGjortB8+8bi7fAHhy4An47gaG6FOOpw==
-
-"@fullcalendar/core@^6.1.20", "@fullcalendar/core@~6.1.20":
-  version "6.1.20"
-  resolved "https://registry.npmjs.org/@fullcalendar/core/-/core-6.1.20.tgz"
-  integrity sha512-1cukXLlePFiJ8YKXn/4tMKsy0etxYLCkXk8nUCFi11nRONF2Ba2CD5b21/ovtOO2tL6afTJfwmc1ed3HG7eB1g==
-  dependencies:
-    preact "~10.12.1"
-
-"@fullcalendar/daygrid@^6.1.20":
-  version "6.1.20"
-  resolved "https://registry.npmjs.org/@fullcalendar/daygrid/-/daygrid-6.1.20.tgz"
-  integrity sha512-AO9vqhkLP77EesmJzuU+IGXgxNulsA8mgQHynclJ8U70vSwAVnbcLG9qftiTAFSlZjiY/NvhE7sflve6cJelyQ==
-
-"@fullcalendar/interaction@^6.1.20":
-  version "6.1.20"
-  resolved "https://registry.npmjs.org/@fullcalendar/interaction/-/interaction-6.1.20.tgz"
-  integrity sha512-p6txmc5txL0bMiPaJxe2ip6o0T384TyoD2KGdsU6UjZ5yoBlaY+dg7kxfnYKpYMzEJLG58n+URrHr2PgNL2fyA==
-
-"@fullcalendar/react@^6.1.20":
-  version "6.1.20"
-  resolved "https://registry.npmjs.org/@fullcalendar/react/-/react-6.1.20.tgz"
-  integrity sha512-1w0pZtceaUdfAnxMSCGHCQalhi+mR1jOe76sXzyAXpcPz/Lf0zHSdcGK/U2XpZlnQgQtBZW+d+QBnnzVQKCxAA==
-
 "@humanfs/core@^0.19.1":
   version "0.19.1"
   resolved "https://registry.npmjs.org/@humanfs/core/-/core-0.19.1.tgz"
@@ -2666,11 +2639,6 @@ fdir@^6.5.0:
   resolved "https://registry.npmjs.org/fdir/-/fdir-6.5.0.tgz"
   integrity sha512-tIbYtZbucOs0BRGqPJkshJUYdL+SDH7dVM8gjy+ERp3WAUjLEFJE+02kanyHtwjWOnwrKYBiwAmM0p4kLJAnXg==
 
-feather-icons-react@^1.0.0:
-  version "1.0.0"
-  resolved "https://registry.npmjs.org/feather-icons-react/-/feather-icons-react-1.0.0.tgz"
-  integrity sha512-i/kf9qDHGAGjqFnD7iEX85qV+aMENfaFXv4dKxFvFpUs4mOk0zF4FTNooCwOvlvqxSQz4ArZ8QFUyQD+geNxLQ==
-
 figures@^3.0.0:
   version "3.2.0"
   resolved "https://registry.npmjs.org/figures/-/figures-3.2.0.tgz"
@@ -2730,11 +2698,6 @@ flat-cache@^4.0.0:
   dependencies:
     flatted "^3.2.9"
     keyv "^4.5.4"
-
-flatpickr@^4.6.13:
-  version "4.6.13"
-  resolved "https://registry.npmjs.org/flatpickr/-/flatpickr-4.6.13.tgz"
-  integrity sha512-97PMG/aywoYpB4IvbvUJi0RQi8vearvU0oov1WW3k0WZPBMrTQVqekSX5CjSG/M4Q3i6A/0FKXC7RyAoAUUSPw==
 
 flatted@^3.2.9:
   version "3.4.2"
@@ -3890,18 +3853,6 @@ normalize-path@^3.0.0, normalize-path@~3.0.0:
   resolved "https://registry.npmjs.org/normalize-path/-/normalize-path-3.0.0.tgz"
   integrity sha512-6eZs5Ls3WtCisHWp9S2GUy8dqkpGi4BVSz3GaqiE6ezub0512ESztXUwUB6C6IKbQkY2Pnb/mD4WYojCRwcwLA==
 
-nouislider-react@^3.4.2:
-  version "3.4.2"
-  resolved "https://registry.npmjs.org/nouislider-react/-/nouislider-react-3.4.2.tgz"
-  integrity sha512-7YsyHY/j7yxaoNzt4PGZMoJLdh/e8aY5rYZ5xxpBv9LAs/gqt+M/Lk9SAi05+XF4mI749B2ISZjHdEIZUMWY6g==
-  dependencies:
-    nouislider "^14.6.3"
-
-nouislider@^14.6.3:
-  version "14.7.0"
-  resolved "https://registry.npmjs.org/nouislider/-/nouislider-14.7.0.tgz"
-  integrity sha512-4RtQ1+LHJKesDCNJrXkQcwXAWCrC2aggdLYMstS/G5fEWL+fXZbUA9pwVNHFghMGuFGRATlDLNInRaPeRKzpFQ==
-
 nprogress@^0.2, nprogress@^0.2.0:
   version "0.2.0"
   resolved "https://registry.npmjs.org/nprogress/-/nprogress-0.2.0.tgz"
@@ -4158,11 +4109,6 @@ preact@^10.0.0:
   resolved "https://registry.npmjs.org/preact/-/preact-10.29.0.tgz"
   integrity sha512-wSAGyk2bYR1c7t3SZ3jHcM6xy0lcBcDel6lODcs9ME6Th++Dx2KU+6D3HD8wMMKGA8Wpw7OMd3/4RGzYRpzwRg==
 
-preact@~10.12.1:
-  version "10.12.1"
-  resolved "https://registry.npmjs.org/preact/-/preact-10.12.1.tgz"
-  integrity sha512-l8386ixSsBdbreOAkqtrwqHwdvR35ID8c3rKPa8lCWuO86dBi32QWHV4vfsZK1utLLFMvw+Z5Ad4XLkZzchscg==
-
 prelude-ls@^1.2.1:
   version "1.2.1"
   resolved "https://registry.npmjs.org/prelude-ls/-/prelude-ls-1.2.1.tgz"
@@ -4257,7 +4203,7 @@ react-countup@^6.5.3:
   dependencies:
     countup.js "^2.8.0"
 
-"react-dom@^16.7.0 || ^17 || ^18 || ^19", "react-dom@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom@^16.8.4 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom@^17.0.2 || ^18.0.0 || ^19.0", react-dom@^19.1.0, react-dom@>=16.14.0, react-dom@>=16.6.0, react-dom@>=16.8, react-dom@>=18:
+"react-dom@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react-dom@^17.0.2 || ^18.0.0 || ^19.0", react-dom@^19.1.0, react-dom@>=16.14.0, react-dom@>=16.6.0, react-dom@>=16.8, react-dom@>=18:
   version "19.1.0"
   resolved "https://registry.npmjs.org/react-dom/-/react-dom-19.1.0.tgz"
   integrity sha512-Xs1hdnE+DyKgeHJeJznQmYMIBG3TKIHJJT95Q58nHLSrElKlGQqDTR2HQ9fx5CN/Gk6Vh/kupBTDLU11/nDk/g==
@@ -4271,13 +4217,6 @@ react-countup@^6.5.3:
   dependencies:
     loose-envify "^1.1.0"
     scheduler "^0.23.2"
-
-react-flatpickr@^4.0.11:
-  version "4.0.11"
-  resolved "https://registry.npmjs.org/react-flatpickr/-/react-flatpickr-4.0.11.tgz"
-  integrity sha512-S0TAu8eUeJgN8lZ0Efi41WGPM/tPPUvrveXQ8CAUO60+7TTrF5Ehyv8fvPVagKCqJahY7hXYERM7XfH2hSAWdg==
-  dependencies:
-    flatpickr "^4.6.13"
 
 react-i18next@^16.6.6:
   version "16.6.6"
@@ -4335,7 +4274,7 @@ react-transition-group@^4.3.0, react-transition-group@^4.4.5:
     loose-envify "^1.4.0"
     prop-types "^15.6.2"
 
-"react@^16.7.0 || ^17 || ^18 || ^19", "react@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1", "react@^16.8.4 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^16.9.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^17.0.2 || ^18.0.0 || ^19.0", react@^19.1.0, "react@>= 16 <= 19", "react@>= 16.3.0", "react@>= 16.8.0", "react@>= 16.8.x", react@>=0.14.0, react@>=15.0.0, react@>=16.14.0, react@>=16.6.0, react@>=16.8, react@>=16.8.0, react@>=18:
+"react@^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^16.8.0 || ^17.0.0-rc.1 || ^18.0.0 || ^19.0.0-rc.1", "react@^16.9.0 || ^17.0.0 || ^18.0.0 || ^19.0.0", "react@^17.0.2 || ^18.0.0 || ^19.0", react@^19.1.0, "react@>= 16.3.0", "react@>= 16.8.0", react@>=0.14.0, react@>=15.0.0, react@>=16.14.0, react@>=16.6.0, react@>=16.8, react@>=16.8.0, react@>=18:
   version "19.1.0"
   resolved "https://registry.npmjs.org/react/-/react-19.1.0.tgz"
   integrity sha512-FS+XFBNvn3GTAWq26joslQgWNoFu08F4kl0J4CgdNKADkdSGXQyTCnKteIAJy96Br6YbpEU1LSzV5dYtjMkMDg==

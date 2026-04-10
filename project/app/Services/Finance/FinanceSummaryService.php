@@ -2,21 +2,24 @@
 
 namespace App\Services\Finance;
 
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Facades\Cache;
-use Illuminate\Support\Facades\Redis;
-use Illuminate\Support\Str;
 
 class FinanceSummaryService
 {
+    public function __construct(
+        private readonly FinanceCacheKeyService $cacheKeys,
+    ) {
+    }
+
     /**
      * Get summary data for the given tenant and month (YYYY-MM).
      */
     public function getSummary(Tenant $tenant, string $month): array
     {
-        $cacheKey = "finance_summary:{$tenant->id}:{$month}";
+        $cacheKey = $this->cacheKeys->versioned($tenant->id, "finance_summary:{$month}");
 
         return Cache::remember($cacheKey, 300, function () use ($tenant, $month) {
             [$year, $mon] = explode('-', $month);
@@ -83,12 +86,20 @@ class FinanceSummaryService
     }
 
     /**
+     * Warm summary cache for active period after transaction mutations.
+     */
+    public function recalculateForTenant(Tenant $tenant): void
+    {
+        $this->getSummary($tenant, now()->format('Y-m'));
+    }
+
+    /**
      * Invalidate summary cache after a transaction mutation.
      * Also clears filtered summaries and account metrics caches for this tenant.
      */
     public function invalidate(int $tenantId, string $month): void
     {
-        Cache::forget("finance_summary:{$tenantId}:{$month}");
+        Cache::forget("finance_summary:{$tenantId}:{$month}"); // legacy key (best effort)
         $this->invalidateTenantCaches($tenantId);
     }
 
@@ -98,27 +109,16 @@ class FinanceSummaryService
      */
     public function invalidateTenantCaches(int $tenantId): void
     {
-        try {
-            $redis = Redis::connection('cache');
-            $cachePrefix = config('cache.prefix', 'laravel_cache_');
-            $redisPrefix = config('database.redis.options.prefix', '');
+        $this->cacheKeys->bumpTenantVersion($tenantId);
 
-            foreach ([
-                "finance_summary_filtered:{$tenantId}:*",
-                "wallet_account_metrics:{$tenantId}:*",
-                "wallet_summary:{$tenantId}:*",
-            ] as $pattern) {
-                $keys = $redis->keys("{$cachePrefix}{$pattern}");
-                if (! empty($keys)) {
-                    $redis->del(array_map(
-                        fn (string $key) => Str::after($key, $redisPrefix),
-                        $keys,
-                    ));
-                }
-            }
-        } catch (\Throwable) {
-            // Redis pattern delete is best-effort; TTL will handle eventual expiry
-        }
+        // Best-effort cleanup for pre-versioned keys only.
+        Cache::forget("wallet_goal_reserved_accounts:{$tenantId}");
+        Cache::forget("wallet_goal_reserved_pockets:{$tenantId}");
+    }
+
+    public function cacheVersion(int $tenantId): int
+    {
+        return $this->cacheKeys->tenantVersion($tenantId);
     }
 
     public function getFilteredSummary(Builder $query, Tenant $tenant, array $options = []): array
@@ -175,7 +175,9 @@ class FinanceSummaryService
         };
 
         if ($cacheKey) {
-            return Cache::remember($cacheKey, 120, $compute);
+            $versionedKey = $this->cacheKeys->versioned($tenant->id, "finance_summary_filtered:{$cacheKey}");
+
+            return Cache::remember($versionedKey, 120, $compute);
         }
 
         return $compute();

@@ -4,7 +4,7 @@ namespace Database\Seeders;
 
 use App\Models\Tenant;
 use App\Models\TenantBudget;
-use App\Models\FinancePocket;
+use App\Models\FinanceWallet;
 use App\Models\TenantMember;
 use Database\Seeders\Support\FamilyFinanceSeed;
 use Illuminate\Database\Seeder;
@@ -20,7 +20,7 @@ class TenantFinanceBudgetSeeder extends Seeder
                 ->where('profile_status', 'active')
                 ->get()
                 ->keyBy(fn (TenantMember $member) => strtolower($member->full_name));
-            $pockets = FinancePocket::query()
+            $pockets = FinanceWallet::query()
                 ->where('tenant_id', $tenant->id)
                 ->with('realAccount:id,name')
                 ->get();
@@ -52,7 +52,7 @@ class TenantFinanceBudgetSeeder extends Seeder
                             'owner_member_id' => $owner?->id,
                         ],
                         [
-                            'pocket_id' => $lockedPocket?->id,
+                            'wallet_id' => $lockedPocket?->id,
                             'name' => $seed['name'],
                             'code' => strtoupper(substr(md5($tenant->slug . '|' . $seed['name'] . '|' . $periodMonth), 0, 10)),
                             'scope' => $seed['scope'],
@@ -87,7 +87,7 @@ class TenantFinanceBudgetSeeder extends Seeder
         return $key !== '' ? $key : 'budget';
     }
 
-    private function resolveLockedPocket($pockets, array $seed): ?FinancePocket
+    private function resolveLockedPocket($pockets, array $seed): ?FinanceWallet
     {
         $target = $seed['lock_pocket'] ?? null;
         if (! $target) {
@@ -105,7 +105,7 @@ class TenantFinanceBudgetSeeder extends Seeder
             ->all();
     }
 
-    private function isLockedPocket(array $seed, FinancePocket $pocket): bool
+    private function isLockedPocket(array $seed, FinanceWallet $pocket): bool
     {
         $target = $seed['lock_pocket'] ?? null;
 
@@ -114,13 +114,13 @@ class TenantFinanceBudgetSeeder extends Seeder
             && (string) ($target['pocket'] ?? '') === (string) $pocket->name;
     }
 
-    private function findPocketByMapping($pockets, ?string $accountName, ?string $pocketName): ?FinancePocket
+    private function findPocketByMapping($pockets, ?string $accountName, ?string $pocketName): ?FinanceWallet
     {
         if (! $accountName || ! $pocketName) {
             return null;
         }
 
-        return $pockets->first(function (FinancePocket $pocket) use ($accountName, $pocketName): bool {
+        return $pockets->first(function (FinanceWallet $pocket) use ($accountName, $pocketName): bool {
             return (string) ($pocket->realAccount?->name ?? '') === (string) $accountName
                 && (string) $pocket->name === (string) $pocketName;
         });

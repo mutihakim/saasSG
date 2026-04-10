@@ -2,15 +2,16 @@
 
 namespace App\Console\Commands;
 
-use App\Models\FinanceMonthReview;
-use App\Models\FinancePocket;
-use App\Models\FinanceSavingsGoal;
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantBankAccount;
-use App\Models\TenantBudget;
+use App\Models\Finance\FinanceMonthReview;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Finance\FinanceSavingsGoal;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Finance\TenantBudget;
+use App\Services\Finance\FinanceSummaryService;
 use App\Services\Finance\Transactions\FinanceTransactionCleanupService;
-use App\Services\Finance\Wallet\WalletPocketService;
+use App\Services\Finance\Wallet\FinanceWalletService;
 use Illuminate\Console\Command;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -19,11 +20,12 @@ class CleanupEnterpriseFinanceData extends Command
 {
     protected $signature = 'finance:cleanup-enterprise {--tenant=enterprise} {--dry-run}';
 
-    protected $description = 'Delete all finance transactions for the target tenant and normalize derived balances, budgets, and goals.';
+    protected $description = 'Delete all finance transactions for the target tenant and reset all balances, opening balances, budgets, and goals to zero.';
 
     public function __construct(
         private readonly FinanceTransactionCleanupService $cleanup,
-        private readonly WalletPocketService $wallets,
+        private readonly FinanceWalletService $wallets,
+        private readonly FinanceSummaryService $summary,
     ) {
         parent::__construct();
     }
@@ -55,6 +57,7 @@ class CleanupEnterpriseFinanceData extends Command
 
         $request = Request::create('/internal/finance-cleanup', 'DELETE');
 
+        $this->info('Deleting transactions and cleaning artifacts...');
         FinanceTransaction::query()
             ->forTenant($tenant->id)
             ->with([
@@ -69,8 +72,8 @@ class CleanupEnterpriseFinanceData extends Command
                 'approvedBy:id,full_name',
                 'bankAccount:id,name,type,currency_code',
                 'pocket:id,name,type,reference_code,real_account_id,currency_code,icon_key,default_budget_id,default_budget_key,budget_lock_enabled',
-                'budget:id,name,period_month,allocated_amount,spent_amount,remaining_amount,pocket_id,budget_key',
-                'pairedTransfer:id,tenant_id,type,transaction_date,amount,description,bank_account_id,pocket_id,transfer_direction,transfer_pair_id',
+                'budget:id,name,period_month,allocated_amount,spent_amount,remaining_amount,wallet_id,budget_key',
+                'pairedTransfer:id,tenant_id,type,transaction_date,amount,description,bank_account_id,wallet_id,transfer_direction,transfer_pair_id',
                 'pairedTransfer.bankAccount:id,name,type,currency_code',
                 'pairedTransfer.pocket:id,name,type,reference_code,real_account_id,currency_code,icon_key,default_budget_id,default_budget_key,budget_lock_enabled',
             ])
@@ -78,6 +81,7 @@ class CleanupEnterpriseFinanceData extends Command
                 $this->cleanup->deleteTransactions($tenant, $transactions, null, $request, false);
             }, 'id', 'id');
 
+        $this->info('Resetting balances, goals, and budgets to zero...');
         DB::transaction(function () use ($tenant) {
             FinanceMonthReview::query()->forTenant($tenant->id)->delete();
 
@@ -101,9 +105,7 @@ class CleanupEnterpriseFinanceData extends Command
                 ->orderBy('id')
                 ->get()
                 ->each(function (TenantBankAccount $account) {
-                    $mainPocket = $this->wallets->ensureMainPocket($account);
-
-                    FinancePocket::query()
+                    FinanceWallet::query()
                         ->where('tenant_id', $account->tenant_id)
                         ->where('real_account_id', $account->id)
                         ->update([
@@ -111,21 +113,18 @@ class CleanupEnterpriseFinanceData extends Command
                             'row_version' => DB::raw('row_version + 1'),
                         ]);
 
-                    FinancePocket::query()
-                        ->whereKey($mainPocket->id)
-                        ->update([
-                            'current_balance' => round((float) $account->opening_balance, 2),
-                            'row_version' => DB::raw('row_version + 1'),
-                        ]);
-
                     $account->forceFill([
-                        'current_balance' => round((float) $account->opening_balance, 2),
+                        'opening_balance' => 0,
+                        'current_balance' => 0,
                         'row_version' => ((int) $account->row_version) + 1,
                     ])->save();
                 });
         });
 
-        $this->info('Finance data cleaned and normalized.');
+        $this->info('Invalidating caches...');
+        $this->summary->invalidateTenantCaches($tenant->id);
+
+        $this->info('Finance data for Enterprise tenant fully reset to zero.');
 
         return self::SUCCESS;
     }

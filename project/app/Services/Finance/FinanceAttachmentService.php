@@ -2,9 +2,9 @@
 
 namespace App\Services\Finance;
 
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantAttachment;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Misc\TenantAttachment;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\Storage;

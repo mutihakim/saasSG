@@ -2,12 +2,13 @@
 
 namespace App\Services\Finance\Wallet;
 
-use App\Models\FinancePocket;
-use App\Models\FinanceSavingsGoal;
-use App\Models\Tenant;
-use App\Models\TenantBankAccount;
-use App\Models\TenantMember;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Finance\FinanceSavingsGoal;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Tenant\TenantMember;
 use App\Services\Finance\FinanceAccessService;
+use App\Services\Finance\FinanceCacheKeyService;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
@@ -19,6 +20,7 @@ class WalletCashflowService
 
     public function __construct(
         private readonly FinanceAccessService $access,
+        private readonly FinanceCacheKeyService $cacheKeys,
     ) {
     }
 
@@ -36,18 +38,9 @@ class WalletCashflowService
             $periodMonth,
             includeLifetime: $detailLevel === self::DETAIL_FULL,
         );
-        $accessibleAccountIds = $accounts->pluck('id')->values();
-        $accountGoalReserved = FinanceSavingsGoal::query()
-            ->join('finance_pockets', 'finance_pockets.id', '=', 'finance_savings_goals.pocket_id')
-            ->where('finance_savings_goals.tenant_id', $tenant->id)
-            ->whereIn('finance_pockets.real_account_id', $accessibleAccountIds)
-            ->whereNull('finance_pockets.deleted_at')
-            ->selectRaw('finance_pockets.real_account_id as account_id, COALESCE(SUM(finance_savings_goals.current_amount), 0) as reserved_total')
-            ->groupBy('finance_pockets.real_account_id')
-            ->get()
-            ->keyBy('account_id');
+        $accountGoalReserved = $this->getAccountGoalReserved($tenant, $accounts->pluck('id'));
 
-        return $accounts->map(function (TenantBankAccount $account) use ($metrics, $accountGoalReserved) {
+        return $accounts->map(function (TenantBankAccount $account) use ($metrics, $accountGoalReserved, $detailLevel) {
             $metric = $metrics[(string) $account->id] ?? [
                 'period_inflow' => 0.0,
                 'period_outflow' => 0.0,
@@ -59,8 +52,11 @@ class WalletCashflowService
             $account->setAttribute('period_outflow', round((float) $metric['period_outflow'], 2));
             $account->setAttribute('goal_reserved_total', $reservedTotal);
             $account->setAttribute('available_balance', round(((float) $account->current_balance) - $reservedTotal, 2));
-            $account->setAttribute('total_inflow', round((float) ($metric['total_inflow'] ?? 0), 2));
-            $account->setAttribute('total_outflow', round((float) ($metric['total_outflow'] ?? 0), 2));
+
+            if ($detailLevel === self::DETAIL_FULL) {
+                $account->setAttribute('total_inflow', round((float) ($metric['total_inflow'] ?? 0), 2));
+                $account->setAttribute('total_outflow', round((float) ($metric['total_outflow'] ?? 0), 2));
+            }
 
             // No longer needs unallocated_amount, allocated_amount mismatch because
             // 'Utama' pocket perfectly acts as the unallocated pool.
@@ -83,15 +79,9 @@ class WalletCashflowService
         $metrics = $detailLevel === self::DETAIL_FULL
             ? $this->pocketMetrics($tenant, $member, $periodMonth, includeLifetime: true)
             : [];
-        $goalReserved = FinanceSavingsGoal::query()
-            ->forTenant($tenant->id)
-            ->whereIn('pocket_id', $pockets->pluck('id'))
-            ->selectRaw('pocket_id, COALESCE(SUM(current_amount), 0) as reserved_total, COUNT(*) as goal_count')
-            ->groupBy('pocket_id')
-            ->get()
-            ->keyBy('pocket_id');
+        $goalReserved = $this->getPocketGoalReserved($tenant, $pockets->pluck('id'));
 
-        return $pockets->map(function (FinancePocket $pocket) use ($metrics, $goalReserved) {
+        return $pockets->map(function (FinanceWallet $pocket) use ($metrics, $goalReserved, $detailLevel) {
             $metric = $metrics[(string) $pocket->id] ?? [
                 'period_inflow' => 0.0,
                 'period_outflow' => 0.0,
@@ -100,15 +90,57 @@ class WalletCashflowService
             ];
             $reservedMetric = $goalReserved->get((string) $pocket->id);
             $reservedTotal = round((float) ($reservedMetric->reserved_total ?? 0), 2);
-            $pocket->setAttribute('period_inflow', round((float) ($metric['period_inflow'] ?? 0), 2));
-            $pocket->setAttribute('period_outflow', round((float) ($metric['period_outflow'] ?? 0), 2));
-            $pocket->setAttribute('total_inflow', round((float) ($metric['total_inflow'] ?? 0), 2));
-            $pocket->setAttribute('total_outflow', round((float) ($metric['total_outflow'] ?? 0), 2));
+
+            if ($detailLevel === self::DETAIL_FULL) {
+                $pocket->setAttribute('period_inflow', round((float) ($metric['period_inflow'] ?? 0), 2));
+                $pocket->setAttribute('period_outflow', round((float) ($metric['period_outflow'] ?? 0), 2));
+                $pocket->setAttribute('total_inflow', round((float) ($metric['total_inflow'] ?? 0), 2));
+                $pocket->setAttribute('total_outflow', round((float) ($metric['total_outflow'] ?? 0), 2));
+                $pocket->setAttribute('goal_count', (int) ($reservedMetric->goal_count ?? 0));
+            }
+
             $pocket->setAttribute('goal_reserved_total', $reservedTotal);
             $pocket->setAttribute('available_balance', round(((float) $pocket->current_balance) - $reservedTotal, 2));
-            $pocket->setAttribute('goal_count', (int) ($reservedMetric->goal_count ?? 0));
 
             return $pocket;
+        });
+    }
+
+    private function getAccountGoalReserved(Tenant $tenant, Collection $accountIds): Collection
+    {
+        if ($accountIds->isEmpty()) {
+            return collect();
+        }
+
+        $cacheKey = $this->cacheKeys->versioned($tenant->id, 'wallet_goal_reserved_accounts');
+
+        return Cache::remember($cacheKey, 300, function () use ($tenant) {
+            return FinanceSavingsGoal::query()
+                ->join('finance_wallets', 'finance_wallets.id', '=', 'finance_savings_goals.wallet_id')
+                ->where('finance_savings_goals.tenant_id', $tenant->id)
+                ->whereNull('finance_wallets.deleted_at')
+                ->selectRaw('finance_wallets.real_account_id as account_id, COALESCE(SUM(finance_savings_goals.current_amount), 0) as reserved_total')
+                ->groupBy('finance_wallets.real_account_id')
+                ->get()
+                ->keyBy('account_id');
+        });
+    }
+
+    private function getPocketGoalReserved(Tenant $tenant, Collection $pocketIds): Collection
+    {
+        if ($pocketIds->isEmpty()) {
+            return collect();
+        }
+
+        $cacheKey = $this->cacheKeys->versioned($tenant->id, 'wallet_goal_reserved_pockets');
+
+        return Cache::remember($cacheKey, 300, function () use ($tenant) {
+            return FinanceSavingsGoal::query()
+                ->forTenant($tenant->id)
+                ->selectRaw('wallet_id, COALESCE(SUM(current_amount), 0) as reserved_total, COUNT(*) as goal_count')
+                ->groupBy('wallet_id')
+                ->get()
+                ->keyBy('wallet_id');
         });
     }
 
@@ -134,7 +166,7 @@ class WalletCashflowService
         bool $includeLifetime = true,
     ): array
     {
-        return $this->metricsByAggregate($tenant, $member, 'pocket_id', $periodMonth, $includeLifetime);
+        return $this->metricsByAggregate($tenant, $member, 'wallet_id', $periodMonth, $includeLifetime);
     }
 
     private function metricsByAggregate(
@@ -147,7 +179,10 @@ class WalletCashflowService
     {
         $month = $periodMonth ?: now()->format('Y-m');
         $memberId = $member?->id ?? 0;
-        $cacheKey = "wallet_account_metrics:{$tenant->id}:{$aggregateColumn}:{$memberId}:{$month}:" . ($includeLifetime ? 'full' : 'summary');
+        $cacheKey = $this->cacheKeys->versioned(
+            $tenant->id,
+            "wallet_metrics:{$aggregateColumn}:{$memberId}:{$month}:" . ($includeLifetime ? 'full' : 'summary'),
+        );
 
         return Cache::remember($cacheKey, 300, function () use ($tenant, $member, $aggregateColumn, $periodMonth, $includeLifetime, $month) {
             $query = $this->access->visibleTransactionsQuery($tenant, $member);

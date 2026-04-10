@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\ActivityLog;
-use App\Models\Tenant;
-use App\Models\TenantMember;
+use App\Models\Misc\ActivityLog;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 

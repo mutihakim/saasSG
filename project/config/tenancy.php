@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use Stancl\Tenancy\Database\Models\Domain;
-use App\Models\Tenant;
+use App\Models\Tenant\Tenant;
 
 return [
     'tenant_model' => Tenant::class,
@@ -19,8 +19,8 @@ return [
     'central_domains' => [
         '127.0.0.1',
         'localhost',
-        'appsah.my.id',
-        'www.appsah.my.id',
+        'sanjo.my.id',
+        'www.sanjo.my.id',
     ],
 
     /**

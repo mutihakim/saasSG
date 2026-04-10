@@ -2,7 +2,7 @@
 
 namespace App\Services\Finance;
 
-use App\Models\TenantTag;
+use App\Models\Master\TenantTag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 

@@ -41,17 +41,41 @@ export default [
         },
         rules: {
             ...reactHooks.configs.recommended.rules,
+            'react-hooks/exhaustive-deps': 'error',
             'react/react-in-jsx-scope': 'off',
             '@typescript-eslint/no-explicit-any': 'off',
             'no-unused-vars': 'off',
             '@typescript-eslint/no-unused-vars': ['error', { argsIgnorePattern: '^_' }],
             'no-undef': 'off',
             'import/order': ['warn', { 'newlines-between': 'always', alphabetize: { order: 'asc' } }],
+            'import/no-restricted-paths': [
+                'warn',
+                {
+                    zones: [
+                        {
+                            target: './resources/js/features',
+                            from: './resources/js/pages',
+                            message: 'Feature layer cannot import from pages layer. Move shared code into components/* or core.',
+                        },
+                    ],
+                },
+            ],
         },
         settings: {
             react: {
                 version: 'detect',
             },
+        },
+    },
+    {
+        files: ['resources/js/features/**/*.{ts,tsx}'],
+        rules: {
+            'no-restricted-imports': [
+                'warn',
+                {
+                    patterns: ['**/pages/**', '@/pages/**'],
+                },
+            ],
         },
     },
     {

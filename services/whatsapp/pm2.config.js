@@ -1,7 +1,7 @@
 module.exports = {
     apps: [
         {
-            name: 'family2-whatsapp',
+            name: 'sanjo-whatsapp',
             script: './src/index.js',
             instances: 1,
             autorestart: true,
@@ -9,8 +9,8 @@ module.exports = {
             max_memory_restart: '512M',
             env: {
                 NODE_ENV: 'production',
-                PORT: 3025,
-                APP_CALLBACK_URL: 'https://appsah.my.id',
+                PORT: 3026,
+                APP_CALLBACK_URL: 'https://sanjo.my.id',
                 WHATSAPP_INTERNAL_TOKEN: 'change-me',
                 WA_AUTH_DIR: './wa-auth',
                 REQUEST_TIMEOUT_MS: 8000,

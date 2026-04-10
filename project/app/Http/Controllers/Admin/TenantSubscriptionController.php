@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\ActivityLog;
-use App\Models\Tenant;
+use App\Models\Misc\ActivityLog;
+use App\Models\Tenant\Tenant;
 use App\Support\ApiResponder;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;

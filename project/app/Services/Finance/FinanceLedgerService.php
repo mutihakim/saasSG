@@ -2,11 +2,11 @@
 
 namespace App\Services\Finance;
 
-use App\Models\FinanceTransaction;
-use App\Models\FinancePocket;
-use App\Models\TenantBankAccount;
-use App\Models\TenantBudget;
-use App\Models\TenantBudgetLine;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Finance\TenantBudget;
+use App\Models\Finance\TenantBudgetLine;
 
 class FinanceLedgerService
 {
@@ -102,14 +102,14 @@ class FinanceLedgerService
 
     private function applyPocketEffect(FinanceTransaction $transaction, int $multiplier): void
     {
-        if (! $transaction->pocket_id) {
+        if (! $transaction->wallet_id) {
             return;
         }
 
-        /** @var FinancePocket|null $pocket */
-        $pocket = FinancePocket::query()
+        /** @var FinanceWallet|null $pocket */
+        $pocket = FinanceWallet::query()
             ->lockForUpdate()
-            ->find($transaction->pocket_id);
+            ->find($transaction->wallet_id);
 
         if (! $pocket) {
             return;

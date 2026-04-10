@@ -2,12 +2,12 @@
 
 namespace App\Providers;
 
-use App\Models\FinanceTransaction;
-use App\Models\TenantCategory;
-use App\Models\TenantMember;
-use App\Models\TenantTag;
-use App\Models\TenantCurrency;
-use App\Models\TenantUom;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Master\TenantCategory;
+use App\Models\Tenant\TenantMember;
+use App\Models\Master\TenantTag;
+use App\Models\Master\TenantCurrency;
+use App\Models\Master\TenantUom;
 use App\Policies\FinanceTransactionPolicy;
 use App\Policies\TenantCategoryPolicy;
 use App\Policies\TenantMemberPolicy;

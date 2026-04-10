@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;

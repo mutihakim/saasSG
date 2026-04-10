@@ -3,10 +3,10 @@
 namespace App\Services;
 
 use App\Exceptions\WhatsappIntentExtractionException;
-use App\Models\Tenant;
-use App\Models\TenantCategory;
-use App\Models\TenantMember;
-use App\Models\TenantWhatsappMedia;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantCategory;
+use App\Models\Tenant\TenantMember;
+use App\Models\Whatsapp\TenantWhatsappMedia;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -181,7 +181,7 @@ class WhatsappAiExtractionService
             ->acceptJson()
             ->withToken($apiKey)
             ->withHeaders([
-                'HTTP-Referer' => config('app.url', 'https://appsah.my.id'),
+                'HTTP-Referer' => config('app.url', 'https://sanjo.my.id'),
                 'X-Title' => 'Family2 WhatsApp Finance',
             ])
             ->post("{$baseUrl}/chat/completions", [

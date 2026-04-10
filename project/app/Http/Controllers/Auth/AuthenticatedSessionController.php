@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\LoginRequest;
-use App\Models\TenantMember;
+use App\Models\Tenant\TenantMember;
 use App\Services\TurnstileService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -49,7 +49,7 @@ class AuthenticatedSessionController extends Controller
 
         $target = '/tenant-access-required';
         $user = $request->user();
-        $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'appsah.my.id';
+        $centralDomain = parse_url(config('app.url'), PHP_URL_HOST) ?: 'sanjo.my.id';
         $protocol = parse_url(config('app.url'), PHP_URL_SCHEME) ?: 'https';
 
         if ($user?->is_superadmin) {

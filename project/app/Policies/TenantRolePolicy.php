@@ -2,7 +2,7 @@
 
 namespace App\Policies;
 
-use App\Models\User;
+use App\Models\Identity\User;
 use Spatie\Permission\Models\Role;
 
 class TenantRolePolicy

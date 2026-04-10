@@ -2,8 +2,8 @@
 
 namespace App\Services\Finance;
 
-use App\Models\Tenant;
-use App\Models\TenantMember;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Collection;
@@ -15,6 +15,7 @@ class FinanceReportService
 {
     public function __construct(
         private readonly FinanceAccessService $access,
+        private readonly FinanceCacheKeyService $cacheKeys,
     ) {
     }
 
@@ -26,20 +27,20 @@ class FinanceReportService
 
         $this->assertRangeWithinLimit($dateFrom, $dateTo);
 
-        $cacheKey = sprintf(
-            'finance_report:%s:%s:%s',
-            $tenant->id,
+        $cacheHash = md5(json_encode([
+            'date_from' => $dateFrom,
+            'date_to' => $dateTo,
+            'group_by' => $groupBy,
+            'account_id' => $filters['account_id'] ?? null,
+            'budget_id' => $filters['budget_id'] ?? null,
+            'category_id' => $filters['category_id'] ?? null,
+            'owner_member_id' => $filters['owner_member_id'] ?? null,
+        ], JSON_THROW_ON_ERROR));
+        $cacheKey = $this->cacheKeys->versioned($tenant->id, sprintf(
+            'finance_report:%s:%s',
             $member?->id ?? 'all',
-            md5(json_encode([
-                'date_from' => $dateFrom,
-                'date_to' => $dateTo,
-                'group_by' => $groupBy,
-                'account_id' => $filters['account_id'] ?? null,
-                'budget_id' => $filters['budget_id'] ?? null,
-                'category_id' => $filters['category_id'] ?? null,
-                'owner_member_id' => $filters['owner_member_id'] ?? null,
-            ], JSON_THROW_ON_ERROR))
-        );
+            $cacheHash,
+        ));
 
         return Cache::remember($cacheKey, now()->addMinutes(5), function () use ($tenant, $member, $filters, $dateFrom, $dateTo, $groupBy) {
             $baseQuery = $this->buildBaseQuery($tenant, $member, $filters, $dateFrom, $dateTo);

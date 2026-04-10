@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1\Mobile;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 use App\Support\ApiResponder;
 use App\Support\SubscriptionEntitlements;
 use App\Support\TenantBranding;
@@ -29,10 +29,11 @@ class MobileBootstrapApiController extends Controller
         }
 
         /** @var Tenant|null $tenant */
-        $tenant = Tenant::query()
-            ->where('slug', $tenantKey)
-            ->orWhere('id', $tenantKey)
-            ->first();
+        $tenantQuery = Tenant::query()->where('slug', $tenantKey);
+        if (ctype_digit($tenantKey)) {
+            $tenantQuery->orWhere('id', (int) $tenantKey);
+        }
+        $tenant = $tenantQuery->first();
 
         if (! $tenant) {
             return $this->error('NOT_FOUND', 'Tenant not found.', [], 404);

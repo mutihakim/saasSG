@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantAttachment;
-use App\Models\TenantBankAccount;
-use App\Models\TenantCurrency;
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Misc\TenantAttachment;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Master\TenantCurrency;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;

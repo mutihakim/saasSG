@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\TenantCategory;
-use App\Models\TenantCurrency;
-use App\Models\TenantMember;
+use App\Models\Master\TenantCategory;
+use App\Models\Master\TenantCurrency;
+use App\Models\Tenant\TenantMember;
 use App\Services\Finance\FinanceAccessService;
 use App\Services\Finance\Wallet\WalletCashflowService;
 use App\Support\SubscriptionEntitlements;
@@ -29,7 +29,7 @@ class TenantFinanceController extends Controller
 
     public function transactions(Request $request, string $tenant): Response|HttpResponse
     {
-        return $this->renderPage($request, initialTab: 'transactions', section: 'transactions', title: 'Transactions');
+        return $this->renderPage($request, initialTab: 'transactions', section: 'transactions', title: 'Transactions', component: 'Tenant/Finance/TransactionsPage');
     }
 
     public function reports(Request $request, string $tenant): Response|HttpResponse
@@ -37,7 +37,7 @@ class TenantFinanceController extends Controller
         $requestedView = (string) $request->query('view', 'report');
         $initialTab = $requestedView === 'stats' ? 'stats' : 'report';
 
-        return $this->renderPage($request, initialTab: $initialTab, section: 'reports', title: 'Reports');
+        return $this->renderPage($request, initialTab: $initialTab, section: 'reports', title: 'Reports', component: 'Tenant/Finance/ReportsPage');
     }
 
     public function budgets(Request $request, string $tenant): Response|HttpResponse
@@ -56,6 +56,7 @@ class TenantFinanceController extends Controller
         string $initialTab,
         string $section,
         string $title,
+        string $component = 'Tenant/Finance/Page',
     ): Response|HttpResponse
     {
         $tenantModel = $request->attributes->get('currentTenant');
@@ -65,7 +66,7 @@ class TenantFinanceController extends Controller
         $activeBudgets = $tenantModel->budgets()->active()->count();
         $shouldPreloadAccounts = $section === 'reports';
         $shouldPreloadBudgets = $section === 'reports';
-        $shouldPreloadPockets = false;
+        $shouldPreloadWallets = false;
         $accounts = $shouldPreloadAccounts
             ? $this->access->accessibleAccountsQuery($tenantModel, $member)
                 ->active()
@@ -73,7 +74,7 @@ class TenantFinanceController extends Controller
                 ->orderBy('name')
                 ->get()
             : collect();
-        $pockets = $shouldPreloadPockets
+        $wallets = $shouldPreloadWallets
             ? $this->access->accessiblePocketsQuery($tenantModel, $member)
                 ->active()
                 ->orderBy('scope')
@@ -82,7 +83,7 @@ class TenantFinanceController extends Controller
                 ->get()
             : collect();
 
-        return Inertia::render('Tenant/Finance/Page', [
+        return Inertia::render($component, [
             'categories'      => TenantCategory::forTenant($tenantModel->id)
                 ->forModule('finance')
                 ->active()
@@ -115,16 +116,16 @@ class TenantFinanceController extends Controller
                     ->orderBy('name')
                     ->get()
                 : [],
-            'pockets' => $shouldPreloadPockets
+            'wallets' => $shouldPreloadWallets
                 ? $this->cashflow->enrichPockets(
                     $tenantModel,
                     $member,
-                    $pockets,
+                    $wallets,
                     detailLevel: WalletCashflowService::DETAIL_SUMMARY,
                 )
                 : [],
             'transferDestinationPockets' => $section === 'transactions'
-                ? $tenantModel->pockets()
+                ? $tenantModel->wallets()
                     ->with(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'realAccount:id,name,type,currency_code'])
                     ->active()
                     ->orderBy('scope')
@@ -159,7 +160,7 @@ class TenantFinanceController extends Controller
                 'preloaded' => [
                     'accounts' => $shouldPreloadAccounts,
                     'budgets' => $shouldPreloadBudgets,
-                    'pockets' => $shouldPreloadPockets,
+                    'wallets' => $shouldPreloadWallets,
                 ],
             ],
         ]);

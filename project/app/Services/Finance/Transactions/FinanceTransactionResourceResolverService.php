@@ -2,21 +2,21 @@
 
 namespace App\Services\Finance\Transactions;
 
-use App\Models\Tenant;
-use App\Models\TenantBankAccount;
-use App\Models\TenantBudget;
-use App\Models\TenantCurrency;
-use App\Models\FinancePocket;
-use App\Models\TenantMember;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Finance\TenantBudget;
+use App\Models\Master\TenantCurrency;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Tenant\TenantMember;
 use App\Services\Finance\FinanceAccessService;
-use App\Services\Finance\Wallet\WalletPocketService;
+use App\Services\Finance\Wallet\FinanceWalletService;
 use Carbon\Carbon;
 
 class FinanceTransactionResourceResolverService
 {
     public function __construct(
         private readonly FinanceAccessService $access,
-        private readonly WalletPocketService $walletPockets,
+        private readonly FinanceWalletService $walletPockets,
     ) {
     }
 
@@ -54,7 +54,7 @@ class FinanceTransactionResourceResolverService
         Tenant $tenant,
         ?TenantMember $member,
         ?string $budgetId,
-        ?FinancePocket $pocket,
+        ?FinanceWallet $pocket,
         ?string $transactionDate = null,
     ): ?TenantBudget {
         $periodMonth = $transactionDate
@@ -76,14 +76,18 @@ class FinanceTransactionResourceResolverService
             return null;
         }
 
+        if ($pocket && ! $this->access->isBudgetWalletCrossoverValid($pocket, $budget)) {
+            return null;
+        }
+
         if ((string) $budget->period_month !== $periodMonth) {
             return null;
         }
 
-        if ($budget->pocket_id) {
-            $mappedPocket = $this->resolveTenantActivePocket($tenant, (string) $budget->pocket_id);
+        if ($budget->wallet_id) {
+            $mappedPocket = $this->resolveTenantActivePocket($tenant, (string) $budget->wallet_id);
 
-            if ($mappedPocket?->budget_lock_enabled && (! $pocket || (string) $budget->pocket_id !== (string) $pocket->id)) {
+            if ($mappedPocket?->budget_lock_enabled && (! $pocket || (string) $budget->wallet_id !== (string) $pocket->id)) {
                 return null;
             }
         }
@@ -100,7 +104,7 @@ class FinanceTransactionResourceResolverService
     public function resolvePocketDefaultBudget(
         Tenant $tenant,
         ?TenantMember $member,
-        ?FinancePocket $pocket,
+        ?FinanceWallet $pocket,
         ?string $periodMonth = null,
     ): ?TenantBudget {
         if (! $pocket) {
@@ -129,7 +133,7 @@ class FinanceTransactionResourceResolverService
         return null;
     }
 
-    public function resolveUsablePocket(Tenant $tenant, ?TenantMember $member, ?string $pocketId): ?FinancePocket
+    public function resolveUsablePocket(Tenant $tenant, ?TenantMember $member, ?string $pocketId): ?FinanceWallet
     {
         if (! $pocketId) {
             return null;
@@ -140,7 +144,7 @@ class FinanceTransactionResourceResolverService
             ->first();
     }
 
-    public function resolveAccessiblePocket(Tenant $tenant, ?TenantMember $member, ?string $pocketId): ?FinancePocket
+    public function resolveAccessiblePocket(Tenant $tenant, ?TenantMember $member, ?string $pocketId): ?FinanceWallet
     {
         if (! $pocketId) {
             return null;
@@ -152,13 +156,13 @@ class FinanceTransactionResourceResolverService
             ->first();
     }
 
-    public function resolveTenantActivePocket(Tenant $tenant, ?string $pocketId): ?FinancePocket
+    public function resolveTenantActivePocket(Tenant $tenant, ?string $pocketId): ?FinanceWallet
     {
         if (! $pocketId) {
             return null;
         }
 
-        return FinancePocket::query()
+        return FinanceWallet::query()
             ->forTenant($tenant->id)
             ->active()
             ->with(['ownerMember:id,full_name', 'memberAccess:id,full_name', 'realAccount:id,name,type,currency_code'])
@@ -184,7 +188,7 @@ class FinanceTransactionResourceResolverService
         ?TenantMember $member,
         ?TenantBankAccount $account,
         ?string $pocketId
-    ): ?FinancePocket {
+    ): ?FinanceWallet {
         if (! $account) {
             return null;
         }

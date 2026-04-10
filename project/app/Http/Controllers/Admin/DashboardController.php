@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Models\User;
+use App\Models\Tenant\Tenant;
+use App\Models\Identity\User;
 use App\Support\SubscriptionEntitlements;
 use Inertia\Inertia;
 use Inertia\Response;

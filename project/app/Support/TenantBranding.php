@@ -2,7 +2,7 @@
 
 namespace App\Support;
 
-use App\Models\Tenant;
+use App\Models\Tenant\Tenant;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Vite;

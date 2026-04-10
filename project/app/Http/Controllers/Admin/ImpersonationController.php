@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\User;
+use App\Models\Identity\User;
 use App\Support\ApiResponder;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;

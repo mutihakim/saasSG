@@ -14,7 +14,7 @@ class TenantMasterDataSeeder extends Seeder
             TenantFinanceCategorySeeder::class,
             TenantFinanceTagSeeder::class,
             TenantFinanceAccountSeeder::class,
-            TenantFinancePocketSeeder::class,
+            TenantFinanceWalletSeeder::class,
             TenantFinanceBudgetSeeder::class,
             TenantFinancePlanningSeeder::class,
             TenantFinanceDemoSeeder::class,

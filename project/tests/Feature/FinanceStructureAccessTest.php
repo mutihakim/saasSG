@@ -2,14 +2,14 @@
 
 namespace Tests\Feature;
 
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantBankAccount;
-use App\Models\TenantBudget;
-use App\Models\TenantCategory;
-use App\Models\TenantCurrency;
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Finance\TenantBudget;
+use App\Models\Master\TenantCategory;
+use App\Models\Master\TenantCurrency;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\Models\Role;
@@ -104,8 +104,8 @@ class FinanceStructureAccessTest extends TestCase
 
         $this->assertNotNull($selfAccess);
         $this->assertNotNull($ownerAccess);
-        $this->assertSame(1, $selfAccess['pivot']['can_manage']);
-        $this->assertSame(0, $ownerAccess['pivot']['can_manage']);
+        $this->assertTrue((bool) $selfAccess['pivot']['can_manage']);
+        $this->assertFalse((bool) $ownerAccess['pivot']['can_manage']);
     }
 
     public function test_member_can_update_and_delete_own_account_but_cannot_touch_other_shared_account(): void
@@ -524,7 +524,7 @@ class FinanceStructureAccessTest extends TestCase
             $this->memberMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => false],
         ]);
 
-        $sharedMainPocket = app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($shared);
+        $sharedMainPocket = app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($shared);
 
         $sharedResponse = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
@@ -564,8 +564,8 @@ class FinanceStructureAccessTest extends TestCase
         $sharedMainPocket->refresh();
         $this->assertSame($this->memberMembership->id, $sharedMainPocket->owner_member_id);
         $this->assertSame('shared', $sharedMainPocket->scope);
-        $this->assertDatabaseHas('finance_pocket_member_access', [
-            'finance_pocket_id' => $sharedMainPocket->id,
+        $this->assertDatabaseHas('finance_wallet_member_access', [
+            'finance_wallet_id' => $sharedMainPocket->id,
             'member_id' => $this->ownerMembership->id,
             'can_manage' => true,
         ]);
@@ -583,7 +583,7 @@ class FinanceStructureAccessTest extends TestCase
             'row_version' => 1,
         ]);
 
-        $privateMainPocket = app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($private);
+        $privateMainPocket = app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($private);
 
         $privateResponse = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
@@ -612,8 +612,8 @@ class FinanceStructureAccessTest extends TestCase
         $privateMainPocket->refresh();
         $this->assertSame($this->memberMembership->id, $privateMainPocket->owner_member_id);
         $this->assertSame('private', $privateMainPocket->scope);
-        $this->assertDatabaseMissing('finance_pocket_member_access', [
-            'finance_pocket_id' => $privateMainPocket->id,
+        $this->assertDatabaseMissing('finance_wallet_member_access', [
+            'finance_wallet_id' => $privateMainPocket->id,
             'member_id' => $this->ownerMembership->id,
         ]);
     }

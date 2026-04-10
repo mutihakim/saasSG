@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\User;
+use App\Models\Identity\User;
 use PragmaRX\Google2FA\Google2FA;
 
 class TwoFactorAuthService

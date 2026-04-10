@@ -2,14 +2,14 @@
 
 namespace App\Services\Finance;
 
-use App\Models\FinanceMonthReview;
-use App\Models\FinancePocket;
-use App\Models\FinanceSavingsGoal;
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantBudget;
-use App\Models\TenantCurrency;
-use App\Models\TenantMember;
+use App\Models\Finance\FinanceMonthReview;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Finance\FinanceSavingsGoal;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Finance\TenantBudget;
+use App\Models\Master\TenantCurrency;
+use App\Models\Tenant\TenantMember;
 use App\Services\Finance\Transactions\FinanceTransactionPayloadService;
 use App\Services\Finance\Wallet\WalletCashflowService;
 use Carbon\CarbonImmutable;
@@ -127,12 +127,12 @@ class MonthlyReviewService
         $goals = FinanceSavingsGoal::query()
             ->forTenant($tenant->id)
             ->with(['pocket:id,name,real_account_id'])
-            ->whereIn('pocket_id', $pockets->pluck('id'))
+            ->whereIn('wallet_id', $pockets->pluck('id'))
             ->orderBy('name')
             ->get();
 
         $accountDeltas = $this->cumulativeDeltas($tenant, $member, 'bank_account_id', $monthEnd->toDateString());
-        $pocketDeltas = $this->cumulativeDeltas($tenant, $member, 'pocket_id', $monthEnd->toDateString());
+        $pocketDeltas = $this->cumulativeDeltas($tenant, $member, 'wallet_id', $monthEnd->toDateString());
         $periodFlows = $this->periodPocketFlows($tenant, $member, $monthStart->toDateString(), $monthEnd->toDateString());
 
         $accountsPreview = $accounts->map(function ($account) use ($pockets, $accountDeltas, $pocketDeltas) {
@@ -185,16 +185,16 @@ class MonthlyReviewService
             'goals' => $goals->map(fn ($goal) => [
                 'id' => $goal->id,
                 'name' => $goal->name,
-                'pocket_id' => $goal->pocket_id,
+                'wallet_id' => $goal->wallet_id,
                 'pocket_name' => $goal->pocket?->name,
             ])->values()->all(),
             'sweep_actions' => $walletsPreview
                 ->filter(fn (array $wallet) => (float) $wallet['ending_balance'] > 0 && ! $wallet['is_system'] && $wallet['purpose_type'] === 'spending')
                 ->map(fn (array $wallet) => [
-                    'source_pocket_id' => $wallet['id'],
+                    'source_wallet_id' => $wallet['id'],
                     'action' => 'rollover',
                     'amount' => $wallet['suggested_amount'],
-                    'target_pocket_id' => null,
+                    'target_wallet_id' => null,
                     'goal_id' => null,
                 ])
                 ->values()
@@ -267,7 +267,7 @@ class MonthlyReviewService
 
                 $budget->fill([
                     'owner_member_id' => $draft['owner_member_id'] ?? null,
-                    'pocket_id' => $draft['pocket_id'] ?? null,
+                    'wallet_id' => $draft['wallet_id'] ?? null,
                     'name' => $draft['name'],
                     'code' => $budget->code ?: strtoupper(substr($draft['budget_key'], 0, 40)),
                     'scope' => $draft['scope'],
@@ -278,6 +278,30 @@ class MonthlyReviewService
                     'row_version' => $budget->exists ? ((int) $budget->row_version + 1) : 1,
                 ]);
                 $budget->save();
+
+                // Copy access from previous month if it exists
+                $previousBudget = TenantBudget::query()
+                    ->forTenant($tenant->id)
+                    ->where('period_month', $periodMonth)
+                    ->where('budget_key', $draft['budget_key'])
+                    ->first();
+
+                if ($previousBudget) {
+                    $accessData = $previousBudget->memberAccess()
+                        ->get(['tenant_members.id', 'can_view', 'can_use', 'can_manage'])
+                        ->mapWithKeys(fn ($m) => [
+                            (int) $m->id => [
+                                'can_view' => (bool) $m->pivot->can_view,
+                                'can_use' => (bool) $m->pivot->can_use,
+                                'can_manage' => (bool) $m->pivot->can_manage,
+                            ]
+                        ])
+                        ->all();
+
+                    if (! empty($accessData)) {
+                        $budget->memberAccess()->sync($accessData);
+                    }
+                }
             }
 
             foreach ($data['sweep_actions'] ?? [] as $action) {
@@ -288,7 +312,7 @@ class MonthlyReviewService
 
                 $sourcePocket = $this->access->accessiblePocketsQuery($tenant, $member)
                     ->active()
-                    ->whereKey($action['source_pocket_id'])
+                    ->whereKey($action['source_wallet_id'])
                     ->with('realAccount')
                     ->first();
 
@@ -300,7 +324,7 @@ class MonthlyReviewService
                 if (($action['action'] ?? null) === 'sweep_to_wallet') {
                     $targetPocket = $this->access->accessiblePocketsQuery($tenant, $member)
                         ->active()
-                        ->whereKey($action['target_pocket_id'] ?? null)
+                        ->whereKey($action['target_wallet_id'] ?? null)
                         ->with('realAccount')
                         ->first();
                 } elseif (($action['action'] ?? null) === 'sweep_to_goal') {
@@ -344,7 +368,7 @@ class MonthlyReviewService
                         'budget_status' => 'unbudgeted',
                         'budget_delta' => 0,
                         'bank_account_id' => $sourcePocket->real_account_id,
-                        'pocket_id' => $sourcePocket->id,
+                        'wallet_id' => $sourcePocket->id,
                         'transfer_direction' => 'out',
                         'is_internal_transfer' => true,
                     ],
@@ -368,7 +392,7 @@ class MonthlyReviewService
                         'budget_status' => 'unbudgeted',
                         'budget_delta' => 0,
                         'bank_account_id' => $targetPocket->real_account_id,
-                        'pocket_id' => $targetPocket->id,
+                        'wallet_id' => $targetPocket->id,
                         'transfer_direction' => 'in',
                         'is_internal_transfer' => true,
                     ],
@@ -439,18 +463,18 @@ class MonthlyReviewService
     private function periodPocketFlows(Tenant $tenant, ?TenantMember $member, string $dateFrom, string $dateTo): array
     {
         return $this->access->visibleTransactionsQuery($tenant, $member)
-            ->whereNotNull('pocket_id')
+            ->whereNotNull('wallet_id')
             ->whereBetween('transaction_date', [$dateFrom, $dateTo])
-            ->selectRaw('pocket_id')
+            ->selectRaw('wallet_id')
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN type = 'pemasukan' OR (type = 'transfer' AND transfer_direction = 'in') THEN amount ELSE 0 END), 0) as inflow
             ")
             ->selectRaw("
                 COALESCE(SUM(CASE WHEN type = 'pengeluaran' OR (type = 'transfer' AND transfer_direction = 'out') THEN amount ELSE 0 END), 0) as outflow
             ")
-            ->groupBy('pocket_id')
+            ->groupBy('wallet_id')
             ->get()
-            ->mapWithKeys(fn ($row) => [$row->pocket_id => ['inflow' => (float) $row->inflow, 'outflow' => (float) $row->outflow]])
+            ->mapWithKeys(fn ($row) => [$row->wallet_id => ['inflow' => (float) $row->inflow, 'outflow' => (float) $row->outflow]])
             ->all();
     }
 
@@ -481,7 +505,7 @@ class MonthlyReviewService
                 'name' => $budget->name,
                 'scope' => $budget->scope,
                 'owner_member_id' => $budget->owner_member_id,
-                'pocket_id' => $budget->pocket_id,
+                'wallet_id' => $budget->wallet_id,
                 'period_month' => $nextMonth,
                 'allocated_amount' => round($allocated, 2),
                 'existing_budget_id' => $nextBudget?->id,

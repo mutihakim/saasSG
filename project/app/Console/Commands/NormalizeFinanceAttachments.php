@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\FinanceTransaction;
-use App\Models\TenantAttachment;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Misc\TenantAttachment;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;

@@ -2,8 +2,8 @@
 
 namespace App\Http\Middleware;
 
-use App\Models\Tenant;
-use App\Models\TenantMember;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;

@@ -2,17 +2,21 @@
 
 namespace App\Services\Finance\Wallet;
 
-use App\Models\FinanceSavingsGoal;
-use App\Models\Tenant;
-use App\Models\TenantMember;
-use App\Models\WalletWish;
+use App\Models\Finance\FinanceSavingsGoal;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
+use App\Models\Finance\WalletWish;
 use App\Services\Finance\FinanceAccessService;
+use App\Services\Finance\FinanceCacheKeyService;
+use App\DTOs\Finance\SummaryDTO;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 
 class WalletSummaryService
 {
     public function __construct(
         private readonly FinanceAccessService $access,
+        private readonly FinanceCacheKeyService $cacheKeys,
     ) {
     }
 
@@ -20,71 +24,93 @@ class WalletSummaryService
     {
         $currentMonth = now()->format('Y-m');
         $memberId = $member?->id ?? 0;
-        $cacheKey = "wallet_summary:{$tenant->id}:{$memberId}:{$currentMonth}";
+        $cacheKey = $this->cacheKeys->versioned($tenant->id, "wallet_summary:{$memberId}:{$currentMonth}");
 
         return Cache::remember($cacheKey, 120, function () use ($tenant, $member, $currentMonth) {
-            $accounts = $this->access->accessibleAccountsQuery($tenant, $member)
+            // 1. Account Aggregations (SQL)
+            $accountTotals = $this->access->accessibleAccountsQuery($tenant, $member)
                 ->active()
-                ->get(['id', 'type', 'currency_code', 'current_balance']);
+                ->selectRaw("
+                    COALESCE(SUM(CASE WHEN type NOT IN ('credit_card', 'paylater') THEN current_balance ELSE 0 END), 0) as total_assets,
+                    COALESCE(SUM(CASE WHEN type IN ('cash', 'bank') THEN GREATEST(current_balance, 0) ELSE 0 END), 0) as cash_bank_assets,
+                    COALESCE(SUM(CASE WHEN type IN ('credit_card', 'paylater') THEN ABS(current_balance) ELSE 0 END), 0) as total_liabilities
+                ")
+                ->first();
 
+            $totalAssets = (float) $accountTotals->total_assets;
+            $cashBankAssets = (float) $accountTotals->cash_bank_assets;
+            $totalLiabilities = (float) $accountTotals->total_liabilities;
+
+            // 2. Asset Allocation (SQL)
+            $assetAllocation = $this->access->accessibleAccountsQuery($tenant, $member)
+                ->active()
+                ->whereNotIn('type', ['credit_card', 'paylater'])
+                ->groupBy('type')
+                ->selectRaw("type as label, COALESCE(SUM(GREATEST(current_balance, 0)), 0) as value")
+                ->get()
+                ->filter(fn ($item) => $item->value > 0)
+                ->values()
+                ->toArray();
+
+            // 3. Goals (SQL)
             $accessiblePocketIds = $this->access->accessiblePocketsQuery($tenant, $member)
-                ->pluck('finance_pockets.id');
+                ->pluck('finance_wallets.id');
 
-            $goals = FinanceSavingsGoal::query()
+            $goalTotals = FinanceSavingsGoal::query()
                 ->forTenant($tenant->id)
-                ->whereIn('pocket_id', $accessiblePocketIds)
-                ->get(['id', 'target_amount', 'current_amount', 'status']);
+                ->whereIn('wallet_id', $accessiblePocketIds)
+                ->selectRaw("
+                    COALESCE(SUM(target_amount), 0) as target_total,
+                    COALESCE(SUM(current_amount), 0) as current_total
+                ")
+                ->first();
 
-            $wishes = WalletWish::query()
-                ->forTenant($tenant->id)
-                ->get(['id', 'estimated_amount', 'priority', 'status']);
+            $lockedFunds = (float) $goalTotals->current_total;
+            $goalTargetTotal = (float) $goalTotals->target_total;
 
+            // 4. Transactions (SQL)
             $visibleTransactions = $this->access->visibleTransactionsQuery($tenant, $member)
                 ->forMonth($currentMonth)
                 ->where(function ($query) {
                     $query->whereNull('is_internal_transfer')->orWhere('is_internal_transfer', false);
                 });
 
-            $totals = (clone $visibleTransactions)
+            $transactionTotals = (clone $visibleTransactions)
                 ->selectRaw("
                     COALESCE(SUM(CASE WHEN type = 'pemasukan' THEN amount_base ELSE 0 END), 0) as income,
                     COALESCE(SUM(CASE WHEN type = 'pengeluaran' THEN amount_base ELSE 0 END), 0) as spending
                 ")
                 ->first();
 
-            $totalAssets = (float) $accounts
-                ->filter(fn ($account) => ! in_array($account->type, ['credit_card', 'paylater'], true))
-                ->sum(fn ($account) => (float) $account->current_balance);
-
-            $cashBankAssets = (float) $accounts
-                ->filter(fn ($account) => in_array($account->type, ['cash', 'bank'], true))
-                ->sum(fn ($account) => max((float) $account->current_balance, 0));
-
-            $totalLiabilities = (float) $accounts
-                ->filter(fn ($account) => in_array($account->type, ['credit_card', 'paylater'], true))
-                ->sum(fn ($account) => abs((float) $account->current_balance));
-
-            $lockedFunds = (float) $goals->sum(fn ($goal) => (float) $goal->current_amount);
-            $freeFunds = max($totalAssets - $lockedFunds, 0);
-            $income = (float) ($totals->income ?? 0);
-            $spending = (float) ($totals->spending ?? 0);
+            $income = (float) $transactionTotals->income;
+            $spending = (float) $transactionTotals->spending;
             $monthlySaving = $income - $spending;
-            $liquidityRatio = $totalAssets > 0 ? round(($cashBankAssets / $totalAssets) * 100, 1) : 0.0;
-            $savingRate = $income > 0 ? round(($monthlySaving / $income) * 100, 1) : 0.0;
-            $debtRatio = $totalAssets > 0 ? round(($totalLiabilities / $totalAssets) * 100, 1) : 0.0;
 
-            $assetAllocation = $accounts
-                ->filter(fn ($account) => ! in_array($account->type, ['credit_card', 'paylater'], true))
-                ->groupBy('type')
-                ->map(function ($group, $type) {
-                    return [
-                        'label' => (string) $type,
-                        'value' => (float) $group->sum(fn ($account) => max((float) $account->current_balance, 0)),
-                    ];
-                })
-                ->filter(fn (array $item) => $item['value'] > 0)
-                ->values()
-                ->all();
+            // 5. Wishlist
+            $wishes = WalletWish::query()
+                ->forTenant($tenant->id)
+                ->get(['id', 'estimated_amount', 'priority', 'status']);
+
+            $highPriorityWishesTotal = (float) $wishes
+                ->filter(fn ($wish) => $wish->priority === 'high' && $wish->status !== 'converted')
+                ->sum(fn ($wish) => (float) $wish->estimated_amount);
+
+            $freeFunds = max($totalAssets - $lockedFunds, 0);
+
+            $dto = new SummaryDTO(
+                income: $income,
+                spending: $spending,
+                monthlySaving: $monthlySaving,
+                totalAssets: $totalAssets,
+                cashBankAssets: $cashBankAssets,
+                totalLiabilities: $totalLiabilities,
+                lockedFunds: $lockedFunds,
+                freeFunds: $freeFunds,
+                liquidityRatio: $totalAssets > 0 ? round(($cashBankAssets / $totalAssets) * 100, 1) : 0.0,
+                savingRate: $income > 0 ? round(($monthlySaving / $income) * 100, 1) : 0.0,
+                debtRatio: $totalAssets > 0 ? round(($totalLiabilities / $totalAssets) * 100, 1) : 0.0,
+                assetAllocation: $assetAllocation,
+            );
 
             $wishlistQuickView = $wishes
                 ->filter(fn ($wish) => $wish->status !== 'converted')
@@ -99,29 +125,17 @@ class WalletSummaryService
                 ])
                 ->all();
 
-            return [
+            return array_merge($dto->toArray(), [
                 'period_month' => $currentMonth,
-                'total_assets' => round($totalAssets, 2),
-                'cash_bank_assets' => round($cashBankAssets, 2),
-                'total_liabilities' => round($totalLiabilities, 2),
                 'net_worth' => round($totalAssets - $totalLiabilities, 2),
-                'locked_funds' => round($lockedFunds, 2),
-                'free_funds' => round($freeFunds, 2),
-                'liquidity_ratio' => $liquidityRatio,
-                'monthly_income' => round($income, 2),
-                'monthly_spending' => round($spending, 2),
-                'monthly_saving' => round($monthlySaving, 2),
-                'saving_rate' => $savingRate,
-                'debt_ratio' => $debtRatio,
+                'monthly_income' => round($income, 2), // Compatibility
+                'monthly_spending' => round($spending, 2), // Compatibility
                 'debt_status_total' => round($totalLiabilities, 2),
-                'high_priority_wishes' => (float) $wishes
-                    ->filter(fn ($wish) => $wish->priority === 'high' && $wish->status !== 'converted')
-                    ->sum(fn ($wish) => (float) $wish->estimated_amount),
-                'goal_target_total' => (float) $goals->sum(fn ($goal) => (float) $goal->target_amount),
-                'goal_current_total' => (float) $goals->sum(fn ($goal) => (float) $goal->current_amount),
-                'asset_allocation' => $assetAllocation,
+                'high_priority_wishes' => $highPriorityWishesTotal,
+                'goal_target_total' => $goalTargetTotal,
+                'goal_current_total' => $lockedFunds,
                 'wishlist_quick_view' => $wishlistQuickView,
-            ];
+            ]);
         });
     }
 }

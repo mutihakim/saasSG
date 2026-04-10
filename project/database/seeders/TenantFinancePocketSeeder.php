@@ -2,16 +2,16 @@
 
 namespace Database\Seeders;
 
-use App\Models\FinancePocket;
+use App\Models\FinanceWallet;
 use App\Models\Tenant;
 use App\Models\TenantBankAccount;
 use App\Models\TenantMember;
-use App\Services\WalletPocketService;
+use App\Services\Finance\Wallet\FinanceWalletService;
 use Database\Seeders\Support\FamilyFinanceSeed;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
-class TenantFinancePocketSeeder extends Seeder
+class TenantFinanceWalletSeeder extends Seeder
 {
     /**
      * Map wallet names to appropriate icons
@@ -112,14 +112,14 @@ class TenantFinancePocketSeeder extends Seeder
     }
     public function run(): void
     {
-        $service = app(WalletPocketService::class);
+        $service = app(FinanceWalletService::class);
         $colors = [
             '#fef08a', '#06b6d4', '#fbcfe8', '#86efac', '#fcd34d', '#93c5fd', '#c4b5fd', '#ffedd5', '#e2e8f0',
         ];
 
         Tenant::query()->orderBy('id')->each(function (Tenant $tenant) use ($service, $colors): void {
             // Update existing wallets that have default/null icons
-            FinancePocket::query()
+            FinanceWallet::query()
                 ->where('tenant_id', $tenant->id)
                 ->where(function ($query) {
                     $query->whereNull('icon_key')
@@ -128,7 +128,7 @@ class TenantFinancePocketSeeder extends Seeder
                         ->orWhere('icon_key', 'ri-wallet-3-line');
                 })
                 ->get()
-                ->each(function (FinancePocket $pocket) {
+                ->each(function (FinanceWallet $pocket) {
                     $newIcon = $this->getIconForWallet($pocket->name);
                     $pocket->update(['icon_key' => $newIcon]);
                 });
@@ -164,7 +164,7 @@ class TenantFinancePocketSeeder extends Seeder
                 foreach ($pockets as $seed) {
                     FamilyFinanceSeed::assertCompactName($seed['name']);
 
-                    $pocket = FinancePocket::query()->updateOrCreate(
+                    $pocket = FinanceWallet::query()->updateOrCreate(
                         [
                             'tenant_id' => $tenant->id,
                             'real_account_id' => $account->id,
@@ -195,7 +195,7 @@ class TenantFinancePocketSeeder extends Seeder
         });
     }
 
-    private function syncPocketAccess(FinancePocket $pocket, $members, string $scope): void
+    private function syncPocketAccess(FinanceWallet $pocket, $members, string $scope): void
     {
         if ($scope === 'private') {
             $sync = [];
@@ -238,7 +238,7 @@ class TenantFinancePocketSeeder extends Seeder
     {
         do {
             $reference = 'WLT-' . strtoupper(Str::random(8));
-        } while (FinancePocket::query()->where('tenant_id', $tenantId)->where('reference_code', $reference)->exists());
+        } while (FinanceWallet::query()->where('tenant_id', $tenantId)->where('reference_code', $reference)->exists());
 
         return $reference;
     }

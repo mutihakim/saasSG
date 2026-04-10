@@ -2,22 +2,24 @@ import fs from 'node:fs';
 import path from 'node:path';
 
 const root = process.cwd();
-const pagesDir = path.join(root, 'resources', 'js', 'Pages');
+const pagesDir = path.join(root, 'resources', 'js', 'pages');
 const packageJsonPath = path.join(root, 'package.json');
 const legacyAdminShellDir = path.join(root, 'resources', 'js', 'admin-shell');
-const allowedPageRoots = new Set(['Admin', 'Auth', 'Landing', 'Tenant']);
+const requiredRootDirs = ['components', 'layouts', 'pages', 'core', 'features'];
+const forbiddenLegacyRootDirs = ['Components', 'Layouts', 'Pages', 'common'];
+const allowedPageRoots = new Set(['admin', 'auth', 'landing', 'tenant']);
 const bannedFiles = [
-  path.join(root, 'resources', 'js', 'Layouts', 'HorizontalLayout'),
-  path.join(root, 'resources', 'js', 'Layouts', 'Header.tsx'),
-  path.join(root, 'resources', 'js', 'Layouts', 'Footer.tsx'),
-  path.join(root, 'resources', 'js', 'Layouts', 'Sidebar.tsx'),
-  path.join(root, 'resources', 'js', 'Layouts', 'index.tsx'),
-  path.join(root, 'resources', 'js', 'Layouts', 'TwoColumnLayout'),
-  path.join(root, 'resources', 'js', 'Layouts', 'VerticalLayouts'),
-  path.join(root, 'resources', 'js', 'Layouts', 'LayoutMenuData.tsx'),
-  path.join(root, 'resources', 'js', 'Pages', 'Profile'),
-  path.join(root, 'resources', 'js', 'Pages', 'Landing', 'Job_Landing'),
-  path.join(root, 'resources', 'js', 'Pages', 'Landing', 'NFTLanding'),
+  path.join(root, 'resources', 'js', 'layouts', 'HorizontalLayout'),
+  path.join(root, 'resources', 'js', 'layouts', 'Header.tsx'),
+  path.join(root, 'resources', 'js', 'layouts', 'Footer.tsx'),
+  path.join(root, 'resources', 'js', 'layouts', 'Sidebar.tsx'),
+  path.join(root, 'resources', 'js', 'layouts', 'index.tsx'),
+  path.join(root, 'resources', 'js', 'layouts', 'TwoColumnLayout'),
+  path.join(root, 'resources', 'js', 'layouts', 'VerticalLayouts'),
+  path.join(root, 'resources', 'js', 'layouts', 'LayoutMenuData.tsx'),
+  path.join(root, 'resources', 'js', 'pages', 'Profile'),
+  path.join(root, 'resources', 'js', 'pages', 'landing', 'Job_Landing'),
+  path.join(root, 'resources', 'js', 'pages', 'landing', 'NFTLanding'),
   path.join(root, 'resources', 'js', 'common', 'data'),
   path.join(root, 'resources', 'scss', 'admin-shell.scss'),
   path.join(root, 'resources', 'scss', 'pages', '_blog.scss'),
@@ -51,13 +53,13 @@ const bannedFiles = [
 ];
 const bannedImports = [
   'admin-shell/',
-  'Layouts/HorizontalLayout',
-  'Layouts/TwoColumnLayout',
-  'Layouts/VerticalLayouts',
-  'Layouts/LayoutMenuData',
+  'layouts/HorizontalLayout',
+  'layouts/TwoColumnLayout',
+  'layouts/VerticalLayouts',
+  'layouts/LayoutMenuData',
   'slices/layouts',
   'common/data',
-  'Components/Common/RightSidebar',
+  'components/common/RightSidebar',
 ];
 const bannedPackages = [
   '@reduxjs/toolkit',
@@ -69,6 +71,20 @@ const bannedPackages = [
 function fail(message) {
   console.error(`Cleanliness check failed: ${message}`);
   process.exitCode = 1;
+}
+
+for (const requiredDir of requiredRootDirs) {
+  const requiredPath = path.join(root, 'resources', 'js', requiredDir);
+  if (!fs.existsSync(requiredPath)) {
+    fail(`required enterprise root missing: ${path.relative(root, requiredPath)}`);
+  }
+}
+
+for (const legacyDir of forbiddenLegacyRootDirs) {
+  const legacyPath = path.join(root, 'resources', 'js', legacyDir);
+  if (fs.existsSync(legacyPath)) {
+    fail(`legacy root must not exist: ${path.relative(root, legacyPath)}`);
+  }
 }
 
 const pageRoots = fs.readdirSync(pagesDir, { withFileTypes: true })

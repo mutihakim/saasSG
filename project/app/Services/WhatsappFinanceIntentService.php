@@ -3,15 +3,15 @@
 namespace App\Services;
 
 use App\Exceptions\WhatsappIntentExtractionException;
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantMember;
-use App\Models\TenantWhatsappCommandContext;
-use App\Models\TenantWhatsappIntent;
-use App\Models\TenantWhatsappMedia;
-use App\Models\TenantWhatsappMessage;
-use App\Models\TenantWhatsappNotification;
-use App\Models\TenantWhatsappSetting;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
+use App\Models\Whatsapp\TenantWhatsappCommandContext;
+use App\Models\Whatsapp\TenantWhatsappIntent;
+use App\Models\Whatsapp\TenantWhatsappMedia;
+use App\Models\Whatsapp\TenantWhatsappMessage;
+use App\Models\Whatsapp\TenantWhatsappNotification;
+use App\Models\Whatsapp\TenantWhatsappSetting;
 use App\Services\Finance\FinanceAccessService;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;

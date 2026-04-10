@@ -13,7 +13,7 @@ class UpdateFinanceTransactionRequest extends FormRequest
 
     public function rules(): array
     {
-        $tenantId = $this->route('tenant') instanceof \App\Models\Tenant
+        $tenantId = $this->route('tenant') instanceof \App\Models\Tenant\Tenant
             ? $this->route('tenant')->id
             : $this->route('tenant');
 
@@ -48,13 +48,13 @@ class UpdateFinanceTransactionRequest extends FormRequest
             'owner_member_id'    => ['nullable', 'integer', \Illuminate\Validation\Rule::exists('tenant_members', 'id')->where('tenant_id', $tenantId)],
             'recipient_member_id'=> ['nullable', 'integer', \Illuminate\Validation\Rule::exists('tenant_members', 'id')->where('tenant_id', $tenantId)],
             'transfer_mode'      => ['nullable', 'in:wallet,member,account'],
-            'from_account_id'    => ['nullable', 'string', 'size:26', \Illuminate\Validation\Rule::requiredIf(fn () => $this->input('type') === 'transfer' && ! $this->filled('from_pocket_id'))],
-            'to_account_id'      => ['nullable', 'string', 'size:26', 'different:from_account_id', \Illuminate\Validation\Rule::requiredIf(fn () => $this->input('type') === 'transfer' && ! $this->filled('to_pocket_id'))],
-            'from_pocket_id'     => ['nullable', 'string', 'size:26', \Illuminate\Validation\Rule::requiredIf(fn () => $this->input('type') === 'transfer' && ! $this->filled('from_account_id')), \Illuminate\Validation\Rule::exists('finance_pockets', 'id')->where('tenant_id', $tenantId)],
-            'to_pocket_id'       => ['nullable', 'string', 'size:26', 'different:from_pocket_id', \Illuminate\Validation\Rule::requiredIf(fn () => $this->input('type') === 'transfer' && ! $this->filled('to_account_id')), \Illuminate\Validation\Rule::exists('finance_pockets', 'id')->where('tenant_id', $tenantId)],
+            'from_account_id'    => ['nullable', 'string', 'size:26', \Illuminate\Validation\Rule::requiredIf(fn () => $this->input('type') === 'transfer' && ! $this->filled('from_wallet_id'))],
+            'to_account_id'      => ['nullable', 'string', 'size:26', 'different:from_account_id', \Illuminate\Validation\Rule::requiredIf(fn () => $this->input('type') === 'transfer' && ! $this->filled('to_wallet_id'))],
+            'from_wallet_id'     => ['nullable', 'string', 'size:26', \Illuminate\Validation\Rule::requiredIf(fn () => $this->input('type') === 'transfer' && ! $this->filled('from_account_id')), \Illuminate\Validation\Rule::exists('finance_wallets', 'id')->where('tenant_id', $tenantId)],
+            'to_wallet_id'       => ['nullable', 'string', 'size:26', 'different:from_wallet_id', \Illuminate\Validation\Rule::requiredIf(fn () => $this->input('type') === 'transfer' && ! $this->filled('to_account_id')), \Illuminate\Validation\Rule::exists('finance_wallets', 'id')->where('tenant_id', $tenantId)],
             'budget_id'          => ['nullable', 'string', 'size:26', \Illuminate\Validation\Rule::exists('tenant_budgets', 'id')->where('tenant_id', $tenantId)],
             'bank_account_id'    => ['nullable', 'string', 'size:26', \Illuminate\Validation\Rule::exists('tenant_bank_accounts', 'id')->where('tenant_id', $tenantId)],
-            'pocket_id'          => ['nullable', 'string', 'size:26', \Illuminate\Validation\Rule::exists('finance_pockets', 'id')->where('tenant_id', $tenantId)],
+            'wallet_id'          => ['nullable', 'string', 'size:26', \Illuminate\Validation\Rule::exists('finance_wallets', 'id')->where('tenant_id', $tenantId)],
             'is_internal_transfer' => ['nullable', 'boolean'],
             'transfer_pair_id'   => ['nullable', 'string', 'size:26'],
             'tags'               => ['nullable', 'array', 'max:10'],

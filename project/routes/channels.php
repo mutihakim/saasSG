@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\TenantMember;
+use App\Models\Tenant\TenantMember;
 use Illuminate\Support\Facades\Broadcast;
 
 /*

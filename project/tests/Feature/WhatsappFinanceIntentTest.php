@@ -2,16 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantAttachment;
-use App\Models\TenantBankAccount;
-use App\Models\TenantCategory;
-use App\Models\TenantCurrency;
-use App\Models\TenantMember;
-use App\Models\TenantWhatsappIntent;
-use App\Models\TenantWhatsappMedia;
-use App\Models\User;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Misc\TenantAttachment;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Master\TenantCategory;
+use App\Models\Master\TenantCurrency;
+use App\Models\Tenant\TenantMember;
+use App\Models\Whatsapp\TenantWhatsappIntent;
+use App\Models\Whatsapp\TenantWhatsappMedia;
+use App\Models\Identity\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
@@ -212,7 +212,7 @@ class WhatsappFinanceIntentTest extends TestCase
         $this->assertSame('openrouter', data_get($intent->error_payload, 'driver'));
         $this->assertNull($intent->extracted_payload);
 
-        $latestOutgoing = \App\Models\TenantWhatsappMessage::query()
+        $latestOutgoing = \App\Models\Whatsapp\TenantWhatsappMessage::query()
             ->where('tenant_id', $this->tenant->id)
             ->where('direction', 'outgoing')
             ->where('recipient_jid', '628222222222@c.us')
@@ -235,14 +235,13 @@ class WhatsappFinanceIntentTest extends TestCase
             'status' => 'parsed',
             'raw_input' => ['text' => '/tx makan 10rb'],
             'extracted_payload' => ['amount' => 10000, 'type' => 'pengeluaran'],
-            'expires_at' => now()->addHour(),
+            'expires_at' => now()->addDay(),
         ]);
 
         Sanctum::actingAs($this->memberUser);
 
         $allowed = $this->withHeader('X-Tenant', $this->tenant->slug)
             ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/whatsapp-intents/{$intent->token}");
-
         $allowed->assertOk()
             ->assertJsonPath('data.intent.id', $intent->id);
 
@@ -267,7 +266,7 @@ class WhatsappFinanceIntentTest extends TestCase
             'status' => 'parsed',
             'raw_input' => ['text' => '/tx makan 10rb'],
             'extracted_payload' => ['amount' => 10000, 'type' => 'pengeluaran'],
-            'expires_at' => now()->addHour(),
+            'expires_at' => now()->addDay(),
         ]);
 
         Sanctum::actingAs($this->owner);
@@ -292,7 +291,7 @@ class WhatsappFinanceIntentTest extends TestCase
             'recipient_jid' => $this->member->whatsapp_jid,
         ]);
 
-        $messageCountAfterFirstSubmit = \App\Models\TenantWhatsappMessage::query()
+        $messageCountAfterFirstSubmit = \App\Models\Whatsapp\TenantWhatsappMessage::query()
             ->where('tenant_id', $this->tenant->id)
             ->where('direction', 'outgoing')
             ->where('recipient_jid', $this->member->whatsapp_jid)
@@ -307,7 +306,7 @@ class WhatsappFinanceIntentTest extends TestCase
 
         $secondResponse->assertOk();
 
-        $messageCountAfterSecondSubmit = \App\Models\TenantWhatsappMessage::query()
+        $messageCountAfterSecondSubmit = \App\Models\Whatsapp\TenantWhatsappMessage::query()
             ->where('tenant_id', $this->tenant->id)
             ->where('direction', 'outgoing')
             ->where('recipient_jid', $this->member->whatsapp_jid)
@@ -328,7 +327,7 @@ class WhatsappFinanceIntentTest extends TestCase
             'status' => 'parsed',
             'raw_input' => ['text' => '/bulk belanja mingguan'],
             'extracted_payload' => ['total' => 35000],
-            'expires_at' => now()->addHour(),
+            'expires_at' => now()->addDay(),
         ]);
 
         Sanctum::actingAs($this->owner);
@@ -342,7 +341,7 @@ class WhatsappFinanceIntentTest extends TestCase
 
         $response->assertOk();
 
-        $message = \App\Models\TenantWhatsappMessage::query()
+        $message = \App\Models\Whatsapp\TenantWhatsappMessage::query()
             ->where('tenant_id', $this->tenant->id)
             ->where('direction', 'outgoing')
             ->where('recipient_jid', $this->member->whatsapp_jid)
@@ -412,7 +411,7 @@ class WhatsappFinanceIntentTest extends TestCase
             'intent_type' => 'single_transaction',
             'status' => 'parsed',
             'raw_input' => ['media_ids' => [$media->id]],
-            'expires_at' => now()->addHour(),
+            'expires_at' => now()->addDay(),
         ]);
 
         Sanctum::actingAs($this->owner);
@@ -516,7 +515,7 @@ class WhatsappFinanceIntentTest extends TestCase
             'intent_type' => 'bulk_shopping',
             'status' => 'parsed',
             'raw_input' => ['media_ids' => [$media->id]],
-            'expires_at' => now()->addHour(),
+            'expires_at' => now()->addDay(),
         ]);
 
         Sanctum::actingAs($this->owner);

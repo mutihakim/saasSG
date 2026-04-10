@@ -2,18 +2,18 @@
 
 namespace Tests\Feature;
 
-use App\Models\FinancePocket;
-use App\Models\FinanceSavingsGoal;
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantBankAccount;
-use App\Models\TenantCategory;
-use App\Models\TenantCurrency;
-use App\Models\TenantMember;
-use App\Models\TenantBudget;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Finance\FinanceSavingsGoal;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Master\TenantCategory;
+use App\Models\Master\TenantCurrency;
+use App\Models\Tenant\TenantMember;
+use App\Models\Finance\TenantBudget;
 use App\Services\Finance\MonthlyReviewService;
-use App\Models\User;
-use App\Models\WalletWish;
+use App\Models\Identity\User;
+use App\Models\Finance\WalletWish;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Spatie\Permission\Models\Permission;
 use Spatie\Permission\PermissionRegistrar;
@@ -92,7 +92,7 @@ class WalletApiTest extends TestCase
         $response->assertCreated();
         $accountId = $response->json('data.account.id');
 
-        $this->assertDatabaseHas('finance_pockets', [
+        $this->assertDatabaseHas('finance_wallets', [
             'tenant_id' => $this->tenant->id,
             'real_account_id' => $accountId,
             'is_system' => true,
@@ -141,10 +141,10 @@ class WalletApiTest extends TestCase
             ]);
 
         $response->assertCreated();
-        $transactionPocketId = $response->json('data.transaction.pocket_id');
+        $transactionPocketId = $response->json('data.transaction.wallet_id');
 
         $this->assertNotNull($transactionPocketId);
-        $this->assertDatabaseHas('finance_pockets', [
+        $this->assertDatabaseHas('finance_wallets', [
             'id' => $transactionPocketId,
             'real_account_id' => $account->id,
             'is_system' => true,
@@ -170,8 +170,8 @@ class WalletApiTest extends TestCase
             'row_version' => 1,
         ]);
 
-        app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($account);
-        $mainPocket = FinancePocket::query()
+        app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
+        $mainPocket = FinanceWallet::query()
             ->where('tenant_id', $this->tenant->id)
             ->where('real_account_id', $account->id)
             ->where('is_system', true)
@@ -179,7 +179,7 @@ class WalletApiTest extends TestCase
 
         FinanceSavingsGoal::create([
             'tenant_id' => $this->tenant->id,
-            'pocket_id' => $mainPocket->id,
+            'wallet_id' => $mainPocket->id,
             'owner_member_id' => $this->ownerMembership->id,
             'name' => 'Emergency',
             'target_amount' => 300000,
@@ -193,7 +193,7 @@ class WalletApiTest extends TestCase
             'owner_member_id' => $this->ownerMembership->id,
             'created_by' => $this->ownerMembership->id,
             'bank_account_id' => $account->id,
-            'pocket_id' => $mainPocket->id,
+            'wallet_id' => $mainPocket->id,
             'type' => 'pemasukan',
             'transaction_date' => now()->toDateString(),
             'currency_id' => $currencyId,
@@ -210,7 +210,7 @@ class WalletApiTest extends TestCase
             'owner_member_id' => $this->ownerMembership->id,
             'created_by' => $this->ownerMembership->id,
             'bank_account_id' => $account->id,
-            'pocket_id' => $mainPocket->id,
+            'wallet_id' => $mainPocket->id,
             'type' => 'pengeluaran',
             'transaction_date' => now()->toDateString(),
             'currency_id' => $currencyId,
@@ -234,7 +234,7 @@ class WalletApiTest extends TestCase
 
         $pocketResponse = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets/{$mainPocket->id}");
+            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets/{$mainPocket->id}");
 
         $pocketResponse->assertOk()
             ->assertJsonPath('data.wallet.id', $mainPocket->id)
@@ -260,11 +260,11 @@ class WalletApiTest extends TestCase
             'row_version' => 1,
         ]);
 
-        app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($account);
+        app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets", [
                 'name' => 'Dana Umroh',
                 'type' => 'personal',
                 'scope' => 'private',
@@ -294,10 +294,10 @@ class WalletApiTest extends TestCase
             'row_version' => 1,
         ]);
 
-        app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($account);
+        app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
 
         foreach (range(1, 12) as $i) {
-            FinancePocket::create([
+            FinanceWallet::create([
                 'tenant_id' => $this->tenant->id,
                 'real_account_id' => $account->id,
                 'owner_member_id' => $this->ownerMembership->id,
@@ -318,7 +318,7 @@ class WalletApiTest extends TestCase
         foreach (range(1, 12) as $i) {
             FinanceSavingsGoal::create([
                 'tenant_id' => $this->tenant->id,
-                'pocket_id' => FinancePocket::query()->where('tenant_id', $this->tenant->id)->where('is_system', false)->firstOrFail()->id,
+                'wallet_id' => FinanceWallet::query()->where('tenant_id', $this->tenant->id)->where('is_system', false)->firstOrFail()->id,
                 'owner_member_id' => $this->ownerMembership->id,
                 'name' => "Goal {$i}",
                 'target_amount' => 100000,
@@ -338,7 +338,7 @@ class WalletApiTest extends TestCase
 
         $walletResponse = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets", [
                 'name' => 'Wallet Unlimited',
                 'type' => 'project',
                 'scope' => 'private',
@@ -353,7 +353,7 @@ class WalletApiTest extends TestCase
         $goalResponse = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
             ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/goals", [
-                'pocket_id' => $walletId,
+                'wallet_id' => $walletId,
                 'name' => 'Goal Unlimited',
                 'target_amount' => 250000,
             ]);
@@ -420,7 +420,7 @@ class WalletApiTest extends TestCase
             'row_version' => 1,
         ]);
 
-        $wallet = FinancePocket::create([
+        $wallet = FinanceWallet::create([
             'tenant_id' => $this->tenant->id,
             'real_account_id' => $account->id,
             'owner_member_id' => $this->ownerMembership->id,
@@ -460,7 +460,7 @@ class WalletApiTest extends TestCase
 
         $this->assertDatabaseHas('finance_savings_goals', [
             'tenant_id' => $this->tenant->id,
-            'pocket_id' => $wallet->id,
+            'wallet_id' => $wallet->id,
             'name' => 'Umroh 2027',
         ]);
     }
@@ -480,7 +480,7 @@ class WalletApiTest extends TestCase
             'row_version' => 1,
         ]);
 
-        $wallet = FinancePocket::create([
+        $wallet = FinanceWallet::create([
             'tenant_id' => $this->tenant->id,
             'real_account_id' => $account->id,
             'owner_member_id' => $this->ownerMembership->id,
@@ -501,7 +501,7 @@ class WalletApiTest extends TestCase
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
             ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/goals", [
-                'pocket_id' => $wallet->id,
+                'wallet_id' => $wallet->id,
                 'name' => 'Modal Booth Baru',
                 'target_amount' => 1500000,
                 'target_date' => now()->addMonth()->toDateString(),
@@ -539,7 +539,7 @@ class WalletApiTest extends TestCase
             'row_version' => 1,
         ]);
 
-        $sourceWallet = FinancePocket::create([
+        $sourceWallet = FinanceWallet::create([
             'tenant_id' => $this->tenant->id,
             'real_account_id' => $sourceAccount->id,
             'owner_member_id' => $this->ownerMembership->id,
@@ -557,7 +557,7 @@ class WalletApiTest extends TestCase
             'row_version' => 1,
         ]);
 
-        $goalWallet = FinancePocket::create([
+        $goalWallet = FinanceWallet::create([
             'tenant_id' => $this->tenant->id,
             'real_account_id' => $goalAccount->id,
             'owner_member_id' => $this->ownerMembership->id,
@@ -586,7 +586,7 @@ class WalletApiTest extends TestCase
 
         $goal = FinanceSavingsGoal::create([
             'tenant_id' => $this->tenant->id,
-            'pocket_id' => $goalWallet->id,
+            'wallet_id' => $goalWallet->id,
             'owner_member_id' => $this->ownerMembership->id,
             'name' => 'Booth Pameran',
             'target_amount' => 1200000,
@@ -598,7 +598,7 @@ class WalletApiTest extends TestCase
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
             ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/goals/{$goal->id}/fund", [
-                'source_pocket_id' => $sourceWallet->id,
+                'source_wallet_id' => $sourceWallet->id,
                 'amount' => 300000,
                 'transaction_date' => now()->toDateString(),
                 'description' => 'Top up booth',
@@ -649,7 +649,7 @@ class WalletApiTest extends TestCase
             'row_version' => 1,
         ]);
 
-        $mainPocket = app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($account);
+        $mainPocket = app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
@@ -680,8 +680,8 @@ class WalletApiTest extends TestCase
 
         $this->assertSame('shared', $mainPocket->scope);
         $this->assertSame($this->ownerMembership->id, $mainPocket->owner_member_id);
-        $this->assertDatabaseHas('finance_pocket_member_access', [
-            'finance_pocket_id' => $mainPocket->id,
+        $this->assertDatabaseHas('finance_wallet_member_access', [
+            'finance_wallet_id' => $mainPocket->id,
             'member_id' => $this->memberAbi->id,
             'can_view' => true,
             'can_use' => true,
@@ -706,7 +706,7 @@ class WalletApiTest extends TestCase
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets", [
                 'name' => 'Tim Operasional',
                 'type' => 'family',
                 'purpose_type' => 'spending',
@@ -740,7 +740,7 @@ class WalletApiTest extends TestCase
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets", [
                 'name' => 'Dana Sekolah',
                 'type' => 'school fund',
                 'purpose_type' => 'saving',
@@ -764,8 +764,8 @@ class WalletApiTest extends TestCase
 
         $walletId = $response->json('data.wallet.id');
 
-        $this->assertDatabaseHas('finance_pocket_member_access', [
-            'finance_pocket_id' => $walletId,
+        $this->assertDatabaseHas('finance_wallet_member_access', [
+            'finance_wallet_id' => $walletId,
             'member_id' => $this->memberAbi->id,
             'can_view' => true,
             'can_use' => true,
@@ -792,7 +792,7 @@ class WalletApiTest extends TestCase
             $this->memberAbi->id => ['can_view' => true, 'can_use' => true, 'can_manage' => false],
         ]);
 
-        $wallet = FinancePocket::create([
+        $wallet = FinanceWallet::create([
             'tenant_id' => $this->tenant->id,
             'real_account_id' => $account->id,
             'owner_member_id' => $this->ownerMembership->id,
@@ -833,8 +833,8 @@ class WalletApiTest extends TestCase
 
         $this->assertSame('private', $wallet->scope);
         $this->assertSame($this->ownerMembership->id, $wallet->owner_member_id);
-        $this->assertDatabaseMissing('finance_pocket_member_access', [
-            'finance_pocket_id' => $wallet->id,
+        $this->assertDatabaseMissing('finance_wallet_member_access', [
+            'finance_wallet_id' => $wallet->id,
             'member_id' => $this->memberAbi->id,
         ]);
     }
@@ -854,7 +854,7 @@ class WalletApiTest extends TestCase
             'row_version' => 1,
         ]);
 
-        $mainPocket = app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($account);
+        $mainPocket = app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
 
         $budget = TenantBudget::create([
             'tenant_id' => $this->tenant->id,
@@ -876,7 +876,7 @@ class WalletApiTest extends TestCase
 
         $response = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets/{$mainPocket->id}", [
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets/{$mainPocket->id}", [
                 'name' => 'Hacked Name',
                 'type' => 'personal',
                 'purpose_type' => 'spending',
@@ -933,7 +933,7 @@ class WalletApiTest extends TestCase
 
         $wallet = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets", [
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets", [
                 'name' => 'Audit Wallet',
                 'type' => 'personal',
                 'purpose_type' => 'saving',
@@ -952,7 +952,7 @@ class WalletApiTest extends TestCase
 
         $updatedWallet = $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets/{$wallet['id']}", [
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets/{$wallet['id']}", [
                 'name' => 'Audit Wallet Updated',
                 'type' => 'personal',
                 'purpose_type' => 'saving',
@@ -1075,7 +1075,7 @@ class WalletApiTest extends TestCase
             'target_id' => (string) $deleteWish->id,
         ]);
 
-        $mainPocket = app(\App\Services\Finance\Wallet\WalletPocketService::class)->ensureMainPocket($account);
+        $mainPocket = app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
         $category = TenantCategory::create([
             'tenant_id' => $this->tenant->id,
             'module' => 'finance',
@@ -1100,7 +1100,7 @@ class WalletApiTest extends TestCase
             'currency_id' => TenantCurrency::where('tenant_id', $this->tenant->id)->first()->id,
             'category_id' => $category->id,
             'bank_account_id' => $account->id,
-            'pocket_id' => $mainPocket->id,
+            'wallet_id' => $mainPocket->id,
             'description' => 'Prev month expense',
             'status' => 'terverifikasi',
             'row_version' => 1,
@@ -1123,7 +1123,7 @@ class WalletApiTest extends TestCase
 
         $this->actingAs($this->owner)
             ->withHeader('X-Tenant', $this->tenant->slug)
-            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/finance/pockets/{$updatedWallet['id']}")
+            ->deleteJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets/{$updatedWallet['id']}")
             ->assertOk();
 
         $this->assertDatabaseHas('activity_logs', [

@@ -3,13 +3,13 @@
 namespace App\Services\Finance\Transactions;
 
 use App\Http\Requests\StoreFinanceTransactionRequest;
-use App\Models\ActivityLog;
-use App\Models\FinanceTransaction;
-use App\Models\FinancePocket;
-use App\Models\Tenant;
-use App\Models\TenantBankAccount;
-use App\Models\TenantBudget;
-use App\Models\TenantMember;
+use App\Models\Misc\ActivityLog;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Finance\TenantBudget;
+use App\Models\Tenant\TenantMember;
 use App\Services\Finance\FinanceAccessService;
 use App\Services\Finance\FinanceLedgerService;
 use App\Services\Finance\FinanceSummaryService;
@@ -100,8 +100,8 @@ class FinanceTransactionStoreService
         }
 
         $ownerMember = $this->access->resolveTransactionOwner($member, $tenant, $data['owner_member_id'] ?? null);
-        $account = $this->resolver->resolveTransactionAccount($tenant, $member, $data['bank_account_id'] ?? null, $data['pocket_id'] ?? null);
-        $pocket = $this->resolver->resolveTransactionPocket($tenant, $member, $account, $data['pocket_id'] ?? null);
+        $account = $this->resolver->resolveTransactionAccount($tenant, $member, $data['bank_account_id'] ?? null, $data['wallet_id'] ?? null);
+        $pocket = $this->resolver->resolveTransactionPocket($tenant, $member, $account, $data['wallet_id'] ?? null);
         $budget = $this->resolver->resolveBudgetForPocket($tenant, $member, $data['budget_id'] ?? null, $pocket, $data['transaction_date'] ?? null);
 
         if (! $account) {
@@ -136,8 +136,8 @@ class FinanceTransactionStoreService
                     ->lockForUpdate()
                     ->first();
 
-                /** @var FinancePocket|null $lockedPocket */
-                $lockedPocket = FinancePocket::query()
+                /** @var FinanceWallet|null $lockedPocket */
+                $lockedPocket = FinanceWallet::query()
                     ->whereKey($pocket->id)
                     ->lockForUpdate()
                     ->first();
@@ -167,7 +167,7 @@ class FinanceTransactionStoreService
                     ownerMemberId: $ownerMember?->id,
                     data: array_merge($data, [
                         'bank_account_id' => $lockedAccount->id,
-                        'pocket_id' => $lockedPocket->id,
+                        'wallet_id' => $lockedPocket->id,
                         'budget_id' => $lockedBudget?->id,
                         'budget_status' => $budgetStatus,
                         'budget_delta' => $budgetDelta,
@@ -218,7 +218,7 @@ class FinanceTransactionStoreService
         string $type,
         float $amount,
         TenantBankAccount $account,
-        FinancePocket $pocket,
+        FinanceWallet $pocket,
     ): ?JsonResponse {
         if ($this->isLiabilityType($account->type) || $type !== 'pengeluaran') {
             return null;

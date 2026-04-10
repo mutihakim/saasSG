@@ -221,23 +221,7 @@
     }
 }
 
-// Full Screen
-.fullscreen-enable {
-    [data-toggle="fullscreen"] {
-        .bx-fullscreen::before {
-            content: "\eacb";
-        }
-    }
-}
-
-// Dark mode enable
-[data-bs-theme="dark"] {
-    .light-dark-mode {
-        .bx-moon::before {
-            content: "\ec34";
-        }
-    }
-}
+// Legacy boxicon toggles removed after remixicon standardization.
 
 [data-topbar="dark"] {
     .logo-dark {

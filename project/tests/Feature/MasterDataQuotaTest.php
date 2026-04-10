@@ -2,13 +2,13 @@
 
 namespace Tests\Feature;
 
-use App\Models\Tenant;
-use App\Models\TenantCategory;
-use App\Models\TenantCurrency;
-use App\Models\TenantMember;
-use App\Models\TenantTag;
-use App\Models\TenantUom;
-use App\Models\User;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantCategory;
+use App\Models\Master\TenantCurrency;
+use App\Models\Tenant\TenantMember;
+use App\Models\Master\TenantTag;
+use App\Models\Master\TenantUom;
+use App\Models\Identity\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Config;
 use Spatie\Permission\Models\Permission;

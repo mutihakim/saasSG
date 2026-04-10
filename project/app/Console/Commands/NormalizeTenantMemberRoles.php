@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\Models\Tenant;
+use App\Models\Tenant\Tenant;
 use App\Services\TenantRoleSyncService;
 use Illuminate\Console\Command;
 

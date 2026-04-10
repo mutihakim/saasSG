@@ -2,9 +2,9 @@
 
 namespace App\Services\Finance\Transactions;
 
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantMember;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
 use App\Services\Finance\FinanceAccessService;
 use App\Services\Finance\FinanceSummaryService;
 use Illuminate\Database\Eloquent\Builder;
@@ -27,6 +27,7 @@ class FinanceTransactionQueryService
     public function applyFilters(Builder $query, Request|array $input): Builder
     {
         $filters = $input instanceof Request ? $input->all() : $input;
+        $walletId = $filters['wallet_id'] ?? $filters['pocket_id'] ?? null;
 
         return $query
             ->when($filters['search'] ?? null, fn (Builder $builder, string $search) => $builder->search($search))
@@ -35,7 +36,7 @@ class FinanceTransactionQueryService
             ->when($filters['currency_code'] ?? null, fn (Builder $builder, string $currencyCode) => $builder->byCurrency($currencyCode))
             ->when($filters['payment_method'] ?? null, fn (Builder $builder, string $paymentMethod) => $builder->where('payment_method', $paymentMethod))
             ->when($filters['bank_account_id'] ?? null, fn (Builder $builder, string $accountId) => $builder->where('bank_account_id', $accountId))
-            ->when($filters['pocket_id'] ?? null, fn (Builder $builder, string $pocketId) => $builder->where('pocket_id', $pocketId))
+            ->when($walletId, fn (Builder $builder, string $resolvedWalletId) => $builder->where('wallet_id', $resolvedWalletId))
             ->when($filters['budget_id'] ?? null, fn (Builder $builder, string $budgetId) => $builder->where('budget_id', $budgetId))
             ->when($filters['owner_member_id'] ?? null, fn (Builder $builder, int|string $ownerMemberId) => $builder->where('owner_member_id', $ownerMemberId))
             ->when(($filters['transaction_kind'] ?? null) === 'external', fn (Builder $builder) => $builder->where('type', '!=', 'transfer'))
@@ -51,8 +52,7 @@ class FinanceTransactionQueryService
     public function paginatedTransactions(Request $request, Tenant $tenant, ?TenantMember $member): array
     {
         $query = $this->visibleQuery($tenant, $member)
-            ->with($this->presenter->relationsForList())
-            ->withCount('attachments');
+            ->with($this->presenter->relationsForList());
 
         $this->applyFilters($query, $request);
 
@@ -72,8 +72,14 @@ class FinanceTransactionQueryService
         $perPage = max(1, min((int) ($request->per_page ?? 15), 100));
         $paginator = $query->paginate($perPage);
 
+        // Optimization: Use loadCount only on the paginated items to avoid per-row subqueries during initial fetch.
+        $items = $paginator->getCollection();
+        if ($items->isNotEmpty()) {
+            $items->loadCount('attachments');
+        }
+
         return [
-            'transactions' => collect($paginator->items())
+            'transactions' => $items
                 ->map(fn (FinanceTransaction $transaction) => $this->presenter->transactionForList($transaction))
                 ->values()
                 ->all(),

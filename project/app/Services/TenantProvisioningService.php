@@ -2,9 +2,9 @@
 
 namespace App\Services;
 
-use App\Models\Tenant;
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 use App\Support\PermissionCatalog;
 use Illuminate\Support\Facades\DB;
 use Spatie\Permission\Models\Permission;

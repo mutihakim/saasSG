@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
-use App\Models\TenantWhatsappIntent;
-use App\Models\TenantWhatsappMedia;
+use App\Models\Whatsapp\TenantWhatsappIntent;
+use App\Models\Whatsapp\TenantWhatsappMedia;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 

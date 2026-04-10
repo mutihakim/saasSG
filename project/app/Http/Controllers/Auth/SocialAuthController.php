@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
-use App\Models\SocialAccount;
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Identity\SocialAccount;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 use App\Services\TenantProvisioningService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;

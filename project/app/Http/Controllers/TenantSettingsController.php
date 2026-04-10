@@ -6,7 +6,7 @@ use App\Http\Requests\Tenant\TenantBillingUpdateRequest;
 use App\Http\Requests\Tenant\TenantBrandingUpdateRequest;
 use App\Http\Requests\Tenant\TenantLocalizationUpdateRequest;
 use App\Http\Requests\Tenant\TenantProfileUpdateRequest;
-use App\Models\Tenant;
+use App\Models\Tenant\Tenant;
 use App\Services\ActivityLogService;
 use App\Support\TenantBranding;
 use Illuminate\Http\RedirectResponse;

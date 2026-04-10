@@ -1,0 +1,147 @@
+<?php
+
+namespace App\Models\Tenant;
+
+use App\Models\Master\TenantBankAccount;
+use App\Models\Finance\TenantBudget;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Identity\User;
+
+use App\Support\TenantBranding;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Str;
+use Stancl\Tenancy\Contracts\Tenant as TenantContract;
+use Stancl\Tenancy\Tenancy;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Tenant extends Model implements TenantContract
+{
+    use HasFactory;
+
+    /**
+     * Create a new factory instance for the model.
+     */
+    protected static function newFactory(): \Database\Factories\Tenant\TenantFactory
+    {
+        return \Database\Factories\Tenant\TenantFactory::new();
+    }
+
+    protected array $tenancyInternal = [];
+
+    protected $fillable = [
+        'owner_user_id',
+        'name',
+        'slug',
+        'display_name',
+        'legal_name',
+        'registration_number',
+        'tax_id',
+        'industry',
+        'website_url',
+        'support_email',
+        'billing_email',
+        'billing_contact_name',
+        'phone',
+        'address_line_1',
+        'address_line_2',
+        'city',
+        'state_region',
+        'postal_code',
+        'country_code',
+        'locale',
+        'timezone',
+        'currency_code',
+        'plan_code',
+        'status',
+        'logo_light_path',
+        'logo_dark_path',
+        'logo_icon_path',
+        'favicon_path',
+    ];
+
+    protected static function booted(): void
+    {
+        static::deleting(function (Tenant $tenant): void {
+            TenantBranding::purgeTenantAssets($tenant);
+        });
+    }
+
+    public function getRouteKeyName(): string
+    {
+        return 'slug';
+    }
+
+    public function getTenantKeyName(): string
+    {
+        return 'slug';
+    }
+
+    public function getTenantKey()
+    {
+        return $this->getAttribute($this->getTenantKeyName());
+    }
+
+    public function getInternal(string $key)
+    {
+        return $this->tenancyInternal[$key] ?? null;
+    }
+
+    public function setInternal(string $key, $value)
+    {
+        $this->tenancyInternal[$key] = $value;
+    }
+
+    public function run(callable $callback)
+    {
+        /** @var Tenancy $tenancy */
+        $tenancy = app(Tenancy::class);
+        $previous = $tenancy->tenant;
+        $tenancy->initialize($this);
+
+        try {
+            return $callback($this);
+        } finally {
+            if ($previous) {
+                $tenancy->initialize($previous);
+            } else {
+                $tenancy->end();
+            }
+        }
+    }
+
+    public function owner()
+    {
+        return $this->belongsTo(User::class, 'owner_user_id');
+    }
+
+    public function members()
+    {
+        return $this->hasMany(TenantMember::class);
+    }
+
+    public function bankAccounts(): HasMany
+    {
+        return $this->hasMany(TenantBankAccount::class);
+    }
+
+    public function budgets(): HasMany
+    {
+        return $this->hasMany(TenantBudget::class);
+    }
+
+    public function wallets(): HasMany
+    {
+        return $this->hasMany(FinanceWallet::class);
+    }
+
+    public function pockets(): HasMany
+    {
+        return $this->wallets();
+    }
+
+    public function presentableName(): string
+    {
+        return Str::of((string) ($this->display_name ?: $this->name))->trim()->value() ?: $this->name;
+    }
+}

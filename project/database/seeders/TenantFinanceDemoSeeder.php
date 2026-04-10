@@ -2,7 +2,7 @@
 
 namespace Database\Seeders;
 
-use App\Models\FinancePocket;
+use App\Models\FinanceWallet;
 use App\Models\FinanceTransaction;
 use App\Models\Tenant;
 use App\Models\TenantBankAccount;
@@ -12,8 +12,8 @@ use App\Models\TenantCategory;
 use App\Models\TenantCurrency;
 use App\Models\TenantMember;
 use App\Models\TenantTag;
-use App\Services\FinanceLedgerService;
-use App\Services\WalletPocketService;
+use App\Services\Finance\FinanceLedgerService;
+use App\Services\Finance\Wallet\FinanceWalletService;
 use Database\Seeders\Support\FamilyFinanceSeed;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Collection;
@@ -21,7 +21,7 @@ use Illuminate\Support\Collection;
 class TenantFinanceDemoSeeder extends Seeder
 {
     public function __construct(
-        private readonly WalletPocketService $walletPockets,
+        private readonly FinanceWalletService $walletPockets,
     ) {
     }
 
@@ -52,10 +52,10 @@ class TenantFinanceDemoSeeder extends Seeder
                         'remaining_amount' => $budget->allocated_amount,
                     ])->save();
                 });
-            FinancePocket::query()
+            FinanceWallet::query()
                 ->where('tenant_id', $tenant->id)
                 ->get()
-                ->each(function (FinancePocket $pocket): void {
+                ->each(function (FinanceWallet $pocket): void {
                     $pocket->forceFill([
                         'current_balance' => $pocket->is_system
                             ? (float) ($pocket->realAccount?->opening_balance ?? 0)
@@ -65,10 +65,10 @@ class TenantFinanceDemoSeeder extends Seeder
 
             $members = TenantMember::query()->where('tenant_id', $tenant->id)->get()->keyBy(fn (TenantMember $member) => strtolower($member->full_name));
             $accounts = TenantBankAccount::query()->where('tenant_id', $tenant->id)->get()->keyBy('name');
-            $pockets = FinancePocket::query()
+            $pockets = FinanceWallet::query()
                 ->where('tenant_id', $tenant->id)
                 ->get()
-                ->keyBy(fn (FinancePocket $pocket) => $this->pocketKey($pocket->realAccount?->name, $pocket->name, $pocket->is_system));
+                ->keyBy(fn (FinanceWallet $pocket) => $this->pocketKey($pocket->realAccount?->name, $pocket->name, $pocket->is_system));
             $budgets = TenantBudget::query()
                 ->where('tenant_id', $tenant->id)
                 ->get()
@@ -120,7 +120,7 @@ class TenantFinanceDemoSeeder extends Seeder
                         'budget_status' => $budget ? 'within_budget' : 'unbudgeted',
                         'budget_delta' => 0,
                         'bank_account_id' => $account->id,
-                        'pocket_id' => $pocket->id,
+                        'wallet_id' => $pocket->id,
                         'status' => 'terverifikasi',
                         'row_version' => 1,
                         'is_internal_transfer' => $seed['type']->value === 'transfer',
@@ -183,7 +183,7 @@ class TenantFinanceDemoSeeder extends Seeder
             ->with('pockets')
             ->get()
             ->each(function (TenantBankAccount $account) use ($tenant): void {
-                $totalPocketBalance = round((float) $account->pockets->sum(fn (FinancePocket $pocket) => (float) $pocket->current_balance), 2);
+                $totalPocketBalance = round((float) $account->pockets->sum(fn (FinanceWallet $pocket) => (float) $pocket->current_balance), 2);
                 $accountBalance = round((float) $account->current_balance, 2);
 
                 if (abs($accountBalance - $totalPocketBalance) > 0.000001) {

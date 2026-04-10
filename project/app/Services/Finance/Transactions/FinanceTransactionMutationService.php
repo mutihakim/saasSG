@@ -2,10 +2,10 @@
 
 namespace App\Services\Finance\Transactions;
 
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantAttachment;
-use App\Models\TenantMember;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Misc\TenantAttachment;
+use App\Models\Tenant\TenantMember;
 use App\Services\Finance\FinanceSummaryService;
 use App\Services\Finance\MonthlyReviewService;
 use Illuminate\Http\JsonResponse;

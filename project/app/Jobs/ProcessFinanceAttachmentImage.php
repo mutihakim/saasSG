@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\FinanceTransaction;
-use App\Models\TenantAttachment;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Misc\TenantAttachment;
 use App\Services\Finance\FinanceAttachmentService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;

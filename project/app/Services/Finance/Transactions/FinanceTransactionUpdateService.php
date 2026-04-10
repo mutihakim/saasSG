@@ -3,12 +3,12 @@
 namespace App\Services\Finance\Transactions;
 
 use App\Http\Requests\UpdateFinanceTransactionRequest;
-use App\Models\ActivityLog;
-use App\Models\FinanceTransaction;
-use App\Models\FinancePocket;
-use App\Models\Tenant;
-use App\Models\TenantBankAccount;
-use App\Models\TenantMember;
+use App\Models\Misc\ActivityLog;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Finance\FinanceWallet;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Tenant\TenantMember;
 use App\Services\Finance\FinanceAccessService;
 use App\Services\Finance\FinanceLedgerService;
 use App\Services\Finance\FinanceSummaryService;
@@ -87,8 +87,8 @@ class FinanceTransactionUpdateService
         }
 
         $ownerMember = $this->access->resolveTransactionOwner($member, $tenant, $data['owner_member_id'] ?? null);
-        $account = $this->resolver->resolveTransactionAccount($tenant, $member, $data['bank_account_id'] ?? null, $data['pocket_id'] ?? null);
-        $pocket = $this->resolver->resolveTransactionPocket($tenant, $member, $account, $data['pocket_id'] ?? null);
+        $account = $this->resolver->resolveTransactionAccount($tenant, $member, $data['bank_account_id'] ?? null, $data['wallet_id'] ?? null);
+        $pocket = $this->resolver->resolveTransactionPocket($tenant, $member, $account, $data['wallet_id'] ?? null);
         $budget = $this->resolver->resolveBudgetForPocket($tenant, $member, $data['budget_id'] ?? null, $pocket, $data['transaction_date'] ?? null);
 
         if (! $account) {
@@ -116,7 +116,7 @@ class FinanceTransactionUpdateService
         }
 
         $oldAccount = TenantBankAccount::query()->find($transaction->bank_account_id);
-        $oldPocket = FinancePocket::query()->find($transaction->pocket_id);
+        $oldPocket = FinanceWallet::query()->find($transaction->wallet_id);
 
         if ($balanceError = $this->guardNonNegativeBalance($transaction, $oldAccount, $oldPocket, $data['type'], (float) $data['amount'], $account, $pocket)) {
             return $balanceError;
@@ -142,7 +142,7 @@ class FinanceTransactionUpdateService
                     ownerMemberId: $ownerMember?->id,
                     data: array_merge($data, [
                         'bank_account_id' => $account->id,
-                        'pocket_id' => $pocket->id,
+                        'wallet_id' => $pocket->id,
                         'budget_id' => $budget?->id,
                         'budget_status' => $budgetStatus,
                         'budget_delta' => $budgetDelta,
@@ -192,11 +192,11 @@ class FinanceTransactionUpdateService
     private function guardNonNegativeBalance(
         FinanceTransaction $existingTransaction,
         ?TenantBankAccount $oldAccount,
-        ?FinancePocket $oldPocket,
+        ?FinanceWallet $oldPocket,
         string $newType,
         float $newAmount,
         TenantBankAccount $newAccount,
-        FinancePocket $newPocket,
+        FinanceWallet $newPocket,
     ): ?JsonResponse {
         $oldDelta = $this->transactionDelta(
             $existingTransaction->type?->value ?? (string) $existingTransaction->type,
@@ -254,7 +254,7 @@ class FinanceTransactionUpdateService
         }
 
         foreach ($pocketProjections as $projection) {
-            /** @var FinancePocket $pocket */
+            /** @var FinanceWallet $pocket */
             $pocket = $projection['pocket'];
             $account = isset($accountProjections[(string) $pocket->real_account_id])
                 ? $accountProjections[(string) $pocket->real_account_id]['account']

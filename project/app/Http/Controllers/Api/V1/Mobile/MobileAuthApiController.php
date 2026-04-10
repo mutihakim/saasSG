@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1\Mobile;
 
 use App\Http\Controllers\Controller;
-use App\Models\Tenant;
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 use App\Services\TwoFactorAuthService;
 use App\Support\ApiResponder;
 use Illuminate\Http\Request;

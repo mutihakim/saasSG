@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\TenantMember;
-use App\Models\User;
+use App\Models\Tenant\TenantMember;
+use App\Models\Identity\User;
 
 class TenantMemberPolicy
 {

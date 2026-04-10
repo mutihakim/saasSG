@@ -3,8 +3,8 @@
 namespace App\Http\Controllers\Tenant;
 
 use App\Http\Controllers\Controller;
-use App\Models\TenantInvitation;
-use App\Models\TenantMember;
+use App\Models\Tenant\TenantInvitation;
+use App\Models\Tenant\TenantMember;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;

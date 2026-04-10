@@ -22,25 +22,30 @@
     "types": [
       "vite/client",
       "node"
-    ]
+    ],
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["resources/js/*"],
+      "@/core/*": ["resources/js/core/*"],
+      "@/assets/*": ["resources/js/assets/*"],
+      "@/components/*": ["resources/js/components/*"],
+      "@/features/*": ["resources/js/features/*"],
+      "@/layouts/*": ["resources/js/layouts/*"],
+      "@/pages/*": ["resources/js/pages/*"],
+      "@/types/*": ["resources/js/types/*"]
+    }
   },
   "include": [
-    "resources/js/app.tsx",
-    "resources/js/bootstrap.ts",
-    "resources/js/i18n.ts",
-    "resources/js/common/**/*.ts",
-    "resources/js/Layouts/**/*.tsx",
-    "resources/js/Components/Common/TurnstileField.tsx",
-    "resources/js/Components/Common/TenantPageTitle.tsx",
-    "resources/js/Pages/Auth/**/*.tsx",
-    "resources/js/Pages/Tenant/**/*.tsx",
-    "resources/js/Pages/Landing/OnePage/**/*.tsx",
+    "resources/js/**/*.ts",
+    "resources/js/**/*.tsx",
+    "resources/js/types/**/*.d.ts",
     "playwright.config.ts",
     "tests/e2e/**/*.ts"
   ],
   "exclude": [
     "node_modules",
     "vendor",
-    "resources/js/Components/Common/TableContainer*.tsx"
+    "resources/js/compat/**",
+    "resources/js/components/ui/TableContainer*.tsx"
   ]
 }

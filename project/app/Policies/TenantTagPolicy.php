@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\TenantTag;
-use App\Models\User;
+use App\Models\Master\TenantTag;
+use App\Models\Identity\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class TenantTagPolicy

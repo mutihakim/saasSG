@@ -2,11 +2,11 @@
 
 namespace App\Services\Finance\Transactions;
 
-use App\Models\ActivityLog;
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantAttachment;
-use App\Models\TenantMember;
+use App\Models\Misc\ActivityLog;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Misc\TenantAttachment;
+use App\Models\Tenant\TenantMember;
 use App\Services\Finance\FinanceLedgerService;
 use App\Services\Finance\TagService;
 use Illuminate\Http\Request;

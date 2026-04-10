@@ -2,8 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Tenant;
-use App\Models\TenantMember;
+use App\Models\Tenant\Tenant;
+use App\Models\Tenant\TenantMember;
 use App\Services\SubscriptionEntitlements;
 use App\Support\SubscriptionEntitlements as SupportSubscriptionEntitlements;
 use Illuminate\Http\Request;

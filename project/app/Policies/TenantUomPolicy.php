@@ -2,8 +2,8 @@
 
 namespace App\Policies;
 
-use App\Models\TenantUom;
-use App\Models\User;
+use App\Models\Master\TenantUom;
+use App\Models\Identity\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 
 class TenantUomPolicy

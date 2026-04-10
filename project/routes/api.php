@@ -1,26 +1,27 @@
 <?php
 
-use App\Http\Controllers\Api\MasterCategoryApiController;
-use App\Http\Controllers\Api\MasterTagApiController;
-use App\Http\Controllers\Api\MasterCurrencyApiController;
-use App\Http\Controllers\Api\MasterUomApiController;
-use App\Http\Controllers\Api\FinanceAccountApiController;
-use App\Http\Controllers\Api\FinanceBudgetApiController;
-use App\Http\Controllers\Api\FinanceReportApiController;
-use App\Http\Controllers\Api\FinanceTransactionApiController;
-use App\Http\Controllers\Api\FinanceWhatsappIntentApiController;
-use App\Http\Controllers\Api\WalletPocketApiController;
-use App\Http\Controllers\Api\WalletMonthlyReviewApiController;
-use App\Http\Controllers\Api\WalletSavingsGoalApiController;
-use App\Http\Controllers\Api\WalletSummaryApiController;
-use App\Http\Controllers\Api\WalletWishApiController;
+use App\Http\Controllers\Api\V1\Master\MasterCategoryApiController;
+use App\Http\Controllers\Api\V1\Master\MasterTagApiController;
+use App\Http\Controllers\Api\V1\Master\MasterCurrencyApiController;
+use App\Http\Controllers\Api\V1\Master\MasterUomApiController;
+use App\Http\Controllers\Api\V1\Finance\FinanceAccountApiController;
+use App\Http\Controllers\Api\V1\Finance\FinanceBudgetApiController;
+use App\Http\Controllers\Api\V1\Finance\FinanceBootstrapApiController;
+use App\Http\Controllers\Api\V1\Finance\FinanceReportApiController;
+use App\Http\Controllers\Api\V1\Finance\FinanceTransactionApiController;
+use App\Http\Controllers\Api\V1\Finance\FinanceWhatsappIntentApiController;
+use App\Http\Controllers\Api\V1\Finance\FinanceWalletApiController;
+use App\Http\Controllers\Api\V1\Finance\WalletMonthlyReviewApiController;
+use App\Http\Controllers\Api\V1\Finance\WalletSavingsGoalApiController;
+use App\Http\Controllers\Api\V1\Finance\WalletSummaryApiController;
+use App\Http\Controllers\Api\V1\Finance\WalletWishApiController;
 use App\Http\Controllers\Api\V1\Mobile\MobileAuthApiController;
 use App\Http\Controllers\Api\V1\Mobile\MobileBootstrapApiController;
-use App\Http\Controllers\Api\V1\TenantMemberApiController;
-use App\Http\Controllers\Api\V1\TenantMemberProfileApiController;
-use App\Http\Controllers\Api\V1\TenantLifecycleApiController;
-use App\Http\Controllers\Api\V1\TenantRoleApiController;
-use App\Http\Controllers\Api\V1\TenantWhatsappApiController;
+use App\Http\Controllers\Api\V1\Identity\TenantMemberApiController;
+use App\Http\Controllers\Api\V1\Identity\TenantMemberProfileApiController;
+use App\Http\Controllers\Api\V1\Tenant\TenantLifecycleApiController;
+use App\Http\Controllers\Api\V1\Identity\TenantRoleApiController;
+use App\Http\Controllers\Api\V1\Whatsapp\TenantWhatsappApiController;
 use Illuminate\Support\Facades\Route;
 
 Route::post('/v1/invitations/accept', [TenantLifecycleApiController::class, 'invitationsAccept'])
@@ -85,6 +86,7 @@ Route::prefix('v1')
 
                 // ── Finance ────────────────────────────────────────────────────────────
                 Route::prefix('finance')->group(function () {
+                    Route::get('/bootstrap', [FinanceBootstrapApiController::class, 'show'])->middleware('tenant.feature:finance,view');
                     Route::get('/summary', [FinanceTransactionApiController::class, 'summary'])->middleware('tenant.feature:finance,view');
                     Route::get('/reports', [FinanceReportApiController::class, 'index'])->middleware('tenant.feature:finance,view');
                     Route::get('/whatsapp-intents/{token}', [FinanceWhatsappIntentApiController::class, 'show'])->middleware('tenant.feature:finance,view');
@@ -100,11 +102,11 @@ Route::prefix('v1')
                     Route::post('/accounts', [FinanceAccountApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,create', 'throttle:tenant.mutation']);
                     Route::patch('/accounts/{account}', [FinanceAccountApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
                     Route::delete('/accounts/{account}', [FinanceAccountApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
-                    Route::get('/pockets', [WalletPocketApiController::class, 'index'])->middleware('tenant.feature:finance,view');
-                    Route::get('/pockets/{pocket}', [WalletPocketApiController::class, 'show'])->middleware('tenant.feature:finance,view');
-                    Route::post('/pockets', [WalletPocketApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,create', 'throttle:tenant.mutation']);
-                    Route::patch('/pockets/{pocket}', [WalletPocketApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
-                    Route::delete('/pockets/{pocket}', [WalletPocketApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
+                    Route::get('/wallets', [FinanceWalletApiController::class, 'index'])->middleware('tenant.feature:finance,view');
+                    Route::get('/wallets/{wallet}', [FinanceWalletApiController::class, 'show'])->middleware('tenant.feature:finance,view');
+                    Route::post('/wallets', [FinanceWalletApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,create', 'throttle:tenant.mutation']);
+                    Route::patch('/wallets/{wallet}', [FinanceWalletApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,update', 'throttle:tenant.mutation']);
+                    Route::delete('/wallets/{wallet}', [FinanceWalletApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:finance,delete', 'throttle:tenant.mutation']);
                     Route::get('/goals', [WalletSavingsGoalApiController::class, 'index'])->middleware('tenant.feature:finance,view');
                     Route::get('/goals/{goal}', [WalletSavingsGoalApiController::class, 'show'])->middleware('tenant.feature:finance,view');
                     Route::get('/goals/{goal}/activities', [WalletSavingsGoalApiController::class, 'activities'])->middleware('tenant.feature:finance,view');

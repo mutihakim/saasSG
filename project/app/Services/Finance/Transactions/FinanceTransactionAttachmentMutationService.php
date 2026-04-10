@@ -3,9 +3,9 @@
 namespace App\Services\Finance\Transactions;
 
 use App\Jobs\ProcessFinanceAttachmentImage;
-use App\Models\FinanceTransaction;
-use App\Models\Tenant;
-use App\Models\TenantAttachment;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Misc\TenantAttachment;
 use App\Services\Finance\FinanceAttachmentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;

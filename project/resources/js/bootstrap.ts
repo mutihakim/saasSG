@@ -15,8 +15,12 @@ window.axios.defaults.headers.common['X-Requested-With'] = 'XMLHttpRequest';
 window.axios.defaults.withCredentials = true;
 
 const resolveLocale = (): string => {
-    const raw = localStorage.getItem('I18N_LANGUAGE') || 'en';
-    return ['en', 'id'].includes(raw) ? raw : 'en';
+    try {
+        const raw = localStorage.getItem('I18N_LANGUAGE') || 'en';
+        return ['en', 'id'].includes(raw) ? raw : 'en';
+    } catch {
+        return 'en';
+    }
 };
 
 window.axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
@@ -33,16 +37,21 @@ window.axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
  * allows your team to easily build robust real-time web applications.
  */
 
-const reverbKey = import.meta.env.VITE_REVERB_APP_KEY;
-if (reverbKey) {
+const reverbKey = String(import.meta.env.VITE_REVERB_APP_KEY || '');
+const reverbHost = String(import.meta.env.VITE_REVERB_HOST || window.location.hostname);
+const reverbScheme = String(import.meta.env.VITE_REVERB_SCHEME || window.location.protocol.replace(':', '') || 'https').toLowerCase();
+const reverbPort = Number(import.meta.env.VITE_REVERB_PORT || (reverbScheme === 'https' ? 443 : 80));
+const hasValidReverbKey = reverbKey.length > 0 && !reverbKey.includes('${');
+
+if (hasValidReverbKey) {
     window.Echo = new Echo({
         broadcaster: 'reverb',
         key: reverbKey,
-        wsHost: window.location.hostname,
-        wsPort: 443,
-        wssPort: 443,
-        forceTLS: true,
-        enabledTransports: ['ws', 'wss'],
+        wsHost: reverbHost,
+        wsPort: reverbPort,
+        wssPort: reverbPort,
+        forceTLS: reverbScheme === 'https',
+        enabledTransports: reverbScheme === 'https' ? ['wss'] : ['ws', 'wss'],
         authEndpoint: '/broadcasting/auth',
     });
 }
