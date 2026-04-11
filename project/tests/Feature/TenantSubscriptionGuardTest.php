@@ -116,4 +116,26 @@ class TenantSubscriptionGuardTest extends TestCase
         $response->assertStatus(403);
         $response->assertInertia(fn (Assert $page) => $page->component('Tenant/Forbidden'));
     }
+
+    public function test_free_plan_cannot_access_math_game_api(): void
+    {
+        [$tenant, $user] = $this->seedTenant('free');
+        Sanctum::actingAs($user);
+
+        $response = $this->getJson("/api/v1/tenants/{$tenant->slug}/games/math/config");
+
+        $response->assertStatus(403)
+            ->assertJsonPath('ok', false)
+            ->assertJsonPath('error.code', 'FEATURE_NOT_AVAILABLE');
+    }
+
+    public function test_free_plan_math_game_web_route_redirects_to_upgrade(): void
+    {
+        [$tenant, $user] = $this->seedTenant('free');
+
+        $response = $this->actingAs($user)
+            ->get(route('tenant.games.math', $tenant->slug));
+
+        $response->assertRedirect(route('tenant.upgrade.required', ['tenant' => $tenant->slug, 'module' => 'games.math']));
+    }
 }

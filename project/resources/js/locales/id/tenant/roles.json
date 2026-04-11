@@ -66,5 +66,6 @@
   "tenant.roles.modules.team.role_permissions": "Permission Role Tim",
   "tenant.roles.modules.team.invitations": "Undangan Tim",
   "tenant.roles.modules.whatsapp.settings": "Pengaturan WhatsApp",
-  "tenant.roles.modules.whatsapp.chats": "Chat WhatsApp"
+  "tenant.roles.modules.whatsapp.chats": "Chat WhatsApp",
+  "tenant.roles.modules.games.math": "Games / Matematika"
 }

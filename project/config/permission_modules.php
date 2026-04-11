@@ -15,4 +15,5 @@ return [
     'master.tags' => ['view', 'create', 'update', 'delete'],
     'master.currencies' => ['view', 'create', 'update', 'delete'],
     'master.uom' => ['view', 'create', 'update', 'delete'],
+    'games.math' => ['view', 'create', 'update'],
 ];

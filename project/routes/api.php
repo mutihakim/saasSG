@@ -87,12 +87,12 @@ Route::prefix('v1')
 
                 // ── Games ──────────────────────────────────────────────────────────────
                 Route::prefix('games/math')->group(function () {
-                    Route::get('/config', [MathGameApiController::class, 'config']);
-                    Route::get('/mastered', [MathGameApiController::class, 'mastered']);
-                    Route::post('/stats', [MathGameApiController::class, 'stats']);
-                    Route::post('/attempt', [MathGameApiController::class, 'attempt'])->middleware(['throttle:tenant.mutation']);
-                    Route::post('/session/finish', [MathGameApiController::class, 'finish'])->middleware(['throttle:tenant.mutation']);
-                    Route::get('/history', [MathGameApiController::class, 'history']);
+                    Route::get('/config', [MathGameApiController::class, 'config'])->middleware('tenant.feature:games.math,view');
+                    Route::get('/mastered', [MathGameApiController::class, 'mastered'])->middleware('tenant.feature:games.math,view');
+                    Route::post('/stats', [MathGameApiController::class, 'stats'])->middleware('tenant.feature:games.math,view');
+                    Route::post('/attempt', [MathGameApiController::class, 'attempt'])->middleware(['tenant.feature:games.math,create', 'throttle:tenant.mutation']);
+                    Route::post('/session/finish', [MathGameApiController::class, 'finish'])->middleware(['tenant.feature:games.math,update', 'throttle:tenant.mutation']);
+                    Route::get('/history', [MathGameApiController::class, 'history'])->middleware('tenant.feature:games.math,view');
                 });
 
                 // ── Finance ────────────────────────────────────────────────────────────

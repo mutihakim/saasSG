@@ -192,6 +192,7 @@ const useMathGame = (): UseMathGameReturn => {
 
     const questionTimerRef = useRef<ReturnType<typeof setInterval> | null>(null);
     const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const submittingRef = useRef(false);
 
     const clearTimers = useCallback(() => {
         if (questionTimerRef.current) {
@@ -232,9 +233,11 @@ const useMathGame = (): UseMathGameReturn => {
     }, [questions.length, attempts, startedAt, finishedAt, streak, bestStreak, masteredPairs]);
 
     const submitAnswer = useCallback((opts?: { timedOut?: boolean; answer?: string }) => {
-        if (isFinished || isLocked || !currentQuestion) {
+        if (isFinished || isLocked || submittingRef.current || !currentQuestion) {
             return;
         }
+
+        submittingRef.current = true;
 
         const timedOut = Boolean(opts?.timedOut);
         const submittedAnswer = opts?.answer ?? userAnswer;
@@ -296,6 +299,7 @@ const useMathGame = (): UseMathGameReturn => {
             setIsCorrect(null);
             setUserAnswer("");
             setIsLocked(false);
+            submittingRef.current = false;
         }, QUESTION_ADVANCE_DELAY_MS);
     }, [bestStreak, config, currentQuestion, currentIndex, isFinished, isLocked, pairStreaks, questions.length, userAnswer]);
 
@@ -326,6 +330,7 @@ const useMathGame = (): UseMathGameReturn => {
 
     const startGame = useCallback((nextConfig: MathGameConfig, options?: { masteredPairs?: string[]; pairStreaks?: Record<string, number> }) => {
         clearTimers();
+        submittingRef.current = false;
 
         const normalizedConfig: MathGameConfig = {
             operator: nextConfig.operator,
@@ -425,6 +430,7 @@ const useMathGame = (): UseMathGameReturn => {
         setPairStreaks({});
         setStartedAt(null);
         setFinishedAt(null);
+        submittingRef.current = false;
     }, [clearTimers]);
 
     useEffect(() => {

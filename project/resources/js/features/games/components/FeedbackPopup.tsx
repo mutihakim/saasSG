@@ -1,5 +1,6 @@
 import React, { useEffect } from "react";
 import { Card } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 interface FeedbackPopupProps {
     show: boolean;
@@ -18,12 +19,15 @@ const FeedbackPopup: React.FC<FeedbackPopupProps> = ({
     onDone,
     duration = 2000,
 }) => {
-    useEffect(() => {
-        if (show && duration > 0) {
-            const timer = setTimeout(() => onDone?.(), duration);
+    const { t } = useTranslation();
 
-            return () => clearTimeout(timer);
+    useEffect(() => {
+        if (!show || duration <= 0) {
+            return;
         }
+
+        const timer = setTimeout(() => onDone?.(), duration);
+        return () => clearTimeout(timer);
     }, [show, duration, onDone]);
 
     if (!show) {
@@ -37,6 +41,7 @@ const FeedbackPopup: React.FC<FeedbackPopupProps> = ({
                 zIndex: 9999,
                 minWidth: "280px",
                 maxWidth: "400px",
+                pointerEvents: "none",
             }}
         >
             <Card
@@ -50,12 +55,10 @@ const FeedbackPopup: React.FC<FeedbackPopupProps> = ({
                     <div className="math-game__feedback-icon mb-2">
                         {isCorrect ? "✓" : "✗"}
                     </div>
-                    <h3 className="fw-bold mb-2">
-                        {message}
-                    </h3>
+                    <h3 className="fw-bold mb-2">{message}</h3>
                     {!isCorrect && correctAnswer !== undefined && correctAnswer !== null && (
                         <div className="mt-2 fs-5">
-                            <span className="opacity-75">Jawaban: </span>
+                            <span className="opacity-75">{t("tenant.games.math.feedback.correct_answer")}</span>
                             <span className="fw-bold">{correctAnswer}</span>
                         </div>
                     )}

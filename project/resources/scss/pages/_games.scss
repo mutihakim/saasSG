@@ -1,3 +1,76 @@
+.math-game-layout {
+    height: 100dvh;
+    overflow: hidden;
+    background: var(--#{$prefix}body-bg);
+    display: flex;
+    flex-direction: column;
+
+    &__topbar {
+        height: 64px;
+        min-height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.75rem;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid var(--#{$prefix}border-color);
+        background: var(--#{$prefix}secondary-bg);
+        z-index: 10;
+    }
+
+    &__title {
+        flex: 1;
+        text-align: center;
+        font-weight: 700;
+        font-size: 1.1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    &__user-dropdown {
+        margin-left: auto;
+    }
+
+    &__content {
+        flex: 1;
+        min-height: 0;
+        overflow: hidden;
+    }
+
+    &__scroll {
+        height: 100%;
+        overflow: auto;
+        padding: 1rem;
+    }
+
+    &--page-scroll {
+        min-height: 100dvh;
+        height: auto;
+        overflow: visible;
+
+        .math-game-layout__content {
+            overflow: visible;
+        }
+
+        .math-game-layout__scroll {
+            height: auto;
+            overflow: visible;
+        }
+    }
+}
+
+.math-game-layout-active {
+    .footer {
+        display: none !important;
+    }
+
+    .page-content {
+        padding: 0 !important;
+        min-height: 100dvh !important;
+    }
+}
+
 .math-game {
     &__tile {
         aspect-ratio: 1 / 1;
@@ -11,11 +84,6 @@
             transform: translateY(-3px);
             box-shadow: var(--#{$prefix}box-shadow-lg);
         }
-    }
-
-    &__operator-symbol {
-        font-size: 3rem;
-        line-height: 1;
     }
 
     &__number-tile {
@@ -42,6 +110,10 @@
 
     &__summary-table {
         max-height: 360px;
+    }
+
+    &__table-scroll {
+        max-height: 60dvh;
     }
 
     &__feedback-card {

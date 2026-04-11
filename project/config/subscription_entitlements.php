@@ -17,6 +17,7 @@ return [
                 'master.tags'       => ['view', 'create', 'update', 'delete'],
                 'master.currencies' => ['view', 'create', 'update', 'delete'],
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
+                'games.math'        => [],
             ],
             'limits' => [
                 'team.members.max'             => 1,
@@ -48,6 +49,7 @@ return [
                 'master.tags'       => ['view', 'create', 'update', 'delete'],
                 'master.currencies' => ['view', 'create', 'update', 'delete'],
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
+                'games.math'        => ['view', 'create', 'update'],
             ],
             'limits' => [
                 'team.members.max'             => 3,
@@ -79,6 +81,7 @@ return [
                 'master.tags'       => ['view', 'create', 'update', 'delete'],
                 'master.currencies' => ['view', 'create', 'update', 'delete'],
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
+                'games.math'        => ['view', 'create', 'update'],
             ],
             'limits' => [
                 'team.members.max'             => 10,
@@ -110,6 +113,7 @@ return [
                 'master.tags'       => ['view', 'create', 'update', 'delete'],
                 'master.currencies' => ['view', 'create', 'update', 'delete'],
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
+                'games.math'        => ['view', 'create', 'update'],
             ],
             'limits' => [
                 'team.members.max'             => -1,
@@ -142,6 +146,7 @@ return [
         'master.tags'       => 'Master Data / Tag',
         'master.currencies' => 'Master Data / Mata Uang',
         'master.uom'        => 'Master Data / Satuan',
+        'games.math'        => 'Games / Matematika',
     ],
 
     'limit_labels' => [

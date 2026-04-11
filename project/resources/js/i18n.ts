@@ -24,6 +24,7 @@ const TRANSLATION_FILES = [
     "tenant/finance.json",
     "tenant/wallet.json",
     "tenant/master.json",
+    "tenant/games.json",
 ] as const;
 
 const localeLoaders = import.meta.glob("./locales/**/*.json");

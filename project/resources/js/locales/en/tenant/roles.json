@@ -66,5 +66,6 @@
   "tenant.roles.modules.team.role_permissions": "Team Role Permissions",
   "tenant.roles.modules.team.invitations": "Team Invitations",
   "tenant.roles.modules.whatsapp.settings": "WhatsApp Settings",
-  "tenant.roles.modules.whatsapp.chats": "WhatsApp Chats"
+  "tenant.roles.modules.whatsapp.chats": "WhatsApp Chats",
+  "tenant.roles.modules.games.math": "Games / Math"
 }
