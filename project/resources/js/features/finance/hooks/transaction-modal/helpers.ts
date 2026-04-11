@@ -41,7 +41,11 @@ export const canUseForOwner = (
         return true;
     }
 
-    const accessList = (item.member_access || item.memberAccess || []) as Array<{
+    const legacyItem = item as (FinanceAccount | FinanceBudget | FinanceWallet) & {
+        memberAccess?: unknown;
+    };
+
+    const accessList = (item.member_access || legacyItem.memberAccess || []) as Array<{
         id?: string | number | null;
         can_use?: boolean | number | string;
         can_manage?: boolean | number | string;

@@ -1,75 +1,129 @@
-/**
- * Games API client
- *
- * All API calls for the Games module go through this file.
- * Uses the tenantRoute pattern: tenantRoute.apiTo('/games/...')
- */
+import axios from "axios";
 
 type TenantRouteLike = {
     apiTo: (path?: string) => string;
 };
 
-export interface GamesApi {
-    /** Fetch available games list */
-    fetchGames: () => Promise<unknown>;
-    /** Fetch recent game sessions */
-    fetchRecentSessions: () => Promise<unknown>;
-    /** Save game evaluation */
-    saveEvaluation: (data: Record<string, unknown>) => Promise<unknown>;
-    /** Save streak data */
-    saveStreak: (data: Record<string, unknown>) => Promise<unknown>;
-    /** Get mastered pairs/words */
-    fetchMastery: (gameId: string, childId: string) => Promise<unknown>;
-    /** Generate AI story */
-    generateStory: (data: Record<string, unknown>) => Promise<unknown>;
-    /** Fetch vocabulary words */
-    fetchVocabulary: (language: string, category: string, day: number) => Promise<unknown>;
-    /** Submit quiz result */
-    submitQuiz: (data: Record<string, unknown>) => Promise<unknown>;
-    /** Fetch surah list */
-    fetchSurahs: () => Promise<unknown>;
+export type MathGameOperator = "+" | "-" | "*" | "/";
+export type MathGameMode = "mencariC" | "mencariB";
+
+export interface MathConfigResponse {
+    operators: Array<{ value: MathGameOperator; label: string }>;
+    modes: Array<{ value: MathGameMode; label: string }>;
+    number_options: number[];
+    question_count_options: number[];
+    time_limit_options: number[];
+    mastered_streak_threshold: number;
 }
 
-/**
- * Creates a games API client bound to the tenant route helper.
- */
-export function createGamesApi(_route: TenantRouteLike): GamesApi {
+export interface MathMasteredPair {
+    operator: MathGameOperator;
+    angka_pilihan: number;
+    angka_random: number;
+    max_streak_benar: number;
+}
+
+export interface MathAttemptPayload {
+    operator: MathGameOperator;
+    angka_pilihan: number;
+    angka_random: number;
+    is_correct: boolean;
+    current_streak: number;
+}
+
+export interface MathAttemptResponse {
+    jumlah_benar: number;
+    jumlah_salah: number;
+    current_streak_benar: number;
+    max_streak_benar: number;
+    mastered: boolean;
+}
+
+export interface MathStatsPair {
+    operator: MathGameOperator;
+    angka_pilihan: number;
+    angka_random: number;
+}
+
+export interface MathPairStats extends MathStatsPair {
+    jumlah_benar: number;
+    jumlah_salah: number;
+    current_streak_benar: number;
+    max_streak_benar: number;
+    mastered: boolean;
+}
+
+export interface MathFinishPayload {
+    operator: MathGameOperator;
+    game_mode: MathGameMode;
+    number_range: number;
+    random_range?: number | null;
+    question_count: number;
+    time_limit: number;
+    correct_count: number;
+    wrong_count: number;
+    best_streak: number;
+    duration_seconds: number;
+    started_at?: string;
+    finished_at?: string;
+    summary?: Record<string, unknown>;
+}
+
+export interface MathSessionHistoryItem {
+    id: string;
+    operator: MathGameOperator;
+    game_mode: MathGameMode;
+    number_range: number;
+    random_range: number | null;
+    question_count: number;
+    time_limit_seconds: number;
+    correct_count: number;
+    wrong_count: number;
+    best_streak: number;
+    score_percent: number;
+    duration_seconds: number;
+    started_at: string | null;
+    finished_at: string | null;
+}
+
+export interface GamesApi {
+    fetchMathConfig: () => Promise<MathConfigResponse>;
+    fetchMathMastery: (operator?: MathGameOperator) => Promise<MathMasteredPair[]>;
+    fetchMathStats: (pairs: MathStatsPair[]) => Promise<Record<string, MathPairStats>>;
+    submitMathAttempt: (payload: MathAttemptPayload) => Promise<MathAttemptResponse>;
+    finishMathSession: (payload: MathFinishPayload) => Promise<{ id: string; score_percent: number }>;
+    fetchMathHistory: (limit?: number) => Promise<MathSessionHistoryItem[]>;
+}
+
+export function createGamesApi(route: TenantRouteLike): GamesApi {
     return {
-        fetchGames: async () => {
-            // TODO: route.apiTo('/games')
-            return [];
+        fetchMathConfig: async () => {
+            const response = await axios.get(route.apiTo("/games/math/config"));
+            return response.data?.data?.config as MathConfigResponse;
         },
-        fetchRecentSessions: async () => {
-            // TODO: route.apiTo('/games/sessions/recent')
-            return [];
+        fetchMathMastery: async (operator?: MathGameOperator) => {
+            const response = await axios.get(route.apiTo("/games/math/mastered"), {
+                params: operator ? { operator } : undefined,
+            });
+            return (response.data?.data?.pairs ?? []) as MathMasteredPair[];
         },
-        saveEvaluation: async (_data: Record<string, unknown>) => {
-            // TODO: route.apiTo('/games/evaluation')
-            return null;
+        fetchMathStats: async (pairs: MathStatsPair[]) => {
+            const response = await axios.post(route.apiTo("/games/math/stats"), { pairs });
+            return (response.data?.data?.stats ?? {}) as Record<string, MathPairStats>;
         },
-        saveStreak: async (_data: Record<string, unknown>) => {
-            // TODO: route.apiTo('/games/streak')
-            return null;
+        submitMathAttempt: async (payload: MathAttemptPayload) => {
+            const response = await axios.post(route.apiTo("/games/math/attempt"), payload);
+            return response.data?.data?.stats as MathAttemptResponse;
         },
-        fetchMastery: async (_gameId: string, _childId: string) => {
-            // TODO: route.apiTo('/games/mastery')
-            return [];
+        finishMathSession: async (payload: MathFinishPayload) => {
+            const response = await axios.post(route.apiTo("/games/math/session/finish"), payload);
+            return response.data?.data?.session as { id: string; score_percent: number };
         },
-        generateStory: async (_data: Record<string, unknown>) => {
-            // TODO: route.apiTo('/games/story/generate')
-            return null;
-        },
-        fetchVocabulary: async (_language: string, _category: string, _day: number) => {
-            // TODO: route.apiTo('/games/vocabulary')
-            return [];
-        },
-        submitQuiz: async (_data: Record<string, unknown>) => {
-            // TODO: route.apiTo('/games/vocabulary/quiz')
-            return null;
-        },
-        fetchSurahs: async () => {
-            // TODO: route.apiTo('/games/tahfiz/surahs')
-            return [];
+        fetchMathHistory: async (limit = 20) => {
+            const response = await axios.get(route.apiTo("/games/math/history"), {
+                params: { limit },
+            });
+            return (response.data?.data?.sessions ?? []) as MathSessionHistoryItem[];
         },
     };
 }

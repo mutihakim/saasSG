@@ -1,5 +1,4 @@
-import axios from "axios";
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 import { Button, Form, Modal } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
@@ -41,40 +40,6 @@ const TransactionModal = ({
     const { t } = useTranslation();
     const tenantRoute = useTenantRoute();
     const [loading, setLoading] = useState(false);
-    const [remoteBudgets, setRemoteBudgets] = useState(budgets);
-
-    useEffect(() => {
-        if (Array.isArray(budgets) && budgets.length > 0) {
-            setRemoteBudgets(budgets);
-        }
-    }, [budgets]);
-
-    useEffect(() => {
-        if (!show) {
-            return;
-        }
-
-        if (Array.isArray(budgets) && budgets.length > 0) {
-            return;
-        }
-
-        void axios
-            .get(tenantRoute.apiTo("/finance/budgets"), { params: { period_month: "" } })
-            .then((response) => {
-                const nextBudgets = response.data?.data?.budgets;
-                if (Array.isArray(nextBudgets)) {
-                    setRemoteBudgets(nextBudgets);
-                }
-            })
-            .catch(() => {
-                // Keep parent-provided budgets as fallback.
-            });
-    }, [show, tenantRoute]);
-
-    const effectiveBudgets = useMemo(
-        () => (remoteBudgets.length > 0 ? remoteBudgets : budgets),
-        [remoteBudgets, budgets],
-    );
     const {
         isEdit,
         formData,
@@ -110,7 +75,7 @@ const TransactionModal = ({
         defaultCurrency,
         paymentMethods,
         accounts,
-        budgets: effectiveBudgets,
+        budgets,
         pockets,
         members,
         activeMemberId,

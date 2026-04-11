@@ -29,6 +29,7 @@ export default defineConfig({
         items: [
           { text: 'Finance', link: '/03-features/finance' },
           { text: 'Wallet', link: '/03-features/wallet' },
+          { text: 'Games', link: '/03-features/games' },
           { text: 'RBAC', link: '/guide/rbac' },
           { text: 'i18n', link: '/guide/i18n' },
           { text: 'PWA Module Template', link: '/guide/pwa-module-template' },
@@ -43,6 +44,7 @@ export default defineConfig({
           { text: 'Progress Dashboard', link: '/08-progress/index' },
           { text: 'Finance Progress', link: '/08-progress/modules/finance' },
           { text: 'Wallet Progress', link: '/08-progress/modules/wallet' },
+          { text: 'Games Progress', link: '/08-progress/modules/games' },
           { text: 'RBAC Progress', link: '/08-progress/modules/rbac' },
           { text: 'i18n Progress', link: '/08-progress/modules/i18n' },
           { text: 'Subscription Progress', link: '/08-progress/modules/subscription' },

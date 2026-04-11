@@ -132,14 +132,7 @@ export const useTransactionModalState = ({
     const visibleAccounts = useMemo(() => accounts.filter((a) => canUseForOwner(a, formData.owner_member_id)), [accounts, formData.owner_member_id]);
     const visiblePockets = useMemo(() => pockets.filter((p) => canUseForOwner(p, formData.owner_member_id)), [formData.owner_member_id, pockets]);
     const selectedPocket = useMemo(() => pockets.find((p) => String(p.id) === String(formData.wallet_id)) ?? null, [formData.wallet_id, pockets]);
-    const visibleBudgets = useMemo(() => {
-        const ownerScoped = budgets.filter((b) => canUseForOwner(b, formData.owner_member_id));
-        if (ownerScoped.length > 0) {
-            return ownerScoped;
-        }
-
-        return budgets.filter((b) => b.is_active !== false);
-    }, [budgets, formData.owner_member_id]);
+    const visibleBudgets = useMemo(() => budgets.filter((b) => canUseForOwner(b, formData.owner_member_id)), [budgets, formData.owner_member_id]);
     
     const transactionPeriodMonth = toPeriodMonth(formData.transaction_date);
     const monthScopedBudgets = useMemo(

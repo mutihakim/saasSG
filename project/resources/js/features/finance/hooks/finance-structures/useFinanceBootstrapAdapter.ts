@@ -66,12 +66,13 @@ export const useFinanceBootstrapAdapter = (
     const applyBootstrapPayload = useCallback(
         (payload: FinanceBootstrapPayload | any) => {
             if (!payload) return;
+            const preloaded = payload?.preloaded ?? {};
 
             if (payload.cache_version) {
                 // Invalidation logic usually handled by orchestration, but we can store it
             }
 
-            if (Array.isArray(payload.accounts)) {
+            if (Array.isArray(payload.accounts) && (preloaded.accounts === true || payload.accounts.length > 0)) {
                 setAccounts(payload.accounts);
                 dataRef.current.accounts = payload.accounts;
 
@@ -80,7 +81,7 @@ export const useFinanceBootstrapAdapter = (
             }
 
             const bootstrapWallets = payload.wallets ?? payload.pockets;
-            if (Array.isArray(bootstrapWallets)) {
+            if (Array.isArray(bootstrapWallets) && (preloaded.wallets === true || preloaded.pockets === true || bootstrapWallets.length > 0)) {
                 setWallets(bootstrapWallets);
 
                 dataRef.current.wallets = bootstrapWallets;
@@ -89,7 +90,7 @@ export const useFinanceBootstrapAdapter = (
                 financeCache.set(walletsCacheKey, bootstrapWallets, financeCacheTtl.structures);
             }
 
-            if (Array.isArray(payload.budgets)) {
+            if (Array.isArray(payload.budgets) && (preloaded.budgets === true || payload.budgets.length > 0)) {
                 const month = String(payload.period_month || periodMonth);
 
                 budgetCacheRef.current[month] = payload.budgets;
@@ -99,7 +100,7 @@ export const useFinanceBootstrapAdapter = (
                 financeCache.set(`${cachePrefix}budgets:${month}`, payload.budgets, financeCacheTtl.structures);
             }
 
-            if (Array.isArray(payload.goals)) {
+            if (Array.isArray(payload.goals) && (preloaded.goals === true || payload.goals.length > 0)) {
                 setGoals(payload.goals);
 
                 dataRef.current.goals = payload.goals;
@@ -108,7 +109,7 @@ export const useFinanceBootstrapAdapter = (
                 financeCache.set(goalsCacheKey, payload.goals, financeCacheTtl.structures);
             }
 
-            if (Array.isArray(payload.wishes)) {
+            if (Array.isArray(payload.wishes) && (preloaded.wishes === true || payload.wishes.length > 0)) {
                 setWishes(payload.wishes);
 
                 dataRef.current.wishes = payload.wishes;

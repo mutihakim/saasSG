@@ -246,7 +246,7 @@ const TransactionsPage = ({
 
         if (options?.includeBudgets ?? true) {
             // Fetch all active budgets for modal flows, then let modal filter by transaction month.
-            promises.push(fetchBudgets("", true));
+            promises.push(fetchBudgets(""));
         }
 
         if (options?.includePockets ?? true) {

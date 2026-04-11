@@ -27,6 +27,8 @@ Dokumen ini memetakan halaman UI ke route dan backend contract untuk mempercepat
 |---|---|---|---|
 | Finance PWA | `Tenant/Finance/Page` | `https://{tenant}.appsah.my.id/finance` | `tenant.feature:finance,view` |
 | Wallet PWA | `Tenant/Wallet/Page` | `https://{tenant}.appsah.my.id/wallet` | `tenant.feature:wallet,view` |
+| Games Hub | `Tenant/Frontend/Member/Games` | `https://{tenant}.appsah.my.id/games` | member shell route |
+| Math Game | `Tenant/Games/MathGamePage` | `https://{tenant}.appsah.my.id/games/math` | member shell route + Math Game API |
 
 Wallet UX contract:
 

@@ -1,58 +1,76 @@
-import React, { useState } from 'react';
-import { Row, Col, Card } from 'react-bootstrap';
+import { Link } from '@inertiajs/react';
+import React from 'react';
+import { Badge, Card, Col, Row } from 'react-bootstrap';
 
 import MemberPage from '../../../../components/layouts/MemberPage';
 import TenantMemberLayout from '../../../../layouts/TenantMemberLayout';
 
-interface Props { tenantName: string; tenantSlug: string; member?: any; demo: any; }
+interface Props {
+    tenantName: string;
+    tenantSlug: string;
+    member?: unknown;
+    demo: unknown;
+}
 
-const GamesPage: React.FC<Props> = ({ demo: _unused_demo }) => {
-    // Game logic for "Tebak Angka" (example)
-    const [target] = useState(() => Math.floor(Math.random() * 10) + 1);
-    const [guess, setGuess] = useState('');
-    const [msg, setMsg] = useState('Tebak angka 1-10');
-
-    const handleGuess = () => {
-        const n = parseInt(guess);
-        if (n === target) setMsg('🎉 Selamat! Anda benar!');
-        else setMsg(n < target ? 'Terlalu rendah!' : 'Terlalu tinggi!');
-    };
-
+const GamesPage: React.FC<Props> = () => {
     return (
         <MemberPage title="Pusat Game Keluarga" parentLabel="Hiburan">
             <Row className="g-4">
-                <Col lg={6}>
+                <Col lg={7}>
                     <Card className="border-0 shadow-sm h-100">
-                        <Card.Body className="text-center p-5">
-                            <div className="rounded-circle bg-info-subtle d-flex align-items-center justify-content-center mx-auto mb-4"
-                                style={{width:80, height:80}}>
-                                <i className="ri-gamepad-line text-info fs-36"></i>
+                        <Card.Body className="p-4">
+                            <div className="d-flex align-items-center justify-content-between mb-3">
+                                <div className="d-flex align-items-center gap-3">
+                                    <div
+                                        className="rounded-circle bg-warning-subtle d-flex align-items-center justify-content-center"
+                                        style={{ width: 56, height: 56 }}
+                                    >
+                                        <i className="ri-calculator-line text-warning fs-3"></i>
+                                    </div>
+                                    <div>
+                                        <h4 className="mb-1 fw-bold">Game Matematika</h4>
+                                        <p className="text-muted mb-0">Latihan berhitung cepat dengan sistem streak dan mastered pair.</p>
+                                    </div>
+                                </div>
+                                <Badge bg="success-subtle" text="success">Active</Badge>
                             </div>
-                            <h3 className="fw-bold mb-3">Tebak Angka Keluarga</h3>
-                            <p className="text-muted mb-4">{msg}</p>
-                            <div className="d-flex gap-2 justify-content-center mb-3">
-                                <input type="number" className="form-control text-center" style={{width:80}}
-                                    value={guess} onChange={e => setGuess(e.target.value)} />
-                                <button onClick={handleGuess} className="btn btn-info px-4">Tebak!</button>
+
+                            <div className="bg-light rounded-3 p-3 mb-3">
+                                <div className="fw-semibold mb-1">Fitur Utama</div>
+                                <ul className="mb-0 text-muted">
+                                    <li>Operator +, -, *, / dengan mode mencari hasil atau mencari angka.</li>
+                                    <li>Timer per soal, score sesi, dan riwayat ringkas.</li>
+                                    <li>Progress mastery per pasangan soal tersimpan per member.</li>
+                                </ul>
                             </div>
-                            <p className="small text-muted mb-0">Menangkan 10 poin jika benar!</p>
+
+                            <Link href="/games/math" className="btn btn-warning text-dark fw-semibold px-4">
+                                Mulai Main
+                            </Link>
                         </Card.Body>
                     </Card>
                 </Col>
-                <Col lg={6}>
+
+                <Col lg={5}>
                     <Card className="border-0 shadow-sm h-100">
                         <Card.Header className="bg-transparent border-0 pt-3">
-                            <h5 className="fw-bold mb-0"><i className="ri-medal-line me-2 text-warning"></i>Status Pemain</h5>
+                            <h5 className="fw-bold mb-0">Roadmap Game Lain</h5>
                         </Card.Header>
-                        <Card.Body>
-                            <div className="p-3 bg-light rounded-3 mb-3">
-                                <h6 className="fw-bold mb-1">Tiket Tersedia</h6>
-                                <div className="d-flex align-items-center gap-2">
-                                    <i className="ri-coupon-2-line text-warning fs-20"></i>
-                                    <span className="fw-bold fs-18">5 Tiket</span>
+                        <Card.Body className="pt-2">
+                            <div className="d-flex flex-column gap-3">
+                                <div className="p-3 border rounded-3">
+                                    <div className="fw-semibold">Belajar Kosakata</div>
+                                    <div className="small text-muted">Mode flashcard dan kuis adaptif.</div>
+                                </div>
+                                <div className="p-3 border rounded-3">
+                                    <div className="fw-semibold">Dongeng Teladan</div>
+                                    <div className="small text-muted">Generator cerita dan slide interaktif.</div>
+                                </div>
+                                <div className="p-3 border rounded-3">
+                                    <div className="fw-semibold">Alat Bantu Tahfiz</div>
+                                    <div className="small text-muted">Pendamping hafalan dengan audio ayat.</div>
                                 </div>
                             </div>
-                            <p className="text-muted fs-13 mb-0">Tiket akan bertambah setiap kali Anda menyelesaikan tugas harian.</p>
                         </Card.Body>
                     </Card>
                 </Col>
@@ -64,4 +82,3 @@ const GamesPage: React.FC<Props> = ({ demo: _unused_demo }) => {
 (GamesPage as any).layout = (page: React.ReactNode) => <TenantMemberLayout>{page}</TenantMemberLayout>;
 
 export default GamesPage;
-

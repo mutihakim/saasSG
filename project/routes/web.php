@@ -137,6 +137,7 @@ Route::middleware([
             Route::get('/leisure',   [TenantHubController::class, 'leisure'])->name('tenant.leisure');
             Route::get('/vacation',  [TenantHubController::class, 'leisure'])->name('tenant.vacation');
             Route::get('/games',     [TenantHubController::class, 'games'])->name('tenant.games');
+            Route::get('/games/math', [TenantHubController::class, 'gamesMath'])->name('tenant.games.math');
             Route::get('/whatsapp',  [TenantHubController::class, 'wa'])->name('tenant.wa');
             Route::get('/gallery',   [TenantHubController::class, 'gallery'])->name('tenant.gallery');
             Route::get('/blog',      [TenantHubController::class, 'blog'])->name('tenant.blog');

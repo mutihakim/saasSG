@@ -12,6 +12,7 @@ Berikut adalah modul-modul utama yang tersedia:
 - [💬 WhatsApp Integration](./guide/whatsapp.md)
 - [💸 Finance Module](./03-features/finance.md)
 - [👛 Wallet Module](./03-features/wallet.md)
+- [🎮 Games Module](./03-features/games.md)
 - [🎨 Velzon Navbar Reference](./reference/velzon-navbar-reference.md)
 - [📈 Progress Dashboard](./08-progress/index.md)
 

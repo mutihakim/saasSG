@@ -4,6 +4,7 @@ use App\Http\Controllers\Api\V1\Master\MasterCategoryApiController;
 use App\Http\Controllers\Api\V1\Master\MasterTagApiController;
 use App\Http\Controllers\Api\V1\Master\MasterCurrencyApiController;
 use App\Http\Controllers\Api\V1\Master\MasterUomApiController;
+use App\Http\Controllers\Api\V1\Games\MathGameApiController;
 use App\Http\Controllers\Api\V1\Finance\FinanceAccountApiController;
 use App\Http\Controllers\Api\V1\Finance\FinanceBudgetApiController;
 use App\Http\Controllers\Api\V1\Finance\FinanceBootstrapApiController;
@@ -83,6 +84,16 @@ Route::prefix('v1')
 
                 Route::post('/suspend', [TenantLifecycleApiController::class, 'suspendTenant'])->middleware(['superadmin.impersonation', 'throttle:tenant.mutation']);
                 Route::post('/restore', [TenantLifecycleApiController::class, 'restoreTenant'])->middleware(['superadmin.impersonation', 'throttle:tenant.mutation']);
+
+                // ── Games ──────────────────────────────────────────────────────────────
+                Route::prefix('games/math')->group(function () {
+                    Route::get('/config', [MathGameApiController::class, 'config']);
+                    Route::get('/mastered', [MathGameApiController::class, 'mastered']);
+                    Route::post('/stats', [MathGameApiController::class, 'stats']);
+                    Route::post('/attempt', [MathGameApiController::class, 'attempt'])->middleware(['throttle:tenant.mutation']);
+                    Route::post('/session/finish', [MathGameApiController::class, 'finish'])->middleware(['throttle:tenant.mutation']);
+                    Route::get('/history', [MathGameApiController::class, 'history']);
+                });
 
                 // ── Finance ────────────────────────────────────────────────────────────
                 Route::prefix('finance')->group(function () {

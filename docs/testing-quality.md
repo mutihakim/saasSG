@@ -71,6 +71,16 @@ Finance PWA / Attachment:
 - edit item bulk tidak boleh menghapus `source_type/source_id`
 - upload gambar attachment harus tersimpan sebagai WebP teroptimasi di backend
 
+Games:
+
+- `tests/Feature/MathGameApiTest.php`
+- Wajib mencakup:
+  - attempt benar mengupdate `tenant_game_math_stats` dan menandai mastered saat streak mencapai threshold
+  - attempt salah mereset current streak tanpa menurunkan max streak
+  - stats batch mengembalikan histori pair untuk summary Math Game
+  - finish session menyimpan `tenant_game_sessions` dan history mengembalikan sesi terbaru
+  - akses lintas tenant disembunyikan dengan `404`
+
 WhatsApp (API + Realtime):
 
 - `tests/Feature/TenantWhatsappServiceIntegrationTest.php`

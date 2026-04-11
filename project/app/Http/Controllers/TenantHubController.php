@@ -96,6 +96,11 @@ class TenantHubController extends Controller
         return Inertia::render('Tenant/Frontend/Member/Games', $this->baseProps($request));
     }
 
+    public function gamesMath(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/MathGamePage', $this->baseProps($request));
+    }
+
     public function wa(Request $request): Response
     {
         return Inertia::render('Tenant/Frontend/Member/WhatsApp', $this->baseProps($request));

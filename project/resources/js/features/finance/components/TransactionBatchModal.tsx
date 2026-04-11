@@ -87,7 +87,6 @@ const TransactionBatchModal = ({
 }: TransactionBatchModalProps) => {
     const tenantRoute = useTenantRoute();
     const [loading, setLoading] = useState(false);
-    const [remoteBudgets, setRemoteBudgets] = useState<any[]>(budgets);
     const [ownerMemberId, setOwnerMemberId] = useState(activeMemberId ? String(activeMemberId) : "");
     const [transactionDate, setTransactionDate] = useState(new Date().toISOString().slice(0, 10));
     const [pocketId, setPocketId] = useState("");
@@ -97,39 +96,6 @@ const TransactionBatchModal = ({
     const [showCalculator, setShowCalculator] = useState(false);
     const [activeCalculatorIndex, setActiveCalculatorIndex] = useState<number | null>(null);
     const [previewItem, setPreviewItem] = useState<{ url: string; title?: string | null; mimeType?: string | null } | null>(null);
-
-    useEffect(() => {
-        if (Array.isArray(budgets) && budgets.length > 0) {
-            setRemoteBudgets(budgets);
-        }
-    }, [budgets]);
-
-    useEffect(() => {
-        if (!show) {
-            return;
-        }
-
-        if (Array.isArray(budgets) && budgets.length > 0) {
-            return;
-        }
-
-        void axios
-            .get(tenantRoute.apiTo("/finance/budgets"), { params: { period_month: "" } })
-            .then((response) => {
-                const nextBudgets = response.data?.data?.budgets;
-                if (Array.isArray(nextBudgets)) {
-                    setRemoteBudgets(nextBudgets);
-                }
-            })
-            .catch(() => {
-                // Keep parent-provided budgets as fallback.
-            });
-    }, [show, tenantRoute]);
-
-    const effectiveBudgets = useMemo(
-        () => (remoteBudgets.length > 0 ? remoteBudgets : budgets),
-        [remoteBudgets, budgets],
-    );
 
     useEffect(() => {
         if (!show) {
@@ -166,14 +132,7 @@ const TransactionBatchModal = ({
     const visiblePockets = useMemo(() => pockets.filter((pocket) => canUseForOwner(pocket, ownerMemberId)), [ownerMemberId, pockets]);
     const selectedPocket = useMemo(() => visiblePockets.find((pocket) => String(pocket.id) === String(pocketId)) ?? null, [pocketId, visiblePockets]);
     const selectedAccount = useMemo(() => accounts.find((account) => String(account.id) === String(selectedPocket?.real_account_id || "")) ?? null, [accounts, selectedPocket]);
-    const visibleBudgets = useMemo(() => {
-        const ownerScoped = effectiveBudgets.filter((budget) => canUseForOwner(budget, ownerMemberId));
-        if (ownerScoped.length > 0) {
-            return ownerScoped;
-        }
-
-        return effectiveBudgets.filter((budget) => budget?.is_active !== false);
-    }, [effectiveBudgets, ownerMemberId]);
+    const visibleBudgets = useMemo(() => budgets.filter((budget) => canUseForOwner(budget, ownerMemberId)), [budgets, ownerMemberId]);
     const filteredBudgets = useMemo(() => {
         if (!selectedPocket) {
             return visibleBudgets;

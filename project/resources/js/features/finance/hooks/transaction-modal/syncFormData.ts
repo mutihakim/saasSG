@@ -60,10 +60,7 @@ export const syncTransactionFormData = ({
     const resolvedPocket = pockets.find((pocket) => String(pocket.id) === String(next.wallet_id));
     next.bank_account_id = resolvedPocket?.real_account_id ? String(resolvedPocket.real_account_id) : "";
 
-    const ownerScopedBudgetCandidates = budgets.filter((budget) => canUseForOwner(budget, next.owner_member_id));
-    const budgetCandidates = ownerScopedBudgetCandidates.length > 0
-        ? ownerScopedBudgetCandidates
-        : budgets.filter((budget) => budget.is_active !== false);
+    const budgetCandidates = budgets.filter((budget) => canUseForOwner(budget, next.owner_member_id));
     const monthBudgetCandidates = budgetCandidates.filter((budget) => String(budget.period_month) === toPeriodMonth(next.transaction_date) && budget.is_active !== false);
     const selectedBudgetCandidate = budgetCandidates.find((budget) => String(budget.id) === String(next.budget_id));
     const lockedBudgetPocket = selectedBudgetCandidate?.wallet_id

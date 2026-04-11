@@ -1,0 +1,56 @@
+.math-game {
+    &__tile {
+        aspect-ratio: 1 / 1;
+        min-height: 92px;
+        width: 100%;
+        border-radius: var(--#{$prefix}border-radius);
+        transition: transform 0.18s ease, box-shadow 0.18s ease;
+
+        &:hover,
+        &:focus {
+            transform: translateY(-3px);
+            box-shadow: var(--#{$prefix}box-shadow-lg);
+        }
+    }
+
+    &__operator-symbol {
+        font-size: 3rem;
+        line-height: 1;
+    }
+
+    &__number-tile {
+        min-height: 64px;
+        aspect-ratio: 1 / 1;
+        border-radius: var(--#{$prefix}border-radius);
+        font-size: 1.35rem;
+        font-weight: 700;
+    }
+
+    &__answer-box {
+        min-width: 86px;
+        border-bottom: 3px solid var(--#{$prefix}border-color);
+    }
+
+    &__numpad {
+        max-width: 340px;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    &__numpad-button {
+        min-height: 54px;
+    }
+
+    &__summary-table {
+        max-height: 360px;
+    }
+
+    &__feedback-card {
+        border-radius: var(--#{$prefix}border-radius);
+        padding: 2rem;
+    }
+
+    &__feedback-icon {
+        font-size: 3rem;
+        line-height: 1;
+    }
+}

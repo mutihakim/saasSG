@@ -176,3 +176,16 @@ Catatan:
 - Default AI provider saat ini adalah OpenRouter dengan model `qwen/qwen3.6-plus:free`.
 - Jika ekstraksi AI gagal untuk natural language, backend tidak mengirim link review ke `/finance`; pengguna menerima pesan error di WhatsApp dan intent disimpan dengan status `failed`.
 - Response draft WhatsApp finance sekarang dapat memuat `media_items[]` selain media utama tunggal, agar PWA bisa menampilkan banyak preview attachment.
+
+### Games
+
+Math Game endpoint berada di bawah `/api/v1/tenants/{tenant}/games/math`.
+
+- `GET /games/math/config`
+- `GET /games/math/mastered?operator=+`
+- `POST /games/math/stats`
+- `POST /games/math/attempt`
+- `POST /games/math/session/finish`
+- `GET /games/math/history?limit=10`
+
+`POST /games/math/stats` menerima `pairs[]` berisi `operator`, `angka_pilihan`, dan `angka_random`, lalu mengembalikan `data.stats` dengan key `{operator}|{angka_pilihan}|{angka_random}`.
