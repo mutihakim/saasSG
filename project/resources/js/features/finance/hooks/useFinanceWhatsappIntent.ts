@@ -25,6 +25,14 @@ type Args = {
     setTransactionModal: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
+/**
+ * Handles WhatsApp intent by opening the standard modal (same as clicking "+ Add Transaction" manually).
+ * - /tx → opens single expense modal with AI data pre-filled
+ * - /bulk → opens batch review modal with AI items pre-filled
+ *
+ * Data (budgets, wallets, accounts) is preloaded server-side when the page
+ * loads with ?source=wa&intent=xxx, so no extra client-side API calls are needed.
+ */
 export const useFinanceWhatsappIntent = ({
     activeMemberId,
     defaultCurrency,
@@ -63,7 +71,9 @@ export const useFinanceWhatsappIntent = ({
                 ? tenantRoute.apiTo(`/finance/whatsapp-media/${payload.media.id}/preview`)
                 : null;
             const mediaItems = Array.isArray(payload.media_items) ? payload.media_items : [];
+            const extracted = payload.extracted_payload || {};
 
+            // /bulk → opens batch review modal (same as manual "+ Bulk" flow)
             if (action === "batch-review") {
                 setBatchDraft({
                     ...payload,
@@ -71,10 +81,11 @@ export const useFinanceWhatsappIntent = ({
                     media_items: mediaItems,
                 });
                 setBatchModal(true);
+                clearWhatsappQuery();
                 return;
             }
 
-            const extracted = payload.extracted_payload || {};
+            // /tx → opens single expense modal (same as manual "+ Expense" flow)
             setTransactionDraft({
                 owner_member_id: payload.member_id || activeMemberId || "",
                 type: extracted.type || "pengeluaran",
@@ -95,6 +106,7 @@ export const useFinanceWhatsappIntent = ({
             setSelectedTransaction(null);
             setTransactionPresetType(extracted.type === "pemasukan" ? "pemasukan" : "pengeluaran");
             setTransactionModal(true);
+            clearWhatsappQuery();
         } catch (error: unknown) {
             const parsed = parseApiError(error, "Failed to open WhatsApp draft");
             notify.error({ title: parsed.title, detail: parsed.detail });

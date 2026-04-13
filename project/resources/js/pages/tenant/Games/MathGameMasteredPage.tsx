@@ -1,1 +1,1 @@
-export { default } from "../../../features/games/MathGameMasteredPage";
+export { default } from "../../../features/games/math/views/MathGameMasteredPage";

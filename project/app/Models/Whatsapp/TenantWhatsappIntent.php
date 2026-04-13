@@ -52,6 +52,11 @@ class TenantWhatsappIntent extends Model
         return $this->hasMany(TenantWhatsappIntentItem::class, 'intent_id')->orderBy('sort_order');
     }
 
+    public function tenant()
+    {
+        return $this->belongsTo(\App\Models\Tenant\Tenant::class, 'tenant_id');
+    }
+
     public function member()
     {
         return $this->belongsTo(TenantMember::class, 'member_id');

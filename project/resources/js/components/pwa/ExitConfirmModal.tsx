@@ -60,9 +60,10 @@ const ExitConfirmModal: React.FC<ExitConfirmModalProps> = ({
     if (!showModal) return null;
 
     return (
-        <div className="modal fade show d-block" tabIndex={-1} role="dialog">
-            <div className="modal-dialog modal-dialog-centered modal-sm" role="document">
-                <div className="modal-content">
+        <div className="modal fade show d-block" tabIndex={-1} role="dialog" style={{ zIndex: 1060 }}>
+            <div className="modal-backdrop fade show" style={{ zIndex: -1 }} />
+            <div className="modal-dialog modal-dialog-centered modal-sm" role="document" style={{ zIndex: 1061 }}>
+                <div className="modal-content shadow-lg border-0">
                     <div className="modal-header border-0 pb-0">
                         <h6 className="modal-title">{title}</h6>
                         <button
@@ -93,7 +94,6 @@ const ExitConfirmModal: React.FC<ExitConfirmModalProps> = ({
                     </div>
                 </div>
             </div>
-            <div className="modal-backdrop fade show" />
         </div>
     );
 };

@@ -296,6 +296,11 @@ class InternalWhatsappCallbackController extends Controller
             'payload' => ['nullable', 'array'],
         ]);
 
+        $payloadData = is_array($payload['payload'] ?? null) ? $payload['payload'] : [];
+        if (!isset($payloadData['text'])) {
+            $payloadData['text'] = '';
+        }
+
         $chatJid = $payload['direction'] === 'incoming'
             ? ($payload['sender_jid'] ?? null)
             : ($payload['recipient_jid'] ?? null);
@@ -310,7 +315,7 @@ class InternalWhatsappCallbackController extends Controller
                 'sender_jid' => $payload['sender_jid'] ?? null,
                 'recipient_jid' => $payload['recipient_jid'] ?? null,
                 'chat_jid' => $chatJid,
-                'payload' => $payload['payload'] ?? null,
+                'payload' => $payloadData,
             ]
         );
 
@@ -349,7 +354,7 @@ class InternalWhatsappCallbackController extends Controller
                     $this->financeIntentService->handleIncomingMessage(
                         tenant: $tenant,
                         senderJid: $chatJid,
-                        text: (string) (($payload['payload']['text'] ?? '') ?: ''),
+                        text: (string) ($payloadData['text'] ?? ''),
                         message: $messageModel
                     );
                 } catch (\Throwable $exception) {

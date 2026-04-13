@@ -1,6 +1,6 @@
 # 08 - Progress Dashboard
 
-Last updated: `2026-04-11`
+Last updated: `2026-04-13`
 
 Progress dashboard ini dipakai untuk memantau execution health lintas modul. Detail teknis tetap ada di `03-features/*`.
 
@@ -14,7 +14,7 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 | Master Data CRUD | Done | 100% | Platform Team | 2026-04-03 | UoM, Currency, Tag, Category: full CRUD + Policy + Soft-Delete Aware Unique Index + i18n + Toast standardized. Tag `is_active` management ditambahkan. |
 | Finance | In Progress | 99% | Finance Team | 2026-04-06 | Finance V2 aktif: ULID string, accounts, budgets, shared access, attachment, grouped bulk entry, Wallet/Pocket PWA v1, dan WhatsApp draft loop end-to-end. [Finance Progress](./modules/finance.md) |
 | Wallet | In Progress | 75% | Finance Team | 2026-04-06 | Wallet/Pocket v1 aktif: pocket tenant, wallet PWA `/wallet`, CRUD pocket, dan integrasi transaksi normal berbasis pocket. [Wallet Progress](./modules/wallet.md) |
-| Games | In Progress | 60% | Frontend Team | 2026-04-11 | Math Game aktif dengan flow operator/setup/soal/summary, stats pair, streak, dan UI berbasis Velzon/Bootstrap. [Games Progress](./modules/games.md) |
+| Games | In Progress | 90% | Frontend Team | 2026-04-13 | Math dan Vocabulary kini memakai shared backend/session layer, shared frontend primitives, submenu Vocabulary aktif, serta timer + reverse direction di Vocabulary; tersisa E2E, screenshot docs, dan selector profil belajar. [Games Progress](./modules/games.md) |
 | Tenant Settings | Done | 90% | Platform Team | 2026-03-30 | Tenant profile, billing, localization, dan branding upload per tenant sudah aktif; tersisa verifikasi browser/E2E visual. |
 | WhatsApp | Done | 100% | Integration Team | 2026-04-08 | Realtime tetap stabil dengan Reverb internal-only di belakang proxy Nginx `/app`. [WhatsApp Progress](./modules/whatsapp.md) |
 | Routing & Websocket | Done | 100% | Platform Team | 2026-04-08 | Ingress publik dipersempit ke Nginx (`80/443`), Reverb bind lokal `127.0.0.1`, dan docs dipublish sebagai static site Nginx. |

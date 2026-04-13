@@ -1,5 +1,13 @@
-export { default as GamesIndexPage } from "./Index";
-export { default as MathGamePage } from "./MathGamePage";
-export { default as StoryPage } from "./StoryPage";
-export { default as TahfizPage } from "./TahfizPage";
-export { default as VocabularyPage } from "./VocabularyPage";
+export { GamesIndexPage } from "./hub";
+export {
+    MathGamePage,
+    MathGameMasteredPage,
+    MathGameHistoryPage,
+    MathGameSettingsPage,
+    useMathGame,
+    createGamesApi,
+} from "./math";
+export { StoryPage, useStory } from "./story";
+export { TahfizPage, useTahfiz } from "./tahfiz";
+export { VocabularyPage, useVocabulary } from "./vocabulary";
+export * from "./shared";

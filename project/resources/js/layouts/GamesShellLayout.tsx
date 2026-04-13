@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 
 import { ExitConfirmModal, ModuleTopbar } from "../components/pwa";
 
@@ -7,6 +7,8 @@ export type GamesShellProps = {
     title: string;
     /** When true, shows exit confirmation on back navigation */
     preventExit?: boolean;
+    /** When true, lock body scroll and force immersive full-height content */
+    immersive?: boolean;
     /** Optional right-side action in topbar (e.g. settings, help) */
     topbarAction?: React.ReactNode;
 };
@@ -15,10 +17,28 @@ const GamesShellLayout = ({
     children,
     title,
     preventExit = false,
+    immersive = false,
     topbarAction,
 }: GamesShellProps) => {
+    useEffect(() => {
+        if (!immersive) {
+            return;
+        }
+
+        const previousHtmlOverflow = document.documentElement.style.overflow;
+        const previousBodyOverflow = document.body.style.overflow;
+
+        document.documentElement.style.overflow = "hidden";
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.documentElement.style.overflow = previousHtmlOverflow;
+            document.body.style.overflow = previousBodyOverflow;
+        };
+    }, [immersive]);
+
     return (
-        <div className="games-shell" style={{ minHeight: "100dvh" }}>
+        <div className={`games-shell${immersive ? " games-shell--immersive" : ""}`} style={{ minHeight: "100dvh" }}>
             <style>{`
                 .games-shell {
                     --games-bg: #0f172a;
@@ -56,6 +76,7 @@ const GamesShellLayout = ({
                     padding: 1rem;
                     padding-bottom: max(1rem, var(--games-safe-bottom));
                     overflow-x: hidden;
+                    overflow-y: auto;
                     overscroll-behavior: none;
                     -webkit-overscroll-behavior: none;
                 }
@@ -86,6 +107,12 @@ const GamesShellLayout = ({
                     flex: 1;
                     display: flex;
                     flex-direction: column;
+                }
+
+                .games-shell--immersive .games-shell__content {
+                    height: calc(100dvh - 56px - var(--games-safe-top));
+                    min-height: calc(100dvh - 56px - var(--games-safe-top));
+                    overflow: hidden;
                 }
 
                 /* Landscape game area: wider layout */

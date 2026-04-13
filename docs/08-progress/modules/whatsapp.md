@@ -1,7 +1,7 @@
 # Progress - WhatsApp Integration
 
 Status: `Done`  
-Last updated: `2026-04-08`  
+Last updated: `2026-04-13`  
 Owner: `Integration Team`
 
 ## Tujuan Modul
@@ -29,23 +29,36 @@ Menyediakan kapabilitas integrasi WhatsApp berbasis WebSockets (via Laravel Reve
 - Guard bisnis lintas tenant aktif: satu `connected_jid` hanya boleh aktif di satu tenant (policy reject newcomer), dengan metadata conflict `jid_conflict` untuk observabilitas UI.
 - Safety net database ditambahkan via unique partial index `connected_jid IS NOT NULL`, termasuk cleanup migrasi duplikasi existing (`jid_conflict_migration`, keep tenant terlama).
 - Saat conflict runtime, tenant newcomer kini juga otomatis ditrigger `removeSession` ke service secara best effort agar auth cache service ikut dibersihkan.
+- Konfigurasi produksi Family2/Sanjo mulai diarahkan ke broker internal bersama `whatsapp-broker` (`127.0.0.1:3030`) untuk mengurangi duplikasi proses Chromium, sementara service lama tetap disimpan sebagai fallback migrasi.
+- Halaman WhatsApp Settings Family2 kini mengikat ulang listener Echo saat koneksi Reverb baru siap atau reconnect, sehingga update QR/status kembali sinkron secara realtime tanpa polling fallback.
+- Jalur chat Family2 setelah migrasi broker sudah di-hardening: callback masuk kini menormalkan `payload.text`, pengiriman ke `@lid` diterima, dan insert outgoing message dibuat idempoten agar callback broker tidak lagi memicu duplicate-key error saat kirim ke chat yang sama.
+- Kode `whatsapp-broker` sudah dimodularisasi: bootstrap server, runtime engine, callback gateway, auth/token guard, presenter payload, dan route adapter per project (`sanjo`, `nestnote`, `renoruma`, `archflow`, `wa-bot`) dipisah agar penambahan project baru tidak lagi menumpuk di satu file.
+- App Laravel Family2 kini punya command audit `php artisan whatsapp:legacy:readiness`, panduan `docs/guide/whatsapp-legacy-cleanup.md`, dan script patch `project/scripts/whatsapp-legacy-cleanup.sh` untuk gating serta eksekusi cleanup service WhatsApp lama per project.
+
+## Inventory Legacy WhatsApp (Family2/Sanjo)
+
+- **PM2 Process**: `sanjo-whatsapp` (id 9, stopped).
+- **Service Directory**: `/var/www/html/apps/family2/services/whatsapp/`.
+- **Runtime Auth**: `/var/www/html/apps/family2/services/whatsapp/wa-auth/`.
+- **Port**: 3026 (legacy default was 3010).
 
 ## Blocker & Dependency
 
 - Blocker: (Tidak ada)
-- Dependency: PM2 `tenant-whatsapp-service` serta PM2 app `family2-reverb` dan `family2-queue-worker` wajib jalan di _background production_; Nginx wajib mempertahankan proxy `/app` dan route `/broadcasting/auth`.
+- Dependency: PM2 `whatsapp-broker` serta PM2 app `sanjo-reverb` dan `sanjo-queue-worker` wajib jalan di _background production_; Nginx wajib mempertahankan proxy `/app` dan route `/broadcasting/auth`.
 
 ## Next Actions
 
-1. Menambahkan dukungan penerimaan/pengiriman file media (Image/Video).
-2. Menyempurnakan layout status centang (Read Receipts) di sidebar History Chat.
-3. Menambahkan test browser/E2E untuk alur Load more + recovery sesi expired + command guide visibility.
+1. Jalankan observasi stabilitas Family2 lalu gunakan `php artisan whatsapp:legacy:readiness --tenant=family2` sebagai gate sebelum mematikan fallback lama.
+2. Cleanup service WhatsApp lama per project satu per satu memakai panduan `docs/guide/whatsapp-legacy-cleanup.md`.
+3. Lanjutkan migrasi project berikutnya ke broker modular setelah checklist cleanup selesai.
 
 ## Referensi PR/Issue/Test
 
 - Feature docs: `docs/03-features/whatsapp.md`
 - Entry points:
-  - `services/whatsapp/src/index.js`
+  - `/var/www/html/services/whatsapp-broker/src/index.js`
+  - `services/whatsapp/src/index.js` (fallback migrasi)
   - `resources/js/Pages/Tenant/WhatsApp/Chats.tsx`
   - `resources/js/Pages/Tenant/WhatsApp/Settings.tsx`
   - `ecosystem.config.cjs`

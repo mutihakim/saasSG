@@ -93,7 +93,12 @@ class TenantBaselineSeeder extends Seeder
             ->all();
         $memberPermissions = $viewOnly
             ->merge($financeWallet)
-            ->merge(['games.math.create', 'games.math.update'])
+            ->merge([
+                'games.math.create',
+                'games.math.update',
+                'games.vocabulary.create',
+                'games.vocabulary.update',
+            ])
             ->unique()
             ->values()
             ->all();

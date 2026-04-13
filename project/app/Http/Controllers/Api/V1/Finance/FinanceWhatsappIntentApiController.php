@@ -10,6 +10,7 @@ use App\Models\Whatsapp\TenantWhatsappMedia;
 use App\Models\Tenant\TenantMember;
 use App\Services\Finance\FinanceAccessService;
 use App\Services\Finance\Transactions\FinanceTransactionPresenter;
+use App\Services\Whatsapp\WhatsappMediaOptimizer;
 use App\Services\WhatsappFinanceIntentService;
 use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\JsonResponse;
@@ -24,6 +25,7 @@ class FinanceWhatsappIntentApiController extends Controller
         private readonly FinanceAccessService $access,
         private readonly WhatsappFinanceIntentService $intentService,
         private readonly FinanceTransactionPresenter $presenter,
+        private readonly WhatsappMediaOptimizer $mediaOptimizer,
     ) {
     }
 
@@ -286,37 +288,25 @@ class FinanceWhatsappIntentApiController extends Controller
 
     private function storeMediaAsAttachment(FinanceTransaction $transaction, TenantWhatsappMedia $media): array
     {
-        $contents = Storage::get($media->storage_path);
+        if ($this->mediaOptimizer->isOptimizableImage($media)) {
+            $path = $this->mediaOptimizer->transactionAttachmentPath(
+                $transaction->tenant_id,
+                $transaction->id,
+                $media->id
+            );
 
-        if (in_array((string) $media->mime_type, ['image/jpeg', 'image/png', 'image/webp'], true)) {
-            $image = @imagecreatefromstring($contents);
-            if ($image) {
-                $this->prepareImageResource($image);
-                $optimized = $this->encodeWebpUnderLimit($image, 100 * 1024);
-                imagedestroy($image);
-
-                $path = sprintf(
-                    'tenants/%d/finance/attachments/transactions/%s/%s.webp',
-                    $transaction->tenant_id,
-                    $transaction->id,
-                    Str::uuid()->toString()
-                );
-                Storage::put($path, $optimized);
-
+            $result = $this->mediaOptimizer->optimizeAndStoreImage($media, $path);
+            if ($result) {
                 return [
-                    'path' => $path,
+                    'path' => $result['path'],
                     'file_name' => sprintf('whatsapp-%d.webp', $media->id),
-                    'mime_type' => 'image/webp',
-                    'file_size' => strlen($optimized),
+                    'mime_type' => $result['mime_type'],
+                    'file_size' => $result['file_size'],
                 ];
             }
         }
 
-        $extension = pathinfo((string) $media->storage_path, PATHINFO_EXTENSION);
-        if ($extension === '') {
-            $extension = Str::lower((string) Str::afterLast($media->mime_type, '/')) ?: 'bin';
-        }
-
+        $extension = $this->mediaOptimizer->resolveMediaExtension($media);
         $path = sprintf(
             'tenants/%d/finance/attachments/transactions/%s/%s.%s',
             $transaction->tenant_id,
@@ -324,174 +314,70 @@ class FinanceWhatsappIntentApiController extends Controller
             Str::uuid()->toString(),
             $extension
         );
-        Storage::put($path, $contents);
+        Storage::put($path, Storage::get($media->storage_path));
 
         return [
             'path' => $path,
             'file_name' => sprintf('whatsapp-%d.%s', $media->id, $extension),
-            'mime_type' => $media->mime_type,
-            'file_size' => strlen($contents),
+            'mime_type' => $this->mediaOptimizer->resolveMediaMimeType($media),
+            'file_size' => Storage::size($path) ?: 0,
         ];
     }
 
     private function storeMediaAsGroupAttachment(Tenant $tenant, string $sourceId, TenantWhatsappMedia $media): array
     {
-        $existingPath = $this->groupAttachmentStoragePath($tenant, $sourceId, $media, $this->resolveMediaExtension($media));
+        $existingPath = $this->mediaOptimizer->groupAttachmentPath($tenant, $sourceId, $media, $this->mediaOptimizer->resolveMediaExtension($media));
         if (Storage::exists($existingPath)) {
             return [
                 'path' => $existingPath,
-                'file_name' => $this->groupAttachmentFileName($media),
-                'mime_type' => $this->resolveMediaMimeType($media),
+                'file_name' => $this->mediaOptimizer->groupAttachmentFileName($media),
+                'mime_type' => $this->mediaOptimizer->resolveMediaMimeType($media),
                 'file_size' => Storage::size($existingPath) ?: 0,
             ];
         }
 
-        $contents = Storage::get($media->storage_path);
-
-        if (in_array((string) $media->mime_type, ['image/jpeg', 'image/png', 'image/webp'], true)) {
-            $image = @imagecreatefromstring($contents);
-            if ($image) {
-                $this->prepareImageResource($image);
-                $optimized = $this->encodeWebpUnderLimit($image, 100 * 1024);
-                imagedestroy($image);
-
-                $path = $this->groupAttachmentStoragePath($tenant, $sourceId, $media, 'webp');
-                Storage::put($path, $optimized);
-
+        if ($this->mediaOptimizer->isOptimizableImage($media)) {
+            $path = $this->mediaOptimizer->groupAttachmentPath($tenant, $sourceId, $media, 'webp');
+            $result = $this->mediaOptimizer->optimizeAndStoreImage($media, $path);
+            if ($result) {
                 return [
-                    'path' => $path,
+                    'path' => $result['path'],
                     'file_name' => sprintf('whatsapp-%d.webp', $media->id),
-                    'mime_type' => 'image/webp',
-                    'file_size' => strlen($optimized),
+                    'mime_type' => $result['mime_type'],
+                    'file_size' => $result['file_size'],
                 ];
             }
         }
 
-        $extension = $this->resolveMediaExtension($media);
-        $path = $this->groupAttachmentStoragePath($tenant, $sourceId, $media, $extension);
-        Storage::put($path, $contents);
+        $extension = $this->mediaOptimizer->resolveMediaExtension($media);
+        $path = $this->mediaOptimizer->groupAttachmentPath($tenant, $sourceId, $media, $extension);
+        Storage::put($path, Storage::get($media->storage_path));
 
         return [
             'path' => $path,
-            'file_name' => $this->groupAttachmentFileName($media, $extension),
-            'mime_type' => $this->resolveMediaMimeType($media),
-            'file_size' => strlen($contents),
+            'file_name' => $this->mediaOptimizer->groupAttachmentFileName($media, $extension),
+            'mime_type' => $this->mediaOptimizer->resolveMediaMimeType($media),
+            'file_size' => Storage::size($path) ?: 0,
         ];
-    }
-
-    private function groupAttachmentStoragePath(Tenant $tenant, string $sourceId, TenantWhatsappMedia $media, string $extension): string
-    {
-        return sprintf(
-            'tenants/%d/finance/attachments/groups/%s/%d.%s',
-            $tenant->id,
-            $sourceId,
-            $media->id,
-            ltrim($extension, '.')
-        );
-    }
-
-    private function groupAttachmentFileName(TenantWhatsappMedia $media, ?string $extension = null): string
-    {
-        $resolvedExtension = $extension ?: $this->resolveMediaExtension($media);
-
-        return sprintf('whatsapp-%d.%s', $media->id, $resolvedExtension);
     }
 
     private function resolveMediaExtension(TenantWhatsappMedia $media): string
     {
-        $extension = pathinfo((string) $media->storage_path, PATHINFO_EXTENSION);
-        if ($extension === '') {
-            $extension = Str::lower((string) Str::afterLast($media->mime_type, '/')) ?: 'bin';
-        }
-
-        return ltrim(Str::lower($extension), '.');
+        return $this->mediaOptimizer->resolveMediaExtension($media);
     }
 
     private function resolveMediaMimeType(TenantWhatsappMedia $media): string
     {
-        return $media->mime_type ?: 'application/octet-stream';
+        return $this->mediaOptimizer->resolveMediaMimeType($media);
     }
 
-    private function encodeWebpUnderLimit(\GdImage $image, int $maxBytes): string
+    private function groupAttachmentStoragePath(Tenant $tenant, string $sourceId, TenantWhatsappMedia $media, string $extension): string
     {
-        $current = $image;
-        $ownsCurrent = false;
-        $bestBytes = null;
-        $qualities = [82, 76, 70, 64, 58, 52, 46, 40, 34];
-
-        for ($iteration = 0; $iteration < 6; $iteration++) {
-            foreach ($qualities as $quality) {
-                $encoded = $this->encodeImageToWebp($current, $quality);
-                if ($encoded === null) {
-                    continue;
-                }
-
-                if ($bestBytes === null || strlen($encoded) < strlen($bestBytes)) {
-                    $bestBytes = $encoded;
-                }
-
-                if (strlen($encoded) <= $maxBytes) {
-                    if ($ownsCurrent && $current !== $image) {
-                        imagedestroy($current);
-                    }
-
-                    return $encoded;
-                }
-            }
-
-            $width = imagesx($current);
-            $height = imagesy($current);
-            if ($width <= 480 && $height <= 480) {
-                break;
-            }
-
-            $scaled = imagescale(
-                $current,
-                max(320, (int) floor($width * 0.85)),
-                max(320, (int) floor($height * 0.85)),
-                IMG_BILINEAR_FIXED
-            );
-
-            if ($scaled === false) {
-                break;
-            }
-
-            $this->prepareImageResource($scaled);
-            if ($ownsCurrent && $current !== $image) {
-                imagedestroy($current);
-            }
-
-            $current = $scaled;
-            $ownsCurrent = true;
-        }
-
-        if ($ownsCurrent && $current !== $image) {
-            imagedestroy($current);
-        }
-
-        return $bestBytes ?? throw new \RuntimeException('Failed to optimize WhatsApp image attachment.');
+        return $this->mediaOptimizer->groupAttachmentPath($tenant, $sourceId, $media, $extension);
     }
 
-    private function encodeImageToWebp(\GdImage $image, int $quality): ?string
+    private function groupAttachmentFileName(TenantWhatsappMedia $media, ?string $extension = null): string
     {
-        ob_start();
-        $success = imagewebp($image, null, $quality);
-        $contents = ob_get_clean();
-
-        if (!$success || !is_string($contents) || $contents === '') {
-            return null;
-        }
-
-        return $contents;
-    }
-
-    private function prepareImageResource(\GdImage $image): void
-    {
-        if (function_exists('imagepalettetotruecolor')) {
-            @imagepalettetotruecolor($image);
-        }
-
-        imagealphablending($image, false);
-        imagesavealpha($image, true);
+        return $this->mediaOptimizer->groupAttachmentFileName($media, $extension);
     }
 }

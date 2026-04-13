@@ -6,6 +6,7 @@ use App\Models\Identity\User;
 use App\Models\Tenant\Tenant;
 use App\Models\Tenant\TenantMember;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -45,6 +46,16 @@ class MathGameApiTest extends TestCase
     {
         [$tenant] = $this->seedTenantMember();
 
+        for ($i = 1; $i <= 7; $i++) {
+            $this->postJson("/api/v1/tenants/{$tenant->slug}/games/math/attempt", [
+                'operator' => '+',
+                'angka_pilihan' => 5,
+                'angka_random' => 7,
+                'is_correct' => true,
+                'current_streak' => $i,
+            ])->assertOk();
+        }
+
         $response = $this->postJson("/api/v1/tenants/{$tenant->slug}/games/math/attempt", [
             'operator' => '+',
             'angka_pilihan' => 5,
@@ -55,7 +66,7 @@ class MathGameApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('ok', true)
-            ->assertJsonPath('data.stats.jumlah_benar', 1)
+            ->assertJsonPath('data.stats.jumlah_benar', 8)
             ->assertJsonPath('data.stats.current_streak_benar', 8)
             ->assertJsonPath('data.stats.max_streak_benar', 8)
             ->assertJsonPath('data.stats.mastered', true);
@@ -65,7 +76,7 @@ class MathGameApiTest extends TestCase
             'operator' => '+',
             'angka_pilihan' => 5,
             'angka_random' => 7,
-            'jumlah_benar' => 1,
+            'jumlah_benar' => 8,
             'jumlah_salah' => 0,
             'current_streak_benar' => 8,
             'max_streak_benar' => 8,
@@ -96,7 +107,7 @@ class MathGameApiTest extends TestCase
             ->assertJsonPath('data.stats.jumlah_benar', 1)
             ->assertJsonPath('data.stats.jumlah_salah', 1)
             ->assertJsonPath('data.stats.current_streak_benar', 0)
-            ->assertJsonPath('data.stats.max_streak_benar', 3);
+            ->assertJsonPath('data.stats.max_streak_benar', 1);
     }
 
     public function test_stats_returns_batch_math_pair_history(): void
@@ -126,8 +137,47 @@ class MathGameApiTest extends TestCase
 
         $stats = $response->json('data.stats');
         $this->assertSame(1, $stats['/|6|4']['jumlah_benar']);
-        $this->assertSame(2, $stats['/|6|4']['current_streak_benar']);
+        $this->assertSame(1, $stats['/|6|4']['current_streak_benar']);
         $this->assertFalse($stats['/|6|4']['mastered']);
+    }
+
+    public function test_attempt_mastered_flag_respects_per_operator_threshold_setting(): void
+    {
+        [$tenant, , $member] = $this->seedTenantMember();
+
+        DB::table('tenant_game_math_settings')->insert([
+            'tenant_id' => $tenant->id,
+            'member_id' => $member->id,
+            'operator' => '+',
+            'default_mode' => 'mencariC',
+            'default_question_count' => 10,
+            'default_time_limit' => 15,
+            'mastered_threshold' => 2,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        $this->postJson("/api/v1/tenants/{$tenant->slug}/games/math/attempt", [
+            'operator' => '+',
+            'angka_pilihan' => 2,
+            'angka_random' => 3,
+            'is_correct' => true,
+            'current_streak' => 1,
+        ])->assertOk()
+            ->assertJsonPath('data.stats.mastered', false);
+
+        $response = $this->postJson("/api/v1/tenants/{$tenant->slug}/games/math/attempt", [
+            'operator' => '+',
+            'angka_pilihan' => 2,
+            'angka_random' => 3,
+            'is_correct' => true,
+            'current_streak' => 2,
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.stats.current_streak_benar', 2)
+            ->assertJsonPath('data.stats.max_streak_benar', 2)
+            ->assertJsonPath('data.stats.mastered', true);
     }
 
     public function test_finish_session_and_history_return_saved_math_session(): void
@@ -160,6 +210,54 @@ class MathGameApiTest extends TestCase
             ->assertJsonPath('data.sessions.0.operator', '-')
             ->assertJsonPath('data.sessions.0.correct_count', 7)
             ->assertJsonPath('data.sessions.0.wrong_count', 3);
+    }
+
+    public function test_math_settings_can_be_saved_updated_and_filtered_by_operator(): void
+    {
+        [$tenant, , $member] = $this->seedTenantMember();
+
+        $this->postJson("/api/v1/tenants/{$tenant->slug}/games/math/settings", [
+            'operator' => '+',
+            'default_mode' => 'mencariB',
+            'default_question_count' => 5,
+            'default_time_limit' => 2,
+            'mastered_threshold' => 3,
+        ])->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('data.message', 'Settings saved.');
+
+        $this->postJson("/api/v1/tenants/{$tenant->slug}/games/math/settings", [
+            'operator' => '-',
+            'default_mode' => 'mencariC',
+            'default_question_count' => 10,
+            'default_time_limit' => 15,
+            'mastered_threshold' => 8,
+        ])->assertOk();
+
+        $this->postJson("/api/v1/tenants/{$tenant->slug}/games/math/settings", [
+            'operator' => '+',
+            'default_mode' => 'mencariC',
+            'default_question_count' => 20,
+            'default_time_limit' => 3,
+            'mastered_threshold' => 4,
+        ])->assertOk();
+
+        $response = $this->getJson("/api/v1/tenants/{$tenant->slug}/games/math/settings?operator=%2B");
+
+        $response->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonCount(1, 'data.settings')
+            ->assertJsonPath('data.settings.0.operator', '+')
+            ->assertJsonPath('data.settings.0.default_mode', 'mencariC')
+            ->assertJsonPath('data.settings.0.default_question_count', 20)
+            ->assertJsonPath('data.settings.0.default_time_limit', 3)
+            ->assertJsonPath('data.settings.0.mastered_threshold', 4);
+
+        $this->assertSame(1, DB::table('tenant_game_math_settings')
+            ->where('tenant_id', $tenant->id)
+            ->where('member_id', $member->id)
+            ->where('operator', '+')
+            ->count());
     }
 
     public function test_cross_tenant_math_access_is_hidden_with_404(): void

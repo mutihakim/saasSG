@@ -189,3 +189,18 @@ Math Game endpoint berada di bawah `/api/v1/tenants/{tenant}/games/math`.
 - `GET /games/math/history?limit=10`
 
 `POST /games/math/stats` menerima `pairs[]` berisi `operator`, `angka_pilihan`, dan `angka_random`, lalu mengembalikan `data.stats` dengan key `{operator}|{angka_pilihan}|{angka_random}`.
+
+Vocabulary Game endpoint berada di bawah `/api/v1/tenants/{tenant}/games/vocabulary`.
+
+- `GET /games/vocabulary/config`
+- `GET /games/vocabulary/mastered?limit=500&language=english`
+- `GET /games/vocabulary/words?language=english&category=Buah-buahan&day=1`
+- `GET /games/vocabulary/pool?language=english&category=Buah-buahan`
+- `POST /games/vocabulary/attempt`
+- `POST /games/vocabulary/session/finish`
+- `GET /games/vocabulary/history?limit=10&language=english`
+- `GET /games/vocabulary/settings?language=english`
+- `POST /games/vocabulary/settings`
+
+`POST /games/vocabulary/attempt` menerima `word_id`, `language`, `is_correct`, dan `current_streak`, lalu mengembalikan `data.stats` berisi hit counter, streak, dan `is_mastered`.
+`POST /games/vocabulary/settings` sekarang menerima `default_mode`, `mastered_threshold`, `default_time_limit`, `auto_tts`, dan `translation_direction`.

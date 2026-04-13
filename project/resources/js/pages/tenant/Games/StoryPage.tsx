@@ -1,1 +1,1 @@
-export { default } from "../../../features/games/StoryPage";
+export { default } from "../../../features/games/story/views/StoryPage";

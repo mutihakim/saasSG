@@ -357,13 +357,35 @@ class TenantWhatsappApiController extends Controller
                 );
 
                 if (!$serviceResponse['ok']) {
+                    $serviceStatus = (int) ($serviceResponse['status'] ?? 503);
+                    $serviceCode = (string) ($serviceResponse['code'] ?? 'REQUEST_FAILED');
+                    $serviceData = [
+                        'service_status' => $serviceStatus,
+                        'service_code' => $serviceCode,
+                    ];
+
+                    if (in_array($serviceStatus, [409, 422], true) && $serviceCode === 'NOT_CONNECTED') {
+                        return $this->error(
+                            'WHATSAPP_NOT_CONNECTED',
+                            'WhatsApp session is not connected.',
+                            ['hint' => 'Connect session first to send messages.'] + $serviceData,
+                            422
+                        );
+                    }
+
+                    if ($serviceStatus === 422) {
+                        return $this->error(
+                            'WHATSAPP_INVALID_RECIPIENT',
+                            $serviceResponse['message'] ?? 'Recipient WhatsApp JID is invalid.',
+                            $serviceData,
+                            422
+                        );
+                    }
+
                     return $this->error(
                         'WHATSAPP_SERVICE_UNAVAILABLE',
                         'WhatsApp service is unavailable.',
-                        [
-                            'service_status' => $serviceResponse['status'] ?? 503,
-                            'service_code' => $serviceResponse['code'] ?? 'REQUEST_FAILED',
-                        ],
+                        $serviceData,
                         503
                     );
                 }
@@ -373,18 +395,22 @@ class TenantWhatsappApiController extends Controller
             }
         }
 
-        TenantWhatsappMessage::query()->create([
-            'tenant_id' => $tenant->id,
-            'direction' => 'outgoing',
-            'whatsapp_message_id' => $serviceMessageId,
-            'sender_jid' => $setting->connected_jid,
-            'recipient_jid' => $chatJid,
-            'chat_jid' => $chatJid,
-            'payload' => [
-                'text' => $payload['message'],
-                'delivery' => $serviceDelivery,
+        TenantWhatsappMessage::query()->updateOrCreate(
+            [
+                'tenant_id' => $tenant->id,
+                'direction' => 'outgoing',
+                'whatsapp_message_id' => $serviceMessageId,
             ],
-        ]);
+            [
+                'sender_jid' => $setting->connected_jid,
+                'recipient_jid' => $chatJid,
+                'chat_jid' => $chatJid,
+                'payload' => [
+                    'text' => $payload['message'],
+                    'delivery' => $serviceDelivery,
+                ],
+            ]
+        );
 
         $this->upsertContact((int) $tenant->id, $chatJid);
 

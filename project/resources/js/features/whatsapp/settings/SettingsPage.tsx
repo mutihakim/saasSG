@@ -1,6 +1,6 @@
 import { Head, usePage } from "@inertiajs/react";
 import axios from "axios";
-import React, { Suspense, lazy, useCallback, useEffect, useState } from "react";
+import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Badge, Button, Card, Col, Row, Spinner } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
@@ -33,6 +33,8 @@ function WhatsAppSettingsPage() {
     const [loading, setLoading] = useState(false);
     const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
     const [session, setSession] = useState<SessionPayload | null>(null);
+    const [realtimeConnected, setRealtimeConnected] = useState(false);
+    const subscribedChannelRef = useRef<string | null>(null);
     const qrDataUrl = session?.connection_status === 'connecting' && typeof session?.meta?.qr_data_url === 'string'
         ? session.meta.qr_data_url
         : null;
@@ -125,12 +127,32 @@ function WhatsAppSettingsPage() {
     }, [apiBase, normalizeSessionForDisplay, showApiError, t]);
 
     useEffect(() => {
+        if (!tenantId) {
+            return;
+        }
+
         fetchSession();
 
-        const channelName = `tenant.${tenantId}.whatsapp`;
-        const channel = (window as any).Echo.private(channelName);
+        let cancelled = false;
+        let intervalId: number | null = null;
+        let connection: any = null;
+        let handleConnected: (() => void) | null = null;
+        let handleStateChange: ((state?: { current?: string }) => void) | null = null;
+        let handleConnectionError: (() => void) | null = null;
 
-        channel.listen('.whatsapp.session.state.updated', (e: any) => {
+        const channelName = `private-tenant.${tenantId}.whatsapp`;
+
+        const leaveRealtimeChannel = () => {
+            const echo = (window as any).Echo;
+            if (!echo || !subscribedChannelRef.current) {
+                return;
+            }
+
+            echo.leave(subscribedChannelRef.current);
+            subscribedChannelRef.current = null;
+        };
+
+        const handleSessionStateUpdated = (e: any) => {
             if (e.meta?.lifecycle_state === 'qr') {
                 fetchSession({ silent: true });
                 return;
@@ -146,12 +168,108 @@ function WhatsAppSettingsPage() {
             } as SessionPayload;
 
             setSession(normalizeSessionForDisplay(incoming));
-        });
+        };
+
+        const subscribeToRealtime = () => {
+            if (cancelled) {
+                return false;
+            }
+
+            const echo = (window as any).Echo;
+            if (!echo) {
+                return false;
+            }
+
+            leaveRealtimeChannel();
+
+            const channel = echo.private(`tenant.${tenantId}.whatsapp`);
+            channel.listen('.whatsapp.session.state.updated', handleSessionStateUpdated);
+            subscribedChannelRef.current = channelName;
+
+            const nextConnection = echo.connector?.pusher?.connection;
+            if (nextConnection && connection !== nextConnection) {
+                if (connection?.unbind && handleConnected && handleStateChange && handleConnectionError) {
+                    connection.unbind('connected', handleConnected);
+                    connection.unbind('state_change', handleStateChange);
+                    connection.unbind('error', handleConnectionError);
+                }
+
+                connection = nextConnection;
+                handleConnected = () => {
+                    if (cancelled) {
+                        return;
+                    }
+
+                    setRealtimeConnected(true);
+                    fetchSession({ silent: true });
+                };
+                handleStateChange = (state: { current?: string } = {}) => {
+                    if (cancelled) {
+                        return;
+                    }
+
+                    setRealtimeConnected(state.current === 'connected');
+                };
+                handleConnectionError = () => {
+                    if (cancelled) {
+                        return;
+                    }
+
+                    setRealtimeConnected(false);
+                };
+                connection.bind('connected', handleConnected);
+                connection.bind('state_change', handleStateChange);
+                connection.bind('error', handleConnectionError);
+                setRealtimeConnected(connection.state === 'connected');
+            }
+
+            return true;
+        };
+
+        if (!subscribeToRealtime()) {
+            intervalId = window.setInterval(() => {
+                if (subscribeToRealtime() && intervalId !== null) {
+                    window.clearInterval(intervalId);
+                    intervalId = null;
+                }
+            }, 1000);
+        }
 
         return () => {
-            channel.stopListening('.whatsapp.session.state.updated');
+            cancelled = true;
+            setRealtimeConnected(false);
+
+            if (intervalId !== null) {
+                window.clearInterval(intervalId);
+            }
+
+            if (connection?.unbind && handleConnected && handleStateChange && handleConnectionError) {
+                connection.unbind('connected', handleConnected);
+                connection.unbind('state_change', handleStateChange);
+                connection.unbind('error', handleConnectionError);
+            }
+
+            leaveRealtimeChannel();
         };
     }, [tenantId, fetchSession, normalizeSessionForDisplay]);
+
+    useEffect(() => {
+        if (!tenantId) {
+            return;
+        }
+
+        if (realtimeConnected) {
+            return;
+        }
+
+        const intervalId = window.setInterval(() => {
+            fetchSession({ silent: true });
+        }, 3000);
+
+        return () => {
+            window.clearInterval(intervalId);
+        };
+    }, [tenantId, realtimeConnected, session?.connection_status, fetchSession]);
 
     async function connect() {
         setLoading(true);

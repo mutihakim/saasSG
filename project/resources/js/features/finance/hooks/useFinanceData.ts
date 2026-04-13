@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 
 import { FinanceFilters } from "../components/pwa/types";
 import { fetchFinanceBootstrap } from "../data/api/financeApi";
@@ -100,7 +100,7 @@ export const useFinanceData = ({
         preloaded,
     });
 
-    const structureFetchers = useFinanceStructureFetchers({
+    const fetcherState = useMemo(() => ({
         setAccounts: structureState.setAccounts,
         setWallets: structureState.setWallets,
         setBudgets: structureState.setBudgets,
@@ -112,9 +112,23 @@ export const useFinanceData = ({
         dataRef: structureState.dataRef,
         budgetCacheRef: structureState.budgetCacheRef,
         loadedBudgetMonthsRef: structureState.loadedBudgetMonthsRef,
-    }, filters.month);
+    }), [
+        structureState.setAccounts,
+        structureState.setWallets,
+        structureState.setBudgets,
+        structureState.setGoals,
+        structureState.setWishes,
+        structureState.setSummary,
+        structureState.setMonthlyReview,
+        structureState.loadedRef,
+        structureState.dataRef,
+        structureState.budgetCacheRef,
+        structureState.loadedBudgetMonthsRef,
+    ]);
 
-    const { applyBootstrapPayload: applyStructuresBootstrap } = useFinanceBootstrapAdapter({
+    const structureFetchers = useFinanceStructureFetchers(fetcherState, filters.month);
+
+    const adapterState = useMemo(() => ({
         ...structureFetchers,
         setAccounts: structureState.setAccounts,
         setWallets: structureState.setWallets,
@@ -127,7 +141,22 @@ export const useFinanceData = ({
         dataRef: structureState.dataRef,
         budgetCacheRef: structureState.budgetCacheRef,
         loadedBudgetMonthsRef: structureState.loadedBudgetMonthsRef,
-    }, filters.month);
+    }), [
+        structureFetchers,
+        structureState.setAccounts,
+        structureState.setWallets,
+        structureState.setBudgets,
+        structureState.setGoals,
+        structureState.setWishes,
+        structureState.setSummary,
+        structureState.setMonthlyReview,
+        structureState.loadedRef,
+        structureState.dataRef,
+        structureState.budgetCacheRef,
+        structureState.loadedBudgetMonthsRef,
+    ]);
+
+    const { applyBootstrapPayload: applyStructuresBootstrap } = useFinanceBootstrapAdapter(adapterState, filters.month);
 
     // 3. Main orchestration state
     const [loading, setLoading] = useState(activeSection !== "reports");
@@ -168,32 +197,6 @@ export const useFinanceData = ({
 
         applyStructuresBootstrap(payload);
     }, [applyStructuresBootstrap, invalidateOnVersionChange, setSummary, setSummaryLoading, setTransactions, setTransactionsMeta]);
-
-    const refreshFinanceEntity = useCallback(async (entityType: 'transaction' | 'account' | 'budget' | 'wallet' | 'pocket' | 'all') => {
-        const promises: Promise<unknown>[] = [];
-        promises.push(fetchSummary());
-        
-        switch (entityType) {
-            case 'account':
-                promises.push(structureFetchers.fetchAccounts(true));
-                break;
-            case 'budget':
-                promises.push(structureFetchers.fetchBudgets(filters.month, true));
-                break;
-            case 'wallet':
-            case 'pocket':
-                promises.push(structureFetchers.fetchWallets(true));
-                break;
-            case 'all':
-                promises.push(
-                    structureFetchers.fetchAccounts(true), 
-                    structureFetchers.fetchBudgets(filters.month, true), 
-                    structureFetchers.fetchWallets(true)
-                );
-                break;
-        }
-        await Promise.all(promises);
-    }, [fetchSummary, filters.month, structureFetchers]);
 
     const loadFinance = useCallback(async (options?: LoadFinanceOptions) => {
         if (activeSection === "reports") {
@@ -241,6 +244,16 @@ export const useFinanceData = ({
             if (!silentLoading) setLoading(false);
         }
     }, [activeSection, apiParams, applyBootstrapPayload, fetchSummary, fetchTransactions, filters.month, loadErrorMessage, setSummaryLoading, structureFetchers, tenantRoute]);
+
+    const refreshFinanceEntity = useCallback(async (_entityType: 'transaction' | 'account' | 'budget' | 'wallet' | 'pocket' | 'all') => {
+        // Invalidate frontend cache for this tenant's finance data
+        financeCache.invalidatePrefix(cachePrefix);
+
+        // Instead of firing multiple requests, use the orchestrated loadFinance
+        // This hits the /bootstrap endpoint which returns everything in one go,
+        // preventing 429 (Too Many Requests) from the rate limiter.
+        await loadFinance({ silentLoading: true, silentSummary: true });
+    }, [cachePrefix, loadFinance]);
 
     const loadMoreTransactions = useCallback(async () => {
         await loadMoreTransactionsWithGuard(loading);

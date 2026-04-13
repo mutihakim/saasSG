@@ -140,6 +140,11 @@ Route::middleware([
             Route::get('/games/math', [TenantHubController::class, 'gamesMath'])->name('tenant.games.math')->middleware('tenant.feature:games.math,view');
             Route::get('/games/math/mastered', [TenantHubController::class, 'gamesMathMastered'])->name('tenant.games.math.mastered')->middleware('tenant.feature:games.math,view');
             Route::get('/games/math/history', [TenantHubController::class, 'gamesMathHistory'])->name('tenant.games.math.history')->middleware('tenant.feature:games.math,view');
+            Route::get('/games/math/settings', [TenantHubController::class, 'gamesMathSettings'])->name('tenant.games.math.settings')->middleware('tenant.feature:games.math,view');
+            Route::get('/games/vocabulary', [TenantHubController::class, 'gamesVocabulary'])->name('tenant.games.vocabulary')->middleware('tenant.feature:games.vocabulary,view');
+            Route::get('/games/vocabulary/mastered', [TenantHubController::class, 'gamesVocabularyMastered'])->name('tenant.games.vocabulary.mastered')->middleware('tenant.feature:games.vocabulary,view');
+            Route::get('/games/vocabulary/history', [TenantHubController::class, 'gamesVocabularyHistory'])->name('tenant.games.vocabulary.history')->middleware('tenant.feature:games.vocabulary,view');
+            Route::get('/games/vocabulary/settings', [TenantHubController::class, 'gamesVocabularySettings'])->name('tenant.games.vocabulary.settings')->middleware('tenant.feature:games.vocabulary,view');
             Route::get('/whatsapp',  [TenantHubController::class, 'wa'])->name('tenant.wa');
             Route::get('/gallery',   [TenantHubController::class, 'gallery'])->name('tenant.gallery');
             Route::get('/blog',      [TenantHubController::class, 'blog'])->name('tenant.blog');

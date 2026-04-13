@@ -4,7 +4,7 @@ return [
     'enabled' => env('WHATSAPP_MODULE_ENABLED', true),
     'service_enabled' => env('WHATSAPP_SERVICE_ENABLED', false),
     'dispatch_async' => env('WHATSAPP_DISPATCH_ASYNC', true),
-    'service_url' => env('WHATSAPP_SERVICE_URL', 'http://127.0.0.1:3010'),
+    'service_url' => env('WHATSAPP_SERVICE_URL', 'http://127.0.0.1:3030'),
     'service_timeout' => (int) env('WHATSAPP_SERVICE_TIMEOUT', 5),
     'internal_token' => env('WHATSAPP_INTERNAL_TOKEN', ''),
     'auth_dir' => env('WA_AUTH_DIR', storage_path('app/whatsapp-auth')),
@@ -51,6 +51,6 @@ return [
         'groq_base_url' => env('WHATSAPP_FINANCE_GROQ_BASE_URL', 'https://api.groq.com/openai/v1'),
         'groq_timeout_seconds' => (int) env('WHATSAPP_FINANCE_GROQ_TIMEOUT_SECONDS', 30),
         'groq_max_tokens' => (int) env('WHATSAPP_FINANCE_GROQ_MAX_TOKENS', 1200),
-        'app_url_template' => env('WHATSAPP_FINANCE_APP_URL_TEMPLATE', 'https://{tenant}.sanjo.my.id/finance'),
+        'app_url_template' => env('WHATSAPP_FINANCE_APP_URL_TEMPLATE', 'https://{tenant}.sanjo.my.id/finance/transactions'),
     ],
 ];

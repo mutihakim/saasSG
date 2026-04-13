@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { LockedGroupMeta, TransactionAttachment, TransactionDraftPayload } from "../components/transactionModalTypes";
 import { FinanceAccount, FinanceBudget, FinanceCategory, FinanceCurrency, FinanceMember, FinancePaymentMethodOption, FinanceWallet, FinanceTransaction } from "../types";
 
-import { canUseForOwner, getCategoryOptionsForType, toPeriodMonth } from "./transaction-modal/helpers";
+import { canUseForOwner, formatLocalDate, getCategoryOptionsForType, toPeriodMonth } from "./transaction-modal/helpers";
 import { syncTransactionFormData } from "./transaction-modal/syncFormData";
 import { useTransactionDerivedMetrics } from "./transaction-modal/useTransactionDerivedMetrics";
 import { useTransactionFormState } from "./transaction-modal/useTransactionFormState";
@@ -135,9 +135,21 @@ export const useTransactionModalState = ({
     const visibleBudgets = useMemo(() => budgets.filter((b) => canUseForOwner(b, formData.owner_member_id)), [budgets, formData.owner_member_id]);
     
     const transactionPeriodMonth = toPeriodMonth(formData.transaction_date);
+    const currentPeriodMonth = toPeriodMonth(formatLocalDate(new Date()));
+    
     const monthScopedBudgets = useMemo(
-        () => visibleBudgets.filter((b) => String(b.period_month) === transactionPeriodMonth && b.is_active !== false),
-        [transactionPeriodMonth, visibleBudgets],
+        () => {
+            const matches = visibleBudgets.filter((b) => String(b.period_month) === transactionPeriodMonth && b.is_active !== false);
+            if (matches.length > 0) return matches;
+            
+            // Fallback to current month if transaction month has no budgets
+            if (transactionPeriodMonth !== currentPeriodMonth) {
+                return visibleBudgets.filter((b) => String(b.period_month) === currentPeriodMonth && b.is_active !== false);
+            }
+            
+            return [];
+        },
+        [transactionPeriodMonth, currentPeriodMonth, visibleBudgets],
     );
 
     const filteredBudgets = useMemo(() => {

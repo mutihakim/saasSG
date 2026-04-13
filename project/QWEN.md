@@ -191,5 +191,5 @@ npm run docs:preview     # Preview VitePress docs
 1. **Documentation location**: Product/architecture docs are at `/var/www/html/apps/family2/docs/`, NOT in `project/docs/`. Always read from the root `docs/` folder.
 2. **AGENTS.md workflow**: This project follows a strict docs-first + progress-first workflow. See `AGENTS.md` for details.
 3. **Environment**: Database is PostgreSQL (`cabinet_core` for dev, `cabinet_core_test` for tests).
-4. **WhatsApp microservice**: Optional external service at `WHATSAPP_SERVICE_URL` (default `http://127.0.0.1:3010`).
+4. **WhatsApp microservice**: Optional external service at `WHATSAPP_SERVICE_URL` (default `http://127.0.0.1:3030`).
 5. **Path aliases**: `@/` maps to `resources/js/`, with sub-aliases for `@/core/`, `@/components/`, `@/features/`, `@/layouts/`, `@/pages/`, `@/types/`.

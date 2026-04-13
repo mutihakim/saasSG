@@ -1,1 +1,1 @@
-export { default } from "../../../features/games/VocabularyPage";
+export { default } from "../../../features/games/vocabulary/views/VocabularyPage";

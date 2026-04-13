@@ -38,7 +38,8 @@ window.axios.interceptors.request.use((config: InternalAxiosRequestConfig) => {
  */
 
 const reverbKey = String(import.meta.env.VITE_REVERB_APP_KEY || '');
-const reverbHost = String(import.meta.env.VITE_REVERB_HOST || window.location.hostname);
+const configuredReverbHost = String(import.meta.env.VITE_REVERB_HOST || '').trim();
+const reverbHost = window.location.hostname || configuredReverbHost;
 const reverbScheme = String(import.meta.env.VITE_REVERB_SCHEME || window.location.protocol.replace(':', '') || 'https').toLowerCase();
 const reverbPort = Number(import.meta.env.VITE_REVERB_PORT || (reverbScheme === 'https' ? 443 : 80));
 const hasValidReverbKey = reverbKey.length > 0 && !reverbKey.includes('${');
@@ -51,7 +52,7 @@ if (hasValidReverbKey) {
         wsPort: reverbPort,
         wssPort: reverbPort,
         forceTLS: reverbScheme === 'https',
-        enabledTransports: reverbScheme === 'https' ? ['wss'] : ['ws', 'wss'],
+        enabledTransports: ['ws', 'wss'],
         authEndpoint: '/broadcasting/auth',
     });
 }

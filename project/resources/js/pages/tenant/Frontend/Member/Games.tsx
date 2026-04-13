@@ -61,6 +61,9 @@ const GamesPage: React.FC<Props> = () => {
                                 <div className="p-3 border rounded-3">
                                     <div className="fw-semibold">Belajar Kosakata</div>
                                     <div className="small text-muted">Mode flashcard dan kuis adaptif.</div>
+                                    <Link href="/games/vocabulary" className="btn btn-sm btn-outline-primary mt-2">
+                                        Buka Vocabulary
+                                    </Link>
                                 </div>
                                 <div className="p-3 border rounded-3">
                                     <div className="fw-semibold">Dongeng Teladan</div>

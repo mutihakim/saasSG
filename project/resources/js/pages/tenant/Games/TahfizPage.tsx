@@ -1,1 +1,1 @@
-export { default } from "../../../features/games/TahfizPage";
+export { default } from "../../../features/games/tahfiz/views/TahfizPage";

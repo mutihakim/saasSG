@@ -16,4 +16,5 @@ return [
     'master.currencies' => ['view', 'create', 'update', 'delete'],
     'master.uom' => ['view', 'create', 'update', 'delete'],
     'games.math' => ['view', 'create', 'update'],
+    'games.vocabulary' => ['view', 'create', 'update'],
 ];

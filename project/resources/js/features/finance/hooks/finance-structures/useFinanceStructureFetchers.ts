@@ -1,4 +1,4 @@
-import { useCallback, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 
 import {
     fetchFinanceAccounts,
@@ -343,7 +343,7 @@ export const useFinanceStructureFetchers = (state: FetcherState, periodMonth: st
         return promise;
     }, [monthlyReviewCacheKey, state, tenantRoute]);
 
-    return {
+    return useMemo(() => ({
         fetchAccounts,
         fetchWallets,
         fetchBudgets,
@@ -358,5 +358,20 @@ export const useFinanceStructureFetchers = (state: FetcherState, periodMonth: st
         wishesCacheKey,
         summaryCacheKey,
         monthlyReviewCacheKey,
-    };
+    }), [
+        fetchAccounts,
+        fetchWallets,
+        fetchBudgets,
+        fetchGoals,
+        fetchWishes,
+        fetchSummary,
+        fetchMonthlyReview,
+        cachePrefix,
+        accountsCacheKey,
+        walletsCacheKey,
+        goalsCacheKey,
+        wishesCacheKey,
+        summaryCacheKey,
+        monthlyReviewCacheKey,
+    ]);
 };

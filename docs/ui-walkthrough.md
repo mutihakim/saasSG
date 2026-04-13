@@ -29,12 +29,25 @@ Dokumen ini memetakan halaman UI ke route dan backend contract untuk mempercepat
 | Wallet PWA | `Tenant/Wallet/Page` | `https://{tenant}.appsah.my.id/wallet` | `tenant.feature:wallet,view` |
 | Games Hub | `Tenant/Frontend/Member/Games` | `https://{tenant}.appsah.my.id/games` | member shell route |
 | Math Game | `Tenant/Games/MathGamePage` | `https://{tenant}.appsah.my.id/games/math` | member shell route + Math Game API |
+| Vocabulary Game | `Tenant/Games/VocabularyPage` | `https://{tenant}.appsah.my.id/games/vocabulary` | member shell route + Vocabulary Game API |
+| Vocabulary Mastered | `Tenant/Games/VocabularyMasteredPage` | `https://{tenant}.appsah.my.id/games/vocabulary/mastered` | member shell route |
+| Vocabulary History | `Tenant/Games/VocabularyHistoryPage` | `https://{tenant}.appsah.my.id/games/vocabulary/history` | member shell route |
+| Vocabulary Settings | `Tenant/Games/VocabularySettingsPage` | `https://{tenant}.appsah.my.id/games/vocabulary/settings` | member shell route |
 
 Wallet UX contract:
 
 1. `/wallet` dipakai sebagai shell mobile-first untuk `Beranda`, `Akun & Wallet`, `Wishes`, dan `Goals`.
 2. Halaman wallet memakai sticky topbar, FAB, dan sticky bottom navbar yang mengikuti pola Finance PWA.
 3. Tiap account selalu memiliki satu Main Wallet sistem; wallet tambahan mengikuti quota subscription.
+
+Games UX contract:
+
+1. Math dan Vocabulary memakai topbar/layout member game yang sama, termasuk exit-guard saat sesi aktif.
+2. Feedback benar/salah dan countdown pre-session berasal dari shared component yang sama agar perilaku lintas game konsisten.
+3. Vocabulary flow dipisah menjadi `setup`, `learn`, `practice`, dan `summary`; perpindahan screen tidak lagi ditahan oleh satu file page monolitik.
+4. Submenu Vocabulary `Mastered`, `History`, dan `Settings` harus membuka halaman data nyata member, bukan placeholder "segera hadir".
+5. Popup feedback game harus auto-hide sekitar 1.2 detik dan wajib hilang saat prompt berikutnya muncul agar tidak menutupi soal baru, termasuk pada mode landscape.
+6. Vocabulary `Practice` memakai timer per soal sesuai settings per bahasa dan dapat membalik arah terjemahan (`Indonesia -> Bahasa Pilihan` atau `Bahasa Pilihan -> Indonesia`).
 
 ## Admin Area
 

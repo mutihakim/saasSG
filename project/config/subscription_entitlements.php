@@ -18,6 +18,7 @@ return [
                 'master.currencies' => ['view', 'create', 'update', 'delete'],
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
                 'games.math'        => [],
+                'games.vocabulary'  => [],
             ],
             'limits' => [
                 'team.members.max'             => 1,
@@ -50,6 +51,7 @@ return [
                 'master.currencies' => ['view', 'create', 'update', 'delete'],
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
                 'games.math'        => ['view', 'create', 'update'],
+                'games.vocabulary'  => ['view', 'create', 'update'],
             ],
             'limits' => [
                 'team.members.max'             => 3,
@@ -82,6 +84,7 @@ return [
                 'master.currencies' => ['view', 'create', 'update', 'delete'],
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
                 'games.math'        => ['view', 'create', 'update'],
+                'games.vocabulary'  => ['view', 'create', 'update'],
             ],
             'limits' => [
                 'team.members.max'             => 10,
@@ -114,6 +117,7 @@ return [
                 'master.currencies' => ['view', 'create', 'update', 'delete'],
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
                 'games.math'        => ['view', 'create', 'update'],
+                'games.vocabulary'  => ['view', 'create', 'update'],
             ],
             'limits' => [
                 'team.members.max'             => -1,
@@ -147,6 +151,7 @@ return [
         'master.currencies' => 'Master Data / Mata Uang',
         'master.uom'        => 'Master Data / Satuan',
         'games.math'        => 'Games / Matematika',
+        'games.vocabulary'  => 'Games / Kosakata',
     ],
 
     'limit_labels' => [

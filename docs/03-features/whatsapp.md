@@ -70,14 +70,15 @@ Semua saluran dilindungi berlapis oleh `routes/channels.php` yang secara paksa m
 
 Mengingat skala modul, beberapa ekosistem wajib dinyalakan seiring berjalannya aplikasi SaaS:
 1. `pm2 start ecosystem.config.cjs`
-2. `cd ../services/whatsapp && pm2 start pm2.config.js`
+2. `cd /var/www/html/services/whatsapp-broker && pm2 start pm2.config.js`
 3. `pm2 save`
 4. `pm2 startup`
 
 Catatan deployment:
 * App utama tetap diserve oleh Nginx + PHP-FPM, bukan PM2 web server terpisah.
+* Produksi VPS single-node saat ini memakai broker internal bersama (`whatsapp-broker`) di `127.0.0.1:3030`; service lama `apps/family2/services/whatsapp` dipertahankan sebagai fallback migrasi sampai seluruh alur broker terbukti normal.
 * Docs site dipublish sebagai static build `../docs/.vitepress/dist` yang diserve langsung oleh Nginx; `vitepress preview` hanya dipakai manual saat diperlukan.
 
 ## Batasan Infrastruktur (Architectural Constraint)
-Secara teknis, _service Node.js_ ini menggunakan strategi `LocalAuth` bawaan dari _whatsapp-web.js_ yang menyimpan berkas data kredensial (_auth artifacts_) dalam satu folder fisik di server host (`WA_AUTH_DIR`).
+Secara teknis, _service Node.js_ ini menggunakan strategi `LocalAuth` bawaan dari _whatsapp-web.js_ yang menyimpan berkas data kredensial (_auth artifacts_) dalam satu folder fisik di server host (`WA_AUTH_DIR`). Pada mode broker bersama, `WA_AUTH_DIR` mengarah ke auth directory broker sehingga lifecycle session dan proses Chromium dikelola terpusat.
 - **Skalabilitas:** Ini bukanlah sebuah _development blocker_, melainkan konvensi rancangan. Jika Anda men-_deploy_ layanan ini dalam topologi multi-server (_Load Balancer_ / replika horizontal), otentikasi klien WA akan gagal tersinkronisasi. Solusi standarnya adalah Anda wajib meyediakan *Persistent Shared Volume* (seperti profil _EFS_ atau _NFS_) yang sama untuk _mount_ `WA_AUTH_DIR` tersebut lintas _node_, atau menerapkan tata letak *Sticky Sessions* pada lapisan ingress/LB Anda.

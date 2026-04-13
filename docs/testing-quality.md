@@ -74,11 +74,17 @@ Finance PWA / Attachment:
 Games:
 
 - `tests/Feature/MathGameApiTest.php`
+- `tests/Feature/VocabularyGameApiTest.php`
 - Wajib mencakup:
   - attempt benar mengupdate `tenant_game_math_stats` dan menandai mastered saat streak mencapai threshold
   - attempt salah mereset current streak tanpa menurunkan max streak
   - stats batch mengembalikan histori pair untuk summary Math Game
   - finish session menyimpan `tenant_game_sessions` dan history mengembalikan sesi terbaru
+  - vocabulary words mengembalikan progress map member untuk hari aktif
+  - vocabulary attempt mengupdate `tenant_game_vocabulary_progress` dan menandai mastered sesuai threshold per bahasa
+  - vocabulary finish session menyimpan `tenant_game_vocabulary_sessions` dan history mengembalikan sesi terbaru
+  - vocabulary mastered mengembalikan daftar kata mastered yang dapat difilter per bahasa
+  - vocabulary settings menyimpan `default_time_limit` dan `translation_direction` per bahasa
   - akses lintas tenant disembunyikan dengan `404`
 
 WhatsApp (API + Realtime):

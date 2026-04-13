@@ -142,7 +142,8 @@ const FinanceTransactionDialogs = ({
                     upsertTransactionInList(finalTransaction);
                     setShowDetailSheet(false);
                     clearWhatsappQuery();
-                    await refreshFinanceSideData();
+                    // Refresh in background - don't block UI so transaction appears immediately
+                    refreshFinanceSideData().catch(() => { /* silent */ });
                 }}
                 transaction={selectedTransaction ?? undefined}
                 initialDraft={selectedTransaction ? null : transactionDraft}
@@ -167,7 +168,8 @@ const FinanceTransactionDialogs = ({
                 onClose={() => setBatchEntryModal(false)}
                 onSuccess={async (createdTransactions) => {
                     createdTransactions.forEach((transaction) => upsertTransactionInList(transaction));
-                    await refreshFinanceSideData();
+                    // Refresh in background - don't block UI
+                    refreshFinanceSideData().catch(() => { /* silent */ });
                 }}
                 categories={categories}
                 accounts={accounts}
@@ -186,7 +188,8 @@ const FinanceTransactionDialogs = ({
                     const finalTransactions = await submitWhatsappBatchTransactions(createdTransactions);
                     finalTransactions.forEach((transaction: FinanceTransaction) => upsertTransactionInList(transaction));
                     clearWhatsappQuery();
-                    await refreshFinanceSideData();
+                    // Refresh in background - don't block UI
+                    refreshFinanceSideData().catch(() => { /* silent */ });
                 }}
                 draft={batchDraft}
                 categories={categories}
@@ -206,7 +209,8 @@ const FinanceTransactionDialogs = ({
                     if (payload?.transaction) {
                         upsertTransactionInList(payload.transaction);
                     }
-                    await refreshFinanceSideData();
+                    // Refresh in background - don't block UI
+                    refreshFinanceSideData().catch(() => { /* silent */ });
                 }}
                 accounts={accounts}
                 pockets={pockets}

@@ -121,6 +121,109 @@ class TenantWhatsappServiceIntegrationTest extends TestCase
         ]);
     }
 
+    public function test_send_message_updates_existing_outgoing_message_instead_of_failing_on_duplicate_message_id(): void
+    {
+        config()->set('whatsapp.enabled', true);
+        config()->set('whatsapp.service_enabled', true);
+        config()->set('whatsapp.service_url', 'http://wa-service.test');
+        config()->set('whatsapp.internal_token', 'internal-secret');
+
+        [$tenant, $user] = $this->seedTenantOwner('pro');
+        Sanctum::actingAs($user);
+
+        TenantWhatsappSetting::query()->create([
+            'tenant_id' => $tenant->id,
+            'session_name' => 'tenant-' . dechex((int) $tenant->id),
+            'connection_status' => 'connected',
+            'connected_jid' => '628111111111@c.us',
+            'auto_connect' => true,
+        ]);
+
+        TenantWhatsappMessage::query()->create([
+            'tenant_id' => $tenant->id,
+            'direction' => 'outgoing',
+            'whatsapp_message_id' => 'wamid-duplicate-1',
+            'sender_jid' => '628111111111@c.us',
+            'recipient_jid' => '628222222222@c.us',
+            'chat_jid' => '628222222222@c.us',
+            'payload' => [
+                'text' => 'older copy',
+                'delivery' => 'queued',
+            ],
+        ]);
+
+        Http::fake([
+            'http://wa-service.test/api/v1/tenants/*/whatsapp/messages/send' => Http::response([
+                'ok' => true,
+                'data' => [
+                    'message_id' => 'wamid-duplicate-1',
+                    'delivery' => 'queued',
+                ],
+            ], 200),
+        ]);
+
+        $jid = rawurlencode('628222222222@c.us');
+        $response = $this->postJson("/api/v1/tenants/{$tenant->slug}/whatsapp/chats/{$jid}/send", [
+            'message' => 'updated copy',
+        ]);
+
+        $response->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonPath('data.message_id', 'wamid-duplicate-1');
+
+        $this->assertSame(1, TenantWhatsappMessage::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('direction', 'outgoing')
+            ->where('whatsapp_message_id', 'wamid-duplicate-1')
+            ->count());
+
+        $message = TenantWhatsappMessage::query()
+            ->where('tenant_id', $tenant->id)
+            ->where('direction', 'outgoing')
+            ->where('whatsapp_message_id', 'wamid-duplicate-1')
+            ->firstOrFail();
+
+        $this->assertSame('updated copy', $message->payload['text'] ?? null);
+    }
+
+    public function test_send_message_returns_validation_error_when_service_rejects_invalid_recipient(): void
+    {
+        config()->set('whatsapp.enabled', true);
+        config()->set('whatsapp.service_enabled', true);
+        config()->set('whatsapp.service_url', 'http://wa-service.test');
+        config()->set('whatsapp.internal_token', 'internal-secret');
+
+        [$tenant, $user] = $this->seedTenantOwner('pro');
+        Sanctum::actingAs($user);
+
+        TenantWhatsappSetting::query()->create([
+            'tenant_id' => $tenant->id,
+            'session_name' => 'tenant-' . dechex((int) $tenant->id),
+            'connection_status' => 'connected',
+            'connected_jid' => '628111111111@c.us',
+            'auto_connect' => true,
+        ]);
+
+        Http::fake([
+            'http://wa-service.test/api/v1/tenants/*/whatsapp/messages/send' => Http::response([
+                'ok' => false,
+                'error' => [
+                    'code' => 'INVALID_RECIPIENT',
+                    'message' => 'Recipient WhatsApp JID is invalid.',
+                ],
+            ], 422),
+        ]);
+
+        $jid = rawurlencode('114096510877750@lid');
+        $response = $this->postJson("/api/v1/tenants/{$tenant->slug}/whatsapp/chats/{$jid}/send", [
+            'message' => 'hello lid',
+        ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('ok', false)
+            ->assertJsonPath('error.code', 'WHATSAPP_INVALID_RECIPIENT');
+    }
+
     public function test_connect_sets_auto_connect_true(): void
     {
         config()->set('whatsapp.enabled', true);

@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\V1\Master\MasterTagApiController;
 use App\Http\Controllers\Api\V1\Master\MasterCurrencyApiController;
 use App\Http\Controllers\Api\V1\Master\MasterUomApiController;
 use App\Http\Controllers\Api\V1\Games\MathGameApiController;
+use App\Http\Controllers\Api\V1\Games\VocabularyApiController;
 use App\Http\Controllers\Api\V1\Finance\FinanceAccountApiController;
 use App\Http\Controllers\Api\V1\Finance\FinanceBudgetApiController;
 use App\Http\Controllers\Api\V1\Finance\FinanceBootstrapApiController;
@@ -93,6 +94,20 @@ Route::prefix('v1')
                     Route::post('/attempt', [MathGameApiController::class, 'attempt'])->middleware(['tenant.feature:games.math,create', 'throttle:tenant.mutation']);
                     Route::post('/session/finish', [MathGameApiController::class, 'finish'])->middleware(['tenant.feature:games.math,update', 'throttle:tenant.mutation']);
                     Route::get('/history', [MathGameApiController::class, 'history'])->middleware('tenant.feature:games.math,view');
+                    Route::get('/settings', [MathGameApiController::class, 'settings'])->middleware('tenant.feature:games.math,view');
+                    Route::post('/settings', [MathGameApiController::class, 'updateSettings'])->middleware(['tenant.feature:games.math,update', 'throttle:tenant.mutation']);
+                });
+
+                Route::prefix('games/vocabulary')->group(function () {
+                    Route::get('/config', [VocabularyApiController::class, 'config'])->middleware('tenant.feature:games.vocabulary,view');
+                    Route::get('/mastered', [VocabularyApiController::class, 'mastered'])->middleware('tenant.feature:games.vocabulary,view');
+                    Route::get('/words', [VocabularyApiController::class, 'words'])->middleware('tenant.feature:games.vocabulary,view');
+                    Route::get('/pool', [VocabularyApiController::class, 'pool'])->middleware('tenant.feature:games.vocabulary,view');
+                    Route::post('/attempt', [VocabularyApiController::class, 'attempt'])->middleware(['tenant.feature:games.vocabulary,create', 'throttle:tenant.mutation']);
+                    Route::post('/session/finish', [VocabularyApiController::class, 'finish'])->middleware(['tenant.feature:games.vocabulary,update', 'throttle:tenant.mutation']);
+                    Route::get('/history', [VocabularyApiController::class, 'history'])->middleware('tenant.feature:games.vocabulary,view');
+                    Route::get('/settings', [VocabularyApiController::class, 'settings'])->middleware('tenant.feature:games.vocabulary,view');
+                    Route::post('/settings', [VocabularyApiController::class, 'updateSettings'])->middleware(['tenant.feature:games.vocabulary,update', 'throttle:tenant.mutation']);
                 });
 
                 // ── Finance ────────────────────────────────────────────────────────────

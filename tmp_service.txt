@@ -1,0 +1,737 @@
+<?php
+
+namespace App\Services;
+
+use App\Exceptions\WhatsappIntentExtractionException;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantCategory;
+use App\Models\Tenant\TenantMember;
+use App\Models\Whatsapp\TenantWhatsappMedia;
+use Illuminate\Support\Collection;
+use App\Services\Whatsapp\WhatsappAiPromptBuilder;
+use App\Services\Finance\Whatsapp\Support\WhatsappResponseParser;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+
+class WhatsappAiExtractionService
+{
+    public function __construct(
+        private readonly WhatsappAiPromptBuilder $promptBuilder,
+        private readonly WhatsappResponseParser $parser,
+    ) {
+    }
+
+    public function extract(
+        Tenant $tenant,
+        ?TenantMember $member,
+        string $command,
+        ?string $text,
+        ?TenantWhatsappMedia $media = null
+    ): array {
+        $startedAt = microtime(true);
+        $categoryReferences = $this->financeCategoryReferences($tenant);
+        $normalizedText = trim((string) $text);
+
+        if ($this->isStructuredCommandPayload($command, $normalizedText)) {
+            $result = $this->extractStructured($tenant, $command, $normalizedText, $media, $categoryReferences);
+            $result['processing_time_ms'] = (int) round((microtime(true) - $startedAt) * 1000);
+
+            return $result;
+        }
+
+        if (!$this->requiresAi($command, $normalizedText, $media)) {
+            $result = $this->extractFallback($tenant, $command, $normalizedText, $media, $categoryReferences);
+            $result['processing_time_ms'] = (int) round((microtime(true) - $startedAt) * 1000);
+
+            return $result;
+        }
+
+        $driver = (string) config('whatsapp.finance.ai_driver', 'openrouter');
+        $driverConfig = $this->resolveAiDriverConfig($driver);
+        if (!$driverConfig['configured']) {
+            throw new WhatsappIntentExtractionException(
+                sprintf('%s is required for natural language finance extraction but is not configured.', ucfirst($driver)),
+                'Maaf, AI untuk membaca pesan transaksi sedang tidak tersedia. Coba lagi nanti atau gunakan format terstruktur seperti `/tx deskripsi#jumlah`.',
+                [
+                    'driver' => $driver,
+                    'command' => $command,
+                    'text' => $normalizedText,
+                    'reason' => 'ai_not_configured',
+                    'config' => $driverConfig,
+                ]
+            );
+        }
+
+        try {
+            $result = match ($driver) {
+                'openrouter' => $this->extractWithOpenRouter($tenant, $member, $command, $normalizedText, $media, $categoryReferences),
+                'gemini' => $this->extractWithGemini($tenant, $member, $command, $normalizedText, $media, $categoryReferences),
+                'groq' => $this->extractWithGroq($tenant, $member, $command, $normalizedText, $media, $categoryReferences),
+                default => throw new \RuntimeException("Unsupported AI driver [{$driver}] for finance extraction."),
+            };
+            $result['processing_time_ms'] = (int) round((microtime(true) - $startedAt) * 1000);
+
+            return $result;
+        } catch (\Throwable $e) {
+            report($e);
+
+            throw new WhatsappIntentExtractionException(
+                $e->getMessage(),
+                'Maaf, AI gagal memahami pesan transaksi saat ini. Coba lagi sebentar lagi atau gunakan format terstruktur seperti `/tx deskripsi#jumlah`.',
+                [
+                    'driver' => $driver,
+                    'command' => $command,
+                    'text' => $normalizedText,
+                    'reason' => 'ai_request_failed',
+                    'exception_class' => $e::class,
+                    'exception_message' => $e->getMessage(),
+                ]
+            );
+        }
+    }
+
+    private function extractWithGemini(
+        Tenant $tenant,
+        ?TenantMember $member,
+        string $command,
+        ?string $text,
+        ?TenantWhatsappMedia $media,
+        Collection $categoryReferences
+    ): array {
+        $model = (string) config('whatsapp.finance.gemini_model', 'gemini-2.5-flash');
+        $apiKey = (string) config('whatsapp.finance.gemini_api_key');
+        $prompt = $this->buildPrompt($tenant, $member, $command, $text, $categoryReferences);
+        $parts = [[
+            'text' => $prompt,
+        ]];
+
+        if ($media && $this->isPreviewableMedia($media)) {
+            $contents = $this->loadMediaBase64($media->storage_path);
+            if ($contents) {
+                $parts[] = [
+                    'inline_data' => [
+                        'mime_type' => $media->mime_type,
+                        'data' => $contents,
+                    ],
+                ];
+            }
+        }
+
+        $response = Http::timeout(30)
+            ->acceptJson()
+            ->withHeaders(['x-goog-api-key' => $apiKey])
+            ->post("https://generativelanguage.googleapis.com/v1beta/models/{$model}:generateContent", [
+                'generationConfig' => [
+                    'responseMimeType' => 'application/json',
+                ],
+                'contents' => [[
+                    'parts' => $parts,
+                ]],
+            ])
+            ->throw()
+            ->json();
+
+        $textPayload = (string) data_get($response, 'candidates.0.content.parts.0.text', '');
+        $decoded = json_decode($textPayload, true);
+        if (!is_array($decoded)) {
+            throw new \RuntimeException('Gemini did not return valid JSON extraction.');
+        }
+
+        $normalized = $this->normalizeAiResult($command, $decoded, $media, $categoryReferences);
+        $normalized['raw_response'] = [
+            'driver' => 'gemini',
+            'model' => $model,
+            'response_text' => $textPayload,
+            'decoded' => $decoded,
+        ];
+
+        return $normalized;
+    }
+
+    /**
+     * Shared OpenAI-compatible extraction for OpenRouter and Groq.
+     * Both providers use the same /chat/completions API shape.
+     */
+    private function extractWithOpenAiCompat(
+        Tenant $tenant,
+        ?TenantMember $member,
+        string $command,
+        ?string $text,
+        ?TenantWhatsappMedia $media,
+        Collection $categoryReferences,
+        string $driver,
+        string $model,
+        string $apiKey,
+        string $baseUrl,
+        int $timeoutSeconds,
+        int $maxTokens,
+        array $extraHeaders = [],
+        array $extraBody = [],
+    ): array {
+        $prompt = $this->buildPrompt($tenant, $member, $command, $text, $categoryReferences);
+        $messages = [[
+            'role' => 'user',
+            'content' => $this->buildOpenRouterContent($prompt, $media),
+        ]];
+
+        $httpOptions = Http::timeout($timeoutSeconds)
+            ->acceptJson()
+            ->withToken($apiKey);
+
+        if ($extraHeaders !== []) {
+            $httpOptions = $httpOptions->withHeaders($extraHeaders);
+        }
+
+        $body = array_merge([
+            'model' => $model,
+            'messages' => $messages,
+            'temperature' => 0,
+            'max_tokens' => $maxTokens,
+            'response_format' => ['type' => 'json_object'],
+        ], $extraBody);
+
+        $response = $httpOptions
+            ->post("{$baseUrl}/chat/completions", $body)
+            ->throw()
+            ->json();
+
+        $textPayload = (string) data_get($response, 'choices.0.message.content', '');
+        $decoded = json_decode($textPayload, true);
+        if (!is_array($decoded)) {
+            throw new \RuntimeException("{$driver} did not return valid JSON extraction.");
+        }
+
+        $normalized = $this->normalizeAiResult($command, $decoded, $media, $categoryReferences, $driver, $model);
+        $normalized['raw_response'] = [
+            'driver' => $driver,
+            'model' => $model,
+            'response_text' => $textPayload,
+            'decoded' => $decoded,
+        ];
+
+        return $normalized;
+    }
+
+    private function extractWithOpenRouter(
+        Tenant $tenant,
+        ?TenantMember $member,
+        string $command,
+        ?string $text,
+        ?TenantWhatsappMedia $media,
+        Collection $categoryReferences
+    ): array {
+        return $this->extractWithOpenAiCompat(
+            tenant: $tenant,
+            member: $member,
+            command: $command,
+            text: $text,
+            media: $media,
+            categoryReferences: $categoryReferences,
+            driver: 'openrouter',
+            model: (string) config('whatsapp.finance.openrouter_model', 'qwen/qwen3.6-plus:free'),
+            apiKey: (string) config('whatsapp.finance.openrouter_api_key'),
+            baseUrl: rtrim((string) config('whatsapp.finance.openrouter_base_url', 'https://openrouter.ai/api/v1'), '/'),
+            timeoutSeconds: max(10, (int) config('whatsapp.finance.openrouter_timeout_seconds', 60)),
+            maxTokens: max(256, (int) config('whatsapp.finance.openrouter_max_tokens', 1200)),
+            extraHeaders: [
+                'HTTP-Referer' => config('app.url', 'https://sanjo.my.id'),
+                'X-Title' => 'Family2 WhatsApp Finance',
+            ],
+            extraBody: ['include_reasoning' => false],
+        );
+    }
+
+    private function extractWithGroq(
+        Tenant $tenant,
+        ?TenantMember $member,
+        string $command,
+        ?string $text,
+        ?TenantWhatsappMedia $media,
+        Collection $categoryReferences
+    ): array {
+        return $this->extractWithOpenAiCompat(
+            tenant: $tenant,
+            member: $member,
+            command: $command,
+            text: $text,
+            media: $media,
+            categoryReferences: $categoryReferences,
+            driver: 'groq',
+            model: $media
+                ? (string) config('whatsapp.finance.groq_vision_model', 'meta-llama/llama-4-scout-17b-16e-instruct')
+                : ($command === 'bulk'
+                    ? (string) config('whatsapp.finance.groq_model_bulk', 'llama-3.1-8b-instant')
+                    : (string) config('whatsapp.finance.groq_model_single', 'llama-3.1-8b-instant')),
+            apiKey: (string) config('whatsapp.finance.groq_api_key'),
+            baseUrl: rtrim((string) config('whatsapp.finance.groq_base_url', 'https://api.groq.com/openai/v1'), '/'),
+            timeoutSeconds: max(10, (int) config('whatsapp.finance.groq_timeout_seconds', 30)),
+            maxTokens: max(256, (int) config('whatsapp.finance.groq_max_tokens', 1200)),
+        );
+    }
+
+    private function extractStructured(
+        Tenant $tenant,
+        string $command,
+        string $text,
+        ?TenantWhatsappMedia $media,
+        Collection $categoryReferences
+    ): array {
+        if ($command === 'bulk') {
+            $items = $this->parser->parseStructuredBulkItems($text, $tenant->currency_code ?? 'IDR');
+            if ($items === []) {
+                throw new WhatsappIntentExtractionException(
+                    'Structured bulk payload is invalid.',
+                    'Format `/bulk` tidak valid. Gunakan format `deskripsi#jumlah` per item.',
+                    [
+                        'driver' => 'structured',
+                        'command' => $command,
+                        'text' => $text,
+                        'reason' => 'invalid_structured_bulk_payload',
+                    ]
+                );
+            }
+
+            $result = [
+                'provider' => 'structured',
+                'model' => 'hash-delimited',
+                'confidence_score' => 0.99,
+                'payload' => [
+                    'merchant' => null,
+                    'transaction_date' => now()->toDateString(),
+                    'subtotal' => collect($items)->sum(fn ($item) => (float) ($item['amount'] ?? 0)),
+                    'total' => collect($items)->sum(fn ($item) => (float) ($item['amount'] ?? 0)),
+                    'notes' => $text,
+                    'category_id' => null,
+                    'needs_review_flags' => [],
+                    'media_id' => $media?->id,
+                ],
+                'items' => $items,
+                'normalization' => [
+                    'single' => null,
+                    'items' => collect($items)->map(fn ($item, $index) => [
+                        'index' => $index,
+                        'amount' => $item['amount'] ?? null,
+                        'description' => $item['description'] ?? null,
+                        'category' => [
+                            'requested_category_id' => null,
+                            'accepted_category_id' => null,
+                            'transaction_type' => 'pengeluaran',
+                            'matched' => false,
+                            'reason' => 'structured_mode_no_category_mapping',
+                        ],
+                    ])->values()->all(),
+                ],
+            ];
+
+            $result['raw_response'] = [
+                'driver' => 'structured',
+                'request' => [
+                    'command' => $command,
+                    'text' => $text,
+                    'category_references' => $categoryReferences->values()->all(),
+                    'has_media' => $media !== null,
+                ],
+                'response' => null,
+                'response_text' => null,
+                'decoded' => $result['payload'],
+                'normalization' => $result['normalization'],
+            ];
+
+            return $result;
+        }
+
+        [$description, $amount] = $this->parser->parseStructuredSingle($text);
+        if ($description === '' || $amount === null) {
+            throw new WhatsappIntentExtractionException(
+                'Structured single payload is invalid.',
+                'Format `/tx` tidak valid. Gunakan format `/tx deskripsi#jumlah`.',
+                [
+                    'driver' => 'structured',
+                    'command' => $command,
+                    'text' => $text,
+                    'reason' => 'invalid_structured_single_payload',
+                ]
+            );
+        }
+
+        $result = [
+            'provider' => 'structured',
+            'model' => 'hash-delimited',
+            'confidence_score' => 0.99,
+            'payload' => [
+                'type' => 'pengeluaran',
+                'amount' => $amount,
+                'currency_code' => $tenant->currency_code ?? 'IDR',
+                'transaction_date' => now()->toDateString(),
+                'merchant' => null,
+                'notes' => $text,
+                'category_id' => null,
+                'category_hint' => null,
+                'account_hint' => null,
+                'budget_hint' => null,
+                'tags' => [],
+                'description' => $description,
+                'needs_review_flags' => [],
+                'media_id' => $media?->id,
+            ],
+            'items' => [],
+            'normalization' => [
+                'single' => [
+                    'mode' => 'structured',
+                    'parsed_amount' => $amount,
+                    'description' => $description,
+                    'category' => [
+                        'requested_category_id' => null,
+                        'accepted_category_id' => null,
+                        'transaction_type' => 'pengeluaran',
+                        'matched' => false,
+                        'reason' => 'structured_mode_no_category_mapping',
+                    ],
+                ],
+                'items' => [],
+            ],
+        ];
+
+        $result['raw_response'] = [
+            'driver' => 'structured',
+            'request' => [
+                'command' => $command,
+                'text' => $text,
+                'category_references' => $categoryReferences->values()->all(),
+                'has_media' => $media !== null,
+            ],
+            'response' => null,
+            'response_text' => null,
+            'decoded' => $result['payload'],
+            'normalization' => $result['normalization'],
+        ];
+
+        return $result;
+    }
+
+    private function buildPrompt(
+        Tenant $tenant,
+        ?TenantMember $member,
+        string $command,
+        ?string $text,
+        Collection $categoryReferences
+    ): string {
+        return $this->promptBuilder->buildPrompt($tenant, $member, $command, $text, $categoryReferences);
+    }
+
+    private function normalizeAiResult(
+        string $command,
+        array $decoded,
+        ?TenantWhatsappMedia $media,
+        Collection $categoryReferences,
+        string $provider = 'gemini',
+        ?string $model = null
+    ): array {
+        $normalizedType = $this->parser->normalizeTransactionType($decoded['type'] ?? null);
+        $singleCategoryResolution = $this->parser->resolveCategoryNormalization(
+            $decoded['category_id'] ?? null,
+            $normalizedType,
+            $categoryReferences
+        );
+
+        $base = [
+            'provider' => $provider,
+            'model' => $model ?? $this->configuredModelFor($provider),
+            'confidence_score' => (float) ($decoded['confidence_score'] ?? 0),
+            'payload' => $decoded,
+            'items' => [],
+            'normalization' => [
+                'single' => [
+                    'transaction_type' => $normalizedType,
+                    'category' => $singleCategoryResolution,
+                ],
+                'items' => [],
+            ],
+        ];
+
+        if ($normalizedType) {
+            $base['payload']['type'] = $normalizedType;
+        }
+
+        $base['payload']['category_id'] = $singleCategoryResolution['accepted_category_id'];
+
+        if ($media) {
+            $base['payload']['media_id'] = $media->id;
+        }
+
+        if ($command === 'bulk') {
+            $itemNormalizations = [];
+            $items = collect($decoded['items'] ?? [])
+                ->filter(fn ($item) => is_array($item))
+                ->map(function ($item, $index) use ($categoryReferences, &$itemNormalizations) {
+                    $categoryResolution = $this->parser->resolveCategoryNormalization(
+                        $item['category_id'] ?? null,
+                        'pengeluaran',
+                        $categoryReferences
+                    );
+                    $payload = $item;
+                    $payload['category_id'] = $categoryResolution['accepted_category_id'];
+                    $itemNormalizations[] = [
+                        'index' => $index,
+                        'category' => $categoryResolution,
+                    ];
+
+                    return [
+                        'sort_order' => $index,
+                        'description' => (string) ($item['description'] ?? ''),
+                        'amount' => isset($item['amount']) ? (float) $item['amount'] : null,
+                        'currency_code' => (string) ($item['currency_code'] ?? ''),
+                        'payload' => $payload,
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $base['items'] = $items;
+            $base['normalization']['items'] = $itemNormalizations;
+        }
+
+        return $base;
+    }
+
+    private function resolveAiDriverConfig(string $driver): array
+    {
+        return match ($driver) {
+            'openrouter' => [
+                'configured' => (string) config('whatsapp.finance.openrouter_api_key', '') !== '',
+                'model' => (string) config('whatsapp.finance.openrouter_model', 'qwen/qwen3.6-plus:free'),
+                'base_url' => (string) config('whatsapp.finance.openrouter_base_url', 'https://openrouter.ai/api/v1'),
+            ],
+            'gemini' => [
+                'configured' => (string) config('whatsapp.finance.gemini_api_key', '') !== '',
+                'model' => (string) config('whatsapp.finance.gemini_model', 'gemini-2.5-flash'),
+            ],
+            'groq' => [
+                'configured' => (string) config('whatsapp.finance.groq_api_key', '') !== '',
+                'model_single' => (string) config('whatsapp.finance.groq_model_single', 'llama-3.1-8b-instant'),
+                'model_bulk' => (string) config('whatsapp.finance.groq_model_bulk', 'llama-3.1-8b-instant'),
+                'model_vision' => (string) config('whatsapp.finance.groq_vision_model', 'meta-llama/llama-4-scout-17b-16e-instruct'),
+                'base_url' => (string) config('whatsapp.finance.groq_base_url', 'https://api.groq.com/openai/v1'),
+            ],
+            default => [
+                'configured' => false,
+                'model' => null,
+            ],
+        };
+    }
+
+    private function configuredModelFor(string $provider): ?string
+    {
+        return match ($provider) {
+            'openrouter' => (string) config('whatsapp.finance.openrouter_model', 'qwen/qwen3.6-plus:free'),
+            'gemini' => (string) config('whatsapp.finance.gemini_model', 'gemini-2.5-flash'),
+            'groq' => sprintf(
+                'single:%s / bulk:%s / vision:%s',
+                config('whatsapp.finance.groq_model_single', 'llama-3.1-8b-instant'),
+                config('whatsapp.finance.groq_model_bulk', 'llama-3.1-8b-instant'),
+                config('whatsapp.finance.groq_vision_model', 'meta-llama/llama-4-scout-17b-16e-instruct'),
+            ),
+            default => null,
+        };
+    }
+
+    private function buildOpenRouterContent(string $prompt, ?TenantWhatsappMedia $media): array|string
+    {
+        if (!$media || !$this->isPreviewableMedia($media)) {
+            return $prompt;
+        }
+
+        $contents = $this->loadMediaBase64($media->storage_path);
+        if (!$contents) {
+            return $prompt;
+        }
+
+        return [
+            [
+                'type' => 'text',
+                'text' => $prompt,
+            ],
+            [
+                'type' => 'image_url',
+                'image_url' => [
+                    'url' => sprintf('data:%s;base64,%s', $media->mime_type, $contents),
+                ],
+            ],
+        ];
+    }
+
+    private function extractFallback(
+        Tenant $tenant,
+        string $command,
+        ?string $text,
+        ?TenantWhatsappMedia $media,
+        Collection $categoryReferences
+    ): array {
+        if ($command === 'bulk') {
+            $items = $this->parser->fallbackBulkItems($text, $tenant->currency_code ?? 'IDR');
+            $result = [
+                'provider' => 'fallback',
+                'model' => 'heuristic',
+                'confidence_score' => $items === [] ? 0.2 : 0.55,
+                'payload' => [
+                    'merchant' => null,
+                    'transaction_date' => now()->toDateString(),
+                    'subtotal' => collect($items)->sum(fn ($item) => (float) ($item['amount'] ?? 0)),
+                    'total' => collect($items)->sum(fn ($item) => (float) ($item['amount'] ?? 0)),
+                    'notes' => $text,
+                    'category_id' => null,
+                    'needs_review_flags' => ['manual_review_recommended'],
+                    'media_id' => $media?->id,
+                ],
+                'items' => $items,
+                'normalization' => [
+                    'single' => null,
+                    'items' => collect($items)->map(fn ($item, $index) => [
+                        'index' => $index,
+                        'amount' => $item['amount'] ?? null,
+                        'description' => $item['description'] ?? null,
+                        'category' => [
+                            'requested_category_id' => data_get($item, 'payload.category_id'),
+                            'accepted_category_id' => null,
+                            'transaction_type' => 'pengeluaran',
+                            'matched' => false,
+                            'reason' => 'fallback_no_category_mapping',
+                        ],
+                    ])->values()->all(),
+                ],
+            ];
+
+            $result['raw_response'] = [
+                'driver' => 'fallback',
+                'request' => [
+                    'command' => $command,
+                    'text' => $text,
+                    'category_references' => $categoryReferences->values()->all(),
+                    'has_media' => $media !== null,
+                ],
+                'response' => null,
+                'response_text' => null,
+                'decoded' => $result['payload'],
+                'normalization' => $result['normalization'],
+            ];
+
+            return $result;
+        }
+
+        [$amount, $description, $amountToken] = $this->parser->extractSimpleAmountAndDescription($text);
+        $result = [
+            'provider' => 'fallback',
+            'model' => 'heuristic',
+            'confidence_score' => $amount ? 0.6 : 0.25,
+            'payload' => [
+                'type' => 'pengeluaran',
+                'amount' => $amount,
+                'currency_code' => $tenant->currency_code ?? 'IDR',
+                'transaction_date' => now()->toDateString(),
+                'merchant' => null,
+                'notes' => $text,
+                'category_id' => null,
+                'category_hint' => null,
+                'account_hint' => null,
+                'budget_hint' => null,
+                'tags' => [],
+                'description' => $description,
+                'needs_review_flags' => ['manual_review_recommended'],
+                'media_id' => $media?->id,
+            ],
+            'items' => [],
+            'normalization' => [
+                'single' => [
+                    'amount_token' => $amountToken,
+                    'parsed_amount' => $amount,
+                    'description' => $description,
+                    'category' => [
+                        'requested_category_id' => null,
+                        'accepted_category_id' => null,
+                        'transaction_type' => 'pengeluaran',
+                        'matched' => false,
+                        'reason' => 'fallback_no_category_mapping',
+                    ],
+                ],
+                'items' => [],
+            ],
+        ];
+
+        $result['raw_response'] = [
+            'driver' => 'fallback',
+            'request' => [
+                'command' => $command,
+                'text' => $text,
+                'category_references' => $categoryReferences->values()->all(),
+                'has_media' => $media !== null,
+            ],
+            'response' => null,
+            'response_text' => null,
+            'decoded' => $result['payload'],
+            'normalization' => $result['normalization'],
+        ];
+
+        return $result;
+    }
+
+    private function isStructuredCommandPayload(string $command, string $text): bool
+    {
+        if ($text === '' || !str_contains($text, '#')) {
+            return false;
+        }
+
+        if ($command === 'tx') {
+            return count(explode('#', $text)) >= 2;
+        }
+
+        $segments = preg_split('/[\r\n,;]+/', $text);
+        foreach ($segments as $segment) {
+            $segment = trim((string) $segment);
+            if ($segment === '') {
+                continue;
+            }
+
+            if (!str_contains($segment, '#')) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private function requiresAi(string $command, string $text, ?TenantWhatsappMedia $media): bool
+    {
+        return in_array($command, ['tx', 'bulk'], true) && ($media !== null || $text !== '');
+    }
+
+                        private function isPreviewableMedia(TenantWhatsappMedia $media): bool
+    {
+        return Str::startsWith($media->mime_type, 'image/') || $media->mime_type === 'application/pdf';
+    }
+
+    private function loadMediaBase64(string $storagePath): ?string
+    {
+        if (!Storage::exists($storagePath)) {
+            return null;
+        }
+
+        return base64_encode((string) Storage::get($storagePath));
+    }
+
+    private function financeCategoryReferences(Tenant $tenant): Collection
+    {
+        return TenantCategory::query()
+            ->forTenant($tenant->id)
+            ->forModule('finance')
+            ->active()
+            ->ordered()
+            ->get(['id', 'name', 'sub_type'])
+            ->map(fn (TenantCategory $category) => [
+                'id' => (int) $category->id,
+                'name' => (string) $category->name,
+                'sub_type' => $category->sub_type ?: 'all',
+            ]);
+    }
+
+        }

@@ -115,20 +115,6 @@ const ReportsPage = ({
         || page.showFilters,
     );
 
-    useFinanceWhatsappIntent({
-        activeMemberId,
-        defaultCurrency,
-        tenantRoute,
-        clearWhatsappQuery,
-        setBatchDraft: page.setBatchDraft,
-        setBatchModal: page.setBatchModal,
-        setTransactionDraft: page.setTransactionDraft,
-        setTransactionDraftMeta: page.setTransactionDraftMeta,
-        setSelectedTransaction: page.setSelectedTransaction,
-        setTransactionPresetType: page.setTransactionPresetType,
-        setTransactionModal: page.setTransactionModal,
-    });
-
     const transactionEntry = useFinanceTransactionEntry({
         activeMemberId,
         defaultCurrency,
@@ -234,6 +220,20 @@ const ReportsPage = ({
 
         await Promise.all(promises);
     }, [fetchAccounts, fetchBudgets, fetchPockets, filters.month]);
+
+    useFinanceWhatsappIntent({
+        activeMemberId,
+        defaultCurrency,
+        tenantRoute,
+        clearWhatsappQuery,
+        setBatchDraft: page.setBatchDraft,
+        setBatchModal: page.setBatchModal,
+        setTransactionDraft: page.setTransactionDraft,
+        setTransactionDraftMeta: page.setTransactionDraftMeta,
+        setSelectedTransaction: page.setSelectedTransaction,
+        setTransactionPresetType: page.setTransactionPresetType,
+        setTransactionModal: page.setTransactionModal,
+    });
 
     const handleOpenFilters = useCallback(() => {
         void ensureTransactionDialogData({ includeAccounts: true, includeBudgets: false, includePockets: false })

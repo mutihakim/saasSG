@@ -1,1 +1,1 @@
-export { default } from "../../../features/games/Index";
+export { default } from "../../../features/games/hub/views/GamesIndexPage";

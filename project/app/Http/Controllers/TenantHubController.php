@@ -101,6 +101,41 @@ class TenantHubController extends Controller
         return Inertia::render('Tenant/Games/MathGamePage', $this->baseProps($request));
     }
 
+    public function gamesMathMastered(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/MathGameMasteredPage', $this->baseProps($request));
+    }
+
+    public function gamesMathHistory(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/MathGameHistoryPage', $this->baseProps($request));
+    }
+
+    public function gamesMathSettings(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/MathGameSettingsPage', $this->baseProps($request));
+    }
+
+    public function gamesVocabulary(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/VocabularyPage', $this->baseProps($request));
+    }
+
+    public function gamesVocabularyMastered(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/VocabularyMasteredPage', $this->baseProps($request));
+    }
+
+    public function gamesVocabularyHistory(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/VocabularyHistoryPage', $this->baseProps($request));
+    }
+
+    public function gamesVocabularySettings(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/VocabularySettingsPage', $this->baseProps($request));
+    }
+
     public function wa(Request $request): Response
     {
         return Inertia::render('Tenant/Frontend/Member/WhatsApp', $this->baseProps($request));

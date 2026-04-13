@@ -85,7 +85,11 @@ export const findPocketForAccount = (pockets: FinanceWallet[], ownerMemberId: st
     return visiblePockets[0] ?? null;
 };
 
-export const toPeriodMonth = (value: string) => String(value || "").slice(0, 7);
+export const toPeriodMonth = (value: string) => {
+    const str = String(value || "");
+    if (str.length >= 7) return str.slice(0, 7);
+    return str;
+};
 
 export const isLiabilityType = (accountType?: string | null) => ["credit_card", "paylater"].includes(String(accountType || ""));
 

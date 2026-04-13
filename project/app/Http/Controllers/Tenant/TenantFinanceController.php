@@ -22,8 +22,12 @@ class TenantFinanceController extends Controller
         private readonly WalletCashflowService $cashflow,
     ) {}
 
-    public function index(Request $request, string $tenant): Response
+    public function index(Request $request, string $tenant): Response|\Illuminate\Http\RedirectResponse
     {
+        if ($request->has('intent') || $request->query('source') === 'wa') {
+            return redirect()->route('tenant.finance.transactions', ['tenant' => $tenant] + $request->query());
+        }
+
         return app(TenantWalletController::class)->home($request, $tenant);
     }
 
@@ -64,9 +68,10 @@ class TenantFinanceController extends Controller
         $member = $request->attributes->get('currentTenantMember');
         $activeAccounts = $tenantModel->bankAccounts()->active()->count();
         $activeBudgets = $tenantModel->budgets()->active()->count();
-        $shouldPreloadAccounts = $section === 'reports';
-        $shouldPreloadBudgets = $section === 'reports';
-        $shouldPreloadWallets = false;
+        $hasWhatsappIntent = $request->query('source') === 'wa' && $request->has('intent');
+        $shouldPreloadAccounts = $section === 'reports' || $hasWhatsappIntent;
+        $shouldPreloadBudgets = $section === 'reports' || $hasWhatsappIntent;
+        $shouldPreloadWallets = $hasWhatsappIntent;
         $accounts = $shouldPreloadAccounts
             ? $this->access->accessibleAccountsQuery($tenantModel, $member)
                 ->active()

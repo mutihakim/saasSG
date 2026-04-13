@@ -70,6 +70,8 @@ class TenantProvisioningService
                     'finance.delete',
                     'games.math.create',
                     'games.math.update',
+                    'games.vocabulary.create',
+                    'games.vocabulary.update',
                 ])
                 ->unique()
                 ->values()

@@ -18,6 +18,18 @@
         z-index: 10;
     }
 
+    @media (orientation: landscape) and (max-height: 520px) {
+        &__topbar {
+            height: 52px;
+            min-height: 52px;
+            padding: 0.35rem 0.75rem;
+        }
+
+        &__title {
+            font-size: 0.98rem;
+        }
+    }
+
     &__title {
         flex: 1;
         text-align: center;
@@ -42,6 +54,11 @@
         height: 100%;
         overflow: auto;
         padding: 1rem;
+    }
+
+    &__scroll--session {
+        overflow: hidden;
+        padding: 0;
     }
 
     &--page-scroll {
@@ -72,17 +89,139 @@
 }
 
 .math-game {
+    &--session {
+        height: 100%;
+        min-height: 0;
+        display: flex;
+        flex-direction: column;
+
+        .row {
+            height: 100%;
+            min-height: 0;
+            margin: 0;
+        }
+
+        .col-xxl-10 {
+            min-height: 0;
+            display: flex;
+            padding: 0;
+        }
+    }
+
+    &__session-card {
+        width: 100%;
+        height: 100%;
+        min-height: 0;
+        margin: 0;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+    }
+
+    &__session-header {
+        padding: clamp(0.5rem, 1.8vh, 0.75rem) clamp(0.6rem, 2.4vw, 1rem) 0.45rem;
+
+        .badge {
+            font-size: clamp(0.68rem, 1.7vh, 0.8rem);
+            line-height: 1.25;
+        }
+    }
+
+    &__session-body {
+        min-height: 0;
+        flex: 1;
+        display: grid;
+        grid-template-rows: auto auto minmax(0, 1fr);
+        gap: clamp(0.35rem, 1.3vh, 0.7rem);
+        padding: clamp(0.45rem, 1.4vh, 0.8rem) clamp(0.6rem, 2.4vw, 1rem) calc(clamp(0.45rem, 1.4vh, 0.8rem) + env(safe-area-inset-bottom, 0px));
+        overflow: hidden;
+    }
+
+    &__session-question {
+        margin-bottom: 0 !important;
+        padding: clamp(0.6rem, 2vh, 1rem) !important;
+
+        .display-6 {
+            font-size: clamp(1.2rem, 4.3vh, 2rem);
+            line-height: 1.2;
+        }
+    }
+
+    &__session-answer {
+        margin-bottom: 0 !important;
+        padding: clamp(0.45rem, 1.6vh, 0.7rem) !important;
+    }
+
+    &__session-numpad {
+        align-self: center;
+        width: min(100%, 380px);
+        margin-top: auto;
+    }
+
     &__tile {
         aspect-ratio: 1 / 1;
         min-height: 92px;
         width: 100%;
-        border-radius: var(--#{$prefix}border-radius);
-        transition: transform 0.18s ease, box-shadow 0.18s ease;
+        border-radius: var(--#{$prefix}border-radius-lg);
+        transition: all 0.2s ease;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        border: none !important;
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
 
-        &:hover,
-        &:focus {
-            transform: translateY(-3px);
-            box-shadow: var(--#{$prefix}box-shadow-lg);
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        i {
+            transition: transform 0.2s ease;
+        }
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.1);
+
+            i {
+                transform: scale(1.1);
+            }
+        }
+
+        &:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        // Custom contrast colors for operator tiles
+        &.btn-soft-success {
+            background-color: #d1e7dd !important;
+            box-shadow: 0 4px 0 #a3cfbb;
+            &:active { box-shadow: 0 2px 0 #a3cfbb; }
+        }
+        &.btn-soft-warning {
+            background-color: #fff3cd !important;
+            box-shadow: 0 4px 0 #ffe69c;
+            &:active { box-shadow: 0 2px 0 #ffe69c; }
+        }
+        &.btn-soft-danger {
+            background-color: #f8d7da !important;
+            box-shadow: 0 4px 0 #f1aeb5;
+            &:active { box-shadow: 0 2px 0 #f1aeb5; }
+        }
+        &.btn-soft-info {
+            background-color: #cff4fc !important;
+            box-shadow: 0 4px 0 #9eeaf9;
+            &:active { box-shadow: 0 2px 0 #9eeaf9; }
         }
     }
 
@@ -90,22 +229,81 @@
         min-height: 64px;
         aspect-ratio: 1 / 1;
         border-radius: var(--#{$prefix}border-radius);
-        font-size: 1.35rem;
-        font-weight: 700;
+        font-size: 1.5rem;
+        font-weight: 800;
+        transition: all 0.15s ease;
+        border: none !important;
+        box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+
+        &::after {
+            content: "";
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+            pointer-events: none;
+        }
+
+        &:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        &:active {
+            transform: translateY(2px);
+            box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1);
+        }
+
+        // Custom contrast colors for number tiles
+        &.btn-soft-success {
+            background-color: #d1e7dd !important;
+            color: #0a3622 !important;
+            box-shadow: 0 4px 0 #a3cfbb;
+            &:active { box-shadow: 0 2px 0 #a3cfbb; }
+        }
+        &.btn-soft-warning {
+            background-color: #fff3cd !important;
+            color: #664d03 !important;
+            box-shadow: 0 4px 0 #ffe69c;
+            &:active { box-shadow: 0 2px 0 #ffe69c; }
+        }
+        &.btn-soft-danger {
+            background-color: #f8d7da !important;
+            color: #58151c !important;
+            box-shadow: 0 4px 0 #f1aeb5;
+            &:active { box-shadow: 0 2px 0 #f1aeb5; }
+        }
+        &.btn-soft-info {
+            background-color: #cff4fc !important;
+            color: #055160 !important;
+            box-shadow: 0 4px 0 #9eeaf9;
+            &:active { box-shadow: 0 2px 0 #9eeaf9; }
+        }
     }
 
     &__answer-box {
         min-width: 86px;
         border-bottom: 3px solid var(--#{$prefix}border-color);
+        font-size: clamp(1.2rem, 4vh, 2rem) !important;
+        line-height: 1.15;
     }
 
     &__numpad {
-        max-width: 340px;
+        max-width: 380px;
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
     &__numpad-button {
-        min-height: 54px;
+        min-height: clamp(2.55rem, 6.3vh, 3.35rem);
+        font-size: clamp(1rem, 2.7vh, 1.35rem);
+        padding-block: clamp(0.35rem, 1.2vh, 0.75rem);
     }
 
     &__summary-table {
@@ -124,5 +322,168 @@
     &__feedback-icon {
         font-size: 3rem;
         line-height: 1;
+    }
+}
+
+.vocab-setup-body {
+    max-height: calc(100dvh - 180px);
+    overflow-y: auto;
+    padding-bottom: max(0.9rem, env(safe-area-inset-bottom, 0px));
+}
+
+.vocab-category-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 0.45rem;
+}
+
+@media (orientation: landscape) {
+    .vocab-category-grid {
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+    }
+}
+
+.vocab-category-card {
+    width: 100%;
+    border: 1px solid var(--#{$prefix}border-color);
+    background: linear-gradient(160deg, var(--#{$prefix}tertiary-bg) 0%, var(--#{$prefix}body-bg) 100%);
+    border-radius: var(--#{$prefix}border-radius-lg);
+    padding: 0.45rem 0.5rem;
+    text-align: left;
+    display: flex;
+    align-items: flex-start;
+    gap: 0.45rem;
+    transition: transform 0.15s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+
+    &:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.08);
+        border-color: rgba(var(--#{$prefix}primary-rgb), 0.5);
+    }
+
+    &.is-active {
+        border-color: rgba(var(--#{$prefix}primary-rgb), 0.85);
+        box-shadow: 0 8px 18px rgba(var(--#{$prefix}primary-rgb), 0.2);
+        background: linear-gradient(160deg, rgba(var(--#{$prefix}primary-rgb), 0.18) 0%, var(--#{$prefix}body-bg) 100%);
+    }
+}
+
+.vocab-category-card__icon-wrap {
+    flex: 0 0 auto;
+    width: 1.55rem;
+    height: 1.55rem;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(var(--#{$prefix}primary-rgb), 0.14);
+    color: var(--#{$prefix}primary);
+}
+
+.vocab-category-card__icon {
+    font-size: 0.82rem;
+    line-height: 1;
+}
+
+.vocab-category-card__content {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1rem;
+}
+
+.vocab-category-card__label {
+    display: block;
+    font-weight: 700;
+    font-size: 0.74rem;
+    line-height: 1.2;
+    white-space: normal;
+    word-break: break-word;
+    overflow: hidden;
+}
+
+.vocab-category-card__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.vocab-category-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.12rem 0.35rem;
+    border-radius: 999px;
+    font-size: 0.64rem;
+    font-weight: 600;
+    color: var(--#{$prefix}primary-text-emphasis);
+    background: rgba(var(--#{$prefix}primary-rgb), 0.15);
+}
+
+.vocab-practice-card {
+    height: 100%;
+    min-height: 0;
+}
+
+.vocab-practice-body {
+    flex: 1;
+    min-height: 0;
+    display: grid;
+    grid-template-rows: minmax(0, 1fr) auto;
+    gap: clamp(0.4rem, 1.4vh, 0.7rem);
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom, 0px));
+}
+
+.vocab-practice-prompt {
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    .rounded-3 {
+        margin-bottom: 0.6rem !important;
+    }
+}
+
+.vocab-practice-options {
+    margin-top: 0;
+    align-self: end;
+
+    .btn {
+        min-height: 2.6rem;
+        font-size: 0.95rem;
+    }
+}
+
+@media (orientation: landscape) and (max-height: 520px) {
+    .math-game {
+        &--session {
+            .col-xxl-10 {
+                max-width: none;
+                flex: 1 1 auto;
+            }
+        }
+
+        &__session-body {
+            gap: 0.35rem;
+            padding-top: 0.4rem;
+            padding-bottom: calc(0.45rem + env(safe-area-inset-bottom, 0px));
+        }
+
+        &__session-question {
+            padding: 0.45rem 0.55rem !important;
+
+            .display-6 {
+                font-size: clamp(1rem, 4.7vh, 1.45rem);
+            }
+        }
+
+        &__session-answer {
+            padding: 0.4rem 0.55rem !important;
+        }
+
+        &__answer-box {
+            font-size: clamp(1rem, 4vh, 1.4rem) !important;
+        }
     }
 }
