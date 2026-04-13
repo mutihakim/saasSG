@@ -1,5 +1,4 @@
 export { default as VocabularyPage } from "./views/VocabularyPage";
-export { default as useVocabulary } from "./hooks/useVocabulary";
 export { default as useVocabularyGameController } from "./hooks/useVocabularyGameController";
 export { default as CategorySelector } from "./components/CategorySelector";
 export { default as FlashCard } from "./components/FlashCard";

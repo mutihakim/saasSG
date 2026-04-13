@@ -56,7 +56,7 @@ const useVoiceFeedback = () => {
         };
     }, []);
 
-    const speak = useCallback((text: string) => {
+    const speak = useCallback((text: string, lang?: string) => {
         if (!synthesisRef.current || !isEnabled) {
             return;
         }
@@ -66,10 +66,26 @@ const useVoiceFeedback = () => {
 
         const utterance = new SpeechSynthesisUtterance(text);
         utteranceRef.current = utterance;
-        if (voice) {
+
+        const targetLang = lang || "id-ID";
+        utterance.lang = targetLang;
+
+        // Try to find a voice matching the target language
+        const voices = window.speechSynthesis.getVoices();
+        const targetLangNormalized = targetLang.toLowerCase().replace("_", "-");
+        const targetPrimary = targetLangNormalized.split("-")[0];
+
+        const matchingVoice = voices.find((v) => {
+            const vLang = v.lang.toLowerCase().replace("_", "-");
+            return vLang === targetLangNormalized || vLang.startsWith(targetPrimary);
+        });
+        
+        if (matchingVoice) {
+            utterance.voice = matchingVoice;
+        } else if (voice) {
             utterance.voice = voice;
         }
-        utterance.lang = "id-ID";
+
         utterance.rate = 0.9;
         utterance.onstart = () => setIsSpeaking(true);
         utterance.onend = () => setIsSpeaking(false);

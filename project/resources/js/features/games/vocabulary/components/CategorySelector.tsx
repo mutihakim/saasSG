@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 type CategoryItem = {
     key: string;
@@ -17,6 +18,8 @@ const CategorySelector: React.FC<Props> = ({
     selected,
     onSelect,
 }) => {
+    const { t } = useTranslation();
+
     const resolveCategoryIcon = (label: string): string => {
         const normalized = label.toLowerCase();
         if (normalized.includes("hewan")) return "ri-bear-smile-line";
@@ -36,10 +39,10 @@ const CategorySelector: React.FC<Props> = ({
 
     return (
         <div className="category-selector">
-            <h6 className="fw-semibold mb-2">Pilih Kategori</h6>
+            <h6 className="fw-semibold mb-2">{t("tenant.games.vocabulary.category.title")}</h6>
             {categories.length === 0 && (
                 <div className="small text-muted">
-                    Belum ada kategori. Import data kosakata terlebih dahulu.
+                    {t("tenant.games.vocabulary.category.empty")}
                 </div>
             )}
             <div className="vocab-category-grid">
@@ -58,7 +61,7 @@ const CategorySelector: React.FC<Props> = ({
                             <span className="vocab-category-card__meta">
                                 <span className="vocab-category-chip">
                                     <i className="ri-calendar-line" />
-                                    {cat.count} hari
+                                    {t("tenant.games.vocabulary.category.day_count", { count: cat.count })}
                                 </span>
                             </span>
                         </span>

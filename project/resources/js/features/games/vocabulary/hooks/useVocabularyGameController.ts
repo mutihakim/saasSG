@@ -1,59 +1,55 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import useGameFeedbackMessages from "../../shared/hooks/useGameFeedbackMessages";
 import useVoiceFeedback from "../../shared/hooks/useVoiceFeedback";
-import { createVocabularyApi, type VocabularyConfigResponse, type VocabularyLanguage, type VocabularyMode, type VocabularyProgressDto, type VocabularyTranslationDirection, type VocabularyWordDto } from "../data/api/vocabularyApi";
-import type { VocabularyAttemptResult, VocabularyController, VocabularyFeedbackState, VocabularySettingsMap } from "../types";
+import { createVocabularyApi, type VocabularyWordDto } from "../data/api/vocabularyApi";
+import type { VocabularyAttemptResult, VocabularyController, VocabularyFeedbackState } from "../types";
 import { answerLangFor, answerTextFor, buildOptionSet, promptTextFor, shuffle } from "../utils/vocabularyGame";
+
+import useVocabularyConfigState from "./useVocabularyConfigState";
+import useVocabularyTimers from "./useVocabularyTimers";
+import { ANSWER_LOCK_MS, initialFeedbackState, normalizeProgress } from "./vocabularyGameController.shared";
 
 import { useTenantRoute } from "@/core/config/routes";
 import { notify } from "@/core/lib/notify";
 
-const initialFeedbackState: VocabularyFeedbackState = {
-    show: false,
-    isCorrect: false,
-    isTimedOut: false,
-    message: "",
-    correctAnswer: null,
-};
-
-const ANSWER_LOCK_MS = 2000;
-
-const normalizeProgress = (
-    current: VocabularyProgressDto | undefined,
-    isCorrect: boolean,
-    nextStreak: number,
-    masteredThreshold: number,
-): VocabularyProgressDto => ({
-    word_id: current?.word_id ?? 0,
-    jumlah_benar: (current?.jumlah_benar ?? 0) + (isCorrect ? 1 : 0),
-    jumlah_salah: (current?.jumlah_salah ?? 0) + (isCorrect ? 0 : 1),
-    correct_streak: nextStreak,
-    max_streak: Math.max(current?.max_streak ?? 0, nextStreak),
-    is_mastered: Math.max(current?.max_streak ?? 0, nextStreak) >= masteredThreshold,
-});
-
 const useVocabularyGameController = (): VocabularyController => {
+    const { t, i18n } = useTranslation();
     const tenantRoute = useTenantRoute();
     const api = useMemo(() => createVocabularyApi(tenantRoute), [tenantRoute]);
     const { speak, isEnabled: voiceEnabled } = useVoiceFeedback();
     const { getNextFeedbackMessage } = useGameFeedbackMessages();
-
-    const [isLoadingConfig, setIsLoadingConfig] = useState(true);
-    const [config, setConfig] = useState<VocabularyConfigResponse | null>(null);
-    const [settingsMap, setSettingsMap] = useState<VocabularySettingsMap>({});
     const [phase, setPhase] = useState<"setup" | "learn" | "practice" | "summary">("setup");
-    const [language, setLanguage] = useState<VocabularyLanguage>("english");
-    const [mode, setMode] = useState<VocabularyMode>("learn");
-    const [selectedCategory, setSelectedCategory] = useState("");
-    const [selectedDay, setSelectedDay] = useState(1);
-    const [autoTts, setAutoTts] = useState(true);
-    const [timeLimit, setTimeLimit] = useState(8);
-    const [translationDirection, setTranslationDirection] = useState<VocabularyTranslationDirection>("id_to_target");
-    const [masteredThreshold, setMasteredThreshold] = useState(8);
-    const [dayWords, setDayWords] = useState<VocabularyWordDto[]>([]);
+    const {
+        isLoadingConfig,
+        config,
+        settingsMap,
+        language,
+        mode,
+        selectedCategory,
+        selectedDay,
+        autoTts,
+        timeLimit,
+        translationDirection,
+        masteredThreshold,
+        dayWords,
+        progressMap,
+        categoryOptions,
+        daysForCategory,
+        hasCategories,
+        hasDaysInSelectedCategory,
+        setLanguage,
+        setMode,
+        setSelectedCategory,
+        setSelectedDay,
+        setAutoTts,
+        setTimeLimit,
+        setTranslationDirection,
+        setProgressMap,
+        fetchDayWords,
+    } = useVocabularyConfigState(api);
     const [poolWords, setPoolWords] = useState<VocabularyWordDto[]>([]);
-    const [progressMap, setProgressMap] = useState<Record<string, VocabularyProgressDto>>({});
     const [learnIndex, setLearnIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
     const [practiceQueue, setPracticeQueue] = useState<VocabularyWordDto[]>([]);
@@ -71,170 +67,24 @@ const useVocabularyGameController = (): VocabularyController => {
     const [feedbackState, setFeedbackState] = useState<VocabularyFeedbackState>(initialFeedbackState);
     const [isMemoryTest, setIsMemoryTest] = useState(false);
     const [showMemoryTestDialog, setShowMemoryTestDialog] = useState(false);
-
-    const answerLockTimerRef = useRef<number | null>(null);
-    const countdownTimerRef = useRef<number | null>(null);
-    const feedbackVoiceTimerRef = useRef<number | null>(null);
-    const timerRef = useRef<number | null>(null);
-
-    const clearAnswerLockTimer = useCallback(() => {
-        if (answerLockTimerRef.current) {
-            window.clearTimeout(answerLockTimerRef.current);
-            answerLockTimerRef.current = null;
-        }
-    }, []);
-
-    const clearCountdownTimer = useCallback(() => {
-        if (countdownTimerRef.current) {
-            window.clearTimeout(countdownTimerRef.current);
-            countdownTimerRef.current = null;
-        }
-    }, []);
-
-    const clearPracticeTimer = useCallback(() => {
-        if (timerRef.current) {
-            window.clearInterval(timerRef.current);
-            timerRef.current = null;
-        }
-    }, []);
-
-    const clearFeedbackVoiceTimer = useCallback(() => {
-        if (feedbackVoiceTimerRef.current) {
-            window.clearTimeout(feedbackVoiceTimerRef.current);
-            feedbackVoiceTimerRef.current = null;
-        }
-    }, []);
+    const {
+        answerLockTimerRef,
+        countdownTimerRef,
+        feedbackVoiceTimerRef,
+        timerRef,
+        clearAnswerLockTimer,
+        clearCountdownTimer,
+        clearFeedbackVoiceTimer,
+        clearPracticeTimer,
+    } = useVocabularyTimers();
 
     const resetFeedback = useCallback(() => {
         setFeedbackState(initialFeedbackState);
     }, []);
 
-    useEffect(() => () => {
-        clearAnswerLockTimer();
-        clearCountdownTimer();
-        clearFeedbackVoiceTimer();
-        clearPracticeTimer();
-        if (typeof window !== "undefined" && window.speechSynthesis) {
-            window.speechSynthesis.cancel();
-        }
-    }, [clearAnswerLockTimer, clearCountdownTimer, clearFeedbackVoiceTimer, clearPracticeTimer]);
-
-    const loadConfig = useCallback(async () => {
-        setIsLoadingConfig(true);
-
-        try {
-            const response = await api.fetchConfig();
-            setConfig(response.config);
-            setSettingsMap(response.settings);
-
-            const initialLanguage = response.config.languages[0]?.value ?? "english";
-            setLanguage(initialLanguage);
-
-            const firstCategory = response.config.categories[0];
-            if (firstCategory) {
-                setSelectedCategory(firstCategory.category);
-                setSelectedDay(firstCategory.days[0] ?? 1);
-            }
-
-            const activeSetting = response.settings[initialLanguage];
-            if (activeSetting) {
-                setMode(activeSetting.default_mode);
-                setAutoTts(activeSetting.auto_tts);
-                setTimeLimit(activeSetting.default_time_limit);
-                setTranslationDirection(activeSetting.translation_direction);
-                setMasteredThreshold(activeSetting.mastered_threshold);
-            } else {
-                setMode("learn");
-                setAutoTts(true);
-                setTimeLimit(response.config.default_time_limit ?? 8);
-                setTranslationDirection("id_to_target");
-                setMasteredThreshold(response.config.default_mastered_threshold ?? 8);
-            }
-        } catch {
-            notify.error("Gagal memuat konfigurasi vocabulary.");
-        } finally {
-            setIsLoadingConfig(false);
-        }
-    }, [api]);
-
-    useEffect(() => {
-        void loadConfig();
-    }, [loadConfig]);
-
-    const categoryOptions = useMemo(() => (
-        (config?.categories ?? []).map((item) => ({
-            key: item.category,
-            label: item.category,
-            count: item.total_days,
-        }))
-    ), [config?.categories]);
-
-    const daysForCategory = useMemo(
-        () => config?.categories.find((item) => item.category === selectedCategory)?.days ?? [],
-        [config?.categories, selectedCategory],
-    );
-
-    const hasCategories = categoryOptions.length > 0;
-    const hasDaysInSelectedCategory = daysForCategory.length > 0;
-
-    useEffect(() => {
-        if (daysForCategory.length > 0 && !daysForCategory.includes(selectedDay)) {
-            setSelectedDay(daysForCategory[0] ?? 1);
-        }
-    }, [daysForCategory, selectedDay]);
-
-    useEffect(() => {
-        const activeSetting = settingsMap[language];
-        if (activeSetting) {
-            setMode(activeSetting.default_mode);
-            setAutoTts(activeSetting.auto_tts);
-            setTimeLimit(activeSetting.default_time_limit);
-            setTranslationDirection(activeSetting.translation_direction);
-            setMasteredThreshold(activeSetting.mastered_threshold);
-            return;
-        }
-
-        if (config) {
-            setMode("learn");
-            setTimeLimit(config.default_time_limit ?? 8);
-            setTranslationDirection("id_to_target");
-            setMasteredThreshold(config.default_mastered_threshold ?? 8);
-        }
-    }, [config, language, settingsMap]);
-
-    const fetchDayWords = useCallback(async () => {
-        if (!selectedCategory || !selectedDay) {
-            return {
-                words: [] as VocabularyWordDto[],
-                progress: {} as Record<string, VocabularyProgressDto>,
-            };
-        }
-
-        const response = await api.fetchWords({
-            language,
-            category: selectedCategory,
-            day: selectedDay,
-        });
-
-        setDayWords(response.words);
-        setProgressMap(response.progress);
-
-        return response;
-    }, [api, language, selectedCategory, selectedDay]);
-
     const pronounce = useCallback((text: string, lang: string) => {
-        if (typeof window === "undefined" || !window.speechSynthesis || !text) {
-            return;
-        }
-
-        window.speechSynthesis.cancel();
-        window.speechSynthesis.resume();
-
-        const utterance = new SpeechSynthesisUtterance(text);
-        utterance.lang = lang;
-        utterance.rate = 0.95;
-        window.speechSynthesis.speak(utterance);
-    }, []);
+        speak(text, lang);
+    }, [speak]);
 
     const resetPracticeState = useCallback(() => {
         clearAnswerLockTimer();
@@ -269,7 +119,7 @@ const useVocabularyGameController = (): VocabularyController => {
         try {
             const { words } = await fetchDayWords();
             if (words.length === 0) {
-                notify.info("Belum ada kata untuk konfigurasi ini.");
+                notify.info(t("tenant.games.vocabulary.error.no_words"));
                 return;
             }
 
@@ -277,11 +127,11 @@ const useVocabularyGameController = (): VocabularyController => {
             setIsFlipped(false);
             setPhase("learn");
         } catch {
-            notify.error("Gagal memuat kata untuk Learn Mode.");
+            notify.error(t("tenant.games.vocabulary.error.load_learn_failed"));
         } finally {
             setIsStartingSession(false);
         }
-    }, [fetchDayWords]);
+    }, [fetchDayWords, t]);
 
     const initializePracticeSession = useCallback((
         words: VocabularyWordDto[],
@@ -330,11 +180,11 @@ const useVocabularyGameController = (): VocabularyController => {
 
             initializePracticeSession(candidateWords, pool, forceMemoryTest);
         } catch {
-            notify.error(forceMemoryTest ? "Gagal memulai Tes Ingatan." : "Gagal memulai Practice Mode.");
+            notify.error(forceMemoryTest ? t("tenant.games.vocabulary.error.start_memory_test_failed") : t("tenant.games.vocabulary.error.start_practice_failed"));
         } finally {
             setIsStartingSession(false);
         }
-    }, [api, clearAnswerLockTimer, fetchDayWords, initializePracticeSession, language, selectedCategory]);
+    }, [api, clearAnswerLockTimer, fetchDayWords, initializePracticeSession, language, selectedCategory, t]);
 
     const startMemoryTest = useCallback(async () => {
         await startPracticeMode(true);
@@ -350,7 +200,7 @@ const useVocabularyGameController = (): VocabularyController => {
 
         const options = buildOptionSet(currentPracticeWord, language, translationDirection, poolWords);
         if (options.length < 2) {
-            notify.error("Pilihan jawaban tidak cukup untuk latihan.");
+            notify.error(t("tenant.games.vocabulary.error.not_enough_options"));
             leaveToSetup();
             return;
         }
@@ -360,7 +210,7 @@ const useVocabularyGameController = (): VocabularyController => {
         setCorrectOption(null);
         setIsAnswerLocked(false);
         setTimeRemaining(timeLimit);
-    }, [currentPracticeWord, language, leaveToSetup, phase, poolWords, timeLimit, translationDirection]);
+    }, [currentPracticeWord, language, leaveToSetup, phase, poolWords, t, timeLimit, translationDirection]);
 
     useEffect(() => {
         clearCountdownTimer();
@@ -379,7 +229,7 @@ const useVocabularyGameController = (): VocabularyController => {
                 setTimeRemaining(timeLimit);
             }, 800);
         }
-    }, [clearCountdownTimer, countdownState, timeLimit]);
+    }, [clearCountdownTimer, countdownState, countdownTimerRef, timeLimit]);
 
     const finishSession = useCallback(async (nextAttempts: VocabularyAttemptResult[]) => {
         if (!selectedCategory || !selectedDay || !startedAt || nextAttempts.length === 0 || isMemoryTest) {
@@ -412,11 +262,11 @@ const useVocabularyGameController = (): VocabularyController => {
                 },
             });
         } catch {
-            notify.error("Ringkasan latihan gagal disimpan.");
+            notify.error(t("tenant.games.vocabulary.error.save_summary_failed"));
         } finally {
             setIsSavingSummary(false);
         }
-    }, [api, isMemoryTest, language, selectedCategory, selectedDay, startedAt]);
+    }, [api, isMemoryTest, language, selectedCategory, selectedDay, startedAt, t]);
 
     const submitPracticeAnswer = useCallback(async (selectedIdx: number | null, forcedTimedOut = false) => {
         if (!currentPracticeWord || isAnswerLocked) {
@@ -468,7 +318,11 @@ const useVocabularyGameController = (): VocabularyController => {
 
         if (voiceEnabled) {
             feedbackVoiceTimerRef.current = window.setTimeout(() => {
-                speak(feedbackMessage);
+                const langMap: Record<string, string> = {
+                    en: "en-US",
+                    id: "id-ID",
+                };
+                speak(feedbackMessage, langMap[i18n.language] || i18n.language);
             }, autoTts && chosenAnswer ? 700 : 120);
         }
 
@@ -496,7 +350,7 @@ const useVocabularyGameController = (): VocabularyController => {
                 },
             }));
         } catch {
-            notify.error("Sinkronisasi jawaban gagal, tapi sesi tetap lanjut.");
+            notify.error(t("tenant.games.vocabulary.error.sync_attempt_failed"));
         }
 
         answerLockTimerRef.current = window.setTimeout(() => {
@@ -518,13 +372,16 @@ const useVocabularyGameController = (): VocabularyController => {
             setPracticeIndex((prev) => prev + 1);
         }, ANSWER_LOCK_MS);
     }, [
+        answerLockTimerRef,
         api,
         attempts,
         autoTts,
         currentPracticeWord,
         dayWords,
         finishSession,
+        feedbackVoiceTimerRef,
         getNextFeedbackMessage,
+        i18n.language,
         isAnswerLocked,
         isMemoryTest,
         language,
@@ -537,7 +394,9 @@ const useVocabularyGameController = (): VocabularyController => {
         clearAnswerLockTimer,
         clearFeedbackVoiceTimer,
         clearPracticeTimer,
+        setProgressMap,
         speak,
+        t,
         translationDirection,
         voiceEnabled,
     ]);
@@ -562,7 +421,7 @@ const useVocabularyGameController = (): VocabularyController => {
         }, 1000);
 
         return () => clearPracticeTimer();
-    }, [clearPracticeTimer, countdownState, currentPracticeWord, isAnswerLocked, phase, submitPracticeAnswer]);
+    }, [clearPracticeTimer, countdownState, currentPracticeWord, isAnswerLocked, phase, submitPracticeAnswer, timerRef]);
 
     useEffect(() => {
         resetFeedback();

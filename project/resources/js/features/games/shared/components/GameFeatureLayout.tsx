@@ -24,6 +24,7 @@ type GameFeatureLayoutProps = {
     isSessionActive?: boolean;
     allowPageScroll?: boolean;
     onLeavingSession?: () => void;
+    featureClass?: string;
     children: React.ReactNode;
 };
 
@@ -44,6 +45,7 @@ const GameFeatureLayout: React.FC<GameFeatureLayoutProps> = ({
     isSessionActive = false,
     allowPageScroll = false,
     onLeavingSession,
+    featureClass,
     children,
 }) => {
     const { t } = useTranslation();
@@ -95,7 +97,7 @@ const GameFeatureLayout: React.FC<GameFeatureLayoutProps> = ({
     };
 
     return (
-        <div className={`math-game-layout${allowPageScroll ? " math-game-layout--page-scroll" : ""}`}>
+        <div className={`math-game-layout${allowPageScroll ? " math-game-layout--page-scroll" : ""}${featureClass ? ` ${featureClass}` : ""}`}>
             <header className="math-game-layout__topbar">
                 <button
                     type="button"

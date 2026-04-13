@@ -1,5 +1,6 @@
 import React from "react";
 import { Card } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 import GameCountdownOverlay from "../../shared/components/GameCountdownOverlay";
 import GameSessionHeader from "../../shared/components/GameSessionHeader";
@@ -45,49 +46,53 @@ const VocabularyPracticeScreen: React.FC<Props> = ({
     isAnswerLocked,
     onLeave,
     onSelect,
-}) => (
-    <Card className="border-0 shadow-sm h-100 d-flex flex-column vocab-practice-card position-relative">
-        <GameCountdownOverlay countdownState={countdownState} />
-        
-        <Card.Header className="bg-transparent border-0 pb-0">
-            <GameSessionHeader
-                currentQuestion={practiceIndex + 1}
-                totalQuestions={practiceQueueLength}
-                streak={currentStreak}
-                timeRemaining={timeRemaining}
-                modeLabel={`${selectedCategoryLabel} • Hari ${selectedDay}`}
-                onLeave={onLeave}
-            />
-        </Card.Header>
+}) => {
+    const { t } = useTranslation();
 
-        <Card.Body className="vocab-practice-body">
-            <GameTimerProgress 
-                timeRemaining={timeRemaining} 
-                timeLimit={timeLimit} 
-                className="mb-3"
-            />
+    return (
+        <Card className="border-0 shadow-sm h-100 d-flex flex-column vocab-practice-card position-relative">
+            <GameCountdownOverlay countdownState={countdownState} />
+            
+            <Card.Header className="bg-transparent border-0 pb-0">
+                <GameSessionHeader
+                    currentQuestion={practiceIndex + 1}
+                    totalQuestions={practiceQueueLength}
+                    streak={currentStreak}
+                    timeRemaining={timeRemaining}
+                    modeLabel={`${selectedCategoryLabel} • ${t("tenant.games.vocabulary.setup.day_value", { day: selectedDay })}`}
+                    onLeave={onLeave}
+                />
+            </Card.Header>
 
-            <div className="vocab-practice-prompt">
-                <div className="rounded-3 border p-4 text-center mb-3">
-                    <div className="text-muted small mb-2">Terjemahkan kata berikut:</div>
-                    <div className="display-6 fw-bold" dir={promptDirection} style={{ textAlign: promptDirection === "rtl" ? "right" : "center" }}>
-                        {promptText}
+            <Card.Body className="vocab-practice-body">
+                <GameTimerProgress 
+                    timeRemaining={timeRemaining} 
+                    timeLimit={timeLimit} 
+                    className="mb-3"
+                />
+
+                <div className="vocab-practice-prompt">
+                    <div className="rounded-3 border p-4 text-center mb-3">
+                        <div className="text-muted small mb-2">{t("tenant.games.vocabulary.session.translate_prompt")}</div>
+                        <div className="display-6 fw-bold" dir={promptDirection} style={{ textAlign: promptDirection === "rtl" ? "right" : "center" }}>
+                            {promptText}
+                        </div>
                     </div>
                 </div>
-            </div>
 
-            <QuizModal
-                question="Pilih jawaban yang benar"
-                options={practiceOptions}
-                selectedIndex={selectedOption}
-                correctIndex={correctOption}
-                disabled={isAnswerLocked || countdownState !== null}
-                onSelect={onSelect}
-                direction={answerDirection}
-                className="vocab-practice-options"
-            />
-        </Card.Body>
-    </Card>
-);
+                <QuizModal
+                    question={t("tenant.games.vocabulary.session.quiz_question")}
+                    options={practiceOptions}
+                    selectedIndex={selectedOption}
+                    correctIndex={correctOption}
+                    disabled={isAnswerLocked || countdownState !== null}
+                    onSelect={onSelect}
+                    direction={answerDirection}
+                    className="vocab-practice-options"
+                />
+            </Card.Body>
+        </Card>
+    );
+};
 
 export default VocabularyPracticeScreen;

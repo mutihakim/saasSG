@@ -1,5 +1,6 @@
 import React, { useMemo } from "react";
 import { Alert, Badge, Table } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 import GameSummaryCard from "../../shared/components/GameSummaryCard";
 import type { VocabularyAttemptResult } from "../types";
@@ -25,18 +26,20 @@ const VocabularySummaryCard: React.FC<Props> = ({
     onPlayAgain,
     onStartMemoryTest,
 }) => {
+    const { t } = useTranslation();
+
     const isAllMastered = useMemo(() => {
         return attempts.length > 0 && attempts.every((a) => a.isCorrect);
     }, [attempts]);
 
     const actions = [
-        { label: "Ubah Setup", variant: "light", onClick: onChangeSetup },
-        { label: isSavingSummary ? "Menyimpan..." : "Main Lagi", variant: "primary", disabled: isSavingSummary, onClick: onPlayAgain },
+        { label: t("tenant.games.vocabulary.summary.change_setup"), variant: "light", onClick: onChangeSetup },
+        { label: isSavingSummary ? t("tenant.games.vocabulary.summary.saving") : t("tenant.games.vocabulary.summary.play_again"), variant: "primary", disabled: isSavingSummary, onClick: onPlayAgain },
     ];
 
     if (isAllMastered && onStartMemoryTest) {
         actions.push({
-            label: "Coba Tes Ingatan",
+            label: t("tenant.games.vocabulary.summary.start_memory_test"),
             variant: "success",
             disabled: isSavingSummary,
             onClick: onStartMemoryTest,
@@ -45,11 +48,11 @@ const VocabularySummaryCard: React.FC<Props> = ({
 
     return (
         <GameSummaryCard
-            title="Rapor Latihan Vocabulary"
+            title={t("tenant.games.vocabulary.summary.title")}
             metrics={[
-                { value: `${scorePercent}%`, label: "Akurasi", cardClassName: "bg-primary-subtle", valueClassName: "text-primary" },
-                { value: correctCount, label: "Benar", cardClassName: "bg-success-subtle", valueClassName: "text-success" },
-                { value: bestStreak, label: "Best Streak", cardClassName: "bg-info-subtle", valueClassName: "text-info" },
+                { value: `${scorePercent}%`, label: t("tenant.games.vocabulary.summary.accuracy"), cardClassName: "bg-primary-subtle", valueClassName: "text-primary" },
+                { value: correctCount, label: t("tenant.games.vocabulary.summary.correct"), cardClassName: "bg-success-subtle", valueClassName: "text-success" },
+                { value: bestStreak, label: t("tenant.games.vocabulary.summary.best_streak"), cardClassName: "bg-info-subtle", valueClassName: "text-info" },
             ]}
             actions={actions}
         >
@@ -58,11 +61,11 @@ const VocabularySummaryCard: React.FC<Props> = ({
                     <div className="d-flex align-items-center gap-3">
                         <div className="display-6">🏆</div>
                         <div>
-                            <h5 className="fw-bold mb-1">Level Mastered!</h5>
+                            <h5 className="fw-bold mb-1">{t("tenant.games.math.memory_test.title")}</h5>
                             <p className="mb-0 small opacity-75">
-                                Semua soal di level ini sudah dikuasai. Ingin mencoba <strong>Tes Ingatan</strong>?
+                                {t("tenant.games.math.memory_test.prompt_prefix")} <strong>{t("tenant.games.math.memory_test.name")}</strong>?
                                 <br />
-                                Di Tes Ingatan, batas mastery diabaikan sehingga streak bisa terus tumbuh. Salah satu kali saja akan mereset streak ke 0.
+                                {t("tenant.games.math.memory_test.description")}
                             </p>
                         </div>
                     </div>
@@ -74,11 +77,11 @@ const VocabularySummaryCard: React.FC<Props> = ({
                     <thead className="table-light">
                         <tr>
                             <th>#</th>
-                            <th>Kata</th>
-                            <th>Jawaban Benar</th>
-                            <th>Jawabanmu</th>
-                            <th>Status</th>
-                            <th className="text-center">Streak</th>
+                            <th>{t("tenant.games.vocabulary.summary.table.word")}</th>
+                            <th>{t("tenant.games.vocabulary.summary.table.correct_answer")}</th>
+                            <th>{t("tenant.games.vocabulary.summary.table.your_answer")}</th>
+                            <th>{t("tenant.games.vocabulary.summary.table.status")}</th>
+                            <th className="text-center">{t("tenant.games.vocabulary.summary.table.streak")}</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -88,11 +91,13 @@ const VocabularySummaryCard: React.FC<Props> = ({
                                 <td>{attempt.prompt}</td>
                                 <td>{attempt.correctAnswer}</td>
                                 <td className={attempt.isTimedOut ? "text-danger italic" : ""}>
-                                    {attempt.isTimedOut ? "Waktu Habis" : (attempt.selectedAnswer || "-")}
+                                    {attempt.isTimedOut ? t("tenant.games.vocabulary.summary.status.time_out_text") : (attempt.selectedAnswer || "-")}
                                 </td>
                                 <td>
                                     <Badge bg={attempt.isCorrect ? "success" : (attempt.isTimedOut ? "danger" : "warning")}>
-                                        {attempt.isCorrect ? "Benar" : (attempt.isTimedOut ? "Timeout" : "Salah")}
+                                        {attempt.isCorrect 
+                                            ? t("tenant.games.math.summary.status.correct") 
+                                            : (attempt.isTimedOut ? t("tenant.games.vocabulary.summary.status.timeout") : t("tenant.games.math.summary.status.wrong"))}
                                     </Badge>
                                 </td>
                                 <td className="text-center">{attempt.streakAfter}</td>

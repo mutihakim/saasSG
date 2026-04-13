@@ -53,7 +53,7 @@ const GameFeedbackPopup: React.FC<GameFeedbackPopupProps> = ({
                         <i className={icon}></i>
                     </div>
                     <h2 className={`fw-bold mb-2 text-${textColor}`}>
-                        {isTimedOut ? "Waktu Habis!" : message}
+                        {isTimedOut ? t("tenant.games.shared.feedback.timeout") : message}
                     </h2>
                     {isTimedOut && <p className="lead mb-0 opacity-75">{message}</p>}
                     {!isCorrect && correctAnswer !== undefined && correctAnswer !== null && (

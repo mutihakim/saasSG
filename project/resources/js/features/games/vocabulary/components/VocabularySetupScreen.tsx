@@ -1,5 +1,6 @@
 import React from "react";
 import { Button, Card, Form } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 import type { VocabularyCategoryOption, VocabularyLanguage, VocabularyMode } from "../types";
 
@@ -47,79 +48,93 @@ const VocabularySetupScreen: React.FC<Props> = ({
     onDayChange,
     onAutoTtsChange,
     onStart,
-}) => (
-    <Card className="border-0 shadow-sm">
-        <Card.Header className="bg-transparent border-0 pb-0">
-            <h5 className="mb-0 fw-bold">Setup Vocabulary</h5>
-        </Card.Header>
-        <Card.Body className="d-flex flex-column gap-3 vocab-setup-body">
-            <div className="row g-3">
-                <div className="col-md-4">
-                    <Form.Label>Bahasa</Form.Label>
-                    <Form.Select value={language} onChange={(e) => onLanguageChange(e.target.value as VocabularyLanguage)}>
-                        <option value="english">Inggris</option>
-                        <option value="arabic">Arab</option>
-                    </Form.Select>
+}) => {
+    const { t } = useTranslation();
+
+    const directionLabel = translationDirection === "id_to_target" 
+        ? t("tenant.games.vocabulary.setup.direction_id_to_target") 
+        : t("tenant.games.vocabulary.setup.direction_target_to_id");
+
+    return (
+        <Card className="border-0 shadow-sm">
+            <Card.Header className="bg-transparent border-0 pb-0">
+                <h5 className="mb-0 fw-bold">{t("tenant.games.vocabulary.setup.title")}</h5>
+            </Card.Header>
+            <Card.Body className="d-flex flex-column gap-3 vocab-setup-body">
+                <div className="row g-3">
+                    <div className="col-md-4">
+                        <Form.Label>{t("tenant.games.vocabulary.setup.language")}</Form.Label>
+                        <Form.Select value={language} onChange={(e) => onLanguageChange(e.target.value as VocabularyLanguage)}>
+                            <option value="english">{t("tenant.games.vocabulary.setup.language_en")}</option>
+                            <option value="arabic">{t("tenant.games.vocabulary.setup.language_ar")}</option>
+                        </Form.Select>
+                    </div>
+                    <div className="col-md-4">
+                        <Form.Label>{t("tenant.games.vocabulary.setup.day")}</Form.Label>
+                        <Form.Select
+                            value={hasDaysInSelectedCategory ? String(selectedDay) : ""}
+                            onChange={(e) => onDayChange(Number(e.target.value))}
+                            disabled={!selectedCategory || !hasDaysInSelectedCategory}
+                        >
+                            {!selectedCategory && <option value="">{t("tenant.games.vocabulary.setup.pick_category_first")}</option>}
+                            {selectedCategory && !hasDaysInSelectedCategory && <option value="">{t("tenant.games.vocabulary.setup.no_days")}</option>}
+                            {daysForCategory.map((day) => (
+                                <option key={day} value={day}>
+                                    {t("tenant.games.vocabulary.setup.day_value", { day })}
+                                </option>
+                            ))}
+                        </Form.Select>
+                    </div>
+                    <div className="col-md-4">
+                        <Form.Label>{t("tenant.games.vocabulary.setup.mode")}</Form.Label>
+                        <Form.Select value={mode} onChange={(e) => onModeChange(e.target.value as VocabularyMode)}>
+                            <option value="learn">{t("tenant.games.vocabulary.setup.mode_learn")}</option>
+                            <option value="practice">{t("tenant.games.vocabulary.setup.mode_practice")}</option>
+                            {mode === "memory_test" && <option value="memory_test">{t("tenant.games.vocabulary.setup.mode_memory_test")}</option>}
+                        </Form.Select>
+                    </div>
                 </div>
-                <div className="col-md-4">
-                    <Form.Label>Hari</Form.Label>
-                    <Form.Select
-                        value={hasDaysInSelectedCategory ? String(selectedDay) : ""}
-                        onChange={(e) => onDayChange(Number(e.target.value))}
-                        disabled={!selectedCategory || !hasDaysInSelectedCategory}
+
+                <CategorySelector
+                    categories={categoryOptions}
+                    selected={selectedCategory || null}
+                    onSelect={onCategorySelect}
+                />
+
+                {!hasCategories && (
+                    <div className="alert alert-warning py-2 mb-0">
+                        {t("tenant.games.vocabulary.setup.no_data_alert")}
+                    </div>
+                )}
+
+                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
+                    <div className="d-flex flex-wrap gap-3">
+                        <Form.Check
+                            id="vocab-auto-tts"
+                            label={t("tenant.games.vocabulary.setup.auto_tts")}
+                            checked={autoTts}
+                            onChange={(e) => onAutoTtsChange(e.target.checked)}
+                        />
+                        <small className="text-muted align-self-center">
+                            {t("tenant.games.vocabulary.setup.timer_label", { seconds: timeLimit })} • {t("tenant.games.vocabulary.setup.direction_label", { direction: directionLabel })}
+                        </small>
+                    </div>
+                    <Button
+                        onClick={onStart}
+                        disabled={isStartingSession || !selectedCategory || !hasDaysInSelectedCategory}
                     >
-                        {!selectedCategory && <option value="">Pilih kategori terlebih dahulu</option>}
-                        {selectedCategory && !hasDaysInSelectedCategory && <option value="">Belum ada data hari di kategori ini</option>}
-                        {daysForCategory.map((day) => (
-                            <option key={day} value={day}>
-                                Hari {day}
-                            </option>
-                        ))}
-                    </Form.Select>
+                        {isStartingSession 
+                            ? t("tenant.games.vocabulary.setup.starting") 
+                            : mode === "learn" 
+                                ? t("tenant.games.vocabulary.setup.start_learn") 
+                                : mode === "memory_test" 
+                                    ? t("tenant.games.vocabulary.setup.start_memory_test") 
+                                    : t("tenant.games.vocabulary.setup.start_practice")}
+                    </Button>
                 </div>
-                <div className="col-md-4">
-                    <Form.Label>Mode</Form.Label>
-                    <Form.Select value={mode} onChange={(e) => onModeChange(e.target.value as VocabularyMode)}>
-                        <option value="learn">Learn (Flashcard)</option>
-                        <option value="practice">Practice (Kuis)</option>
-                        {mode === "memory_test" && <option value="memory_test">Tes Ingatan</option>}
-                    </Form.Select>
-                </div>
-            </div>
-
-            <CategorySelector
-                categories={categoryOptions}
-                selected={selectedCategory || null}
-                onSelect={onCategorySelect}
-            />
-
-            {!hasCategories && (
-                <div className="alert alert-warning py-2 mb-0">
-                    Data kosakata belum tersedia. Jalankan import data sebelum memulai sesi.
-                </div>
-            )}
-
-            <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                <div className="d-flex flex-wrap gap-3">
-                    <Form.Check
-                        id="vocab-auto-tts"
-                        label="Baca opsi saat dipilih"
-                        checked={autoTts}
-                        onChange={(e) => onAutoTtsChange(e.target.checked)}
-                    />
-                    <small className="text-muted align-self-center">
-                        Timer: {timeLimit}s • Arah: {translationDirection === "id_to_target" ? "Indonesia -> Bahasa Pilihan" : "Bahasa Pilihan -> Indonesia"}
-                    </small>
-                </div>
-                <Button
-                    onClick={onStart}
-                    disabled={isStartingSession || !selectedCategory || !hasDaysInSelectedCategory}
-                >
-                    {isStartingSession ? "Memulai..." : mode === "learn" ? "Mulai Learn" : mode === "memory_test" ? "Mulai Tes Ingatan" : "Mulai Practice"}
-                </Button>
-            </div>
-        </Card.Body>
-    </Card>
-);
+            </Card.Body>
+        </Card>
+    );
+};
 
 export default VocabularySetupScreen;

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import type { GamesPageProps } from "../../shared/types";
 
@@ -9,20 +10,21 @@ const GamesIndex: React.FC<GamesPageProps> = ({
     financeRoute: _financeRoute,
     demo: _demo,
 }) => {
+    const { t } = useTranslation();
+
     return (
         <div className="container-fluid">
             <div className="row">
                 <div className="col-12">
                     <div className="page-title-box d-flex align-items-center justify-content-between">
-                        <h4 className="mb-0">Games Hub</h4>
+                        <h4 className="mb-0">{t("tenant.games.hub.title")}</h4>
                     </div>
                 </div>
             </div>
             <div className="row">
                 <div className="col-12">
                     <p className="text-muted">
-                        Game modules available: {games.length} | Recent sessions:{" "}
-                        {recentSessions.length}
+                        {t("tenant.games.hub.summary", { modules: games.length, sessions: recentSessions.length })}
                     </p>
                     {/* TODO: Render game cards and session history */}
                 </div>

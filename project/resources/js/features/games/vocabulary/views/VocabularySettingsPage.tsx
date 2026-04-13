@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Button, Card, Form, Spinner } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 import VocabularyLayout from "../components/VocabularyLayout";
 import { createVocabularyApi, type VocabularyLanguage, type VocabularyMode, type VocabularySetting, type VocabularyTranslationDirection } from "../data/api/vocabularyApi";
@@ -15,6 +16,7 @@ type PageProps = {
 };
 
 const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
+    const { t } = useTranslation();
     const tenantRoute = useTenantRoute();
     const api = useMemo(() => createVocabularyApi(tenantRoute), [tenantRoute]);
 
@@ -73,7 +75,7 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
                 setAutoTts(initial.auto_tts);
                 setTranslationDirection(initial.translation_direction);
             } catch {
-                notify.error("Gagal memuat pengaturan vocabulary.");
+                notify.error(t("tenant.games.vocabulary.settings.load_error"));
             } finally {
                 if (!cancelled) {
                     setIsLoading(false);
@@ -84,7 +86,7 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
         return () => {
             cancelled = true;
         };
-    }, [api]);
+    }, [api, t]);
 
     useEffect(() => {
         const current = settingsMap[selectedLanguage];
@@ -119,9 +121,9 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
         try {
             await api.updateSettings(payload);
             setSettingsMap((prev) => ({ ...prev, [selectedLanguage]: payload }));
-            notify.success("Pengaturan vocabulary berhasil disimpan.");
+            notify.success(t("tenant.games.vocabulary.settings.save_success"));
         } catch {
-            notify.error("Gagal menyimpan pengaturan vocabulary.");
+            notify.error(t("tenant.games.vocabulary.error.save_summary_failed"));
         } finally {
             setIsSaving(false);
         }
@@ -129,7 +131,7 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
 
     return (
         <VocabularyLayout
-            title="Pengaturan Vocabulary"
+            title={t("tenant.games.vocabulary.settings.title")}
             menuKey="settings"
             memberName={member?.full_name ?? member?.name ?? undefined}
             allowPageScroll
@@ -145,16 +147,16 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
                             <Card className="border-0 shadow-sm">
                                 <Card.Body>
                                     <div className="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-4">
-                                        <h5 className="fw-semibold mb-0">Pengaturan Default Vocabulary</h5>
+                                        <h5 className="fw-semibold mb-0">{t("tenant.games.vocabulary.settings.header")}</h5>
                                         <div className="d-flex gap-2">
-                                            <Button variant={selectedLanguage === "english" ? "primary" : "outline-primary"} size="sm" onClick={() => setSelectedLanguage("english")}>Inggris</Button>
-                                            <Button variant={selectedLanguage === "arabic" ? "primary" : "outline-primary"} size="sm" onClick={() => setSelectedLanguage("arabic")}>Arab</Button>
+                                            <Button variant={selectedLanguage === "english" ? "primary" : "outline-primary"} size="sm" onClick={() => setSelectedLanguage("english")}>{t("tenant.games.vocabulary.setup.language_en")}</Button>
+                                            <Button variant={selectedLanguage === "arabic" ? "primary" : "outline-primary"} size="sm" onClick={() => setSelectedLanguage("arabic")}>{t("tenant.games.vocabulary.setup.language_ar")}</Button>
                                         </div>
                                     </div>
 
                                     <Form>
                                         <Form.Group className="mb-4">
-                                            <Form.Label className="fw-semibold mb-2">Mode Default</Form.Label>
+                                            <Form.Label className="fw-semibold mb-2">{t("tenant.games.vocabulary.settings.mode_label")}</Form.Label>
                                             <div className="d-flex gap-3">
                                                 <Form.Check type="radio" id="vocab-mode-learn" name="vocab-mode" label="Learn" checked={defaultMode === "learn"} onChange={() => setDefaultMode("learn")} />
                                                 <Form.Check type="radio" id="vocab-mode-practice" name="vocab-mode" label="Practice" checked={defaultMode === "practice"} onChange={() => setDefaultMode("practice")} />
@@ -162,8 +164,8 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
                                         </Form.Group>
 
                                         <Form.Group className="mb-4">
-                                            <Form.Label className="fw-semibold mb-2">Batas Mastered</Form.Label>
-                                            <Form.Text className="text-muted d-block mb-2">Jumlah streak benar berturut-turut agar kata ditandai dikuasai.</Form.Text>
+                                            <Form.Label className="fw-semibold mb-2">{t("tenant.games.vocabulary.settings.mastered_threshold_label")}</Form.Label>
+                                            <Form.Text className="text-muted d-block mb-2">{t("tenant.games.vocabulary.settings.mastered_threshold_help")}</Form.Text>
                                             <div className="d-flex flex-wrap gap-2">
                                                 {[2, 3, 5, 8, 10, 12, 15].map((value) => (
                                                     <Button key={value} variant={masteredThreshold === value ? "primary" : "outline-primary"} size="sm" onClick={() => setMasteredThreshold(value)}>
@@ -174,25 +176,25 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
                                         </Form.Group>
 
                                         <Form.Group className="mb-4">
-                                            <Form.Label className="fw-semibold mb-2">Timer Default per Soal</Form.Label>
-                                            <Form.Text className="text-muted d-block mb-2">Batas waktu menjawab saat Practice Mode.</Form.Text>
+                                            <Form.Label className="fw-semibold mb-2">{t("tenant.games.vocabulary.settings.time_limit_label")}</Form.Label>
+                                            <Form.Text className="text-muted d-block mb-2">{t("tenant.games.vocabulary.settings.time_limit_help")}</Form.Text>
                                             <div className="d-flex flex-wrap gap-2">
                                                 {[3, 5, 8, 10, 15, 20].map((value) => (
                                                     <Button key={value} variant={defaultTimeLimit === value ? "primary" : "outline-primary"} size="sm" onClick={() => setDefaultTimeLimit(value)}>
-                                                        {value} dtk
+                                                        {t("tenant.games.vocabulary.settings.time_limit_value", { seconds: value })}
                                                     </Button>
                                                 ))}
                                             </div>
                                         </Form.Group>
 
                                         <Form.Group className="mb-4">
-                                            <Form.Label className="fw-semibold mb-2">Arah Terjemahan</Form.Label>
+                                            <Form.Label className="fw-semibold mb-2">{t("tenant.games.vocabulary.settings.translation_direction_label")}</Form.Label>
                                             <div className="d-flex flex-column gap-2">
                                                 <Form.Check
                                                     type="radio"
                                                     id="vocab-direction-id-to-target"
                                                     name="vocab-direction"
-                                                    label="Indonesia -> Bahasa pilihan"
+                                                    label={t("tenant.games.vocabulary.settings.translation_direction_id_to_target")}
                                                     checked={translationDirection === "id_to_target"}
                                                     onChange={() => setTranslationDirection("id_to_target")}
                                                 />
@@ -200,7 +202,7 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
                                                     type="radio"
                                                     id="vocab-direction-target-to-id"
                                                     name="vocab-direction"
-                                                    label="Bahasa pilihan -> Indonesia"
+                                                    label={t("tenant.games.vocabulary.settings.translation_direction_target_to_id")}
                                                     checked={translationDirection === "target_to_id"}
                                                     onChange={() => setTranslationDirection("target_to_id")}
                                                 />
@@ -210,7 +212,7 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
                                         <Form.Group className="mb-4">
                                             <Form.Check
                                                 id="vocab-settings-auto-tts"
-                                                label="Aktifkan auto TTS saat latihan"
+                                                label={t("tenant.games.vocabulary.settings.auto_tts_label")}
                                                 checked={autoTts}
                                                 onChange={(e) => setAutoTts(e.target.checked)}
                                             />
@@ -218,7 +220,7 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
 
                                         <div className="d-flex justify-content-end">
                                             <Button onClick={() => void handleSave()} disabled={isSaving}>
-                                                {isSaving ? "Menyimpan..." : "Simpan Pengaturan"}
+                                                {isSaving ? t("tenant.games.vocabulary.settings.saving_button") : t("tenant.games.vocabulary.settings.save_button")}
                                             </Button>
                                         </div>
                                     </Form>

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 type Props = {
     word: {
@@ -26,6 +27,7 @@ const FlashCard: React.FC<Props> = ({
     onFlip,
     isFlipped,
 }) => {
+    const { t } = useTranslation();
     const targetText = language === "english" ? word.bahasaInggris : word.bahasaArab;
     const phonetic = language === "english" ? word.phonetic : word.phoneticArabic;
     const frontText = translationDirection === "target_to_id" ? targetText : word.bahasaIndonesia;
@@ -52,7 +54,7 @@ const FlashCard: React.FC<Props> = ({
                 {isMastered && (
                     <span className="badge bg-success-subtle text-success mb-2">
                         <i className="ri-check-double-line me-1"></i>
-                        Mastered
+                        {t("tenant.games.vocabulary.session.mastered_badge")}
                     </span>
                 )}
                 <h3 className="fw-bold mb-2" dir={textDirection}>{displayText}</h3>
@@ -60,7 +62,7 @@ const FlashCard: React.FC<Props> = ({
                     <p className="text-muted small mb-1">{phonetic}</p>
                 )}
                 {!isFlipped && (
-                    <p className="text-muted small">Tap untuk melihat terjemahan</p>
+                    <p className="text-muted small">{t("tenant.games.vocabulary.session.tap_to_flip")}</p>
                 )}
                 <button
                     type="button"
@@ -71,7 +73,7 @@ const FlashCard: React.FC<Props> = ({
                     }}
                 >
                     <i className="ri-volume-up-line me-1"></i>
-                    Dengarkan
+                    {t("tenant.games.vocabulary.session.listen")}
                 </button>
             </div>
         </div>

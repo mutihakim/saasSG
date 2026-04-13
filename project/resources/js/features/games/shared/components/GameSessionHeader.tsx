@@ -1,5 +1,6 @@
 import React from "react";
 import { Badge, Button } from "react-bootstrap";
+import { useTranslation } from "react-i18next";
 
 type GameSessionHeaderProps = {
     currentQuestion: number;
@@ -18,13 +19,15 @@ const GameSessionHeader: React.FC<GameSessionHeaderProps> = ({
     timeRemaining,
     modeLabel,
     onLeave,
-    leaveButtonLabel = "Keluar Sesi",
+    leaveButtonLabel,
 }) => {
+    const { t } = useTranslation();
+
     return (
         <div className="game-session-header d-flex justify-content-between align-items-center flex-wrap gap-2 mb-2">
             <div className="d-flex align-items-center gap-2">
                 <Badge bg="soft-primary" text="primary">
-                    Soal {currentQuestion}/{totalQuestions}
+                    {t("tenant.games.shared.session.question_counter", { current: currentQuestion, total: totalQuestions })}
                 </Badge>
                 
                 {modeLabel && (
@@ -35,7 +38,7 @@ const GameSessionHeader: React.FC<GameSessionHeaderProps> = ({
 
                 <Badge bg="soft-success" text="success">
                     <i className="ri-fire-line me-1" />
-                    Streak: {streak}
+                    {t("tenant.games.shared.session.streak", { count: streak })}
                 </Badge>
 
                 <Badge bg={timeRemaining <= 3 ? "danger" : "warning"}>
@@ -45,7 +48,7 @@ const GameSessionHeader: React.FC<GameSessionHeaderProps> = ({
 
             {onLeave && (
                 <Button variant="outline-secondary" size="sm" onClick={onLeave}>
-                    {leaveButtonLabel}
+                    {leaveButtonLabel ?? t("tenant.games.shared.session.leave_button")}
                 </Button>
             )}
         </div>

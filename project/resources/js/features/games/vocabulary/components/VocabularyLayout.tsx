@@ -40,6 +40,7 @@ const VocabularyLayout: React.FC<VocabularyLayoutProps> = ({
             isSessionActive={isSessionActive}
             allowPageScroll={allowPageScroll}
             onLeavingSession={onLeavingSession}
+            featureClass="vocab-theme"
         >
             {children}
         </GameFeatureLayout>

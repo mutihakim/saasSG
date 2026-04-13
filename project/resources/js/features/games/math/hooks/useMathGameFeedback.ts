@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import useGameFeedbackMessages from "../../shared/hooks/useGameFeedbackMessages";
 import type { MathAttemptEntry, MathFeedbackState, MathGameSetupState } from "../types";
@@ -8,11 +9,12 @@ const initialFeedbackState: MathFeedbackState = { show: false, isCorrect: false,
 type Props = {
     attempts: MathAttemptEntry[];
     setup: MathGameSetupState | null;
-    speak: (message: string) => void;
+    speak: (message: string, lang?: string) => void;
     voiceEnabled: boolean;
 };
 
 export const useMathGameFeedback = ({ attempts, setup, speak, voiceEnabled }: Props) => {
+    const { i18n } = useTranslation();
     const [feedbackState, setFeedbackState] = useState<MathFeedbackState>(initialFeedbackState);
     const lastSpokenAttemptIndexRef = useRef<number>(-1);
     const { getNextFeedbackMessage } = useGameFeedbackMessages();
@@ -42,7 +44,11 @@ export const useMathGameFeedback = ({ attempts, setup, speak, voiceEnabled }: Pr
         const message = getNextFeedbackMessage(latestAttempt.isCorrect);
 
         if (voiceEnabled) {
-            speak(message);
+            const langMap: Record<string, string> = {
+                en: "en-US",
+                id: "id-ID",
+            };
+            speak(message, langMap[i18n.language] || i18n.language);
         }
 
         const timer = window.setTimeout(() => {
@@ -55,7 +61,7 @@ export const useMathGameFeedback = ({ attempts, setup, speak, voiceEnabled }: Pr
         }, 0);
 
         return () => window.clearTimeout(timer);
-    }, [attempts, getNextFeedbackMessage, setup, speak, voiceEnabled]);
+    }, [attempts, getNextFeedbackMessage, i18n.language, setup, speak, voiceEnabled]);
 
     return {
         feedbackState,

@@ -1,4 +1,5 @@
 import React from "react";
+import { useTranslation } from "react-i18next";
 
 import GameFeedbackPopup from "../../shared/components/GameFeedbackPopup";
 import VocabularyLayout from "../components/VocabularyLayout";
@@ -16,11 +17,12 @@ type PageProps = {
 };
 
 const VocabularyPage: React.FC<PageProps> = ({ member }) => {
+    const { t } = useTranslation();
     const game = useVocabularyGameController();
 
     return (
         <VocabularyLayout
-            title="Belajar Kosakata"
+            title={t("tenant.games.vocabulary.title")}
             menuKey="main"
             memberName={member?.full_name ?? member?.name ?? undefined}
             isSessionActive={game.isSessionActive}
@@ -34,7 +36,7 @@ const VocabularyPage: React.FC<PageProps> = ({ member }) => {
                         isTimedOut={game.feedbackState.isTimedOut}
                         message={game.feedbackState.message}
                         correctAnswer={game.feedbackState.correctAnswer}
-                        correctAnswerLabel="Jawaban benar: "
+                        correctAnswerLabel={t("tenant.games.vocabulary.session.correct_answer_label")}
                         onDone={game.handleFeedbackDone}
                         duration={1200}
                     />
@@ -52,7 +54,7 @@ const VocabularyPage: React.FC<PageProps> = ({ member }) => {
                         <div className="card border-0 shadow-sm">
                             <div className="card-body d-flex align-items-center gap-2 py-4">
                                 <div className="spinner-border spinner-border-sm" role="status" />
-                                <span>Memuat konfigurasi vocabulary...</span>
+                                <span>{t("tenant.games.vocabulary.loading")}</span>
                             </div>
                         </div>
                     )}
@@ -141,6 +143,9 @@ const VocabularyPage: React.FC<PageProps> = ({ member }) => {
                             onChangeSetup={game.leaveToSetup}
                             onPlayAgain={() => {
                                 void game.startPracticeMode();
+                            }}
+                            onStartMemoryTest={() => {
+                                void game.startPracticeMode(true);
                             }}
                         />
                     )}

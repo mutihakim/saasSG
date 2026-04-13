@@ -9,5 +9,5 @@ export {
 } from "./math";
 export { StoryPage, useStory } from "./story";
 export { TahfizPage, useTahfiz } from "./tahfiz";
-export { VocabularyPage, useVocabulary } from "./vocabulary";
+export { VocabularyPage } from "./vocabulary";
 export * from "./shared";

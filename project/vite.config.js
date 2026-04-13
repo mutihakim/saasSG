@@ -31,11 +31,6 @@ export default defineConfig({
         rollupOptions: {
             output: {
                 manualChunks(id) {
-                    // ApexCharts (heavy, jarang berubah)
-                    if (id.includes('apexcharts') || id.includes('react-apexcharts')) {
-                        return 'charts-vendor';
-                    }
-
                     // i18n locale files
                     if (id.includes('resources/js/locales/en/')) {
                         return 'i18n-en';
