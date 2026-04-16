@@ -61,7 +61,7 @@ class ImportVocabularyWordsCommand extends Command
                     continue;
                 }
 
-                [$bahasaIndonesia, $bahasaInggris, $fonetik, $bahasaArab, $fonetikArab, $kategori, $hari] = $normalized;
+                [$bahasaIndonesia, $bahasaInggris, $fonetik, $bahasaArab, $fonetikArab, $bahasaMandarin, $fonetikMandarin, $kategori, $hari] = $normalized;
 
                 $query = DB::table('tenant_game_vocabulary_words')
                     ->where('bahasa_indonesia', $bahasaIndonesia)
@@ -84,6 +84,8 @@ class ImportVocabularyWordsCommand extends Command
                             'fonetik' => $fonetik,
                             'bahasa_arab' => $bahasaArab,
                             'fonetik_arab' => $fonetikArab,
+                            'bahasa_mandarin' => $bahasaMandarin,
+                            'fonetik_mandarin' => $fonetikMandarin,
                             'updated_at' => $now,
                         ]);
                     $updated++;
@@ -95,6 +97,8 @@ class ImportVocabularyWordsCommand extends Command
                         'fonetik' => $fonetik,
                         'bahasa_arab' => $bahasaArab,
                         'fonetik_arab' => $fonetikArab,
+                        'bahasa_mandarin' => $bahasaMandarin,
+                        'fonetik_mandarin' => $fonetikMandarin,
                         'kategori' => $kategori,
                         'hari' => $hari,
                         'created_at' => $now,
@@ -189,8 +193,10 @@ class ImportVocabularyWordsCommand extends Command
         $fonetik = $this->nullableString($row['fonetik'] ?? null);
         $bahasaArab = $this->nullableString($row['bahasa_arab'] ?? null);
         $fonetikArab = $this->nullableString($row['fonetik_arab'] ?? null);
+        $bahasaMandarin = $this->nullableString($row['bahasa_mandarin'] ?? null);
+        $fonetikMandarin = $this->nullableString($row['fonetik_mandarin'] ?? null);
 
-        return [$bahasaIndonesia, $bahasaInggris, $fonetik, $bahasaArab, $fonetikArab, $kategori, $hari];
+        return [$bahasaIndonesia, $bahasaInggris, $fonetik, $bahasaArab, $fonetikArab, $bahasaMandarin, $fonetikMandarin, $kategori, $hari];
     }
 
     private function nullableString(mixed $value): ?string

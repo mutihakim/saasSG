@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Master\TenantUom;
 use App\Models\Tenant\Tenant;
 use App\Services\ActivityLogService;
+use App\Support\MasterDataPagination;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -24,27 +25,93 @@ class MasterUomApiController extends Controller
     {
         $this->authorize('viewAny', TenantUom::class);
 
-        $query = TenantUom::forTenant($tenant->id)
-            ->active()
-            ->ordered();
+        $resolved = MasterDataPagination::resolve($request);
+        $code = trim($request->string('code')->toString());
+        $name = trim($request->string('name')->toString());
+        $abbreviation = trim($request->string('abbreviation')->toString());
+        $codeTerms = MasterDataPagination::searchTerms($code);
+        $nameTerms = MasterDataPagination::searchTerms($name);
+        $abbreviationTerms = MasterDataPagination::searchTerms($abbreviation);
+        $dimensionTypes = MasterDataPagination::stringList($request, 'dimension_type');
+        $statusFilters = MasterDataPagination::stringList($request, 'status');
+        $baseFactorExpression = trim((string) $request->input('base_factor', ''));
+        $baseFactorMin = $request->input('base_factor_min');
+        $baseFactorMax = $request->input('base_factor_max');
+        $baseFactorRange = $baseFactorExpression !== ''
+            ? MasterDataPagination::parseNumberExpression($baseFactorExpression)
+            : [
+                'min' => is_numeric($baseFactorMin) ? (float) $baseFactorMin : null,
+                'max' => is_numeric($baseFactorMax) ? (float) $baseFactorMax : null,
+            ];
+        $allowedSorts = ['code', 'name', 'abbreviation', 'dimension_type', 'base_factor', 'is_active', 'sort_order'];
+        $sortBy = $request->string('sort_by')->toString();
+        $sortDirection = strtolower($request->string('sort_direction')->toString()) === 'desc' ? 'desc' : 'asc';
+        $sortColumn = in_array($sortBy, $allowedSorts, true) ? $sortBy : 'sort_order';
+        $query = TenantUom::forTenant($tenant->id);
 
-        if ($request->filled('search')) {
-            $query->where(function ($q) use ($request) {
-                $q->where('code', 'like', "%{$request->search}%")
-                    ->orWhere('name', 'like', "%{$request->search}%")
-                    ->orWhere('abbreviation', 'like', "%{$request->search}%");
-            });
+        if ($codeTerms !== []) {
+            MasterDataPagination::applyTokenizedContains($query, 'code', $codeTerms);
         }
 
-        if ($request->filled('dimension_type')) {
-            $query->where('dimension_type', $request->dimension_type);
+        if ($nameTerms !== []) {
+            MasterDataPagination::applyTokenizedContains($query, 'name', $nameTerms);
         }
 
-        $units = $query->get();
+        if ($abbreviationTerms !== []) {
+            MasterDataPagination::applyTokenizedContains($query, 'abbreviation', $abbreviationTerms);
+        }
+
+        if ($dimensionTypes !== []) {
+            $query->whereIn('dimension_type', $dimensionTypes);
+        }
+
+        if ($statusFilters !== []) {
+            $statusValues = collect($statusFilters)
+                ->map(static fn (string $item) => match ($item) {
+                    'active' => true,
+                    'inactive' => false,
+                    default => null,
+                })
+                ->filter(static fn ($item) => $item !== null)
+                ->values()
+                ->all();
+
+            if ($statusValues !== []) {
+                $query->whereIn('is_active', $statusValues);
+            }
+        }
+
+        if ($baseFactorRange['min'] !== null) {
+            $query->where('base_factor', '>=', $baseFactorRange['min']);
+        }
+
+        if ($baseFactorRange['max'] !== null) {
+            $query->where('base_factor', '<=', $baseFactorRange['max']);
+        }
+
+        if ($sortColumn === 'sort_order') {
+            $query->orderBy('sort_order', $sortDirection)->orderBy('code', 'asc');
+        } else {
+            $query->orderBy($sortColumn, $sortDirection)->orderBy('sort_order', 'asc');
+        }
+
+        $units = $query->paginate(
+            $resolved['per_page'],
+            ['id', 'code', 'name', 'abbreviation', 'dimension_type', 'base_unit_code', 'base_factor', 'is_active', 'sort_order', 'row_version'],
+            'page',
+            $resolved['page']
+        );
 
         return response()->json([
             'ok' => true,
-            'data' => $units,
+            'data' => [
+                'units' => $units->items(),
+                'pagination' => MasterDataPagination::meta($units, $resolved),
+                'sort' => [
+                    'by' => $sortColumn,
+                    'direction' => $sortDirection,
+                ],
+            ],
         ]);
     }
 
@@ -68,6 +135,10 @@ class MasterUomApiController extends Controller
                     'message' => "Batas {$limit} satuan tercapai. Upgrade plan untuk menambah satuan.",
                 ], 422);
             }
+        }
+
+        if ($request->has('code')) {
+            $request->merge(['code' => strtoupper((string) $request->input('code'))]);
         }
 
         $validated = $request->validate([
@@ -99,14 +170,17 @@ class MasterUomApiController extends Controller
             ], 422);
         }
 
+        // Standardize base_factor: if no base unit, factor must be 1
+        $baseFactor = empty($validated['base_unit_code']) ? 1 : $validated['base_factor'];
+
         $unit = TenantUom::create([
             'tenant_id' => $tenant->id,
-            'code' => strtoupper($validated['code']),
+            'code' => $validated['code'],
             'name' => $validated['name'],
             'abbreviation' => $validated['abbreviation'],
             'dimension_type' => $validated['dimension_type'],
             'base_unit_code' => $validated['base_unit_code'] ?? null,
-            'base_factor' => $validated['base_factor'],
+            'base_factor' => $baseFactor,
             'is_active' => $validated['is_active'] ?? true,
             'sort_order' => $validated['sort_order'] ?? 0,
             'row_version' => 1,
@@ -133,6 +207,10 @@ class MasterUomApiController extends Controller
     {
         $this->authorize('update', $uom);
         abort_if((int) $uom->tenant_id !== (int) $tenant->id, 404);
+
+        if ($request->has('code')) {
+            $request->merge(['code' => strtoupper((string) $request->input('code'))]);
+        }
 
         $validated = $request->validate([
             'code' => [
@@ -176,13 +254,16 @@ class MasterUomApiController extends Controller
         $before = $this->activityLogs->snapshot($uom);
         $beforeVersion = (int) $uom->row_version;
 
+        $baseUnitCode = array_key_exists('base_unit_code', $validated) ? $validated['base_unit_code'] : $uom->base_unit_code;
+        $baseFactor = empty($baseUnitCode) ? 1 : ($validated['base_factor'] ?? $uom->base_factor);
+
         $uom->update([
             'code' => isset($validated['code']) ? strtoupper($validated['code']) : $uom->code,
             'name' => $validated['name'] ?? $uom->name,
             'abbreviation' => $validated['abbreviation'] ?? $uom->abbreviation,
             'dimension_type' => $validated['dimension_type'] ?? $uom->dimension_type,
-            'base_unit_code' => array_key_exists('base_unit_code', $validated) ? $validated['base_unit_code'] : $uom->base_unit_code,
-            'base_factor' => $validated['base_factor'] ?? $uom->base_factor,
+            'base_unit_code' => $baseUnitCode,
+            'base_factor' => $baseFactor,
             'is_active' => $validated['is_active'] ?? $uom->is_active,
             'sort_order' => $validated['sort_order'] ?? $uom->sort_order,
             'row_version' => $uom->row_version + 1,
@@ -218,7 +299,6 @@ class MasterUomApiController extends Controller
             return response()->json([
                 'ok' => false,
                 'error_code' => 'UOM_IN_USE',
-                'message' => 'Satuan ukur tidak dapat dihapus karena digunakan sebagai pengali dasar (base unit) oleh satuan lain.',
             ], 422);
         }
         
@@ -242,6 +322,74 @@ class MasterUomApiController extends Controller
         return response()->json([
             'ok' => true,
             'message' => 'Unit of measure deleted successfully.',
+        ]);
+    }
+
+    // DELETE /master/uom (bulk)
+    public function bulkDestroy(Request $request, Tenant $tenant): JsonResponse
+    {
+        $this->authorize('delete', TenantUom::class);
+        $ids = $request->validate(['ids' => 'required|array|min:1'])['ids'];
+
+        $units = TenantUom::forTenant($tenant->id)
+            ->whereIn('id', $ids)
+            ->get();
+
+        $results = [];
+        $summary = [
+            'total'   => count($ids),
+            'deleted' => 0,
+            'failed'  => 0,
+        ];
+
+        foreach ($units as $unit) {
+            // Check if used as base unit
+            $isUsedAsBase = TenantUom::where('tenant_id', $tenant->id)
+                ->where('base_unit_code', $unit->code)
+                ->exists();
+
+            if ($isUsedAsBase) {
+                $results[] = [
+                    'id' => $unit->id,
+                    'name' => $unit->name,
+                    'ok' => false,
+                    'code' => 'UOM_IN_USE',
+                ];
+                $summary['failed']++;
+                continue;
+            }
+
+            $before = $this->activityLogs->snapshot($unit);
+            $beforeVersion = (int) $unit->row_version;
+            $name = $unit->name;
+
+            $unit->delete();
+
+            $this->activityLogs->log(
+                $request,
+                $tenant,
+                'master.uom.deleted',
+                'tenant_uom',
+                $unit->id,
+                $before,
+                null,
+                [],
+                $beforeVersion,
+                null
+            );
+
+            $results[] = [
+                'id' => $unit->id,
+                'name' => $name,
+                'ok' => true,
+            ];
+            $summary['deleted']++;
+        }
+
+        return response()->json([
+            'ok'      => $summary['failed'] === 0,
+            'results' => $results,
+            'summary' => $summary,
         ]);
     }
 }

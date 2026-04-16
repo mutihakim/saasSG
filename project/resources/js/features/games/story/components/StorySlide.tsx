@@ -24,8 +24,7 @@ const StorySlideView: React.FC<Props> = ({
                 <img
                     src={slide.imageUrl}
                     alt={slide.imageDescription}
-                    className="img-fluid rounded mb-3"
-                    style={{ maxHeight: 300, objectFit: "cover" }}
+                    className="img-fluid rounded mb-3 game-story-slide__image"
                 />
             )}
             <p className="fs-5 px-3">{slide.text}</p>

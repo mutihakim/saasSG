@@ -20,6 +20,7 @@ type Props<T extends HistoryItem> = {
     renderSubGroupKey: (item: T) => string;
     renderSubGroupHeader: (item: T) => React.ReactNode;
     renderSummaryBadges?: (item: T) => React.ReactNode;
+    onItemClick?: (item: T) => void;
 };
 
 const groupDateFormatter = new Intl.DateTimeFormat("id-ID", {
@@ -71,6 +72,7 @@ function GameHistoryView<T extends HistoryItem>({
     renderSubGroupKey,
     renderSubGroupHeader,
     renderSummaryBadges,
+    onItemClick,
 }: Props<T>) {
     const groupedHistory = useMemo(() => {
         const dateGroups: Record<string, Record<string, T[]>> = {};
@@ -126,19 +128,20 @@ function GameHistoryView<T extends HistoryItem>({
                                     <Accordion.Body className="p-0">
                                         <ListGroup variant="flush">
                                             {items.map((item) => (
-                                                <ListGroup.Item 
-                                                    key={item.id} 
-                                                    className="d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-light small"
+                                                <ListGroup.Item
+                                                    key={item.id}
+                                                    className={`d-flex flex-wrap justify-content-between align-items-center py-2 px-3 border-light small${onItemClick ? " game-history-item game-history-item--clickable" : ""}`}
+                                                    onClick={() => onItemClick?.(item)}
                                                 >
                                                     <div className="d-flex align-items-center gap-3 flex-wrap">
-                                                        <div className="text-muted fw-bold" style={{ width: "40px" }}>
+                                                        <div className="text-muted fw-bold game-history-item__time">
                                                             {formatTime(item.finished_at)}
                                                         </div>
-                                                        <div className="fw-bold d-flex align-items-center gap-2" style={{ minWidth: "90px" }}>
+                                                        <div className="fw-bold d-flex align-items-center gap-2 game-history-item__score">
                                                             <span className={item.score_percent >= 80 ? "text-success" : item.score_percent >= 60 ? "text-warning" : "text-danger"}>
                                                                 {Math.round(item.score_percent)}%
                                                             </span>
-                                                            <span className="text-muted fw-normal x-small">
+                                                            <span className="text-muted fw-normal game-history-xsmall">
                                                                 ({item.correct_count}/{item.question_count})
                                                             </span>
                                                         </div>
@@ -167,26 +170,6 @@ function GameHistoryView<T extends HistoryItem>({
                     </Accordion.Body>
                 </Accordion.Item>
             ))}
-            
-            <style>{`
-                .game-history-accordion .accordion-button:not(.collapsed),
-                .nested-accordion .accordion-button:not(.collapsed) {
-                    background-color: transparent;
-                    color: inherit;
-                    box-shadow: none;
-                }
-                .game-history-accordion .accordion-button:focus,
-                .nested-accordion .accordion-button:focus {
-                    box-shadow: none;
-                }
-                .nested-accordion .accordion-button {
-                    padding: 0.75rem 1rem;
-                    background-color: #fff;
-                }
-                .x-small {
-                    font-size: 0.7rem;
-                }
-            `}</style>
         </Accordion>
     );
 }

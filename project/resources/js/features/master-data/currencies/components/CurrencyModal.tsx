@@ -118,6 +118,7 @@ const CurrencyModal = ({
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                   placeholder="IDR"
                   maxLength={3}
+                  data-testid="currency-code-input"
                 />
               </Form.Group>
             </Col>
@@ -129,6 +130,7 @@ const CurrencyModal = ({
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Rupiah"
+                  data-testid="currency-name-input"
                 />
               </Form.Group>
             </Col>
@@ -143,6 +145,7 @@ const CurrencyModal = ({
                   value={formData.symbol}
                   onChange={(e) => setFormData({ ...formData, symbol: e.target.value })}
                   placeholder="Rp"
+                  data-testid="currency-symbol-input"
                 />
               </Form.Group>
             </Col>
@@ -181,6 +184,7 @@ const CurrencyModal = ({
                   max="4"
                   value={formData.decimal_places}
                   onChange={(e) => setFormData({ ...formData, decimal_places: parseInt(e.target.value) || 0 })}
+                  data-testid="currency-decimal-input"
                 />
               </Form.Group>
             </Col>
@@ -191,6 +195,7 @@ const CurrencyModal = ({
                   type="number"
                   value={formData.sort_order}
                   onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
+                  data-testid="currency-sort-order-input"
                 />
               </Form.Group>
             </Col>
@@ -210,7 +215,7 @@ const CurrencyModal = ({
           <Button variant="light" onClick={onClose} disabled={loading}>
             {t("master.currencies.buttons.cancel")}
           </Button>
-          <Button variant="primary" type="submit" disabled={loading}>
+          <Button variant="primary" type="submit" disabled={loading} data-testid="currency-submit-btn">
             {loading ? t("master.currencies.buttons.saving") : t("master.currencies.buttons.save")}
           </Button>
         </Modal.Footer>

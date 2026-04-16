@@ -3,7 +3,9 @@
 namespace App\Console\Commands;
 
 use App\Models\Tenant\Tenant;
-use App\Services\TenantRoleSyncService;
+use App\Models\Tenant\TenantMember;
+use App\Services\Tenant\Finance\TenantFinanceBaselineService;
+use App\Services\Tenant\Roles\TenantRoleSyncService;
 use Illuminate\Console\Command;
 
 class NormalizeTenantMemberRoles extends Command
@@ -12,9 +14,9 @@ class NormalizeTenantMemberRoles extends Command
         {tenant : Tenant slug or numeric id}
         {--dry-run : Show the tenant and member counts without writing role assignments}';
 
-    protected $description = 'Normalize effective tenant user roles from tenant_members.role_code.';
+    protected $description = 'Normalize effective tenant user roles from tenant_members.role_code and repair missing private finance baseline for linked members.';
 
-    public function handle(TenantRoleSyncService $roleSyncService): int
+    public function handle(TenantRoleSyncService $roleSyncService, TenantFinanceBaselineService $financeBaselineService): int
     {
         $tenantInput = (string) $this->argument('tenant');
 
@@ -49,6 +51,32 @@ class NormalizeTenantMemberRoles extends Command
         }
 
         $stats = $roleSyncService->normalizeTenantRoles($tenant);
+
+        $repairedFinanceBaseline = 0;
+        TenantMember::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereNull('deleted_at')
+            ->where('profile_status', 'active')
+            ->whereNotNull('user_id')
+            ->orderBy('id')
+            ->get()
+            ->each(function (TenantMember $member) use ($tenant, $financeBaselineService, &$repairedFinanceBaseline): void {
+                $before = $member->ownedBankAccounts()
+                    ->where('notes', '[system-baseline-private]')
+                    ->count();
+
+                $financeBaselineService->ensureMemberFinanceBaseline($tenant, $member);
+
+                $after = $member->ownedBankAccounts()
+                    ->where('notes', '[system-baseline-private]')
+                    ->count();
+
+                if ($after > $before) {
+                    $repairedFinanceBaseline++;
+                }
+            });
+
+        $stats['repaired_finance_baseline'] = $repairedFinanceBaseline;
 
         foreach ($stats as $label => $value) {
             $this->line(sprintf('%s: %d', str_replace('_', ' ', $label), $value));

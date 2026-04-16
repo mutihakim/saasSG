@@ -1,5 +1,4 @@
 import React from "react";
-import { Button, Card, Form } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import type { VocabularyCategoryOption, VocabularyLanguage, VocabularyMode } from "../types";
@@ -15,6 +14,7 @@ type Props = {
     timeLimit: number;
     translationDirection: "id_to_target" | "target_to_id";
     daysForCategory: number[];
+    masteredDaysForCategory: number[];
     hasCategories: boolean;
     hasDaysInSelectedCategory: boolean;
     categoryOptions: VocabularyCategoryOption[];
@@ -38,6 +38,7 @@ const VocabularySetupScreen: React.FC<Props> = ({
     timeLimit,
     translationDirection,
     daysForCategory,
+    masteredDaysForCategory,
     hasCategories,
     hasDaysInSelectedCategory,
     categoryOptions,
@@ -51,89 +52,145 @@ const VocabularySetupScreen: React.FC<Props> = ({
 }) => {
     const { t } = useTranslation();
 
-    const directionLabel = translationDirection === "id_to_target" 
-        ? t("tenant.games.vocabulary.setup.direction_id_to_target") 
+    const directionLabel = translationDirection === "id_to_target"
+        ? t("tenant.games.vocabulary.setup.direction_id_to_target")
         : t("tenant.games.vocabulary.setup.direction_target_to_id");
 
     return (
-        <Card className="border-0 shadow-sm">
-            <Card.Header className="bg-transparent border-0 pb-0">
-                <h5 className="mb-0 fw-bold">{t("tenant.games.vocabulary.setup.title")}</h5>
-            </Card.Header>
-            <Card.Body className="d-flex flex-column gap-3 vocab-setup-body">
-                <div className="row g-3">
-                    <div className="col-md-4">
-                        <Form.Label>{t("tenant.games.vocabulary.setup.language")}</Form.Label>
-                        <Form.Select value={language} onChange={(e) => onLanguageChange(e.target.value as VocabularyLanguage)}>
-                            <option value="english">{t("tenant.games.vocabulary.setup.language_en")}</option>
-                            <option value="arabic">{t("tenant.games.vocabulary.setup.language_ar")}</option>
-                        </Form.Select>
-                    </div>
-                    <div className="col-md-4">
-                        <Form.Label>{t("tenant.games.vocabulary.setup.day")}</Form.Label>
-                        <Form.Select
-                            value={hasDaysInSelectedCategory ? String(selectedDay) : ""}
-                            onChange={(e) => onDayChange(Number(e.target.value))}
-                            disabled={!selectedCategory || !hasDaysInSelectedCategory}
-                        >
-                            {!selectedCategory && <option value="">{t("tenant.games.vocabulary.setup.pick_category_first")}</option>}
-                            {selectedCategory && !hasDaysInSelectedCategory && <option value="">{t("tenant.games.vocabulary.setup.no_days")}</option>}
-                            {daysForCategory.map((day) => (
-                                <option key={day} value={day}>
-                                    {t("tenant.games.vocabulary.setup.day_value", { day })}
-                                </option>
-                            ))}
-                        </Form.Select>
-                    </div>
-                    <div className="col-md-4">
-                        <Form.Label>{t("tenant.games.vocabulary.setup.mode")}</Form.Label>
-                        <Form.Select value={mode} onChange={(e) => onModeChange(e.target.value as VocabularyMode)}>
-                            <option value="learn">{t("tenant.games.vocabulary.setup.mode_learn")}</option>
-                            <option value="practice">{t("tenant.games.vocabulary.setup.mode_practice")}</option>
-                            {mode === "memory_test" && <option value="memory_test">{t("tenant.games.vocabulary.setup.mode_memory_test")}</option>}
-                        </Form.Select>
-                    </div>
-                </div>
+        <>
+        <div className="vocab-setup-card d-flex flex-column h-100">
+            <div className="vocab-setup-content vocab-inner-content pb-5">
 
-                <CategorySelector
-                    categories={categoryOptions}
-                    selected={selectedCategory || null}
-                    onSelect={onCategorySelect}
-                />
-
-                {!hasCategories && (
-                    <div className="alert alert-warning py-2 mb-0">
-                        {t("tenant.games.vocabulary.setup.no_data_alert")}
+                <div className="mb-2">
+                        <label className="d-block text-sm text-gray-600 mb-1 font-medium small fw-semibold text-muted">{t("tenant.games.vocabulary.setup.language")}</label>
+                        <div className="vocab-lang-container">
+                            <button type="button" className={`vocab-lang-btn ${language === "english" ? "active" : ""}`} onClick={() => onLanguageChange("english")}>
+                                <img src="https://flagcdn.com/w20/us.png" srcSet="https://flagcdn.com/w40/us.png 2x" width="20" alt="English" className="rounded-1" />
+                                <span className="d-none d-md-inline">{t("tenant.games.vocabulary.setup.language_en")}</span>
+                                <span className="d-md-none">{t("tenant.games.vocabulary.setup.language_en").substring(0, 3)}</span>
+                            </button>
+                            <button type="button" className={`vocab-lang-btn ${language === "arabic" ? "active" : ""}`} onClick={() => onLanguageChange("arabic")}>
+                                <img src="https://flagcdn.com/w20/sa.png" srcSet="https://flagcdn.com/w40/sa.png 2x" width="20" alt="Arabic" className="rounded-1" />
+                                <span className="d-none d-md-inline">{t("tenant.games.vocabulary.setup.language_ar")}</span>
+                                <span className="d-md-none">{t("tenant.games.vocabulary.setup.language_ar").substring(0, 3)}</span>
+                            </button>
+                            <button type="button" className={`vocab-lang-btn ${language === "mandarin" ? "active" : ""}`} onClick={() => onLanguageChange("mandarin")}>
+                                <img src="https://flagcdn.com/w20/cn.png" srcSet="https://flagcdn.com/w40/cn.png 2x" width="20" alt={t("tenant.games.vocabulary.setup.language_zh")} className="rounded-1" />
+                                <span className="d-none d-md-inline">{t("tenant.games.vocabulary.setup.language_zh")}</span>
+                                <span className="d-md-none">{t("tenant.games.vocabulary.setup.language_zh").substring(0, 3)}</span>
+                            </button>
+                        </div>
                     </div>
-                )}
 
-                <div className="d-flex flex-wrap justify-content-between align-items-center gap-2">
-                    <div className="d-flex flex-wrap gap-3">
-                        <Form.Check
-                            id="vocab-auto-tts"
-                            label={t("tenant.games.vocabulary.setup.auto_tts")}
-                            checked={autoTts}
-                            onChange={(e) => onAutoTtsChange(e.target.checked)}
+                    <div className="mb-2 mt-2">
+                        <label className="d-block text-sm text-gray-600 mb-1 font-medium small fw-semibold text-muted">{t("tenant.games.vocabulary.setup.day")}</label>
+                        <div className="vocab-day-container">
+                            <button type="button" className="vocab-day-arrow" onClick={() => { document.getElementById('vocab-day-scroll')?.scrollBy({left: -150, behavior: 'smooth'}); }}>
+                                <i className="ri-arrow-left-s-line fs-5" />
+                            </button>
+                            <div className="vocab-day-scroll" id="vocab-day-scroll">
+                                {!selectedCategory && <div className="text-muted small py-1">{t("tenant.games.vocabulary.setup.pick_category_first")}</div>}
+                                {selectedCategory && !hasDaysInSelectedCategory && <div className="text-muted small py-1">{t("tenant.games.vocabulary.setup.no_days")}</div>}
+                                {daysForCategory.map((day) => {
+                                    const isMastered = masteredDaysForCategory.includes(day);
+                                    return (
+                                        <button key={day} type="button" className={`vocab-day-btn ${selectedDay === day ? "active" : ""} position-relative`} onClick={() => onDayChange(day)}>
+                                            {t("tenant.games.vocabulary.setup.day_value", { day })}
+                                            {isMastered && (
+                                                <span className="vocab-day-trophy pe-none" aria-hidden="true">🏆</span>
+                                            )}
+                                        </button>
+                                    );
+                                })}
+                            </div>
+                            <button type="button" className="vocab-day-arrow" onClick={() => { document.getElementById('vocab-day-scroll')?.scrollBy({left: 150, behavior: 'smooth'}); }}>
+                                <i className="ri-arrow-right-s-line fs-5" />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="mb-2 mt-2">
+                        <label className="d-block text-sm text-gray-600 mb-1 font-medium small fw-semibold text-muted">{t("tenant.games.vocabulary.setup.mode")}</label>
+                        <div className="vocab-mode-container">
+                            <button type="button" className={`vocab-mode-btn ${mode === "practice" ? "active" : ""}`} onClick={() => onModeChange("practice")}>
+                                Practice (Kuis)
+                            </button>
+                            <button type="button" className={`vocab-mode-btn ${mode === "learn" ? "active" : ""}`} onClick={() => onModeChange("learn")}>
+                                Review
+                            </button>
+                            {mode === "memory_test" && (
+                                <button type="button" className={`vocab-mode-btn ${mode === "memory_test" ? "active" : ""}`} onClick={() => onModeChange("memory_test")}>
+                                    Memory
+                                </button>
+                            )}
+                            <div className={`vocab-mode-slider ${mode === "learn" ? "is-learn" : mode === "memory_test" ? "is-memory-test" : "is-practice"} ${mode === "memory_test" ? "has-three-options" : "has-two-options"}`} />
+                        </div>
+                    </div>
+
+                    <div className="mt-2 text-start">
+                        <label className="d-block text-sm text-gray-800 mb-1 font-medium small fw-semibold text-muted">{t("tenant.games.vocabulary.category.title")}</label>
+                        <CategorySelector
+                            categories={categoryOptions}
+                            selected={selectedCategory || null}
+                            onSelect={onCategorySelect}
                         />
-                        <small className="text-muted align-self-center">
-                            {t("tenant.games.vocabulary.setup.timer_label", { seconds: timeLimit })} • {t("tenant.games.vocabulary.setup.direction_label", { direction: directionLabel })}
-                        </small>
+                        {!hasCategories && (
+                            <div className="alert alert-warning py-2 mb-0 mt-2">
+                                {t("tenant.games.vocabulary.setup.no_data_alert")}
+                            </div>
+                        )}
                     </div>
-                    <Button
-                        onClick={onStart}
-                        disabled={isStartingSession || !selectedCategory || !hasDaysInSelectedCategory}
-                    >
-                        {isStartingSession 
-                            ? t("tenant.games.vocabulary.setup.starting") 
-                            : mode === "learn" 
-                                ? t("tenant.games.vocabulary.setup.start_learn") 
-                                : mode === "memory_test" 
-                                    ? t("tenant.games.vocabulary.setup.start_memory_test") 
-                                    : t("tenant.games.vocabulary.setup.start_practice")}
-                    </Button>
+
+                    <div className="vocab-bottom-controls-v2 mt-3 pt-3 border-top pb-5 mb-5 pb-md-0 mb-md-0">
+                        <div className="d-flex align-items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={() => onAutoTtsChange(!autoTts)}
+                                className={`vocab-switch ${autoTts ? 'on' : 'off'}`}
+                                aria-label="Toggle Auto TTS"
+                            >
+                                <div className={`vocab-switch-thumb ${autoTts ? 'on' : 'off'}`} />
+                            </button>
+                            <span className="text-sm font-medium small text-muted text-dark text-nowrap">Read options when selected</span>
+                        </div>
+
+                        <div className="vocab-bottom-meta d-flex align-items-center gap-2 px-3 py-2 bg-light rounded-pill small flex-nowrap text-nowrap">
+                            <span className="text-muted d-flex align-items-center gap-1">
+                                <i className="ri-timer-line text-success" />
+                                <span className="vocab-bottom-meta__value">{t("tenant.games.vocabulary.setup.timer_label", { seconds: timeLimit })}</span>
+                            </span>
+                            <span className="text-muted">|</span>
+                            <span className="text-muted d-flex align-items-center gap-1">
+                                <i className="ri-arrow-left-right-line text-success" />
+                                <span className="vocab-bottom-meta__value">{t("tenant.games.vocabulary.setup.direction_label", { direction: directionLabel })}</span>
+                            </span>
+                        </div>
+                    </div>
                 </div>
-            </Card.Body>
-        </Card>
+            </div>
+
+        <div 
+            className="vocab-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 p-md-5 d-flex justify-content-center"
+            style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+        >
+            <div className="w-100 vocab-start-floating__inner">
+                <button
+                    type="button"
+                    className="btn vocab-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
+                    onClick={onStart}
+                    disabled={isStartingSession || !selectedCategory || !hasDaysInSelectedCategory}
+                >
+                    {isStartingSession
+                        ? t("tenant.games.vocabulary.setup.starting")
+                        : mode === "learn"
+                            ? <>{t("tenant.games.vocabulary.setup.start_learn")} 🚀</>
+                            : mode === "memory_test"
+                                ? <>{t("tenant.games.vocabulary.setup.start_memory_test")} 🧠</>
+                                : <>{t("tenant.games.vocabulary.setup.start_practice")} 🚀</>}
+                </button>
+            </div>
+        </div>
+        </>
     );
 };
 

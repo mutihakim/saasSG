@@ -20,12 +20,12 @@ class TenantUomPolicy
         return $user->hasPermissionTo('master.uom.create');
     }
 
-    public function update(User $user, TenantUom $uom): bool
+    public function update(User $user, ?TenantUom $uom = null): bool
     {
         return $user->hasPermissionTo('master.uom.update');
     }
 
-    public function delete(User $user, TenantUom $uom): bool
+    public function delete(User $user, ?TenantUom $uom = null): bool
     {
         return $user->hasPermissionTo('master.uom.delete');
     }

@@ -14,7 +14,6 @@ interface UomModalProps {
   onSuccess: () => void;
   unit?: any;
   dimensionTypes: string[];
-  units: any[];
 }
 
 const UomModal = ({
@@ -22,8 +21,7 @@ const UomModal = ({
   onClose,
   onSuccess,
   unit,
-  dimensionTypes,
-  units
+  dimensionTypes
 }: UomModalProps) => {
   const { t } = useTranslation();
   const tenantRoute = useTenantRoute();
@@ -31,6 +29,7 @@ const UomModal = ({
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [availableUnits, setAvailableUnits] = useState<any[]>([]);
 
   const [formData, setFormData] = useState({
     code: "",
@@ -72,6 +71,41 @@ const UomModal = ({
     }
   }, [show, unit]);
 
+  useEffect(() => {
+    if (!show || !formData.dimension_type) {
+      setAvailableUnits([]);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadUnits = async () => {
+      try {
+        const response = await axios.get(tenantRoute.apiTo("/master/uom"), {
+          params: {
+            dimension_type: formData.dimension_type,
+            per_page: "all",
+          },
+        });
+
+        const items = Array.isArray(response.data?.data?.units) ? response.data.data.units : [];
+        if (!isCancelled) {
+          setAvailableUnits(items);
+        }
+      } catch {
+        if (!isCancelled) {
+          setAvailableUnits([]);
+        }
+      }
+    };
+
+    void loadUnits();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [formData.dimension_type, show, tenantRoute]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -112,12 +146,24 @@ const UomModal = ({
     value: dt
   }));
 
-  const baseUnitOptions = units
-    .filter(u => u.dimension_type === formData.dimension_type && (!unit || u.code !== unit.code))
+  // Only UOMs with base_unit_code === null can be selected as a Base Unit
+  // This enforces a 1-level hierarchy.
+  const baseUnitOptions = availableUnits
+    .filter(u => u.dimension_type === formData.dimension_type && u.base_unit_code === null && (!unit || u.code !== unit.code))
     .map(u => ({
       label: `${u.name} (${u.abbreviation})`,
       value: u.code
     }));
+
+  const handleBaseUnitChange = (opt: any) => {
+    const newBaseUnitCode = opt?.value || "";
+    setFormData({ 
+        ...formData, 
+        base_unit_code: newBaseUnitCode,
+        // If base unit is cleared, reset factor to 1
+        base_factor: newBaseUnitCode === "" ? 1 : formData.base_factor
+    });
+  };
 
   return (
     <Modal show={show} onHide={onClose} centered>
@@ -138,6 +184,7 @@ const UomModal = ({
                   onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
                   placeholder="KG"
                   maxLength={10}
+                  data-testid="uom-code-input"
                 />
               </Form.Group>
             </Col>
@@ -149,6 +196,7 @@ const UomModal = ({
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   placeholder="Kilogram"
+                  data-testid="uom-name-input"
                 />
               </Form.Group>
             </Col>
@@ -163,6 +211,7 @@ const UomModal = ({
                   value={formData.abbreviation}
                   onChange={(e) => setFormData({ ...formData, abbreviation: e.target.value })}
                   placeholder="kg"
+                  data-testid="uom-abbr-input"
                 />
               </Form.Group>
             </Col>
@@ -172,8 +221,9 @@ const UomModal = ({
                 <Select
                   options={dimensionOptions}
                   value={dimensionOptions.find(o => o.value === formData.dimension_type)}
-                  onChange={(opt: any) => setFormData({ ...formData, dimension_type: opt.value, base_unit_code: "" })}
+                  onChange={(opt: any) => setFormData({ ...formData, dimension_type: opt.value, base_unit_code: "", base_factor: 1 })}
                   classNamePrefix="react-select"
+                  data-testid="uom-dimension-select"
                 />
               </Form.Group>
             </Col>
@@ -183,14 +233,16 @@ const UomModal = ({
             <Col md={6}>
               <Form.Group className="mb-3">
                 <Form.Label>{t("master.uom.fields.base_unit")}</Form.Label>
-                <Select
-                  options={baseUnitOptions}
-                  value={baseUnitOptions.find(o => o.value === formData.base_unit_code)}
-                  onChange={(opt: any) => setFormData({ ...formData, base_unit_code: opt?.value || "" })}
-                  isClearable
-                  placeholder={t("master.uom.fields.base_unit_placeholder")}
-                  classNamePrefix="react-select"
-                />
+                <div data-testid="uom-base-unit-select">
+                    <Select
+                      options={baseUnitOptions}
+                      value={baseUnitOptions.find(o => o.value === formData.base_unit_code)}
+                      onChange={handleBaseUnitChange}
+                      isClearable
+                      placeholder={t("master.uom.fields.base_unit_placeholder")}
+                      classNamePrefix="react-select"
+                    />
+                </div>
               </Form.Group>
             </Col>
             <Col md={6}>
@@ -203,6 +255,8 @@ const UomModal = ({
                   value={formData.base_factor}
                   onChange={(e) => setFormData({ ...formData, base_factor: parseFloat(e.target.value) || 1 })}
                   placeholder="1"
+                  disabled={!formData.base_unit_code}
+                  data-testid="uom-factor-input"
                 />
                 <Form.Text className="text-muted">
                   {t("master.uom.fields.base_factor_help")}
@@ -219,6 +273,7 @@ const UomModal = ({
                   type="number"
                   value={formData.sort_order}
                   onChange={(e) => setFormData({ ...formData, sort_order: parseInt(e.target.value) || 0 })}
+                  data-testid="uom-sort-order-input"
                 />
               </Form.Group>
             </Col>
@@ -230,6 +285,7 @@ const UomModal = ({
                   label={t("master.uom.fields.is_active")}
                   checked={formData.is_active}
                   onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
+                  data-testid="uom-active-switch"
                 />
               </Form.Group>
             </Col>
@@ -239,7 +295,7 @@ const UomModal = ({
           <Button variant="light" onClick={onClose} disabled={loading}>
             {t("master.uom.buttons.cancel")}
           </Button>
-          <Button variant="primary" type="submit" disabled={loading}>
+          <Button variant="primary" type="submit" disabled={loading} data-testid="uom-submit-btn">
             {loading ? t("master.uom.buttons.saving") : t("master.uom.buttons.save")}
           </Button>
         </Modal.Footer>

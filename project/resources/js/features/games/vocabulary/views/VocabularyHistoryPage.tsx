@@ -1,10 +1,12 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { Badge, Card } from "react-bootstrap";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { Badge } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import GameHistoryView from "../../shared/components/GameHistoryView";
+import LanguageFilterTabs, { type LanguageFilterValue } from "../../shared/components/LanguageFilterTabs";
+import SessionDetailModal from "../components/SessionDetailModal";
 import VocabularyLayout from "../components/VocabularyLayout";
-import { createVocabularyApi, type VocabularyLanguage, type VocabularySessionHistoryItem } from "../data/api/vocabularyApi";
+import { createVocabularyApi, type VocabularySessionHistoryItem } from "../data/api/vocabularyApi";
 
 import { useTenantRoute } from "@/core/config/routes";
 import { notify } from "@/core/lib/notify";
@@ -16,7 +18,13 @@ type PageProps = {
     } | null;
 };
 
-const HISTORY_LIMIT = 50;
+const HISTORY_LIMIT = 200;
+
+const LANGUAGE_FLAGS: Record<string, string> = {
+    english: "🇬🇧",
+    arabic: "🇸🇦",
+    mandarin: "🇨🇳",
+};
 
 const VocabularyHistoryPage: React.FC<PageProps> = ({ member }) => {
     const { t } = useTranslation();
@@ -24,8 +32,10 @@ const VocabularyHistoryPage: React.FC<PageProps> = ({ member }) => {
     const api = useMemo(() => createVocabularyApi(tenantRoute), [tenantRoute]);
 
     const [isLoading, setIsLoading] = useState(true);
-    const [language, setLanguage] = useState<"all" | VocabularyLanguage>("all");
+    const [language, setLanguage] = useState<LanguageFilterValue>(null);
     const [history, setHistory] = useState<VocabularySessionHistoryItem[]>([]);
+    const [selectedSession, setSelectedSession] = useState<VocabularySessionHistoryItem | null>(null);
+    const [showDetailModal, setShowDetailModal] = useState(false);
 
     useEffect(() => {
         let cancelled = false;
@@ -35,7 +45,7 @@ const VocabularyHistoryPage: React.FC<PageProps> = ({ member }) => {
             try {
                 const rows = await api.fetchHistory({
                     limit: HISTORY_LIMIT,
-                    language: language === "all" ? undefined : language,
+                    language: language ?? undefined,
                 });
                 if (!cancelled) {
                     setHistory(rows);
@@ -57,6 +67,16 @@ const VocabularyHistoryPage: React.FC<PageProps> = ({ member }) => {
         };
     }, [api, language, t]);
 
+    const handleSessionClick = useCallback((item: VocabularySessionHistoryItem) => {
+        setSelectedSession(item);
+        setShowDetailModal(true);
+    }, []);
+
+    const handleCloseModal = useCallback(() => {
+        setShowDetailModal(false);
+        setSelectedSession(null);
+    }, []);
+
     const metrics = useMemo(() => {
         const totalSessions = history.length;
         const avgScore = totalSessions > 0
@@ -74,53 +94,78 @@ const VocabularyHistoryPage: React.FC<PageProps> = ({ member }) => {
             title={t("tenant.games.vocabulary.history.title")}
             menuKey="history"
             memberName={member?.full_name ?? member?.name ?? undefined}
-            allowPageScroll
         >
-            <div className="container-fluid py-3">
-                <div className="row g-3 mb-4 flex-nowrap">
-                    <div className="col-3">
-                        <Card className="border-0 shadow-sm h-100"><Card.Body className="d-flex flex-column"><div className="small text-muted flex-grow-1">{t("tenant.games.history.total_sessions")}</div><div className="fs-3 fw-bold mt-auto">{metrics.totalSessions}</div></Card.Body></Card>
-                    </div>
-                    <div className="col-3">
-                        <Card className="border-0 shadow-sm h-100"><Card.Body className="d-flex flex-column"><div className="small text-muted flex-grow-1">{t("tenant.games.history.average_score")}</div><div className="fs-3 fw-bold text-primary mt-auto">{metrics.avgScore}%</div></Card.Body></Card>
-                    </div>
-                    <div className="col-3">
-                        <Card className="border-0 shadow-sm h-100"><Card.Body className="d-flex flex-column"><div className="small text-muted flex-grow-1">{t("tenant.games.history.best_streak")}</div><div className="fs-3 fw-bold text-success mt-auto">{metrics.bestStreak}x</div></Card.Body></Card>
-                    </div>
-                    <div className="col-3">
-                        <Card className="border-0 shadow-sm h-100"><Card.Body className="d-flex flex-column"><div className="small text-muted flex-grow-1">{t("tenant.games.history.correct_wrong")}</div><div className="fs-5 fw-bold mt-auto"><span className="text-success">{metrics.totalCorrect}</span><span className="text-muted mx-1">/</span><span className="text-danger">{metrics.totalWrong}</span></div></Card.Body></Card>
-                    </div>
-                </div>
+            {/* Gunakan struktur yang sama dengan VocabularyPage:
+                math-game-layout__scroll → math-game → vocab-setup-card → vocab-setup-content (scrollable) */}
+            <div className="math-game-layout__scroll">
+                <div className="math-game">
 
-                <div className="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
-                    <h5 className="fw-bold mb-0">{t("tenant.games.history.session_table_title")}</h5>
-                    <div className="d-flex gap-2">
-                        <button type="button" className={`btn btn-sm ${language === "all" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setLanguage("all")}>{t("tenant.games.vocabulary.mastered.all")}</button>
-                        <button type="button" className={`btn btn-sm ${language === "english" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setLanguage("english")}>{t("tenant.games.vocabulary.setup.language_en")}</button>
-                        <button type="button" className={`btn btn-sm ${language === "arabic" ? "btn-primary" : "btn-outline-primary"}`} onClick={() => setLanguage("arabic")}>{t("tenant.games.vocabulary.setup.language_ar")}</button>
-                    </div>
-                </div>
+                    <div className="vocab-setup-card">
+                        {/* Stats bar — colored pill cards */}
+                        <div className="vocab-stat-row">
+                            <div className="vocab-stat-card vocab-stat-card--indigo">
+                                <div className="vocab-stat-card__value">{metrics.totalSessions}</div>
+                                <div className="vocab-stat-card__label">{t("tenant.games.history.total_sessions")}</div>
+                            </div>
+                            <div className="vocab-stat-card vocab-stat-card--teal">
+                                <div className="vocab-stat-card__value">{metrics.avgScore}%</div>
+                                <div className="vocab-stat-card__label">{t("tenant.games.history.average_score")}</div>
+                            </div>
+                            <div className="vocab-stat-card vocab-stat-card--amber">
+                                <div className="vocab-stat-card__value">{metrics.bestStreak}x</div>
+                                <div className="vocab-stat-card__label">{t("tenant.games.history.best_streak")}</div>
+                            </div>
+                            <div className="vocab-stat-card vocab-stat-card--split">
+                                <div className="vocab-stat-card__value">
+                                    <span className="text-success">{metrics.totalCorrect}</span>
+                                    <span className="text-muted mx-1" style={{ fontSize: "0.8rem" }}>/</span>
+                                    <span className="text-danger">{metrics.totalWrong}</span>
+                                </div>
+                                <div className="vocab-stat-card__label">{t("tenant.games.history.correct_wrong")}</div>
+                            </div>
+                        </div>
 
-                <GameHistoryView
-                    history={history}
-                    isLoading={isLoading}
-                    emptyMessage={t("tenant.games.vocabulary.history.empty")}
-                    renderSubGroupKey={(item) => `${item.category}-${item.day}`}
-                    renderSubGroupHeader={(item) => (
-                        <span>{item.category} <span className="text-muted mx-1">•</span> {t("tenant.games.vocabulary.setup.day_value", { day: item.day })}</span>
-                    )}
-                    renderSummaryBadges={(item) => (
-                        <>
-                            <Badge bg="primary-subtle" text="primary" className="x-small">
-                                {item.language === "english" ? t("tenant.games.vocabulary.setup.language_en") : t("tenant.games.vocabulary.setup.language_ar")}
-                            </Badge>
-                            {item.mode === "memory_test" && (
-                                <Badge bg="info-subtle" text="info" className="x-small">{t("tenant.games.vocabulary.setup.mode_memory_test")}</Badge>
-                            )}
-                        </>
-                    )}
-                />
+                        {/* Konten utama — scrollable */}
+                        <div className="vocab-setup-content vocab-inner-content">
+                            <div className="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+                                <h6 className="fw-bold mb-0">{t("tenant.games.history.session_table_title")}</h6>
+                                <LanguageFilterTabs
+                                    selected={language}
+                                    onChange={setLanguage}
+                                />
+                            </div>
+
+                            <GameHistoryView
+                                history={history}
+                                isLoading={isLoading}
+                                emptyMessage={t("tenant.games.vocabulary.history.empty")}
+                                renderSubGroupKey={(item) => `${item.category}-${item.day}`}
+                                renderSubGroupHeader={(item) => (
+                                    <span>{item.category} <span className="text-muted mx-1">•</span> {t("tenant.games.vocabulary.setup.day_value", { day: item.day })}</span>
+                                )}
+                                renderSummaryBadges={(item) => (
+                                    <>
+                                        <span className="fs-5 game-history-flag" title={item.language} onClick={() => handleSessionClick(item)}>
+                                            {LANGUAGE_FLAGS[item.language] ?? "🏳️"}
+                                        </span>
+                                        {item.mode === "memory_test" && (
+                                            <Badge bg="info-subtle" text="info" className="x-small">{t("tenant.games.vocabulary.setup.mode_memory_test")}</Badge>
+                                        )}
+                                    </>
+                                )}
+                                onItemClick={handleSessionClick}
+                            />
+                        </div>
+                    </div>
+
+                </div>
             </div>
+
+            <SessionDetailModal
+                session={selectedSession}
+                show={showDetailModal}
+                onHide={handleCloseModal}
+            />
         </VocabularyLayout>
     );
 };

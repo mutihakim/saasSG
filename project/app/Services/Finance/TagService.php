@@ -5,6 +5,7 @@ namespace App\Services\Finance;
 use App\Models\Master\TenantTag;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class TagService
 {
@@ -17,9 +18,7 @@ class TagService
             // Detach all, decrement usage_count
             $existingTagIds = $model->tags()->pluck('tenant_tags.id')->all();
             if (! empty($existingTagIds)) {
-                TenantTag::whereIn('id', $existingTagIds)
-                    ->where('tenant_id', $tenantId)
-                    ->decrement('usage_count');
+                $this->decrementUsageCounts($tenantId, $existingTagIds);
             }
             $model->tags()->detach();
             return;
@@ -42,7 +41,7 @@ class TagService
         $addedIds   = array_diff($newIds, $oldIds);
 
         if (! empty($removedIds)) {
-            TenantTag::whereIn('id', $removedIds)->decrement('usage_count');
+            $this->decrementUsageCounts($tenantId, $removedIds);
         }
 
         if (! empty($addedIds)) {
@@ -74,5 +73,15 @@ class TagService
             '#1ABC9C', '#E67E22', '#2980B9', '#27AE60', '#8E44AD',
         ];
         return $colors[abs(crc32($name)) % count($colors)];
+    }
+
+    private function decrementUsageCounts(int $tenantId, array $tagIds): void
+    {
+        TenantTag::query()
+            ->where('tenant_id', $tenantId)
+            ->whereIn('id', $tagIds)
+            ->update([
+                'usage_count' => DB::raw('GREATEST(usage_count - 1, 0)'),
+            ]);
     }
 }

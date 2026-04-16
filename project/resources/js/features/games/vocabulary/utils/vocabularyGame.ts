@@ -9,9 +9,11 @@ export const shuffle = <T,>(arr: T[]): T[] => {
     return copy;
 };
 
-export const targetTextFor = (word: VocabularyWordDto, language: VocabularyLanguage): string => (
-    language === "english" ? (word.bahasa_inggris ?? "") : (word.bahasa_arab ?? "")
-);
+export const targetTextFor = (word: VocabularyWordDto, language: VocabularyLanguage): string => {
+    if (language === "english") return word.bahasa_inggris ?? "";
+    if (language === "mandarin") return word.bahasa_mandarin ?? "";
+    return word.bahasa_arab ?? "";
+};
 
 export const promptTextFor = (
     word: VocabularyWordDto,
@@ -19,6 +21,23 @@ export const promptTextFor = (
     direction: VocabularyTranslationDirection,
 ): string => (
     direction === "target_to_id" ? targetTextFor(word, language) : word.bahasa_indonesia
+);
+
+export const phoneticTextFor = (
+    word: VocabularyWordDto,
+    language: VocabularyLanguage,
+): string | null => {
+    if (language === "english") return word.fonetik ?? null;
+    if (language === "mandarin") return word.fonetik_mandarin ?? null;
+    return word.fonetik_arab ?? null;
+};
+
+export const promptPhoneticFor = (
+    word: VocabularyWordDto,
+    language: VocabularyLanguage,
+    direction: VocabularyTranslationDirection,
+): string | null => (
+    direction === "target_to_id" ? phoneticTextFor(word, language) : null
 );
 
 export const answerTextFor = (
@@ -29,12 +48,22 @@ export const answerTextFor = (
     direction === "target_to_id" ? word.bahasa_indonesia : targetTextFor(word, language)
 );
 
+export const answerPhoneticFor = (
+    word: VocabularyWordDto,
+    language: VocabularyLanguage,
+    direction: VocabularyTranslationDirection,
+): string | null => (
+    direction === "target_to_id" ? null : phoneticTextFor(word, language)
+);
+
 export const promptLangFor = (
     language: VocabularyLanguage,
     direction: VocabularyTranslationDirection,
 ): string => {
     if (direction === "target_to_id") {
-        return language === "english" ? "en-US" : "ar-SA";
+        if (language === "english") return "en-US";
+        if (language === "mandarin") return "zh-CN";
+        return "ar-SA";
     }
 
     return "id-ID";
@@ -43,11 +72,12 @@ export const promptLangFor = (
 export const answerLangFor = (
     language: VocabularyLanguage,
     direction: VocabularyTranslationDirection,
-): string => (
-    direction === "target_to_id"
-        ? "id-ID"
-        : (language === "english" ? "en-US" : "ar-SA")
-);
+): string => {
+    if (direction === "target_to_id") return "id-ID";
+    if (language === "english") return "en-US";
+    if (language === "mandarin") return "zh-CN";
+    return "ar-SA";
+};
 
 export const promptDirectionFor = (
     language: VocabularyLanguage,
@@ -68,8 +98,10 @@ export const toFlashcardWord = (word: VocabularyWordDto) => ({
     bahasaIndonesia: word.bahasa_indonesia,
     bahasaInggris: word.bahasa_inggris,
     bahasaArab: word.bahasa_arab,
+    bahasaMandarin: word.bahasa_mandarin,
     phonetic: word.fonetik,
     phoneticArabic: word.fonetik_arab,
+    phoneticMandarin: word.fonetik_mandarin,
 });
 
 export const buildOptionSet = (
@@ -77,28 +109,35 @@ export const buildOptionSet = (
     language: VocabularyLanguage,
     direction: VocabularyTranslationDirection,
     pool: VocabularyWordDto[],
-): string[] => {
-    const correct = answerTextFor(currentWord, language, direction);
+): { text: string; phonetic: string | null }[] => {
+    const correctText = answerTextFor(currentWord, language, direction);
+    const correctPhonetic = answerPhoneticFor(currentWord, language, direction);
+
     const distractors = shuffle(
         pool
             .filter((item) => item.id !== currentWord.id)
-            .map((item) => answerTextFor(item, language, direction))
-            .filter((value) => value && value !== correct),
+            .map((item) => ({
+                text: answerTextFor(item, language, direction),
+                phonetic: answerPhoneticFor(item, language, direction),
+            }))
+            .filter((value) => value.text && value.text !== correctText)
     );
 
-    const unique: string[] = [];
+    const unique: { text: string; phonetic: string | null }[] = [];
+    const uniqueTexts = new Set<string>();
     for (const item of distractors) {
-        if (!unique.includes(item)) {
+        if (!uniqueTexts.has(item.text)) {
             unique.push(item);
+            uniqueTexts.add(item.text);
         }
         if (unique.length >= 3) {
             break;
         }
     }
 
-    if (!correct) {
+    if (!correctText) {
         return [];
     }
 
-    return shuffle([correct, ...unique]);
+    return shuffle([{ text: correctText, phonetic: correctPhonetic }, ...unique]);
 };

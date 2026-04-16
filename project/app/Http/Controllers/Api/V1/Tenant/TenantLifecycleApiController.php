@@ -8,8 +8,9 @@ use App\Models\Tenant\Tenant;
 use App\Models\Tenant\TenantInvitation;
 use App\Models\Tenant\TenantMember;
 use App\Models\Identity\User;
-use App\Services\TenantProvisioningService;
-use App\Services\TenantRoleSyncService;
+use App\Services\Tenant\TenantProvisionService;
+use App\Services\Tenant\Finance\TenantFinanceBaselineService;
+use App\Services\Tenant\Roles\TenantRoleSyncService;
 use App\Support\ApiResponder;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\Request;
@@ -24,7 +25,7 @@ class TenantLifecycleApiController extends Controller
 {
     use ApiResponder;
 
-    public function createTenant(Request $request, TenantProvisioningService $provisioningService)
+    public function createTenant(Request $request, TenantProvisionService $provisioningService)
     {
         $this->ensureSuperadmin($request);
 
@@ -328,7 +329,7 @@ class TenantLifecycleApiController extends Controller
         $password = (string) $payload['password'];
 
         try {
-            $user = DB::transaction(function () use ($request, $tenant, $invitation, $email, $name, $password) {
+            [$user, $member] = DB::transaction(function () use ($request, $tenant, $invitation, $email, $name, $password) {
                 $user = User::query()->whereRaw('LOWER(email) = ?', [$email])->first();
 
                 if ($user) {
@@ -421,13 +422,15 @@ class TenantLifecycleApiController extends Controller
                     'user_agent' => $request->userAgent(),
                 ]);
 
-                return $user;
+                return [$user, $member];
             });
         } catch (ValidationException $exception) {
             return $this->error('INVITATION_EMAIL_CONFLICT', 'Invitation email already linked to different tenant membership.', [
                 'fields' => $exception->errors(),
             ], 422);
         }
+
+        app(TenantFinanceBaselineService::class)->ensureMemberFinanceBaseline($tenant, $member);
 
         Auth::guard('web')->login($user);
         if ($request->hasSession()) {

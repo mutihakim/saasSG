@@ -1,5 +1,5 @@
 import React from "react";
-import { useTranslation } from "react-i18next";
+
 
 type CategoryItem = {
     key: string;
@@ -18,53 +18,78 @@ const CategorySelector: React.FC<Props> = ({
     selected,
     onSelect,
 }) => {
-    const { t } = useTranslation();
-
-    const resolveCategoryIcon = (label: string): string => {
+    const resolveCategoryTheme = (label: string): string => {
         const normalized = label.toLowerCase();
-        if (normalized.includes("hewan")) return "ri-bear-smile-line";
-        if (normalized.includes("buah")) return "ri-apple-line";
-        if (normalized.includes("sayur")) return "ri-leaf-line";
-        if (normalized.includes("anggota tubuh")) return "ri-heart-pulse-line";
-        if (normalized.includes("keluarga")) return "ri-team-line";
-        if (normalized.includes("pakaian")) return "ri-t-shirt-line";
-        if (normalized.includes("rumah")) return "ri-home-4-line";
-        if (normalized.includes("kata kerja")) return "ri-run-line";
-        if (normalized.includes("warna")) return "ri-palette-line";
-        if (normalized.includes("bentuk")) return "ri-shapes-line";
-        if (normalized.includes("angka")) return "ri-hashtag";
-        if (normalized.includes("kendaraan")) return "ri-car-line";
-        return "ri-book-open-line";
+        if (normalized.includes("anggota tubuh")) return "bg-purple";
+        if (normalized.includes("angka")) return "bg-teal";
+        if (normalized.includes("rumah")) return "bg-yellow-dark";
+        if (normalized.includes("bentuk")) return "bg-pink";
+        if (normalized.includes("buah")) return "bg-green";
+        if (normalized.includes("hewan darat")) return "bg-red";
+        if (normalized.includes("hewan laut")) return "bg-purple"; // using purple to match mockup sort of
+        if (normalized.includes("hewan udara")) return "bg-yellow-light";
+        if (normalized.includes("kata kerja")) return "bg-blue-dark";
+        if (normalized.includes("keluarga")) return "bg-yellow-dark";
+        if (normalized.includes("kendaraan")) return "bg-pink";
+        if (normalized.includes("pakaian")) return "bg-cyan-light";
+        if (normalized.includes("sayur")) return "bg-cyan-dark";
+        if (normalized.includes("warna")) return "bg-orange";
+
+        const hashes = ["bg-purple", "bg-teal", "bg-yellow-dark", "bg-pink", "bg-green", "bg-red", "bg-blue", "bg-orange"];
+        let hash = 0;
+        for (let i = 0; i < label.length; i++) {
+            hash = label.charCodeAt(i) + ((hash << 5) - hash);
+        }
+        return hashes[Math.abs(hash) % hashes.length];
+    };
+
+    const resolveCategoryEmoji = (label: string): string => {
+        const normalized = label.toLowerCase();
+        if (normalized.includes("anggota tubuh")) return "🙋🏽‍♀️";
+        if (normalized.includes("angka")) return "1️⃣2️⃣";
+        if (normalized.includes("rumah")) return "🛋️";
+        if (normalized.includes("bentuk")) return "🔵🔺";
+        if (normalized.includes("buah")) return "🍎";
+        if (normalized.includes("hewan darat")) return "🐕";
+        if (normalized.includes("hewan laut")) return "🐙";
+        if (normalized.includes("hewan udara")) return "✈️";
+        if (normalized.includes("kata kerja")) return "🏃";
+        if (normalized.includes("keluarga")) return "👨‍👩‍👧";
+        if (normalized.includes("kendaraan")) return "🚗";
+        if (normalized.includes("pakaian")) return "👕";
+        if (normalized.includes("sayur")) return "🍅🥬";
+        if (normalized.includes("warna")) return "🎨";
+        return "📚";
     };
 
     return (
         <div className="category-selector">
-            <h6 className="fw-semibold mb-2">{t("tenant.games.vocabulary.category.title")}</h6>
-            {categories.length === 0 && (
-                <div className="small text-muted">
-                    {t("tenant.games.vocabulary.category.empty")}
-                </div>
-            )}
-            <div className="vocab-category-grid">
+            <div className="vocab-category-grid-v2">
                 {categories.map((cat) => (
                     <button
                         key={cat.key}
                         type="button"
-                        className={`vocab-category-card ${selected === cat.key ? "is-active" : ""}`}
+                        className={`vocab-category-card-v2 ${resolveCategoryTheme(cat.label)} ${selected === cat.key ? "is-active" : ""}`}
                         onClick={() => onSelect(cat.key)}
                     >
-                        <span className="vocab-category-card__icon-wrap" aria-hidden="true">
-                            <i className={`${resolveCategoryIcon(cat.label)} vocab-category-card__icon`} />
-                        </span>
-                        <span className="vocab-category-card__content">
-                            <span className="vocab-category-card__label">{cat.label}</span>
-                            <span className="vocab-category-card__meta">
-                                <span className="vocab-category-chip">
-                                    <i className="ri-calendar-line" />
-                                    {t("tenant.games.vocabulary.category.day_count", { count: cat.count })}
-                                </span>
+                        {selected === cat.key && (
+                            <span className="badge rounded-pill vocab-category-card-v2__check-badge" aria-hidden="true">
+                                <i className="ri-check-line" />
                             </span>
-                        </span>
+                        )}
+                        <div className="card-layout">
+                            <div className="text-content d-flex align-items-center justify-content-start w-100 h-100 ps-2">
+                                <h3 className="m-0 fw-bold text-dark w-100 vocab-category-card-v2__title">{cat.label}</h3>
+                            </div>
+                        </div>
+
+                        <div className="progress-bar-wrapper">
+                            <div className="progress-fill bg-white vocab-category-card-v2__progress-fill" />
+                        </div>
+
+                        <div className="sticker-emoji">
+                            {resolveCategoryEmoji(cat.label)}
+                        </div>
                     </button>
                 ))}
             </div>

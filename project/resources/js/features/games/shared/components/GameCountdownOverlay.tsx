@@ -24,12 +24,10 @@ const GameCountdownOverlay: React.FC<GameCountdownOverlayProps> = ({
 
     return (
         <div
-            className="position-absolute w-100 h-100 top-0 start-0 d-flex flex-column justify-content-center align-items-center rounded-3"
-            style={{ zIndex: 10, background: "rgba(255, 255, 255, 0.8)", backdropFilter: "blur(2px)" }}
+            className="game-countdown-overlay position-absolute w-100 h-100 top-0 start-0 d-flex flex-column justify-content-center align-items-center rounded-3"
         >
             <div
-                className={`rounded-circle shadow-lg d-flex justify-content-center align-items-center ${isPreparing ? "bg-warning text-dark" : "bg-success text-white"}`}
-                style={{ width: "150px", height: "150px", transition: "background-color 0.2s ease" }}
+                className={`game-countdown-overlay__bubble rounded-circle shadow-lg d-flex justify-content-center align-items-center ${isPreparing ? "bg-warning text-dark" : "bg-success text-white"}`}
             >
                 <i className={`display-1 ${isPreparing ? "ri-timer-flash-line" : "ri-check-line"}`}></i>
             </div>

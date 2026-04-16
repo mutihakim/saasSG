@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React from "react";
 import { Alert, Badge, Table } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
@@ -11,6 +11,7 @@ type Props = {
     correctCount: number;
     bestStreak: number;
     isSavingSummary: boolean;
+    isLevelMastered: boolean;
     onChangeSetup: () => void;
     onPlayAgain: () => void;
     onStartMemoryTest?: () => void;
@@ -22,22 +23,19 @@ const VocabularySummaryCard: React.FC<Props> = ({
     correctCount,
     bestStreak,
     isSavingSummary,
+    isLevelMastered,
     onChangeSetup,
     onPlayAgain,
     onStartMemoryTest,
 }) => {
     const { t } = useTranslation();
 
-    const isAllMastered = useMemo(() => {
-        return attempts.length > 0 && attempts.every((a) => a.isCorrect);
-    }, [attempts]);
-
     const actions = [
         { label: t("tenant.games.vocabulary.summary.change_setup"), variant: "light", onClick: onChangeSetup },
         { label: isSavingSummary ? t("tenant.games.vocabulary.summary.saving") : t("tenant.games.vocabulary.summary.play_again"), variant: "primary", disabled: isSavingSummary, onClick: onPlayAgain },
     ];
 
-    if (isAllMastered && onStartMemoryTest) {
+    if (isLevelMastered && onStartMemoryTest) {
         actions.push({
             label: t("tenant.games.vocabulary.summary.start_memory_test"),
             variant: "success",
@@ -56,7 +54,7 @@ const VocabularySummaryCard: React.FC<Props> = ({
             ]}
             actions={actions}
         >
-            {isAllMastered && (
+            {isLevelMastered && (
                 <Alert variant="success" className="border-0 shadow-sm mb-0">
                     <div className="d-flex align-items-center gap-3">
                         <div className="display-6">🏆</div>

@@ -4,15 +4,21 @@ import { useTranslation } from "react-i18next";
 import useGameFeedbackMessages from "../../shared/hooks/useGameFeedbackMessages";
 import useVoiceFeedback from "../../shared/hooks/useVoiceFeedback";
 import { createVocabularyApi, type VocabularyWordDto } from "../data/api/vocabularyApi";
-import type { VocabularyAttemptResult, VocabularyController, VocabularyFeedbackState } from "../types";
-import { answerLangFor, answerTextFor, buildOptionSet, promptTextFor, shuffle } from "../utils/vocabularyGame";
+import type { VocabularyAttemptResult, VocabularyController, VocabularyFeedbackState, VocabularyOption } from "../types";
+import { answerLangFor, answerPhoneticFor, answerTextFor, buildOptionSet, promptTextFor } from "../utils/vocabularyGame";
 
 import useVocabularyConfigState from "./useVocabularyConfigState";
+import { useVocabularyQuestionDeck } from "./useVocabularyQuestionDeck";
 import useVocabularyTimers from "./useVocabularyTimers";
-import { ANSWER_LOCK_MS, initialFeedbackState, normalizeProgress } from "./vocabularyGameController.shared";
+import { initialFeedbackState, normalizeProgress } from "./vocabularyGameController.shared";
 
 import { useTenantRoute } from "@/core/config/routes";
 import { notify } from "@/core/lib/notify";
+
+const isDayMastered = (
+    words: VocabularyWordDto[],
+    progress: Record<string, { is_mastered?: boolean }>,
+) => words.length > 0 && words.every((word) => progress[String(word.id)]?.is_mastered === true);
 
 const useVocabularyGameController = (): VocabularyController => {
     const { t, i18n } = useTranslation();
@@ -30,6 +36,7 @@ const useVocabularyGameController = (): VocabularyController => {
         selectedCategory,
         selectedDay,
         autoTts,
+        questionCount,
         timeLimit,
         translationDirection,
         masteredThreshold,
@@ -37,6 +44,7 @@ const useVocabularyGameController = (): VocabularyController => {
         progressMap,
         categoryOptions,
         daysForCategory,
+        masteredDaysForCategory,
         hasCategories,
         hasDaysInSelectedCategory,
         setLanguage,
@@ -52,9 +60,8 @@ const useVocabularyGameController = (): VocabularyController => {
     const [poolWords, setPoolWords] = useState<VocabularyWordDto[]>([]);
     const [learnIndex, setLearnIndex] = useState(0);
     const [isFlipped, setIsFlipped] = useState(false);
-    const [practiceQueue, setPracticeQueue] = useState<VocabularyWordDto[]>([]);
-    const [practiceIndex, setPracticeIndex] = useState(0);
-    const [practiceOptions, setPracticeOptions] = useState<string[]>([]);
+    const [currentPracticeWord, setCurrentPracticeWord] = useState<VocabularyWordDto | null>(null);
+    const [practiceOptions, setPracticeOptions] = useState<VocabularyOption[]>([]);
     const [selectedOption, setSelectedOption] = useState<number | null>(null);
     const [correctOption, setCorrectOption] = useState<number | null>(null);
     const [isAnswerLocked, setIsAnswerLocked] = useState(false);
@@ -67,6 +74,10 @@ const useVocabularyGameController = (): VocabularyController => {
     const [feedbackState, setFeedbackState] = useState<VocabularyFeedbackState>(initialFeedbackState);
     const [isMemoryTest, setIsMemoryTest] = useState(false);
     const [showMemoryTestDialog, setShowMemoryTestDialog] = useState(false);
+    const [sessionQuestionTarget, setSessionQuestionTarget] = useState(0);
+    
+    const { generateNextQuestion, resetDeck } = useVocabularyQuestionDeck();
+    
     const {
         answerLockTimerRef,
         countdownTimerRef,
@@ -82,6 +93,10 @@ const useVocabularyGameController = (): VocabularyController => {
         setFeedbackState(initialFeedbackState);
     }, []);
 
+    const createPracticeWordInstance = useCallback((word: VocabularyWordDto): VocabularyWordDto => ({
+        ...word,
+    }), []);
+
     const pronounce = useCallback((text: string, lang: string) => {
         speak(text, lang);
     }, [speak]);
@@ -91,9 +106,9 @@ const useVocabularyGameController = (): VocabularyController => {
         clearCountdownTimer();
         clearFeedbackVoiceTimer();
         clearPracticeTimer();
-        setPracticeQueue([]);
+        resetDeck();
+        setCurrentPracticeWord(null);
         setPoolWords([]);
-        setPracticeIndex(0);
         setPracticeOptions([]);
         setSelectedOption(null);
         setCorrectOption(null);
@@ -104,8 +119,9 @@ const useVocabularyGameController = (): VocabularyController => {
         setCountdownState(null);
         setTimeRemaining(0);
         setIsMemoryTest(false);
+        setSessionQuestionTarget(0);
         resetFeedback();
-    }, [clearAnswerLockTimer, clearCountdownTimer, clearFeedbackVoiceTimer, clearPracticeTimer, resetFeedback]);
+    }, [clearAnswerLockTimer, clearCountdownTimer, clearFeedbackVoiceTimer, clearPracticeTimer, resetDeck, resetFeedback]);
 
     const leaveToSetup = useCallback(() => {
         resetPracticeState();
@@ -136,15 +152,22 @@ const useVocabularyGameController = (): VocabularyController => {
     const initializePracticeSession = useCallback((
         words: VocabularyWordDto[],
         pool: VocabularyWordDto[],
+        progress: Record<string, { correct_streak?: number, is_mastered?: boolean }>,
         nextIsMemoryTest: boolean,
     ) => {
         clearAnswerLockTimer();
         clearCountdownTimer();
         clearFeedbackVoiceTimer();
         clearPracticeTimer();
+        resetDeck();
         setPoolWords(pool);
-        setPracticeQueue(shuffle(words));
-        setPracticeIndex(0);
+        
+        const firstQuestion = generateNextQuestion(words, progress, nextIsMemoryTest);
+        if (!firstQuestion) {
+            return;
+        }
+        setCurrentPracticeWord(createPracticeWordInstance(firstQuestion));
+        
         setPracticeOptions([]);
         setSelectedOption(null);
         setCorrectOption(null);
@@ -155,9 +178,10 @@ const useVocabularyGameController = (): VocabularyController => {
         setCountdownState("yellow");
         setTimeRemaining(timeLimit);
         setIsMemoryTest(nextIsMemoryTest);
+        setSessionQuestionTarget(nextIsMemoryTest ? words.length : questionCount);
         resetFeedback();
         setPhase("practice");
-    }, [clearAnswerLockTimer, clearCountdownTimer, clearFeedbackVoiceTimer, clearPracticeTimer, resetFeedback, timeLimit]);
+    }, [clearAnswerLockTimer, clearCountdownTimer, clearFeedbackVoiceTimer, clearPracticeTimer, resetDeck, generateNextQuestion, createPracticeWordInstance, questionCount, timeLimit, resetFeedback]);
 
     const startPracticeMode = useCallback(async (forceMemoryTest = false) => {
         setIsStartingSession(true);
@@ -178,7 +202,7 @@ const useVocabularyGameController = (): VocabularyController => {
                 return;
             }
 
-            initializePracticeSession(candidateWords, pool, forceMemoryTest);
+            initializePracticeSession(words, pool, progress, forceMemoryTest);
         } catch {
             notify.error(forceMemoryTest ? t("tenant.games.vocabulary.error.start_memory_test_failed") : t("tenant.games.vocabulary.error.start_practice_failed"));
         } finally {
@@ -191,7 +215,6 @@ const useVocabularyGameController = (): VocabularyController => {
     }, [startPracticeMode]);
 
     const currentLearnWord = dayWords[learnIndex] ?? null;
-    const currentPracticeWord = practiceQueue[practiceIndex] ?? null;
 
     useEffect(() => {
         if (phase !== "practice" || !currentPracticeWord) {
@@ -232,32 +255,36 @@ const useVocabularyGameController = (): VocabularyController => {
     }, [clearCountdownTimer, countdownState, countdownTimerRef, timeLimit]);
 
     const finishSession = useCallback(async (nextAttempts: VocabularyAttemptResult[]) => {
-        if (!selectedCategory || !selectedDay || !startedAt || nextAttempts.length === 0 || isMemoryTest) {
+        if (!selectedCategory || !selectedDay || !startedAt || nextAttempts.length === 0) {
             return;
         }
 
-        const correctCount = nextAttempts.filter((attempt) => attempt.isCorrect).length;
-        const wrongCount = nextAttempts.length - correctCount;
+        const sessionCorrectCount = nextAttempts.filter((attempt) => attempt.isCorrect).length;
+        const sessionWrongCount = nextAttempts.length - sessionCorrectCount;
 
         setIsSavingSummary(true);
         try {
             await api.finishSession({
                 language,
-                mode: "practice",
+                mode: isMemoryTest ? "memory_test" : "practice",
                 category: selectedCategory,
                 day: selectedDay,
                 question_count: nextAttempts.length,
-                correct_count: correctCount,
-                wrong_count: wrongCount,
+                correct_count: sessionCorrectCount,
+                wrong_count: sessionWrongCount,
                 best_streak: nextAttempts.reduce((max, attempt) => Math.max(max, attempt.streakAfter), 0),
                 duration_seconds: Math.max(0, Math.round((Date.now() - startedAt) / 1000)),
                 started_at: new Date(startedAt).toISOString(),
                 finished_at: new Date().toISOString(),
                 summary: {
+                    language,
                     attempts: nextAttempts.map((attempt) => ({
                         word_id: attempt.wordId,
-                        correct: attempt.isCorrect,
+                        prompt: attempt.prompt,
+                        correct_answer: attempt.correctAnswer,
                         selected_answer: attempt.selectedAnswer,
+                        correct: attempt.isCorrect,
+                        streak_after: attempt.streakAfter,
                     })),
                 },
             });
@@ -274,12 +301,23 @@ const useVocabularyGameController = (): VocabularyController => {
         }
 
         const correctAnswer = answerTextFor(currentPracticeWord, language, translationDirection);
-        const chosenAnswer = selectedIdx === null ? "" : (practiceOptions[selectedIdx] ?? "");
-        const isCorrect = !forcedTimedOut && chosenAnswer === correctAnswer;
+        const correctAnswerPhonetic = answerPhoneticFor(currentPracticeWord, language, translationDirection);
+        const chosenOption = practiceOptions[selectedIdx ?? -1];
+        const chosenAnswer = chosenOption?.text ?? "Timeout";
+        const isCorrect = chosenAnswer === correctAnswer && !forcedTimedOut;
         const previousProgress = progressMap[String(currentPracticeWord.id)];
-        const nextStreak = isCorrect ? ((previousProgress?.correct_streak ?? 0) + 1) : 0;
+        const nextStreak = isCorrect
+            ? ((previousProgress?.correct_streak ?? 0) + 1)
+            : 0;
         const nextProgress = normalizeProgress(previousProgress, isCorrect, nextStreak, masteredThreshold);
-        const resolvedCorrectOption = practiceOptions.findIndex((option) => option === correctAnswer);
+        const nextProgressMap = {
+            ...progressMap,
+            [String(currentPracticeWord.id)]: {
+                ...nextProgress,
+                word_id: currentPracticeWord.id,
+            },
+        };
+        const resolvedCorrectOption = practiceOptions.findIndex((option) => option.text === correctAnswer);
         const nextAttempt: VocabularyAttemptResult = {
             wordId: currentPracticeWord.id,
             prompt: promptTextFor(currentPracticeWord, language, translationDirection),
@@ -314,6 +352,7 @@ const useVocabularyGameController = (): VocabularyController => {
             isTimedOut: forcedTimedOut,
             message: feedbackMessage,
             correctAnswer: isCorrect ? null : correctAnswer,
+            correctAnswerPhonetic: isCorrect ? null : correctAnswerPhonetic,
         });
 
         if (voiceEnabled) {
@@ -353,52 +392,74 @@ const useVocabularyGameController = (): VocabularyController => {
             notify.error(t("tenant.games.vocabulary.error.sync_attempt_failed"));
         }
 
-        answerLockTimerRef.current = window.setTimeout(() => {
-            const isLastQuestion = practiceIndex + 1 >= practiceQueue.length;
+        // Store whether it was correct for UI
+        // If it's correct, autoadvance shortly (as requested by user, correct -> auto next)
+        // If wrong, wait for manual continue (no timer set here!)
 
-            if (isLastQuestion) {
-                setPhase("summary");
-                const allDayWordsMastered = dayWords.length > 0 && dayWords.every((word) => (
-                    progressMap[String(word.id)]?.is_mastered
-                    || word.id === currentPracticeWord.id
-                ));
-                if (allDayWordsMastered && !isMemoryTest) {
-                    setShowMemoryTestDialog(true);
+        if (isCorrect) {
+            answerLockTimerRef.current = window.setTimeout(() => {
+                const isTargetReached = nextAttempts.length >= sessionQuestionTarget;
+                const allDayWordsMastered = !isMemoryTest && isDayMastered(dayWords, nextProgressMap);
+
+                if (isTargetReached || allDayWordsMastered) {
+                    setPhase("summary");
+                    if (allDayWordsMastered) {
+                        setShowMemoryTestDialog(true);
+                    }
+                    void finishSession(nextAttempts);
+                    return;
                 }
-                void finishSession(nextAttempts);
-                return;
-            }
 
-            setPracticeIndex((prev) => prev + 1);
-        }, ANSWER_LOCK_MS);
+                const nextQuestion = generateNextQuestion(dayWords, nextProgressMap, isMemoryTest);
+                if (!nextQuestion) {
+                    setPhase("summary");
+                    void finishSession(nextAttempts);
+                    return;
+                }
+
+                setCurrentPracticeWord(createPracticeWordInstance(nextQuestion));
+            }, 1500);
+        }
     }, [
-        answerLockTimerRef,
-        api,
-        attempts,
-        autoTts,
-        currentPracticeWord,
-        dayWords,
-        finishSession,
-        feedbackVoiceTimerRef,
-        getNextFeedbackMessage,
-        i18n.language,
-        isAnswerLocked,
-        isMemoryTest,
-        language,
-        masteredThreshold,
-        practiceIndex,
-        practiceOptions,
-        practiceQueue.length,
-        progressMap,
-        pronounce,
-        clearAnswerLockTimer,
-        clearFeedbackVoiceTimer,
-        clearPracticeTimer,
-        setProgressMap,
-        speak,
-        t,
-        translationDirection,
-        voiceEnabled,
+        answerLockTimerRef, api, attempts, autoTts, currentPracticeWord, dayWords, finishSession,
+        feedbackVoiceTimerRef, getNextFeedbackMessage, i18n.language, isAnswerLocked, isMemoryTest,
+        language, masteredThreshold, practiceOptions, progressMap, pronounce, sessionQuestionTarget,
+        clearAnswerLockTimer, clearFeedbackVoiceTimer, clearPracticeTimer, setProgressMap, speak, t,
+        translationDirection, voiceEnabled, generateNextQuestion, createPracticeWordInstance
+    ]);
+
+    const continuePractice = useCallback(() => {
+        clearAnswerLockTimer();
+        if (!currentPracticeWord || !isAnswerLocked) {
+            return;
+        }
+
+        const isTargetReached = attempts.length >= sessionQuestionTarget;
+
+        if (isTargetReached) {
+            setPhase("summary");
+            const allNowMastered = !isMemoryTest && isDayMastered(dayWords, progressMap);
+            if (allNowMastered) {
+                setShowMemoryTestDialog(true);
+            }
+            void finishSession(attempts);
+            return;
+        }
+
+        const nextQuestion = generateNextQuestion(dayWords, progressMap, isMemoryTest);
+        if (!nextQuestion) {
+            setPhase("summary");
+            if (!isMemoryTest) {
+                setShowMemoryTestDialog(true);
+            }
+            void finishSession(attempts);
+            return;
+        }
+
+        setCurrentPracticeWord(createPracticeWordInstance(nextQuestion));
+    }, [
+        clearAnswerLockTimer, currentPracticeWord, isAnswerLocked, attempts, sessionQuestionTarget,
+        dayWords, progressMap, isMemoryTest, finishSession, generateNextQuestion, createPracticeWordInstance
     ]);
 
     useEffect(() => {
@@ -425,7 +486,7 @@ const useVocabularyGameController = (): VocabularyController => {
 
     useEffect(() => {
         resetFeedback();
-    }, [practiceIndex, phase, resetFeedback]);
+    }, [currentPracticeWord, phase, resetFeedback]);
 
     const currentStreak = useMemo(() => {
         if (!currentPracticeWord) {
@@ -440,9 +501,12 @@ const useVocabularyGameController = (): VocabularyController => {
     ), [attempts]);
 
     const totalQuestions = attempts.length;
-    const correctCount = attempts.filter((attempt) => attempt.isCorrect).length;
-    const scorePercent = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+    const sessionCorrectCount = attempts.filter((attempt) => attempt.isCorrect).length;
+    const scorePercent = totalQuestions > 0 ? Math.round((sessionCorrectCount / totalQuestions) * 100) : 0;
     const selectedCategoryLabel = selectedCategory || "-";
+    const isLevelMastered = useMemo(() => (
+        dayWords.length > 0 && dayWords.every((word) => progressMap[String(word.id)]?.is_mastered === true)
+    ), [dayWords, progressMap]);
     const isSessionActive = phase === "learn" || phase === "practice";
 
     return {
@@ -455,6 +519,8 @@ const useVocabularyGameController = (): VocabularyController => {
         selectedCategory,
         selectedDay,
         autoTts,
+        questionCount,
+        sessionQuestionTarget,
         timeLimit,
         translationDirection,
         masteredThreshold,
@@ -463,8 +529,6 @@ const useVocabularyGameController = (): VocabularyController => {
         progressMap,
         learnIndex,
         isFlipped,
-        practiceQueue,
-        practiceIndex,
         practiceOptions,
         selectedOption,
         correctOption,
@@ -479,6 +543,7 @@ const useVocabularyGameController = (): VocabularyController => {
         voiceEnabled,
         categoryOptions,
         daysForCategory,
+        masteredDaysForCategory,
         hasCategories,
         hasDaysInSelectedCategory,
         currentLearnWord,
@@ -487,8 +552,9 @@ const useVocabularyGameController = (): VocabularyController => {
         bestStreak,
         selectedCategoryLabel,
         totalQuestions,
-        correctCount,
+        correctCount: sessionCorrectCount,
         scorePercent,
+        isLevelMastered,
         isSessionActive,
         isMemoryTest,
         showMemoryTestDialog,
@@ -509,6 +575,7 @@ const useVocabularyGameController = (): VocabularyController => {
         submitPracticeAnswer: async (selectedIdx: number) => {
             await submitPracticeAnswer(selectedIdx, false);
         },
+        continuePractice,
         leaveToSetup,
         pronounce,
     };

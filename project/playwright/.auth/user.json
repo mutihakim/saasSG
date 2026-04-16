@@ -1,0 +1,43 @@
+{
+  "cookies": [
+    {
+      "name": "XSRF-TOKEN",
+      "value": "eyJpdiI6Im9CWlRCUDBBSWZOYVpYS3h1SEZldnc9PSIsInZhbHVlIjoiM0EvdVlwc3RGa1U2RVdoaHoveUNETEdKLzhLa1JxNk5IeXBPZ2lacTYvNzhXdTRXejltZ3F1WjdNbFVORXBDWHViMU1hUkFLcG5KdC9kNyt1Um9yU0xsbnBqQmYzUEd1cnU0bXFCWDFNOGgwYkxWRGV3NmtVMWRsU09JVEVLZ2UiLCJtYWMiOiIxMDMwNjU1ZTFhNzMwNGIxYmRmMmIzN2M1MzFjMmZjMDlmMjQ2MWRkZmNiN2NiYjZkZjg3OThjNjNlMWFhMDA2IiwidGFnIjoiIn0%3D",
+      "domain": ".sanjo.my.id",
+      "path": "/",
+      "expires": 1776350999.588093,
+      "httpOnly": false,
+      "secure": true,
+      "sameSite": "Lax"
+    },
+    {
+      "name": "saas_boilerplate_2_session",
+      "value": "eyJpdiI6InNGdkovS0JHTnpKTWdKOGlWSFgwREE9PSIsInZhbHVlIjoiUjhwKy85WVVRRklWV3RLWnA1d2YrNk9jSEtrV0k3ZElpYXV0Y0UrVmZnUXlSQk9yRWtaeWxpT09QQWZMN2Ura21RNU5RdzRoa21reVZLVGZFclZIUWw4OGdYMlhubnB5b2FZbGVDdThUSk5sZ2dpeXFZcE9QcDl0MGgvUmQxdnUiLCJtYWMiOiJmODQwOWNjNWQwOTBkNjYyNWViM2M1NzkxNGU0Mjc0MTg5NDc1MjUxODc1MzQ4NTNkMWFjODFmNmMzY2JlOTFkIiwidGFnIjoiIn0%3D",
+      "domain": ".sanjo.my.id",
+      "path": "/",
+      "expires": 1776350999.588323,
+      "httpOnly": true,
+      "secure": true,
+      "sameSite": "Lax"
+    }
+  ],
+  "origins": [
+    {
+      "origin": "https://enterprise.sanjo.my.id",
+      "localStorage": [
+        {
+          "name": "i18nextLng",
+          "value": "en"
+        },
+        {
+          "name": "pusherTransportTLS",
+          "value": "{\"timestamp\":1776343799817,\"transport\":\"ws\",\"latency\":105,\"cacheSkipCount\":0}"
+        },
+        {
+          "name": "I18N_LANGUAGE",
+          "value": "en"
+        }
+      ]
+    }
+  ]
+}

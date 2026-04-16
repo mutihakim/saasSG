@@ -22,8 +22,7 @@ const GamesPage: React.FC<Props> = () => {
                             <div className="d-flex align-items-center justify-content-between mb-3">
                                 <div className="d-flex align-items-center gap-3">
                                     <div
-                                        className="rounded-circle bg-warning-subtle d-flex align-items-center justify-content-center"
-                                        style={{ width: 56, height: 56 }}
+                                        className="rounded-circle bg-warning-subtle d-flex align-items-center justify-content-center game-card__icon"
                                     >
                                         <i className="ri-calculator-line text-warning fs-3"></i>
                                     </div>
@@ -61,9 +60,16 @@ const GamesPage: React.FC<Props> = () => {
                                 <div className="p-3 border rounded-3">
                                     <div className="fw-semibold">Belajar Kosakata</div>
                                     <div className="small text-muted">Mode flashcard dan kuis adaptif.</div>
-                                    <Link href="/games/vocabulary" className="btn btn-sm btn-outline-primary mt-2">
+                                    <a href="/games/vocabulary" className="btn btn-sm btn-outline-primary mt-2">
                                         Buka Vocabulary
-                                    </Link>
+                                    </a>
+                                </div>
+                                <div className="p-3 border rounded-3">
+                                    <div className="fw-semibold">Kurikulum</div>
+                                    <div className="small text-muted">Latihan soal pilihan ganda per unit pelajaran dengan history sesi.</div>
+                                    <a href="/games/curriculum" className="btn btn-sm btn-outline-primary mt-2">
+                                        Buka Curriculum
+                                    </a>
                                 </div>
                                 <div className="p-3 border rounded-3">
                                     <div className="fw-semibold">Dongeng Teladan</div>
@@ -72,6 +78,9 @@ const GamesPage: React.FC<Props> = () => {
                                 <div className="p-3 border rounded-3">
                                     <div className="fw-semibold">Alat Bantu Tahfiz</div>
                                     <div className="small text-muted">Pendamping hafalan dengan audio ayat.</div>
+                                    <a href="/games/tahfiz" className="btn btn-sm btn-outline-primary mt-2">
+                                        Buka Tahfiz
+                                    </a>
                                 </div>
                             </div>
                         </Card.Body>

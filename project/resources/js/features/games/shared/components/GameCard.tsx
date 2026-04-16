@@ -23,8 +23,7 @@ const GameCard: React.FC<Props> = ({ game, onPress }) => {
         >
             <div className="card-body text-center p-3">
                 <div
-                    className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2"
-                    style={{ width: 56, height: 56 }}
+                    className="rounded-circle d-flex align-items-center justify-content-center mx-auto mb-2 game-card__icon"
                 >
                     <i className={`${game.icon} fs-4`}></i>
                 </div>

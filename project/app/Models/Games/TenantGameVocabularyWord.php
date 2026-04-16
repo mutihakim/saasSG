@@ -20,6 +20,8 @@ class TenantGameVocabularyWord extends Model
         'fonetik',
         'bahasa_arab',
         'fonetik_arab',
+        'bahasa_mandarin',
+        'fonetik_mandarin',
         'kategori',
         'hari',
     ];

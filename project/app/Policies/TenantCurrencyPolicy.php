@@ -20,12 +20,12 @@ class TenantCurrencyPolicy
         return $user->hasPermissionTo('master.currencies.create');
     }
 
-    public function update(User $user, TenantCurrency $currency): bool
+    public function update(User $user, ?TenantCurrency $currency = null): bool
     {
         return $user->hasPermissionTo('master.currencies.update');
     }
 
-    public function delete(User $user, TenantCurrency $currency): bool
+    public function delete(User $user, ?TenantCurrency $currency = null): bool
     {
         return $user->hasPermissionTo('master.currencies.delete');
     }

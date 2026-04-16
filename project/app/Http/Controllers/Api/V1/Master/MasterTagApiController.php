@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Master\TenantTag;
 use App\Models\Tenant\Tenant;
 use App\Services\ActivityLogService;
+use App\Support\MasterDataPagination;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,15 +24,55 @@ class MasterTagApiController extends Controller
     {
         $this->authorize('viewAny', TenantTag::class);
 
+        $resolved = MasterDataPagination::resolve($request);
+        $name = trim($request->string('name')->toString());
+        $nameTerms = MasterDataPagination::searchTerms($name);
+        $usageExpression = trim((string) $request->input('usage', ''));
+        $usageMin = $request->input('usage_min');
+        $usageMax = $request->input('usage_max');
+        $usageRange = $usageExpression !== ''
+            ? MasterDataPagination::parseNumberExpression($usageExpression)
+            : [
+                'min' => is_numeric($usageMin) ? (int) $usageMin : null,
+                'max' => is_numeric($usageMax) ? (int) $usageMax : null,
+            ];
+        $allowedSorts = ['name', 'usage_count', 'created_at'];
+        $sortBy = $request->string('sort_by')->toString();
+        $sortDirection = strtolower($request->string('sort_direction')->toString()) === 'desc' ? 'desc' : 'asc';
+        $sortColumn = in_array($sortBy, $allowedSorts, true) ? $sortBy : 'name';
         $query = TenantTag::forTenant($tenant->id)->popular();
 
-        if ($request->filled('search')) {
-            $query->where('name', 'like', "%{$request->search}%");
+        if ($nameTerms !== []) {
+            MasterDataPagination::applyTokenizedContains($query, 'name', $nameTerms);
         }
+
+        if ($usageRange['min'] !== null) {
+            $query->where('usage_count', '>=', $usageRange['min']);
+        }
+
+        if ($usageRange['max'] !== null) {
+            $query->where('usage_count', '<=', $usageRange['max']);
+        }
+
+        $query->orderBy($sortColumn, $sortDirection)->orderBy('id');
+
+        $tags = $query->paginate(
+            $resolved['per_page'],
+            ['id', 'name', 'color', 'usage_count', 'is_active', 'row_version', 'created_at'],
+            'page',
+            $resolved['page']
+        );
 
         return response()->json([
             'ok'   => true,
-            'data' => ['tags' => $query->get(['id', 'name', 'color', 'usage_count', 'is_active', 'row_version', 'created_at'])],
+            'data' => [
+                'tags' => $tags->items(),
+                'pagination' => MasterDataPagination::meta($tags, $resolved),
+                'sort' => [
+                    'by' => $sortColumn,
+                    'direction' => $sortDirection,
+                ],
+            ],
         ]);
     }
 
@@ -40,9 +81,10 @@ class MasterTagApiController extends Controller
     {
         $this->authorize('viewAny', TenantTag::class);
 
-        $q    = $request->get('q', '');
+        $q = trim((string) $request->get('q', ''));
+        $terms = MasterDataPagination::searchTerms($q);
         $tags = TenantTag::forTenant($tenant->id)
-            ->when($q, fn ($query) => $query->where('name', 'like', "%{$q}%"))
+            ->when($terms !== [], fn ($query) => MasterDataPagination::applyTokenizedContains($query, 'name', $terms))
             ->popular()
             ->limit(10)
             ->get(['id', 'name', 'color', 'usage_count']);

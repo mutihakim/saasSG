@@ -4,12 +4,11 @@ namespace Tests\Feature;
 
 use App\Models\Tenant\Tenant;
 use App\Models\Identity\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use Tests\TestCase;
 
 class TenantSubscriptionAdminTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_superadmin_can_update_tenant_subscription(): void
     {

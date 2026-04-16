@@ -20,7 +20,11 @@ class TenantHubController extends Controller
     {
         $tenant = tenant();
         $user = $request->user();
-        $member = $tenant->members()->where('user_id', $user->id)->first();
+        $member = $request->attributes->get('currentTenantMember');
+
+        if (! $member && $user) {
+            $member = $tenant->members()->where('user_id', $user->id)->first();
+        }
 
         return [
             'tenantName' => $tenant->name ?? $tenant->slug,
@@ -134,6 +138,36 @@ class TenantHubController extends Controller
     public function gamesVocabularySettings(Request $request): Response
     {
         return Inertia::render('Tenant/Games/VocabularySettingsPage', $this->baseProps($request));
+    }
+
+    public function gamesTahfiz(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/TahfizPage', $this->baseProps($request));
+    }
+
+    public function gamesTahfizHistory(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/TahfizHistoryPage', $this->baseProps($request));
+    }
+
+    public function gamesTahfizSettings(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/TahfizSettingsPage', $this->baseProps($request));
+    }
+
+    public function gamesCurriculum(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/CurriculumPage', $this->baseProps($request));
+    }
+
+    public function gamesCurriculumHistory(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/CurriculumHistoryPage', $this->baseProps($request));
+    }
+
+    public function gamesCurriculumSettings(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/CurriculumSettingsPage', $this->baseProps($request));
     }
 
     public function wa(Request $request): Response

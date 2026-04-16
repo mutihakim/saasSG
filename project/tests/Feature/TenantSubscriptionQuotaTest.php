@@ -7,14 +7,13 @@ use App\Models\Tenant\TenantInvitation;
 use App\Models\Tenant\TenantMember;
 use App\Models\Identity\User;
 use Illuminate\Support\Facades\Config;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use Laravel\Sanctum\Sanctum;
 use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class TenantSubscriptionQuotaTest extends TestCase
 {
-    use RefreshDatabase;
 
     private function bootstrapTenant(string $planCode = 'free'): array
     {

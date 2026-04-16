@@ -11,14 +11,7 @@ const AyatHighlighter: React.FC<Props> = ({ text, highlighted, onClick }) => {
         <span
             role="button"
             tabIndex={0}
-            className={`ayat-char ${highlighted ? "highlighted" : ""}`}
-            style={{
-                cursor: "pointer",
-                padding: "2px 4px",
-                borderRadius: 4,
-                transition: "background-color 0.2s ease",
-                backgroundColor: highlighted ? "rgba(56, 189, 248, 0.2)" : "transparent",
-            }}
+            className={`ayat-char game-ayat-char ${highlighted ? "highlighted game-ayat-char--highlighted" : ""}`}
             onClick={onClick}
             onKeyDown={(e) => {
                 if (e.key === "Enter") onClick();

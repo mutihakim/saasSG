@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Identity\SocialAccount;
 use App\Models\Tenant\TenantMember;
 use App\Models\Identity\User;
-use App\Services\TenantProvisioningService;
+use App\Services\Tenant\TenantProvisionService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -21,7 +21,7 @@ class SocialAuthController extends Controller
         return Socialite::driver($provider)->redirect();
     }
 
-    public function callback(string $provider, TenantProvisioningService $provisioningService)
+    public function callback(string $provider, TenantProvisionService $provisioningService)
     {
         abort_unless(in_array($provider, ['google', 'github'], true), 404);
 

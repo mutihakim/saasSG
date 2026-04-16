@@ -23,6 +23,7 @@ type UseVocabularyConfigStateReturn = {
     selectedCategory: string;
     selectedDay: number;
     autoTts: boolean;
+    questionCount: number;
     timeLimit: number;
     translationDirection: VocabularyTranslationDirection;
     masteredThreshold: number;
@@ -30,6 +31,7 @@ type UseVocabularyConfigStateReturn = {
     progressMap: Record<string, VocabularyProgressDto>;
     categoryOptions: VocabularyCategoryOption[];
     daysForCategory: number[];
+    masteredDaysForCategory: number[];
     hasCategories: boolean;
     hasDaysInSelectedCategory: boolean;
     setLanguage: (language: VocabularyLanguage) => void;
@@ -37,6 +39,7 @@ type UseVocabularyConfigStateReturn = {
     setSelectedCategory: (category: string) => void;
     setSelectedDay: (day: number) => void;
     setAutoTts: (enabled: boolean) => void;
+    setQuestionCount: (count: number) => void;
     setTimeLimit: (seconds: number) => void;
     setTranslationDirection: (direction: VocabularyTranslationDirection) => void;
     setProgressMap: Dispatch<SetStateAction<Record<string, VocabularyProgressDto>>>;
@@ -52,6 +55,7 @@ const applyActiveSetting = (
     fallbackConfig: VocabularyConfigResponse | null,
     setMode: (mode: VocabularyMode) => void,
     setAutoTts: (enabled: boolean) => void,
+    setQuestionCount: (count: number) => void,
     setTimeLimit: (seconds: number) => void,
     setTranslationDirection: (direction: VocabularyTranslationDirection) => void,
     setMasteredThreshold: (threshold: number) => void,
@@ -59,6 +63,7 @@ const applyActiveSetting = (
     if (activeSetting) {
         setMode(activeSetting.default_mode);
         setAutoTts(activeSetting.auto_tts);
+        setQuestionCount(activeSetting.default_question_count);
         setTimeLimit(activeSetting.default_time_limit);
         setTranslationDirection(activeSetting.translation_direction);
         setMasteredThreshold(activeSetting.mastered_threshold);
@@ -71,6 +76,7 @@ const applyActiveSetting = (
 
     setMode("learn");
     setAutoTts(true);
+    setQuestionCount(fallbackConfig.default_question_count ?? 6);
     setTimeLimit(fallbackConfig.default_time_limit ?? 8);
     setTranslationDirection("id_to_target");
     setMasteredThreshold(fallbackConfig.default_mastered_threshold ?? 8);
@@ -85,6 +91,7 @@ const useVocabularyConfigState = (api: VocabularyApi): UseVocabularyConfigStateR
     const [selectedCategory, setSelectedCategory] = useState("");
     const [selectedDay, setSelectedDay] = useState(1);
     const [autoTts, setAutoTts] = useState(true);
+    const [questionCount, setQuestionCount] = useState(6);
     const [timeLimit, setTimeLimit] = useState(8);
     const [translationDirection, setTranslationDirection] = useState<VocabularyTranslationDirection>("id_to_target");
     const [masteredThreshold, setMasteredThreshold] = useState(8);
@@ -113,6 +120,7 @@ const useVocabularyConfigState = (api: VocabularyApi): UseVocabularyConfigStateR
                 response.config,
                 setMode,
                 setAutoTts,
+                setQuestionCount,
                 setTimeLimit,
                 setTranslationDirection,
                 setMasteredThreshold,
@@ -141,6 +149,13 @@ const useVocabularyConfigState = (api: VocabularyApi): UseVocabularyConfigStateR
         [config?.categories, selectedCategory],
     );
 
+    const masteredDaysForCategory = useMemo(() => {
+        const masteredDays = config?.mastered_days;
+        if (!masteredDays || !language || !selectedCategory) return [];
+        return masteredDays[language]?.[selectedCategory] ?? [];
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [config?.mastered_days, language, selectedCategory, config?.categories]);
+
     const hasCategories = categoryOptions.length > 0;
     const hasDaysInSelectedCategory = daysForCategory.length > 0;
 
@@ -156,6 +171,7 @@ const useVocabularyConfigState = (api: VocabularyApi): UseVocabularyConfigStateR
             config,
             setMode,
             setAutoTts,
+            setQuestionCount,
             setTimeLimit,
             setTranslationDirection,
             setMasteredThreshold,
@@ -191,6 +207,7 @@ const useVocabularyConfigState = (api: VocabularyApi): UseVocabularyConfigStateR
         selectedCategory,
         selectedDay,
         autoTts,
+        questionCount,
         timeLimit,
         translationDirection,
         masteredThreshold,
@@ -198,6 +215,7 @@ const useVocabularyConfigState = (api: VocabularyApi): UseVocabularyConfigStateR
         progressMap,
         categoryOptions,
         daysForCategory,
+        masteredDaysForCategory,
         hasCategories,
         hasDaysInSelectedCategory,
         setLanguage,
@@ -205,6 +223,7 @@ const useVocabularyConfigState = (api: VocabularyApi): UseVocabularyConfigStateR
         setSelectedCategory,
         setSelectedDay,
         setAutoTts,
+        setQuestionCount,
         setTimeLimit,
         setTranslationDirection,
         setProgressMap,

@@ -18,15 +18,23 @@
         </include>
     </source>
     <php>
-        <env name="APP_ENV" value="testing"/>
+        <env name="APP_ENV" value="testing" force="true"/>
+        <env name="APP_URL" value="http://localhost"/>
         <env name="APP_KEY" value="base64:6trIqR2Y5NDej7Gc0n+8MP7zrjz3+IqPZ0DSE4p+E8E="/>
         <env name="BCRYPT_ROUNDS" value="4"/>
         <env name="CACHE_DRIVER" value="array"/>
         <env name="DB_CONNECTION" value="pgsql"/>
         <env name="DB_DATABASE" value="cabinet_core_test"/>
+        <env name="DB_USERNAME" value="cabinet_user2"/>
+        <env name="DB_PASSWORD" value="cabinet_pass2"/>
         <env name="MAIL_MAILER" value="array"/>
+        <env name="BROADCAST_DRIVER" value="log"/>
+        <env name="REVERB_ENABLED" value="false"/>
         <env name="QUEUE_CONNECTION" value="sync"/>
         <env name="SESSION_DRIVER" value="array"/>
+        <env name="SESSION_DOMAIN" value=""/>
+        <env name="SESSION_SECURE_COOKIE" value="false"/>
         <env name="TELESCOPE_ENABLED" value="false"/>
+        <env name="TURNSTILE_ENABLED" value="false"/>
     </php>
 </phpunit>

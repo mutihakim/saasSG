@@ -6,7 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Tenant\TenantInvitation;
 use App\Models\Tenant\TenantMember;
 use App\Models\Identity\User;
-use App\Services\TenantProvisioningService;
+use App\Services\Tenant\TenantProvisionService;
 use App\Services\TurnstileService;
 use Illuminate\Auth\Events\Registered;
 use Illuminate\Http\RedirectResponse;
@@ -50,7 +50,7 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request, TenantProvisioningService $provisioningService, TurnstileService $turnstile): mixed
+    public function store(Request $request, TenantProvisionService $provisioningService, TurnstileService $turnstile): mixed
     {
         $request->validate([
             'name' => 'required|string|max:255',

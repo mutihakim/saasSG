@@ -61,8 +61,7 @@ const MathSessionCard: React.FC<Props> = ({
                 <GameTimerProgress
                     timeRemaining={timeRemaining}
                     timeLimit={setup.timeLimit}
-                    className="mb-0"
-                    style={{ height: 6 }}
+                    className="mb-0 game-timer-progress--compact"
                 />
             </Card.Header>
 
@@ -85,13 +84,12 @@ const MathSessionCard: React.FC<Props> = ({
                             key={digit}
                             variant="outline-primary"
                             size="lg"
-                            className="math-game__numpad-button"
+                            className="math-game__numpad-button game-touch-manipulation"
                             onClick={(event) => {
                                 event.currentTarget.blur();
                                 onDigit(digit);
                             }}
                             disabled={disabled}
-                            style={{ touchAction: "manipulation" }}
                         >
                             {digit}
                         </Button>
@@ -100,13 +98,12 @@ const MathSessionCard: React.FC<Props> = ({
                     <Button
                         variant="outline-warning"
                         size="lg"
-                        className="math-game__numpad-button"
+                        className="math-game__numpad-button game-touch-manipulation"
                         onClick={(event) => {
                             event.currentTarget.blur();
                             onDelete();
                         }}
                         disabled={disabled}
-                        style={{ touchAction: "manipulation" }}
                     >
                         <i className="ri-delete-back-line" />
                     </Button>
@@ -114,13 +111,12 @@ const MathSessionCard: React.FC<Props> = ({
                     <Button
                         variant="outline-primary"
                         size="lg"
-                        className="math-game__numpad-button"
+                        className="math-game__numpad-button game-touch-manipulation"
                         onClick={(event) => {
                             event.currentTarget.blur();
                             onDigit("0");
                         }}
                         disabled={disabled}
-                        style={{ touchAction: "manipulation" }}
                     >
                         0
                     </Button>
@@ -128,13 +124,12 @@ const MathSessionCard: React.FC<Props> = ({
                     <Button
                         variant="success"
                         size="lg"
-                        className="math-game__numpad-button"
+                        className="math-game__numpad-button game-touch-manipulation"
                         onClick={(event) => {
                             event.currentTarget.blur();
                             onSubmit();
                         }}
                         disabled={disabled}
-                        style={{ touchAction: "manipulation" }}
                     >
                         {t("tenant.games.math.session.numpad.submit")}
                     </Button>

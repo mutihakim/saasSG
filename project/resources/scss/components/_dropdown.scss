@@ -11,6 +11,10 @@
     font-family: "Material Design Icons";
 }
 
+.arrow-none.dropdown-toggle::after {
+    display: none;
+}
+
 .dropdown-menu {
     box-shadow: $box-shadow-lg;
     animation-name: DropDownSlide;

@@ -7,10 +7,12 @@ type Props = {
         bahasaIndonesia: string;
         bahasaInggris?: string | null;
         bahasaArab?: string | null;
+        bahasaMandarin?: string | null;
         phonetic?: string | null;
         phoneticArabic?: string | null;
+        phoneticMandarin?: string | null;
     };
-    language: "english" | "arabic";
+    language: "english" | "arabic" | "mandarin";
     translationDirection?: "id_to_target" | "target_to_id";
     isMastered?: boolean;
     onPronounce: (text: string, lang: string) => void;
@@ -28,14 +30,19 @@ const FlashCard: React.FC<Props> = ({
     isFlipped,
 }) => {
     const { t } = useTranslation();
-    const targetText = language === "english" ? word.bahasaInggris : word.bahasaArab;
-    const phonetic = language === "english" ? word.phonetic : word.phoneticArabic;
+    const targetText = language === "english" ? word.bahasaInggris : (language === "mandarin" ? word.bahasaMandarin : word.bahasaArab);
+    const phonetic = language === "english" ? word.phonetic : (language === "mandarin" ? word.phoneticMandarin : word.phoneticArabic);
     const frontText = translationDirection === "target_to_id" ? targetText : word.bahasaIndonesia;
     const backText = translationDirection === "target_to_id" ? word.bahasaIndonesia : targetText;
     const displayText = isFlipped ? backText : frontText;
+    const getLangCode = () => {
+        if (language === "english") return "en-US";
+        if (language === "mandarin") return "zh-CN";
+        return "ar-SA";
+    };
     const langCode = translationDirection === "target_to_id"
-        ? (isFlipped ? "id-ID" : (language === "english" ? "en-US" : "ar-SA"))
-        : (isFlipped ? (language === "english" ? "en-US" : "ar-SA") : "id-ID");
+        ? (isFlipped ? "id-ID" : getLangCode())
+        : (isFlipped ? getLangCode() : "id-ID");
     const textDirection = translationDirection === "target_to_id" && !isFlipped && language === "arabic"
         ? "rtl"
         : "ltr";

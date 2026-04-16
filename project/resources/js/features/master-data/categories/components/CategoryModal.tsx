@@ -14,7 +14,7 @@ interface CategoryModalProps {
   onSuccess: () => void;
   category?: any;
   module: string;
-  parents: any[];
+  modules: string[];
 }
 
 const ICON_OPTIONS = [
@@ -99,7 +99,7 @@ const CategoryModal = ({
   onSuccess,
   category,
   module,
-  parents
+  modules,
 }: CategoryModalProps) => {
   const { t } = useTranslation();
   const tenantRoute = useTenantRoute();
@@ -118,6 +118,7 @@ const CategoryModal = ({
   });
 
   const [loading, setLoading] = useState(false);
+  const [parentOptions, setParentOptions] = useState<Array<{ label: string; value: number }>>([]);
 
   useEffect(() => {
     if (category) {
@@ -147,6 +148,72 @@ const CategoryModal = ({
     }
   }, [category, show, module]);
 
+  useEffect(() => {
+    if (formData.module !== "finance" && formData.sub_type !== "") {
+      setFormData((current) => ({ ...current, sub_type: "" }));
+    }
+
+    if (formData.module === "finance" && !formData.sub_type) {
+      setFormData((current) => ({ ...current, sub_type: "pengeluaran" }));
+    }
+  }, [formData.module, formData.sub_type]);
+
+  useEffect(() => {
+    if (!show || !formData.module) {
+      setParentOptions([]);
+      return;
+    }
+
+    let isCancelled = false;
+
+    const loadParents = async () => {
+      try {
+        const response = await axios.get(tenantRoute.apiTo("/master/categories"), {
+          params: {
+            module: formData.module,
+            roots_only: 1,
+            exclude_children: 1,
+            per_page: "all",
+          },
+        });
+
+        const items = Array.isArray(response.data?.data?.categories) ? response.data.data.categories : [];
+        const nextOptions = items
+          .filter((parent: any) => !category || parent.id !== category.id)
+          .map((parent: any) => ({
+            label: parent.name,
+            value: parent.id,
+          }));
+
+        if (!isCancelled) {
+          setParentOptions(nextOptions);
+        }
+      } catch {
+        if (!isCancelled) {
+          setParentOptions([]);
+        }
+      }
+    };
+
+    void loadParents();
+
+    return () => {
+      isCancelled = true;
+    };
+  }, [category, formData.module, show, tenantRoute]);
+
+  useEffect(() => {
+    if (!formData.parent_id) {
+      return;
+    }
+
+    const hasSelectedParent = parentOptions.some((option) => String(option.value) === String(formData.parent_id));
+
+    if (!hasSelectedParent) {
+      setFormData((current) => ({ ...current, parent_id: "" }));
+    }
+  }, [formData.parent_id, parentOptions]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -160,6 +227,7 @@ const CategoryModal = ({
       
       await axios[method](url, {
         ...formData,
+        sub_type: formData.module === "finance" ? formData.sub_type || "pengeluaran" : null,
         parent_id: formData.parent_id || null,
       });
 
@@ -177,15 +245,8 @@ const CategoryModal = ({
     }
   };
 
-  const parentOptions = parents
-    .filter(p => !p.parent_id && (!category || p.id !== category.id)) 
-    .map(p => ({ 
-        label: p.name, 
-        value: p.id 
-    }));
-
   return (
-    <Modal show={show} onHide={onClose} centered size="lg">
+    <Modal show={show} onHide={onClose} centered size="lg" contentClassName="category-modal" data-testid="category-modal">
       <Modal.Header closeButton className="bg-light p-3">
         <Modal.Title>{isEdit ? t("master.categories.modals.edit_title") : t("master.categories.modals.add_title")}</Modal.Title>
       </Modal.Header>
@@ -194,21 +255,24 @@ const CategoryModal = ({
           <Row>
             <Col lg={12}>
               <Form.Group className="mb-3">
-                <Form.Label>{t("master.categories.fields.name")}</Form.Label>
+                <Form.Label htmlFor="category-name">{t("master.categories.fields.name")}</Form.Label>
                 <Form.Control
+                  id="category-name"
                   type="text"
                   placeholder={t("master.common.search_placeholder")}
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                   required
+                  data-testid="category-name-input"
                 />
               </Form.Group>
             </Col>
 
             <Col lg={12}>
               <Form.Group className="mb-3">
-                <Form.Label>{t("master.categories.fields.description")}</Form.Label>
+                <Form.Label htmlFor="category-description">{t("master.categories.fields.description")}</Form.Label>
                 <Form.Control
+                  id="category-description"
                   as="textarea"
                   rows={3}
                   placeholder={t("master.categories.placeholders.description")}
@@ -220,35 +284,38 @@ const CategoryModal = ({
             
             <Col lg={6}>
               <Form.Group className="mb-3">
-                <Form.Label>{t("master.categories.fields.module")}</Form.Label>
+                <Form.Label htmlFor="category-module">{t("master.categories.fields.module")}</Form.Label>
                 {isEdit ? (
                   <Form.Control
+                    id="category-module"
                     type="text"
                     value={formData.module ? t(`master.categories.modules.${formData.module}`) : ""}
                     disabled
                   />
                 ) : (
                   <Form.Select
+                    id="category-module"
                     value={formData.module}
                     onChange={(e) => setFormData({ ...formData, module: e.target.value })}
+                    data-testid="category-module-select"
                   >
                     <option value="">{t("master.categories.placeholders.select_module")}</option>
-                    <option value="finance">{t("master.categories.modules.finance")}</option>
-                    <option value="grocery">{t("master.categories.modules.grocery")}</option>
-                    <option value="inventory">{t("master.categories.modules.inventory")}</option>
-                    <option value="task">{t("master.categories.modules.task")}</option>
-                    <option value="medical">{t("master.categories.modules.medical")}</option>
-                    <option value="wishlist">{t("master.categories.modules.wishlist")}</option>
+                    {modules.map((moduleOption) => (
+                      <option key={moduleOption} value={moduleOption}>
+                        {t(`master.categories.modules.${moduleOption}`)}
+                      </option>
+                    ))}
                   </Form.Select>
                 )}
               </Form.Group>
             </Col>
 
-            {module === 'finance' && (
+            {formData.module === 'finance' && (
               <Col lg={6}>
                 <Form.Group className="mb-3">
-                  <Form.Label>{t("master.categories.fields.type")}</Form.Label>
+                  <Form.Label htmlFor="category-sub-type">{t("master.categories.fields.type")}</Form.Label>
                   <Form.Select
+                    id="category-sub-type"
                     value={formData.sub_type}
                     onChange={(e) => setFormData({ ...formData, sub_type: e.target.value })}
                   >
@@ -261,8 +328,9 @@ const CategoryModal = ({
 
             <Col lg={12}>
               <Form.Group className="mb-3">
-                <Form.Label>{t("master.categories.fields.parent")}</Form.Label>
+                <Form.Label htmlFor="category-parent">{t("master.categories.fields.parent")}</Form.Label>
                 <Select
+                  inputId="category-parent"
                   options={parentOptions}
                   value={parentOptions.find(o => String(o.value) === String(formData.parent_id)) || null}
                   onChange={(opt: any) => setFormData({ ...formData, parent_id: opt ? opt.value : "" })}
@@ -275,9 +343,10 @@ const CategoryModal = ({
             </Col>
 
             <Col lg={6}>
-              <Form.Group className="mb-3">
+              <Form.Group className="mb-3" controlId="category-icon">
                 <Form.Label>{t("master.categories.fields.icon")}</Form.Label>
                 <Select
+                    inputId="category-icon"
                     options={ICON_OPTIONS}
                     components={{ Option: IconOption, SingleValue: IconSingleValue }}
                     value={ICON_OPTIONS.find(o => o.value === formData.icon) || null}
@@ -288,9 +357,10 @@ const CategoryModal = ({
             </Col>
 
             <Col lg={6}>
-              <Form.Group className="mb-3">
+              <Form.Group className="mb-3" controlId="category-color">
                 <Form.Label>{t("master.categories.fields.color")}</Form.Label>
                 <Select
+                    inputId="category-color"
                     options={COLOR_OPTIONS}
                     components={{ Option: ColorOption, SingleValue: ColorSingleValue }}
                     value={COLOR_OPTIONS.find(o => o.value === formData.color) || null}
@@ -315,7 +385,7 @@ const CategoryModal = ({
         </Modal.Body>
         <Modal.Footer>
           <Button variant="light" onClick={onClose} disabled={loading}>{t("master.categories.buttons.cancel")}</Button>
-          <Button variant="primary" type="submit" disabled={loading}>
+          <Button variant="primary" type="submit" disabled={loading} data-testid="category-submit-btn">
             {loading ? t("master.categories.buttons.saving") : (isEdit ? t("master.categories.buttons.update") : t("master.categories.buttons.save"))}
           </Button>
         </Modal.Footer>

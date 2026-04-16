@@ -39,6 +39,12 @@ const useVoiceFeedback = () => {
             }
 
             unlockedRef.current = true;
+            
+            // Trik khusus Mobile (iOS/Android): harus call speak() di dalam user interaction event!
+            const unlockUtterance = new SpeechSynthesisUtterance("");
+            unlockUtterance.volume = 0; // bisu, hanya untuk mancing engine idle status
+            synthesisRef.current.speak(unlockUtterance);
+            
             synthesisRef.current.resume();
             loadVoices();
         };

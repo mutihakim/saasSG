@@ -4,17 +4,19 @@ type TenantRouteLike = {
     apiTo: (path?: string) => string;
 };
 
-export type VocabularyLanguage = "english" | "arabic";
+export type VocabularyLanguage = "english" | "arabic" | "mandarin";
 export type VocabularyMode = "learn" | "practice" | "memory_test";
 export type VocabularyTranslationDirection = "id_to_target" | "target_to_id";
 
 export interface VocabularyWordDto {
     id: number;
     bahasa_indonesia: string;
-    bahasa_inggris: string | null;
-    fonetik: string | null;
-    bahasa_arab: string | null;
-    fonetik_arab: string | null;
+    bahasa_inggris?: string | null;
+    bahasa_arab?: string | null;
+    fonetik?: string | null;
+    fonetik_arab?: string | null;
+    bahasa_mandarin?: string | null;
+    fonetik_mandarin?: string | null;
     kategori: string;
     hari: number;
 }
@@ -33,13 +35,16 @@ export interface VocabularyConfigResponse {
     modes: Array<{ value: VocabularyMode; label: string }>;
     directions: Array<{ value: VocabularyTranslationDirection; label: string }>;
     categories: Array<{ category: string; total_days: number; days: number[] }>;
-    default_mastered_threshold: number;
-    default_time_limit: number;
+    default_question_count?: number;
+    default_mastered_threshold?: number;
+    default_time_limit?: number;
+    mastered_days?: Record<string, Record<string, number[]>>;
 }
 
 export interface VocabularySetting {
     language: VocabularyLanguage;
     default_mode: VocabularyMode;
+    default_question_count: number;
     mastered_threshold: number;
     default_time_limit: number;
     auto_tts: boolean;
@@ -92,6 +97,17 @@ export interface VocabularySessionHistoryItem {
     duration_seconds: number;
     started_at: string | null;
     finished_at: string | null;
+    summary?: {
+        language?: string;
+        attempts?: Array<{
+            word_id: number;
+            prompt?: string;
+            correct_answer?: string;
+            selected_answer?: string;
+            correct?: boolean;
+            streak_after?: number;
+        }>;
+    } | null;
 }
 
 export interface VocabularyMasteredItem {

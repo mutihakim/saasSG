@@ -5,14 +5,13 @@ namespace Tests\Feature;
 use App\Models\Tenant\Tenant;
 use App\Models\Tenant\TenantMember;
 use App\Models\Identity\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use Illuminate\Support\Facades\Config;
 use Inertia\Testing\AssertableInertia as Assert;
 use Tests\TestCase;
 
 class TenantHubAccessTest extends TestCase
 {
-    use RefreshDatabase;
 
     private function provisionTenant(): array
     {
@@ -43,6 +42,7 @@ class TenantHubAccessTest extends TestCase
         // Mock the domain
         $url = "https://{$tenant->slug}.sanjo.my.id/";
 
+        $this->withoutExceptionHandling();
         $response = $this->actingAs($user)
             ->get($url);
 
@@ -98,8 +98,9 @@ class TenantHubAccessTest extends TestCase
     {
         [$user, $tenant] = $this->provisionTenant();
 
-        $this->actingAs($user)
-            ->get("https://{$tenant->slug}.sanjo.my.id/finance/home")
+        $this->actingAs($user);
+        $this->withoutExceptionHandling();
+        $this->get("https://{$tenant->slug}.sanjo.my.id/finance/home")
             ->assertOk()
             ->assertInertia(fn (Assert $page) => $page
                 ->component('Tenant/Finance/OverviewPage')
@@ -158,6 +159,7 @@ class TenantHubAccessTest extends TestCase
     {
         [$user, $tenant] = $this->provisionTenant();
 
+        $this->withoutExceptionHandling();
         $response = $this->get("https://{$tenant->slug}.sanjo.my.id/");
 
         $response->assertOk();

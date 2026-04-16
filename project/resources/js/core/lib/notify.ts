@@ -55,7 +55,7 @@ function withDefaults(options?: ToastOptions): ToastOptions {
 }
 
 type NotifyType = "success" | "error" | "warning" | "info";
-type ErrorInput = ReactNode | { title: string; detail?: string };
+type ErrorInput = ReactNode | { title: string; detail?: ReactNode };
 
 function buildTwoLineErrorMessage(input: ErrorInput): ReactNode {
     if (isValidElement(input)) {
@@ -64,7 +64,7 @@ function buildTwoLineErrorMessage(input: ErrorInput): ReactNode {
 
     if (typeof input === "object" && input !== null && "title" in input) {
         const title = String(input.title || "Terjadi kesalahan");
-        const detail = String(input.detail || "Silakan coba lagi beberapa saat lagi.");
+        const detail = input.detail || "Silakan coba lagi beberapa saat lagi.";
         return createElement(
             "div",
             null,
@@ -87,19 +87,13 @@ function buildTwoLineErrorMessage(input: ErrorInput): ReactNode {
 }
 
 function emit(type: NotifyType, message: ReactNode, options?: ToastOptions) {
-    const baseOptions = withDefaults({ ...options, toastId: GLOBAL_TOAST_ID });
-
-    if (toast.isActive(GLOBAL_TOAST_ID)) {
-        return toast.update(GLOBAL_TOAST_ID, {
-            ...baseOptions,
-            render: message,
-            type,
-            autoClose: baseOptions.autoClose ?? 3000,
-        });
-    }
+    // Dismiss all previous toasts immediately to ensure only one is visible.
+    // This is the snappiest way as it bypasses any queuing logic and 
+    // forces a fresh DOM element for the new toast.
+    toast.dismiss();
 
     return toast(message, {
-        ...baseOptions,
+        ...withDefaults(options),
         type,
     });
 }

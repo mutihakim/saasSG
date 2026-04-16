@@ -8,6 +8,7 @@ use App\Http\Requests\Tenant\UpdateTenantMemberRequest;
 use App\Jobs\TenantRoleSyncJob;
 use App\Models\Misc\ActivityLog;
 use App\Models\Tenant\TenantMember;
+use App\Services\Tenant\Finance\TenantFinanceBaselineService;
 use App\Support\ApiResponder;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\Request;
@@ -160,6 +161,8 @@ class TenantMemberApiController extends Controller
             'event_name' => 'tenant_member.created',
             'request_id' => $request->header('X-Request-Id'),
         ]);
+
+        app(TenantFinanceBaselineService::class)->ensureMemberFinanceBaseline($tenant, $member);
 
         $response = [
             'ok' => true,

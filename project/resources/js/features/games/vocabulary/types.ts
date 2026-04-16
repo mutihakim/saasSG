@@ -36,6 +36,7 @@ export type VocabularyFeedbackState = {
     isTimedOut?: boolean;
     message: string;
     correctAnswer?: string | null;
+    correctAnswerPhonetic?: string | null;
 };
 
 export type VocabularyCategoryOption = {
@@ -44,8 +45,14 @@ export type VocabularyCategoryOption = {
     count: number;
 };
 
+export type VocabularyOption = {
+    text: string;
+    phonetic: string | null;
+};
+
 export type VocabularySettingsMap = Record<string, {
     default_mode: VocabularyMode;
+    default_question_count: number;
     mastered_threshold: number;
     default_time_limit: number;
     auto_tts: boolean;
@@ -67,6 +74,8 @@ export type VocabularyController = {
     selectedCategory: string;
     selectedDay: number;
     autoTts: boolean;
+    questionCount: number;
+    sessionQuestionTarget: number;
     timeLimit: number;
     translationDirection: VocabularyTranslationDirection;
     masteredThreshold: number;
@@ -75,9 +84,7 @@ export type VocabularyController = {
     progressMap: Record<string, VocabularyProgressDto>;
     learnIndex: number;
     isFlipped: boolean;
-    practiceQueue: VocabularyWordDto[];
-    practiceIndex: number;
-    practiceOptions: string[];
+    practiceOptions: VocabularyOption[];
     selectedOption: number | null;
     correctOption: number | null;
     isAnswerLocked: boolean;
@@ -91,6 +98,7 @@ export type VocabularyController = {
     voiceEnabled: boolean;
     categoryOptions: VocabularyCategoryOption[];
     daysForCategory: number[];
+    masteredDaysForCategory: number[];
     hasCategories: boolean;
     hasDaysInSelectedCategory: boolean;
     currentLearnWord: VocabularyWordDto | null;
@@ -101,6 +109,7 @@ export type VocabularyController = {
     totalQuestions: number;
     correctCount: number;
     scorePercent: number;
+    isLevelMastered: boolean;
     isSessionActive: boolean;
     isMemoryTest: boolean;
     showMemoryTestDialog: boolean;
@@ -119,6 +128,7 @@ export type VocabularyController = {
     startPracticeMode: (forceMemoryTest?: boolean) => Promise<void>;
     startMemoryTest: () => Promise<void>;
     submitPracticeAnswer: (selectedIdx: number) => Promise<void>;
+    continuePractice: () => void;
     leaveToSetup: () => void;
     pronounce: (text: string, lang: string) => void;
 };

@@ -145,6 +145,12 @@ Route::middleware([
             Route::get('/games/vocabulary/mastered', [TenantHubController::class, 'gamesVocabularyMastered'])->name('tenant.games.vocabulary.mastered')->middleware('tenant.feature:games.vocabulary,view');
             Route::get('/games/vocabulary/history', [TenantHubController::class, 'gamesVocabularyHistory'])->name('tenant.games.vocabulary.history')->middleware('tenant.feature:games.vocabulary,view');
             Route::get('/games/vocabulary/settings', [TenantHubController::class, 'gamesVocabularySettings'])->name('tenant.games.vocabulary.settings')->middleware('tenant.feature:games.vocabulary,view');
+            Route::get('/games/tahfiz', [TenantHubController::class, 'gamesTahfiz'])->name('tenant.games.tahfiz');
+            Route::get('/games/tahfiz/history', [TenantHubController::class, 'gamesTahfizHistory'])->name('tenant.games.tahfiz.history');
+            Route::get('/games/tahfiz/settings', [TenantHubController::class, 'gamesTahfizSettings'])->name('tenant.games.tahfiz.settings');
+            Route::get('/games/curriculum', [TenantHubController::class, 'gamesCurriculum'])->name('tenant.games.curriculum')->middleware('tenant.feature:games.curriculum,view');
+            Route::get('/games/curriculum/history', [TenantHubController::class, 'gamesCurriculumHistory'])->name('tenant.games.curriculum.history')->middleware('tenant.feature:games.curriculum,view');
+            Route::get('/games/curriculum/settings', [TenantHubController::class, 'gamesCurriculumSettings'])->name('tenant.games.curriculum.settings')->middleware('tenant.feature:games.curriculum,view');
             Route::get('/whatsapp',  [TenantHubController::class, 'wa'])->name('tenant.wa');
             Route::get('/gallery',   [TenantHubController::class, 'gallery'])->name('tenant.gallery');
             Route::get('/blog',      [TenantHubController::class, 'blog'])->name('tenant.blog');
@@ -248,6 +254,8 @@ Route::middleware([
                 Route::get('/uom',        [TenantMasterUomController::class, 'index'])->name('uom');
             });
         }); // End prefix('admin')
+        
+
     });
 
     // --- SUPER ADMIN AREA (Central Domains Only) ---

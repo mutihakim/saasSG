@@ -44,8 +44,7 @@ const GameFeedbackPopup: React.FC<GameFeedbackPopupProps> = ({
 
     return (
         <div
-            className="game-feedback-popup position-fixed top-50 start-50 translate-middle animate__animated animate__zoomIn"
-            style={{ zIndex: 9999, minWidth: "280px", maxWidth: "400px", pointerEvents: "none" }}
+            className="game-feedback-popup game-feedback-popup__container position-fixed top-50 start-50 translate-middle animate__animated animate__zoomIn"
         >
             <Card className={`game-feedback-popup__card border-0 shadow-lg text-center bg-${variant} text-${textColor}`}>
                 <Card.Body className="p-4">

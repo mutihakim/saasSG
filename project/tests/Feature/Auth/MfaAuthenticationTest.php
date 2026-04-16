@@ -3,13 +3,12 @@
 namespace Tests\Feature\Auth;
 
 use App\Models\Identity\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use PragmaRX\Google2FA\Google2FA;
 use Tests\TestCase;
 
 class MfaAuthenticationTest extends TestCase
 {
-    use RefreshDatabase;
 
     public function test_user_with_confirmed_mfa_must_submit_code(): void
     {

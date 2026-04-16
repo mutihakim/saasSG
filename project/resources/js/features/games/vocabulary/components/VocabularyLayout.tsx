@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import GameFeatureLayout, { type GameFeatureMenuItem, type GameFeatureMenuKey } from "../../shared/components/GameFeatureLayout";
@@ -11,6 +11,27 @@ type VocabularyLayoutProps = {
     allowPageScroll?: boolean;
     onLeavingSession?: () => void;
     children: React.ReactNode;
+};
+
+const BackgroundPattern = () => {
+    // Generate pseudo-random positions once per load using lazy useState to satisfy purity
+    const [items] = useState(() => {
+        const emojis = ['📖', '✏️', '⭐', '✨', '📚'];
+        return Array.from({ length: 20 }).map((_, i) => ({
+            emoji: emojis[i % 5],
+            rotation: Math.random() * 360,
+        }));
+    });
+
+    return (
+        <div className="vocab-bg-pattern" aria-hidden="true">
+            {items.map((item: { emoji: string, rotation: number }, i: number) => (
+                <div key={i} className={`vocab-bg-emoji vocab-bg-emoji--${Math.round(item.rotation) % 6}`}>
+                    {item.emoji}
+                </div>
+            ))}
+        </div>
+    );
 };
 
 const VocabularyLayout: React.FC<VocabularyLayoutProps> = ({
@@ -42,6 +63,7 @@ const VocabularyLayout: React.FC<VocabularyLayoutProps> = ({
             onLeavingSession={onLeavingSession}
             featureClass="vocab-theme"
         >
+            <BackgroundPattern />
             {children}
         </GameFeatureLayout>
     );

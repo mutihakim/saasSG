@@ -30,5 +30,11 @@
   "api.error.UNAUTHENTICATED.detail": "Sesi Anda berakhir. Silakan login ulang lalu coba lagi.",
   "api.error.NOT_FOUND.title": "Resource tidak ditemukan",
   "api.error.PLAN_QUOTA_EXCEEDED.title": "Kuota paket penuh",
-  "api.error.VERSION_CONFLICT.title": "Konflik Data"
+  "api.error.VERSION_CONFLICT.title": "Konflik Data",
+  "api.error.UOM_IN_USE.title": "Satuan Sedang Digunakan",
+  "api.error.UOM_IN_USE.detail": "Satuan ukur tidak dapat dihapus karena digunakan sebagai pengali dasar (base unit) oleh satuan lain.",
+  "api.error.CURRENCY_IN_USE.title": "Mata Uang Sedang Digunakan",
+  "api.error.CURRENCY_IN_USE.detail": "Mata uang sedang digunakan dalam transaksi dan tidak dapat dihapus.",
+  "api.error.IS_SYSTEM_CURRENCY.title": "Mata Uang Sistem",
+  "api.error.IS_SYSTEM_CURRENCY.detail": "Merupakan mata uang utama sistem yang tidak dapat dihapus."
 }

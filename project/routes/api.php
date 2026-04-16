@@ -5,7 +5,12 @@ use App\Http\Controllers\Api\V1\Master\MasterTagApiController;
 use App\Http\Controllers\Api\V1\Master\MasterCurrencyApiController;
 use App\Http\Controllers\Api\V1\Master\MasterUomApiController;
 use App\Http\Controllers\Api\V1\Games\MathGameApiController;
+use App\Http\Controllers\Api\V1\Games\CurriculumEntitlementApiController;
+use App\Http\Controllers\Api\V1\Games\CurriculumGameApiController;
+use App\Http\Controllers\Api\V1\Games\CurriculumQuestionApiController;
+use App\Http\Controllers\Api\V1\Games\CurriculumUnitApiController;
 use App\Http\Controllers\Api\V1\Games\VocabularyApiController;
+use App\Http\Controllers\Api\V1\Games\TahfizApiController;
 use App\Http\Controllers\Api\V1\Finance\FinanceAccountApiController;
 use App\Http\Controllers\Api\V1\Finance\FinanceBudgetApiController;
 use App\Http\Controllers\Api\V1\Finance\FinanceBootstrapApiController;
@@ -110,6 +115,41 @@ Route::prefix('v1')
                     Route::post('/settings', [VocabularyApiController::class, 'updateSettings'])->middleware(['tenant.feature:games.vocabulary,update', 'throttle:tenant.mutation']);
                 });
 
+                Route::prefix('games/curriculum')->group(function () {
+                    Route::get('/config', [CurriculumGameApiController::class, 'config'])->middleware('tenant.feature:games.curriculum,view');
+                    Route::get('/units/{unitId}/questions', [CurriculumGameApiController::class, 'questions'])->middleware('tenant.feature:games.curriculum,view');
+                    Route::post('/attempt', [CurriculumGameApiController::class, 'attempt'])->middleware(['tenant.feature:games.curriculum,create', 'throttle:tenant.mutation']);
+                    Route::post('/session/finish', [CurriculumGameApiController::class, 'finish'])->middleware(['tenant.feature:games.curriculum,update', 'throttle:tenant.mutation']);
+                    Route::get('/history', [CurriculumGameApiController::class, 'history'])->middleware('tenant.feature:games.curriculum,view');
+                    Route::get('/settings', [CurriculumGameApiController::class, 'settings'])->middleware('tenant.feature:games.curriculum,view');
+                    Route::post('/settings', [CurriculumGameApiController::class, 'updateSettings'])->middleware(['tenant.feature:games.curriculum,update', 'throttle:tenant.mutation']);
+
+
+                    Route::get('/admin/units', [CurriculumUnitApiController::class, 'index'])->middleware('tenant.feature:games.curriculum,view');
+                    Route::post('/admin/units', [CurriculumUnitApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:games.curriculum,create', 'throttle:tenant.mutation']);
+                    Route::patch('/admin/units/{unit}', [CurriculumUnitApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:games.curriculum,update', 'throttle:tenant.mutation']);
+                    Route::delete('/admin/units/{unit}', [CurriculumUnitApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:games.curriculum,delete', 'throttle:tenant.mutation']);
+
+                    Route::get('/admin/units/{unitId}/questions', [CurriculumQuestionApiController::class, 'index'])->middleware('tenant.feature:games.curriculum,view');
+                    Route::post('/admin/units/{unitId}/questions', [CurriculumQuestionApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:games.curriculum,create', 'throttle:tenant.mutation']);
+                    Route::post('/admin/units/{unitId}/questions/import', [CurriculumQuestionApiController::class, 'bulkImport'])->middleware(['superadmin.impersonation', 'tenant.feature:games.curriculum,create', 'throttle:tenant.mutation']);
+                    Route::patch('/admin/questions/{question}', [CurriculumQuestionApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:games.curriculum,update', 'throttle:tenant.mutation']);
+                    Route::delete('/admin/questions/{question}', [CurriculumQuestionApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:games.curriculum,delete', 'throttle:tenant.mutation']);
+
+                    Route::get('/admin/entitlements', [CurriculumEntitlementApiController::class, 'index'])->middleware('tenant.feature:games.curriculum,view');
+                    Route::post('/admin/entitlements', [CurriculumEntitlementApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:games.curriculum,create', 'throttle:tenant.mutation']);
+                    Route::delete('/admin/entitlements/{entitlement}', [CurriculumEntitlementApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:games.curriculum,delete', 'throttle:tenant.mutation']);
+                });
+
+                Route::prefix('games/tahfiz')->group(function () {
+                    Route::get('/surahs', [TahfizApiController::class, 'surahs'])->middleware('tenant.feature:games.tahfiz,view');
+                    Route::get('/surahs/{id}', [TahfizApiController::class, 'surah'])->middleware('tenant.feature:games.tahfiz,view');
+                    Route::get('/settings', [TahfizApiController::class, 'settings'])->middleware('tenant.feature:games.tahfiz,view');
+                    Route::post('/settings', [TahfizApiController::class, 'updateSettings'])->middleware(['tenant.feature:games.tahfiz,update', 'throttle:tenant.mutation']);
+                    Route::get('/history', [TahfizApiController::class, 'history'])->middleware('tenant.feature:games.tahfiz,view');
+                    Route::post('/progress', [TahfizApiController::class, 'recordProgress'])->middleware(['tenant.feature:games.tahfiz,update', 'throttle:tenant.mutation']);
+                });
+
                 // ── Finance ────────────────────────────────────────────────────────────
                 Route::prefix('finance')->group(function () {
                     Route::get('/bootstrap', [FinanceBootstrapApiController::class, 'show'])->middleware('tenant.feature:finance,view');
@@ -187,12 +227,14 @@ Route::prefix('v1')
                     Route::get('/currencies', [MasterCurrencyApiController::class, 'index'])->middleware('tenant.feature:master.currencies,view');
                     Route::post('/currencies', [MasterCurrencyApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:master.currencies,create', 'throttle:tenant.mutation']);
                     Route::patch('/currencies/{currency}', [MasterCurrencyApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:master.currencies,update', 'throttle:tenant.mutation']);
+                    Route::delete('/currencies', [MasterCurrencyApiController::class, 'bulkDestroy'])->middleware(['superadmin.impersonation', 'tenant.feature:master.currencies,delete', 'throttle:tenant.mutation']);
                     Route::delete('/currencies/{currency}', [MasterCurrencyApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:master.currencies,delete', 'throttle:tenant.mutation']);
 
                     // Units of Measure
                     Route::get('/uom', [MasterUomApiController::class, 'index'])->middleware('tenant.feature:master.uom,view');
                     Route::post('/uom', [MasterUomApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:master.uom,create', 'throttle:tenant.mutation']);
                     Route::patch('/uom/{uom}', [MasterUomApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:master.uom,update', 'throttle:tenant.mutation']);
+                    Route::delete('/uom', [MasterUomApiController::class, 'bulkDestroy'])->middleware(['superadmin.impersonation', 'tenant.feature:master.uom,delete', 'throttle:tenant.mutation']);
                     Route::delete('/uom/{uom}', [MasterUomApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:master.uom,delete', 'throttle:tenant.mutation']);
                 });
             });

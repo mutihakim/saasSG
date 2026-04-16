@@ -90,7 +90,7 @@ const startApp = async () => {
                 root.render(
                     <>
                         <App {...props} />
-                        <ToastContainer closeButton={false} limit={1} newestOnTop />
+                        <ToastContainer closeButton={false} newestOnTop />
                     </>
                 );
             },

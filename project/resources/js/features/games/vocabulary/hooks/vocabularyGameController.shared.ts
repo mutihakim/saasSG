@@ -7,9 +7,10 @@ export const initialFeedbackState: VocabularyFeedbackState = {
     isTimedOut: false,
     message: "",
     correctAnswer: null,
+    correctAnswerPhonetic: null,
 };
 
-export const ANSWER_LOCK_MS = 2000;
+
 
 export const normalizeProgress = (
     current: VocabularyProgressDto | undefined,
@@ -22,5 +23,5 @@ export const normalizeProgress = (
     jumlah_salah: (current?.jumlah_salah ?? 0) + (isCorrect ? 0 : 1),
     correct_streak: nextStreak,
     max_streak: Math.max(current?.max_streak ?? 0, nextStreak),
-    is_mastered: Math.max(current?.max_streak ?? 0, nextStreak) >= masteredThreshold,
+    is_mastered: nextStreak >= masteredThreshold,
 });

@@ -13,6 +13,7 @@ use Illuminate\Support\Facades\DB;
 
 class VocabularyGameService
 {
+    public const DEFAULT_QUESTION_COUNT = 6;
     public const DEFAULT_MASTERED_THRESHOLD = 8;
     public const DEFAULT_TIME_LIMIT = 8;
     public const DEFAULT_TRANSLATION_DIRECTION = 'id_to_target';
@@ -23,21 +24,15 @@ class VocabularyGameService
 
     public function config(Tenant $tenant, TenantMember $member): array
     {
-        $words = TenantGameVocabularyWord::query()
-            ->where(function ($query) use ($tenant) {
-                $query->whereNull('tenant_id')
-                    ->orWhere('tenant_id', $tenant->id);
-            })
-            ->orderBy('kategori')
-            ->orderBy('hari')
-            ->get(['id', 'tenant_id', 'kategori', 'hari']);
-
-        $categoryDays = [];
-        foreach ($words as $word) {
-            $categoryDays[(string) $word->kategori][(int) $word->hari] = true;
+        $effectiveWords = $this->effectiveWordsForTenant((int) $tenant->id);
+        $effectiveWordIdsByCategoryDay = [];
+        foreach ($effectiveWords as $word) {
+            $category = (string) $word->kategori;
+            $day = (int) $word->hari;
+            $effectiveWordIdsByCategoryDay[$category][$day][] = (int) $word->id;
         }
 
-        $categories = collect($categoryDays)->map(function (array $days, string $category) {
+        $categories = collect($effectiveWordIdsByCategoryDay)->map(function (array $days, string $category) {
             $dayList = array_keys($days);
             sort($dayList);
 
@@ -51,11 +46,12 @@ class VocabularyGameService
         $settings = TenantGameVocabularySetting::query()
             ->where('tenant_id', $tenant->id)
             ->where('member_id', $member->id)
-            ->get(['language', 'default_mode', 'mastered_threshold', 'default_time_limit', 'auto_tts', 'translation_direction'])
+            ->get(['language', 'default_mode', 'default_question_count', 'mastered_threshold', 'default_time_limit', 'auto_tts', 'translation_direction'])
             ->mapWithKeys(static fn (TenantGameVocabularySetting $setting) => [
                 (string) $setting->language => [
                     'language' => (string) $setting->language,
                     'default_mode' => (string) $setting->default_mode,
+                    'default_question_count' => (int) ($setting->default_question_count ?? self::DEFAULT_QUESTION_COUNT),
                     'mastered_threshold' => (int) $setting->mastered_threshold,
                     'default_time_limit' => (int) $setting->default_time_limit,
                     'auto_tts' => (bool) $setting->auto_tts,
@@ -64,11 +60,78 @@ class VocabularyGameService
             ])
             ->all();
 
+        $thresholds = collect($settings)
+            ->map(fn (array $setting) => (int) $setting['mastered_threshold'])
+            ->all();
+
+        $stats = TenantGameVocabularyStat::query()
+            ->where('tenant_game_vocabulary_progress.tenant_id', $tenant->id)
+            ->where('tenant_game_vocabulary_progress.member_id', $member->id)
+            ->whereIn('tenant_game_vocabulary_progress.word_id', $effectiveWords->pluck('id')->all())
+            ->get(['language', 'word_id', 'correct_streak']);
+
+        $masteredDays = [];
+        $masteredCountByLanguageCategoryDay = [];
+        foreach ($stats as $stat) {
+            $lang = (string) $stat->language;
+            $threshold = $thresholds[$lang] ?? self::DEFAULT_MASTERED_THRESHOLD;
+
+            if ((int) $stat->correct_streak < $threshold) {
+                continue;
+            }
+
+            $word = $effectiveWords->firstWhere('id', (int) $stat->word_id);
+            if (! $word) {
+                continue;
+            }
+
+            $category = (string) $word->kategori;
+            $day = (int) $word->hari;
+
+            if (! isset($masteredCountByLanguageCategoryDay[$lang][$category][$day])) {
+                $masteredCountByLanguageCategoryDay[$lang][$category][$day] = 0;
+            }
+
+            $masteredCountByLanguageCategoryDay[$lang][$category][$day]++;
+        }
+
+        $languages = $stats->pluck('language')
+            ->map(fn ($language) => (string) $language)
+            ->merge(array_keys($thresholds))
+            ->unique()
+            ->values()
+            ->all();
+
+        foreach ($effectiveWordIdsByCategoryDay as $category => $days) {
+            foreach ($days as $day => $wordIds) {
+                $total = count($wordIds);
+                if ($total === 0) {
+                    continue;
+                }
+
+                foreach ($languages as $language) {
+                    $mastered = (int) ($masteredCountByLanguageCategoryDay[$language][$category][$day] ?? 0);
+                    if ($mastered >= $total) {
+                        $masteredDays[$language][$category][] = (int) $day;
+                    }
+                }
+            }
+        }
+
+        foreach ($masteredDays as $language => $categoriesForLanguage) {
+            foreach ($categoriesForLanguage as $category => $days) {
+                $uniqueDays = array_values(array_unique(array_map('intval', $days)));
+                sort($uniqueDays);
+                $masteredDays[$language][$category] = $uniqueDays;
+            }
+        }
+
         return [
             'config' => [
                 'languages' => [
                     ['value' => 'english', 'label' => 'Inggris'],
                     ['value' => 'arabic', 'label' => 'Arab'],
+                    ['value' => 'mandarin', 'label' => 'Mandarin'],
                 ],
                 'modes' => [
                     ['value' => 'learn', 'label' => 'Learn'],
@@ -79,8 +142,10 @@ class VocabularyGameService
                     ['value' => 'target_to_id', 'label' => 'Bahasa Pilihan -> Indonesia'],
                 ],
                 'categories' => $categories,
+                'default_question_count' => self::DEFAULT_QUESTION_COUNT,
                 'default_mastered_threshold' => self::DEFAULT_MASTERED_THRESHOLD,
                 'default_time_limit' => self::DEFAULT_TIME_LIMIT,
+                'mastered_days' => $masteredDays,
             ],
             'settings' => $settings,
         ];
@@ -236,6 +301,7 @@ class VocabularyGameService
             ->get([
                 'id',
                 'metadata',
+                'summary',
                 'question_count',
                 'correct_count',
                 'wrong_count',
@@ -259,6 +325,7 @@ class VocabularyGameService
                 'duration_seconds' => (int) $session->duration_seconds,
                 'started_at' => $session->started_at,
                 'finished_at' => $session->finished_at,
+                'summary' => is_array($session->summary) ? $session->summary : ($session->summary ? json_decode($session->summary, true) : null),
             ])
             ->values()
             ->all();
@@ -306,6 +373,8 @@ class VocabularyGameService
                     'fonetik' => $stat->word->fonetik !== null ? (string) $stat->word->fonetik : null,
                     'bahasa_arab' => $stat->word->bahasa_arab !== null ? (string) $stat->word->bahasa_arab : null,
                     'fonetik_arab' => $stat->word->fonetik_arab !== null ? (string) $stat->word->fonetik_arab : null,
+                    'bahasa_mandarin' => $stat->word->bahasa_mandarin !== null ? (string) $stat->word->bahasa_mandarin : null,
+                    'fonetik_mandarin' => $stat->word->fonetik_mandarin !== null ? (string) $stat->word->fonetik_mandarin : null,
                     'kategori' => (string) $stat->word->kategori,
                     'hari' => (int) $stat->word->hari,
                 ],
@@ -325,10 +394,11 @@ class VocabularyGameService
         }
 
         return $query
-            ->get(['language', 'default_mode', 'mastered_threshold', 'default_time_limit', 'auto_tts', 'translation_direction'])
+            ->get(['language', 'default_mode', 'default_question_count', 'mastered_threshold', 'default_time_limit', 'auto_tts', 'translation_direction'])
             ->map(static fn (TenantGameVocabularySetting $setting) => [
                 'language' => (string) $setting->language,
                 'default_mode' => (string) $setting->default_mode,
+                'default_question_count' => (int) ($setting->default_question_count ?? self::DEFAULT_QUESTION_COUNT),
                 'mastered_threshold' => (int) $setting->mastered_threshold,
                 'default_time_limit' => (int) $setting->default_time_limit,
                 'auto_tts' => (bool) $setting->auto_tts,
@@ -348,6 +418,7 @@ class VocabularyGameService
             ],
             [
                 'default_mode' => $data['default_mode'],
+                'default_question_count' => $data['default_question_count'],
                 'mastered_threshold' => $data['mastered_threshold'],
                 'default_time_limit' => $data['default_time_limit'],
                 'auto_tts' => $data['auto_tts'],
@@ -367,32 +438,55 @@ class VocabularyGameService
 
     private function fetchEffectiveWords(int $tenantId, string $category, ?int $day): Collection
     {
-        $query = TenantGameVocabularyWord::query()
-            ->where('kategori', $category)
-            ->where(function ($inner) use ($tenantId) {
-                $inner->whereNull('tenant_id')
-                    ->orWhere('tenant_id', $tenantId);
-            });
+        $query = $this->effectiveWordsBaseQuery($tenantId)
+            ->where('kategori', $category);
 
         if ($day !== null) {
             $query->where('hari', $day);
         }
 
-        $rows = $query
-            ->orderByRaw('(tenant_id IS NULL) ASC')
-            ->orderBy('id')
-            ->get([
-                'id',
-                'tenant_id',
-                'bahasa_indonesia',
-                'bahasa_inggris',
-                'fonetik',
-                'bahasa_arab',
-                'fonetik_arab',
-                'kategori',
-                'hari',
-            ]);
+        return $this->collapseEffectiveWords($query->get($this->effectiveWordColumns()));
+    }
 
+    private function effectiveWordsForTenant(int $tenantId): Collection
+    {
+        return $this->collapseEffectiveWords(
+            $this->effectiveWordsBaseQuery($tenantId)->get($this->effectiveWordColumns())
+        );
+    }
+
+    private function effectiveWordsBaseQuery(int $tenantId)
+    {
+        return TenantGameVocabularyWord::query()
+            ->where(function ($inner) use ($tenantId) {
+                $inner->whereNull('tenant_id')
+                    ->orWhere('tenant_id', $tenantId);
+            })
+            ->orderBy('kategori')
+            ->orderBy('hari')
+            ->orderByRaw('(tenant_id IS NULL) ASC')
+            ->orderBy('id');
+    }
+
+    private function effectiveWordColumns(): array
+    {
+        return [
+            'id',
+            'tenant_id',
+            'bahasa_indonesia',
+            'bahasa_inggris',
+            'fonetik',
+            'bahasa_arab',
+            'fonetik_arab',
+            'bahasa_mandarin',
+            'fonetik_mandarin',
+            'kategori',
+            'hari',
+        ];
+    }
+
+    private function collapseEffectiveWords(Collection $rows): Collection
+    {
         $effective = [];
         foreach ($rows as $row) {
             $key = mb_strtolower(trim((string) $row->bahasa_indonesia)).'|'.$row->kategori.'|'.$row->hari;
@@ -413,6 +507,8 @@ class VocabularyGameService
             'fonetik' => $word->fonetik !== null ? (string) $word->fonetik : null,
             'bahasa_arab' => $word->bahasa_arab !== null ? (string) $word->bahasa_arab : null,
             'fonetik_arab' => $word->fonetik_arab !== null ? (string) $word->fonetik_arab : null,
+            'bahasa_mandarin' => $word->bahasa_mandarin !== null ? (string) $word->bahasa_mandarin : null,
+            'fonetik_mandarin' => $word->fonetik_mandarin !== null ? (string) $word->fonetik_mandarin : null,
             'kategori' => (string) $word->kategori,
             'hari' => (int) $word->hari,
         ];

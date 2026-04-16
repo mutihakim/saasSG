@@ -1,0 +1,653 @@
+<?php
+
+namespace Tests\Feature\Apps\Finance;
+
+use App\Models\Finance\FinanceWallet;
+use App\Models\Finance\FinanceSavingsGoal;
+use App\Models\Finance\FinanceTransaction;
+use App\Models\Tenant\Tenant;
+use App\Models\Master\TenantBankAccount;
+use App\Models\Master\TenantCategory;
+use App\Models\Master\TenantCurrency;
+use App\Models\Tenant\TenantMember;
+use App\Models\Finance\TenantBudget;
+use App\Services\Finance\MonthlyReviewService;
+use App\Models\Identity\User;
+use App\Models\Finance\WalletWish;
+
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\PermissionRegistrar;
+use Tests\TestCase;
+
+class WalletApiTest extends TestCase
+{
+
+    private Tenant $tenant;
+    private User $owner;
+    private TenantMember $ownerMembership;
+    private TenantMember $memberAbi;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->owner = User::factory()->create();
+        $this->tenant = Tenant::factory()->create([
+            'slug' => 'wallet-test',
+            'owner_user_id' => $this->owner->id,
+            'plan_code' => 'pro',
+            'currency_code' => 'IDR',
+        ]);
+
+        $this->ownerMembership = TenantMember::create([
+            'tenant_id' => $this->tenant->id,
+            'user_id' => $this->owner->id,
+            'full_name' => 'Wallet Owner',
+            'role_code' => 'owner',
+            'profile_status' => 'active',
+        ]);
+
+        $this->memberAbi = TenantMember::create([
+            'tenant_id' => $this->tenant->id,
+            'full_name' => 'Abi',
+            'role_code' => 'member',
+            'profile_status' => 'active',
+        ]);
+
+        TenantCurrency::create([
+            'tenant_id' => $this->tenant->id,
+            'code' => 'IDR',
+            'name' => 'Indonesian Rupiah',
+            'symbol' => 'Rp',
+            'symbol_position' => 'before',
+            'decimal_places' => 0,
+            'exchange_rate' => 1,
+            'is_active' => true,
+            'sort_order' => 1,
+        ]);
+
+        foreach (['finance.view', 'finance.create', 'finance.update', 'finance.delete'] as $permission) {
+            Permission::findOrCreate($permission, 'web');
+        }
+
+        app(PermissionRegistrar::class)->setPermissionsTeamId($this->tenant->id);
+        $this->owner->givePermissionTo(['finance.view', 'finance.create', 'finance.update', 'finance.delete']);
+    }
+
+    public function test_wallet_account_creation_creates_main_pocket(): void
+    {
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts", [
+                'name' => 'BCA',
+                'scope' => 'private',
+                'type' => 'bank',
+                'currency_code' => 'IDR',
+                'owner_member_id' => $this->ownerMembership->id,
+                'opening_balance' => 250000,
+                'notes' => 'Primary bank',
+            ]);
+
+        $response->assertCreated();
+        $accountId = $response->json('data.account.id');
+
+        $this->assertDatabaseHas('finance_wallets', [
+            'tenant_id' => $this->tenant->id,
+            'real_account_id' => $accountId,
+            'is_system' => true,
+            'type' => 'main',
+        ]);
+    }
+
+    public function test_finance_only_transaction_without_pocket_uses_main_pocket(): void
+    {
+        $this->tenant->update(['plan_code' => 'free']);
+
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Cash',
+            'scope' => 'private',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 100000,
+            'current_balance' => 100000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $category = TenantCategory::create([
+            'tenant_id' => $this->tenant->id,
+            'module' => 'finance',
+            'name' => 'Food',
+            'slug' => 'food',
+            'sub_type' => 'pengeluaran',
+            'is_active' => true,
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/transactions", [
+                'type' => 'pengeluaran',
+                'amount' => 30000,
+                'currency_code' => 'IDR',
+                'exchange_rate' => 1,
+                'category_id' => $category->id,
+                'transaction_date' => now()->toDateString(),
+                'bank_account_id' => $account->id,
+                'owner_member_id' => $this->ownerMembership->id,
+                'description' => 'Dinner',
+            ]);
+
+        $response->assertCreated();
+        $transactionPocketId = $response->json('data.transaction.wallet_id');
+
+        $this->assertNotNull($transactionPocketId);
+        $this->assertDatabaseHas('finance_wallets', [
+            'id' => $transactionPocketId,
+            'real_account_id' => $account->id,
+            'is_system' => true,
+        ]);
+    }
+
+    public function test_account_and_pocket_show_endpoints_return_full_detail_metrics(): void
+    {
+        $currencyId = TenantCurrency::query()
+            ->where('tenant_id', $this->tenant->id)
+            ->value('id');
+
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Cash Detail',
+            'scope' => 'private',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 100000,
+            'current_balance' => 160000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
+        $mainPocket = FinanceWallet::query()
+            ->where('tenant_id', $this->tenant->id)
+            ->where('real_account_id', $account->id)
+            ->where('is_system', true)
+            ->firstOrFail();
+
+        FinanceSavingsGoal::create([
+            'tenant_id' => $this->tenant->id,
+            'wallet_id' => $mainPocket->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Emergency',
+            'target_amount' => 300000,
+            'current_amount' => 25000,
+            'status' => 'active',
+            'row_version' => 1,
+        ]);
+
+        FinanceTransaction::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'created_by' => $this->ownerMembership->id,
+            'bank_account_id' => $account->id,
+            'wallet_id' => $mainPocket->id,
+            'type' => 'pemasukan',
+            'transaction_date' => now()->toDateString(),
+            'currency_id' => $currencyId,
+            'currency_code' => 'IDR',
+            'exchange_rate' => 1,
+            'amount' => 60000,
+            'amount_base' => 60000,
+            'description' => 'Salary topup',
+            'tags' => [],
+        ]);
+
+        FinanceTransaction::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'created_by' => $this->ownerMembership->id,
+            'bank_account_id' => $account->id,
+            'wallet_id' => $mainPocket->id,
+            'type' => 'pengeluaran',
+            'transaction_date' => now()->toDateString(),
+            'currency_id' => $currencyId,
+            'currency_code' => 'IDR',
+            'exchange_rate' => 1,
+            'amount' => 15000,
+            'amount_base' => 15000,
+            'description' => 'Groceries',
+            'tags' => [],
+        ]);
+
+        $accountResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$account->id}");
+
+        $accountResponse->assertOk()
+            ->assertJsonPath('data.account.id', $account->id)
+            ->assertJsonPath('data.account.total_inflow', 60000)
+            ->assertJsonPath('data.account.total_outflow', 15000)
+            ->assertJsonPath('data.account.goal_reserved_total', 25000);
+
+        $pocketResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->getJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets/{$mainPocket->id}");
+
+        $pocketResponse->assertOk()
+            ->assertJsonPath('data.wallet.id', $mainPocket->id)
+            ->assertJsonPath('data.wallet.total_inflow', 60000)
+            ->assertJsonPath('data.wallet.total_outflow', 15000)
+            ->assertJsonPath('data.wallet.goal_reserved_total', 25000);
+    }
+
+    public function test_free_plan_cannot_create_additional_wallet_beyond_default(): void
+    {
+        $this->tenant->update(['plan_code' => 'free']);
+
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Cash',
+            'scope' => 'private',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 100000,
+            'current_balance' => 100000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets", [
+                'name' => 'Dana Umroh',
+                'type' => 'personal',
+                'scope' => 'private',
+                'real_account_id' => $account->id,
+                'purpose_type' => 'spending',
+                'owner_member_id' => $this->ownerMembership->id,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error_code', 'PLAN_QUOTA_EXCEEDED');
+    }
+
+    public function test_enterprise_plan_can_create_wallet_goal_and_wish_without_quota_limit(): void
+    {
+        $this->tenant->update(['plan_code' => 'enterprise']);
+
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Enterprise Cash',
+            'scope' => 'private',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 1000000,
+            'current_balance' => 1000000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
+
+        foreach (range(1, 12) as $i) {
+            FinanceWallet::create([
+                'tenant_id' => $this->tenant->id,
+                'real_account_id' => $account->id,
+                'owner_member_id' => $this->ownerMembership->id,
+                'name' => "Wallet {$i}",
+                'slug' => "wallet-{$i}",
+                'type' => 'personal',
+                'purpose_type' => 'spending',
+                'is_system' => false,
+                'scope' => 'private',
+                'currency_code' => 'IDR',
+                'reference_code' => 'WLT-ENT-' . str_pad((string) $i, 4, '0', STR_PAD_LEFT),
+                'current_balance' => 0,
+                'is_active' => true,
+                'row_version' => 1,
+            ]);
+        }
+
+        foreach (range(1, 12) as $i) {
+            FinanceSavingsGoal::create([
+                'tenant_id' => $this->tenant->id,
+                'wallet_id' => FinanceWallet::query()->where('tenant_id', $this->tenant->id)->where('is_system', false)->firstOrFail()->id,
+                'owner_member_id' => $this->ownerMembership->id,
+                'name' => "Goal {$i}",
+                'target_amount' => 100000,
+                'current_amount' => 0,
+                'status' => 'active',
+                'row_version' => 1,
+            ]);
+            WalletWish::create([
+                'tenant_id' => $this->tenant->id,
+                'owner_member_id' => $this->ownerMembership->id,
+                'title' => "Wish {$i}",
+                'priority' => 'medium',
+                'status' => 'pending',
+                'row_version' => 1,
+            ]);
+        }
+
+        $walletResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets", [
+                'name' => 'Wallet Unlimited',
+                'type' => 'project',
+                'scope' => 'private',
+                'real_account_id' => $account->id,
+                'purpose_type' => 'spending',
+                'owner_member_id' => $this->ownerMembership->id,
+            ]);
+        $walletResponse->assertCreated();
+
+        $walletId = $walletResponse->json('data.wallet.id');
+
+        $goalResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/goals", [
+                'wallet_id' => $walletId,
+                'name' => 'Goal Unlimited',
+                'target_amount' => 250000,
+            ]);
+        $goalResponse->assertCreated();
+
+        $wishResponse = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wishes", [
+                'title' => 'Wish Unlimited',
+                'priority' => 'high',
+            ]);
+        $wishResponse->assertCreated();
+    }
+
+
+    public function test_account_sharing_update_syncs_main_pocket_scope_owner_and_access(): void
+    {
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Shared Ops',
+            'scope' => 'private',
+            'type' => 'bank',
+            'currency_code' => 'IDR',
+            'opening_balance' => 150000,
+            'current_balance' => 150000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $mainPocket = app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$account->id}", [
+                'name' => 'Shared Ops',
+                'scope' => 'shared',
+                'type' => 'bank',
+                'currency_code' => 'IDR',
+                'owner_member_id' => $this->ownerMembership->id,
+                'opening_balance' => 150000,
+                'notes' => 'Updated',
+                'is_active' => true,
+                'row_version' => 1,
+                'member_access' => [
+                    [
+                        'id' => $this->memberAbi->id,
+                        'can_view' => true,
+                        'can_use' => true,
+                        'can_manage' => false,
+                    ],
+                ],
+            ]);
+
+        $response->assertOk()
+            ->assertJsonPath('data.account.scope', 'shared');
+
+        $mainPocket->refresh();
+
+        $this->assertSame('shared', $mainPocket->scope);
+        $this->assertSame($this->ownerMembership->id, $mainPocket->owner_member_id);
+        $this->assertDatabaseHas('finance_wallet_member_access', [
+            'finance_wallet_id' => $mainPocket->id,
+            'member_id' => $this->memberAbi->id,
+            'can_view' => true,
+            'can_use' => true,
+            'can_manage' => false,
+        ]);
+    }
+
+    public function test_private_account_cannot_create_shared_wallet(): void
+    {
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Private Parent',
+            'scope' => 'private',
+            'type' => 'bank',
+            'currency_code' => 'IDR',
+            'opening_balance' => 100000,
+            'current_balance' => 100000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets", [
+                'name' => 'Tim Operasional',
+                'type' => 'family',
+                'purpose_type' => 'spending',
+                'scope' => 'shared',
+                'real_account_id' => $account->id,
+                'owner_member_id' => $this->ownerMembership->id,
+            ]);
+
+        $response->assertStatus(422)
+            ->assertJsonPath('error_code', 'WALLET_SCOPE_EXCEEDS_ACCOUNT_SCOPE');
+    }
+
+    public function test_shared_wallet_inherits_account_access_and_custom_type(): void
+    {
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Family Shared',
+            'scope' => 'shared',
+            'type' => 'bank',
+            'currency_code' => 'IDR',
+            'opening_balance' => 300000,
+            'current_balance' => 300000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $account->memberAccess()->sync([
+            $this->memberAbi->id => ['can_view' => true, 'can_use' => true, 'can_manage' => false],
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->postJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets", [
+                'name' => 'Dana Sekolah',
+                'type' => 'school fund',
+                'purpose_type' => 'saving',
+                'scope' => 'shared',
+                'real_account_id' => $account->id,
+                'owner_member_id' => $this->memberAbi->id,
+                'member_access' => [
+                    [
+                        'id' => $this->memberAbi->id,
+                        'can_view' => false,
+                        'can_use' => false,
+                        'can_manage' => true,
+                    ],
+                ],
+            ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.wallet.type', 'school fund')
+            ->assertJsonPath('data.wallet.scope', 'shared')
+            ->assertJsonPath('data.wallet.owner_member_id', $this->ownerMembership->id);
+
+        $walletId = $response->json('data.wallet.id');
+
+        $this->assertDatabaseHas('finance_wallet_member_access', [
+            'finance_wallet_id' => $walletId,
+            'member_id' => $this->memberAbi->id,
+            'can_view' => true,
+            'can_use' => true,
+            'can_manage' => false,
+        ]);
+    }
+
+    public function test_account_scope_change_to_private_converts_shared_child_wallet_to_private(): void
+    {
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Shared Parent',
+            'scope' => 'shared',
+            'type' => 'bank',
+            'currency_code' => 'IDR',
+            'opening_balance' => 250000,
+            'current_balance' => 250000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $account->memberAccess()->sync([
+            $this->memberAbi->id => ['can_view' => true, 'can_use' => true, 'can_manage' => false],
+        ]);
+
+        $wallet = FinanceWallet::create([
+            'tenant_id' => $this->tenant->id,
+            'real_account_id' => $account->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Dana Komunal',
+            'slug' => 'dana-komunal',
+            'type' => 'family',
+            'purpose_type' => 'saving',
+            'is_system' => false,
+            'scope' => 'shared',
+            'currency_code' => 'IDR',
+            'reference_code' => 'WLT-SHARED01',
+            'icon_key' => 'ri-safe-2-line',
+            'current_balance' => 100000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+        $wallet->memberAccess()->sync([
+            $this->memberAbi->id => ['can_view' => true, 'can_use' => true, 'can_manage' => false],
+        ]);
+
+        $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/accounts/{$account->id}", [
+                'name' => 'Shared Parent',
+                'scope' => 'private',
+                'type' => 'bank',
+                'currency_code' => 'IDR',
+                'owner_member_id' => $this->ownerMembership->id,
+                'opening_balance' => 250000,
+                'notes' => '',
+                'is_active' => true,
+                'row_version' => 1,
+                'member_access' => [],
+            ])
+            ->assertOk();
+
+        $wallet->refresh();
+
+        $this->assertSame('private', $wallet->scope);
+        $this->assertSame($this->ownerMembership->id, $wallet->owner_member_id);
+        $this->assertDatabaseMissing('finance_wallet_member_access', [
+            'finance_wallet_id' => $wallet->id,
+            'member_id' => $this->memberAbi->id,
+        ]);
+    }
+
+    public function test_system_wallet_allows_partial_update_but_keeps_inherited_fields_locked(): void
+    {
+        $account = TenantBankAccount::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Cash',
+            'scope' => 'private',
+            'type' => 'cash',
+            'currency_code' => 'IDR',
+            'opening_balance' => 100000,
+            'current_balance' => 100000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+
+        $mainPocket = app(\App\Services\Finance\Wallet\FinanceWalletService::class)->ensureMainPocket($account);
+
+        $budget = TenantBudget::create([
+            'tenant_id' => $this->tenant->id,
+            'owner_member_id' => $this->ownerMembership->id,
+            'name' => 'Operasional',
+            'code' => 'OPS',
+            'budget_key' => 'operasional',
+            'scope' => 'private',
+            'period_month' => now()->format('Y-m'),
+            'allocated_amount' => 500000,
+            'spent_amount' => 0,
+            'remaining_amount' => 500000,
+            'is_active' => true,
+            'row_version' => 1,
+        ]);
+        $budget->memberAccess()->sync([
+            $this->ownerMembership->id => ['can_view' => true, 'can_use' => true, 'can_manage' => true],
+        ]);
+
+        $response = $this->actingAs($this->owner)
+            ->withHeader('X-Tenant', $this->tenant->slug)
+            ->patchJson("/api/v1/tenants/{$this->tenant->slug}/finance/wallets/{$mainPocket->id}", [
+                'name' => 'Hacked Name',
+                'type' => 'personal',
+                'purpose_type' => 'spending',
+                'background_color' => '#06b6d4',
+                'scope' => 'shared',
+                'real_account_id' => $account->id,
+                'owner_member_id' => $this->memberAbi->id,
+                'default_budget_id' => $budget->id,
+                'default_budget_key' => $budget->budget_key,
+                'budget_lock_enabled' => true,
+                'icon_key' => 'ri-safe-2-line',
+                'notes' => 'Should not update',
+                'is_active' => false,
+                'member_access' => [
+                    [
+                        'id' => $this->memberAbi->id,
+                        'can_view' => true,
+                        'can_use' => true,
+                        'can_manage' => true,
+                    ],
+                ],
+                'row_version' => 1,
+            ]);
+
+        $response->assertOk();
+
+        $mainPocket->refresh();
+
+        $this->assertSame('Utama', $mainPocket->name);
+        $this->assertSame('main', $mainPocket->type);
+        $this->assertSame('private', $mainPocket->scope);
+        $this->assertSame($this->ownerMembership->id, $mainPocket->owner_member_id);
+        $this->assertTrue((bool) $mainPocket->is_active);
+        $this->assertSame('ri-safe-2-line', $mainPocket->icon_key);
+        $this->assertSame('#06b6d4', $mainPocket->background_color);
+        $this->assertSame($budget->id, $mainPocket->default_budget_id);
+        $this->assertTrue((bool) $mainPocket->budget_lock_enabled);
+    }
+
+}

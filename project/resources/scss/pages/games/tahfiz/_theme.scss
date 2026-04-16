@@ -1,0 +1,41 @@
+// Tahfiz Module Theme Colors
+$tahfiz-emerald: #064e3b;
+$tahfiz-emerald-light: #ecf3f0;
+$tahfiz-gold: #b45309;
+$tahfiz-gold-light: #fef3c7;
+
+.tahfiz-theme.math-game-layout {
+    background-color: $tahfiz-emerald-light;
+    background-image: radial-gradient(rgba($tahfiz-emerald, 0.08) 20%, transparent 20%), radial-gradient(rgba($tahfiz-emerald, 0.08) 20%, transparent 20%);
+    background-size: 20px 20px;
+    background-position: 0 0, 10px 10px;
+
+    .math-game-layout__topbar {
+        background: transparent;
+        border-bottom: none;
+    }
+
+    .math-game-layout__title {
+        font-family: "Georgia", serif;
+        font-size: 1.3rem;
+        color: $tahfiz-emerald;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+    }
+
+    .math-game-layout__topbar .btn-light {
+        background: rgba($tahfiz-emerald, 0.1);
+        border: 1px solid rgba($tahfiz-emerald, 0.2);
+        color: $tahfiz-emerald;
+        border-radius: 999px;
+        backdrop-filter: blur(4px);
+    }
+}
+
+// Global Quranic Typography support
+.quran-text {
+    font-family: "Amiri", serif;
+    direction: rtl;
+    line-height: 2;
+    text-align: center;
+}

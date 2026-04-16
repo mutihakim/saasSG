@@ -19,6 +19,8 @@ return [
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
                 'games.math'        => [],
                 'games.vocabulary'  => [],
+                'games.curriculum'  => [],
+                'games.tahfiz'      => [],
             ],
             'limits' => [
                 'team.members.max'             => 1,
@@ -52,6 +54,8 @@ return [
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
                 'games.math'        => ['view', 'create', 'update'],
                 'games.vocabulary'  => ['view', 'create', 'update'],
+                'games.curriculum'  => ['view', 'create', 'update', 'delete'],
+                'games.tahfiz'      => ['view', 'create', 'update'],
             ],
             'limits' => [
                 'team.members.max'             => 3,
@@ -85,6 +89,8 @@ return [
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
                 'games.math'        => ['view', 'create', 'update'],
                 'games.vocabulary'  => ['view', 'create', 'update'],
+                'games.curriculum'  => ['view', 'create', 'update', 'delete'],
+                'games.tahfiz'      => ['view', 'create', 'update'],
             ],
             'limits' => [
                 'team.members.max'             => 10,
@@ -118,6 +124,8 @@ return [
                 'master.uom'        => ['view', 'create', 'update', 'delete'],
                 'games.math'        => ['view', 'create', 'update'],
                 'games.vocabulary'  => ['view', 'create', 'update'],
+                'games.curriculum'  => ['view', 'create', 'update', 'delete'],
+                'games.tahfiz'      => ['view', 'create', 'update'],
             ],
             'limits' => [
                 'team.members.max'             => -1,
@@ -152,6 +160,8 @@ return [
         'master.uom'        => 'Master Data / Satuan',
         'games.math'        => 'Games / Matematika',
         'games.vocabulary'  => 'Games / Kosakata',
+        'games.curriculum'  => 'Games / Kurikulum',
+        'games.tahfiz'      => 'Games / Tahfiz Quran',
     ],
 
     'limit_labels' => [

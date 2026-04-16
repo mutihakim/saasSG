@@ -19,6 +19,7 @@ class TenantGameVocabularySetting extends Model
         'member_id',
         'language',
         'default_mode',
+        'default_question_count',
         'mastered_threshold',
         'default_time_limit',
         'auto_tts',
@@ -30,6 +31,7 @@ class TenantGameVocabularySetting extends Model
         return [
             'tenant_id' => 'integer',
             'member_id' => 'integer',
+            'default_question_count' => 'integer',
             'mastered_threshold' => 'integer',
             'default_time_limit' => 'integer',
             'auto_tts' => 'boolean',

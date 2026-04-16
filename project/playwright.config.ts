@@ -9,8 +9,16 @@ export default defineConfig({
     },
     projects: [
         {
+            name: 'setup',
+            testMatch: /.*\.setup\.ts/,
+        },
+        {
             name: 'chromium',
-            use: { browserName: 'chromium' },
+            use: { 
+                browserName: 'chromium',
+                storageState: 'playwright/.auth/user.json',
+            },
+            dependencies: ['setup'],
         },
     ],
 });

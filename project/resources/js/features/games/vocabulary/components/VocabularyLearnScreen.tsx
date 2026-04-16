@@ -13,7 +13,7 @@ type Props = {
     totalWords: number;
     selectedCategoryLabel: string;
     selectedDay: number;
-    language: "english" | "arabic";
+    language: "english" | "arabic" | "mandarin";
     translationDirection: "id_to_target" | "target_to_id";
     isFlipped: boolean;
     isMastered: boolean;

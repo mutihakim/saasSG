@@ -17,4 +17,5 @@ return [
     'master.uom' => ['view', 'create', 'update', 'delete'],
     'games.math' => ['view', 'create', 'update'],
     'games.vocabulary' => ['view', 'create', 'update'],
+    'games.curriculum' => ['view', 'create', 'update', 'delete'],
 ];

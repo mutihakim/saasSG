@@ -1,7 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 
-import GameFeedbackPopup from "../../shared/components/GameFeedbackPopup";
+
 import VocabularyLayout from "../components/VocabularyLayout";
 import VocabularyLearnScreen from "../components/VocabularyLearnScreen";
 import VocabularyMemoryTestDialog from "../components/VocabularyMemoryTestDialog";
@@ -10,7 +10,7 @@ import VocabularySetupScreen from "../components/VocabularySetupScreen";
 import VocabularySummaryCard from "../components/VocabularySummaryCard";
 import useVocabularyGameController from "../hooks/useVocabularyGameController";
 import type { VocabularyPageMember } from "../types";
-import { answerDirectionFor, promptDirectionFor, promptTextFor } from "../utils/vocabularyGame";
+import { answerDirectionFor, promptDirectionFor, promptPhoneticFor, promptTextFor } from "../utils/vocabularyGame";
 
 type PageProps = {
     member?: VocabularyPageMember;
@@ -20,6 +20,8 @@ const VocabularyPage: React.FC<PageProps> = ({ member }) => {
     const { t } = useTranslation();
     const game = useVocabularyGameController();
 
+    const isUILayoutActive = game.phase === "learn" || game.phase === "practice" || game.phase === "summary";
+
     return (
         <VocabularyLayout
             title={t("tenant.games.vocabulary.title")}
@@ -28,18 +30,8 @@ const VocabularyPage: React.FC<PageProps> = ({ member }) => {
             isSessionActive={game.isSessionActive}
             allowPageScroll={false}
         >
-            <div className={`math-game-layout__scroll${game.isSessionActive ? " math-game-layout__scroll--session" : ""}`}>
-                <div className={`math-game${game.isSessionActive ? " math-game--session" : ""}`}>
-                    <GameFeedbackPopup
-                        show={game.feedbackState.show}
-                        isCorrect={game.feedbackState.isCorrect}
-                        isTimedOut={game.feedbackState.isTimedOut}
-                        message={game.feedbackState.message}
-                        correctAnswer={game.feedbackState.correctAnswer}
-                        correctAnswerLabel={t("tenant.games.vocabulary.session.correct_answer_label")}
-                        onDone={game.handleFeedbackDone}
-                        duration={1200}
-                    />
+            <div className={`math-game-layout__scroll${isUILayoutActive ? " math-game-layout__scroll--session" : ""}`}>
+                <div className={`math-game${isUILayoutActive ? " math-game--session" : ""}`}>
 
                     <VocabularyMemoryTestDialog
                         show={game.showMemoryTestDialog}
@@ -69,6 +61,7 @@ const VocabularyPage: React.FC<PageProps> = ({ member }) => {
                             timeLimit={game.timeLimit}
                             translationDirection={game.translationDirection}
                             daysForCategory={game.daysForCategory}
+                            masteredDaysForCategory={game.masteredDaysForCategory}
                             hasCategories={game.hasCategories}
                             hasDaysInSelectedCategory={game.hasDaysInSelectedCategory}
                             categoryOptions={game.categoryOptions}
@@ -111,8 +104,8 @@ const VocabularyPage: React.FC<PageProps> = ({ member }) => {
 
                     {!game.isLoadingConfig && game.phase === "practice" && game.currentPracticeWord && (
                         <VocabularyPracticeScreen
-                            practiceIndex={game.practiceIndex}
-                            practiceQueueLength={game.practiceQueue.length}
+                            currentQuestionNumber={game.attempts.length + 1}
+                            totalQuestions={game.sessionQuestionTarget}
                             selectedCategoryLabel={game.selectedCategoryLabel}
                             selectedDay={game.selectedDay}
                             currentStreak={game.currentStreak}
@@ -120,34 +113,39 @@ const VocabularyPage: React.FC<PageProps> = ({ member }) => {
                             timeLimit={game.timeLimit}
                             countdownState={game.countdownState}
                             promptText={promptTextFor(game.currentPracticeWord, game.language, game.translationDirection)}
+                            promptPhonetic={promptPhoneticFor(game.currentPracticeWord, game.language, game.translationDirection)}
                             promptDirection={promptDirectionFor(game.language, game.translationDirection)}
                             answerDirection={answerDirectionFor(game.language, game.translationDirection)}
                             practiceOptions={game.practiceOptions}
                             selectedOption={game.selectedOption}
-                            correctOption={game.correctOption}
                             isAnswerLocked={game.isAnswerLocked}
+                            feedbackState={game.feedbackState}
                             onLeave={game.leaveToSetup}
                             onSelect={(index) => {
                                 void game.submitPracticeAnswer(index);
                             }}
+                            onContinue={game.continuePractice}
                         />
                     )}
 
                     {!game.isLoadingConfig && game.phase === "summary" && (
-                        <VocabularySummaryCard
-                            attempts={game.attempts}
-                            scorePercent={game.scorePercent}
-                            correctCount={game.correctCount}
-                            bestStreak={game.bestStreak}
-                            isSavingSummary={game.isSavingSummary}
-                            onChangeSetup={game.leaveToSetup}
-                            onPlayAgain={() => {
-                                void game.startPracticeMode();
-                            }}
-                            onStartMemoryTest={() => {
-                                void game.startPracticeMode(true);
-                            }}
-                        />
+                        <div className="vocab-summary-scroll">
+                            <VocabularySummaryCard
+                                attempts={game.attempts}
+                                scorePercent={game.scorePercent}
+                                correctCount={game.correctCount}
+                                bestStreak={game.bestStreak}
+                                isSavingSummary={game.isSavingSummary}
+                                isLevelMastered={game.isLevelMastered}
+                                onChangeSetup={game.leaveToSetup}
+                                onPlayAgain={() => {
+                                    void game.startPracticeMode();
+                                }}
+                                onStartMemoryTest={() => {
+                                    void game.startPracticeMode(true);
+                                }}
+                            />
+                        </div>
                     )}
                 </div>
             </div>

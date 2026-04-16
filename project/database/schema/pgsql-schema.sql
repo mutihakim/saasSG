@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict H2KlthTAWSla0AubpZU0wpSsZ9AKghMT8yDgpiY9oje033Og2DRn2G3DC6Lk0WU
+\restrict eZfNB39JFfYyikRcVizuNIJcUa4m2qKsIxcXuzjYhCpnmaLyhMg2jaoibHC8XDt
 
 -- Dumped from database version 14.22 (Ubuntu 14.22-0ubuntu0.22.04.1)
 -- Dumped by pg_dump version 14.22 (Ubuntu 14.22-0ubuntu0.22.04.1)
@@ -64,6 +64,89 @@ CREATE SEQUENCE public.activity_logs_id_seq
 --
 
 ALTER SEQUENCE public.activity_logs_id_seq OWNED BY public.activity_logs.id;
+
+
+--
+-- Name: curriculum_questions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.curriculum_questions (
+    id bigint NOT NULL,
+    tenant_id bigint,
+    curriculum_unit_id bigint NOT NULL,
+    question_key character varying(120) NOT NULL,
+    question_text text NOT NULL,
+    options json NOT NULL,
+    correct_answer character varying(255) NOT NULL,
+    question_type character varying(50) DEFAULT 'multiple_choice'::character varying NOT NULL,
+    points integer DEFAULT 10 NOT NULL,
+    difficulty_order integer DEFAULT 1 NOT NULL,
+    metadata json,
+    row_version integer DEFAULT 1 NOT NULL,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone,
+    deleted_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: curriculum_questions_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.curriculum_questions_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: curriculum_questions_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.curriculum_questions_id_seq OWNED BY public.curriculum_questions.id;
+
+
+--
+-- Name: curriculum_units; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.curriculum_units (
+    id bigint NOT NULL,
+    tenant_id bigint,
+    educational_phase character varying(30),
+    grade integer,
+    subject character varying(120) NOT NULL,
+    semester integer,
+    chapter character varying(180) NOT NULL,
+    curriculum_type character varying(60) DEFAULT 'kurikulum_merdeka'::character varying NOT NULL,
+    difficulty_level character varying(60),
+    metadata json,
+    row_version integer DEFAULT 1 NOT NULL,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone,
+    deleted_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: curriculum_units_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.curriculum_units_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: curriculum_units_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.curriculum_units_id_seq OWNED BY public.curriculum_units.id;
 
 
 --
@@ -217,9 +300,9 @@ CREATE TABLE public.finance_transactions (
     budget_delta numeric(15,2) DEFAULT '0'::numeric NOT NULL,
     transfer_direction character varying(10),
     wallet_id character(26) NOT NULL,
-    CONSTRAINT finance_transactions_payment_method_check CHECK (((payment_method)::text = ANY ((ARRAY['tunai'::character varying, 'transfer'::character varying, 'kartu_kredit'::character varying, 'kartu_debit'::character varying, 'dompet_digital'::character varying, 'qris'::character varying, 'lainnya'::character varying])::text[]))),
-    CONSTRAINT finance_transactions_status_check CHECK (((status)::text = ANY ((ARRAY['terverifikasi'::character varying, 'pending'::character varying, 'ditandai'::character varying])::text[]))),
-    CONSTRAINT finance_transactions_type_check CHECK (((type)::text = ANY ((ARRAY['pemasukan'::character varying, 'pengeluaran'::character varying, 'transfer'::character varying])::text[])))
+    CONSTRAINT finance_transactions_payment_method_check CHECK (((payment_method)::text = ANY (ARRAY[('tunai'::character varying)::text, ('transfer'::character varying)::text, ('kartu_kredit'::character varying)::text, ('kartu_debit'::character varying)::text, ('dompet_digital'::character varying)::text, ('qris'::character varying)::text, ('lainnya'::character varying)::text]))),
+    CONSTRAINT finance_transactions_status_check CHECK (((status)::text = ANY (ARRAY[('terverifikasi'::character varying)::text, ('pending'::character varying)::text, ('ditandai'::character varying)::text]))),
+    CONSTRAINT finance_transactions_type_check CHECK (((type)::text = ANY (ARRAY[('pemasukan'::character varying)::text, ('pengeluaran'::character varying)::text, ('transfer'::character varying)::text])))
 );
 
 
@@ -288,6 +371,58 @@ CREATE SEQUENCE public.idempotency_keys_id_seq
 --
 
 ALTER SEQUENCE public.idempotency_keys_id_seq OWNED BY public.idempotency_keys.id;
+
+
+--
+-- Name: job_batches; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.job_batches (
+    id character varying(255) NOT NULL,
+    name character varying(255) NOT NULL,
+    total_jobs integer NOT NULL,
+    pending_jobs integer NOT NULL,
+    failed_jobs integer NOT NULL,
+    failed_job_ids text NOT NULL,
+    options text,
+    cancelled_at integer,
+    created_at integer NOT NULL,
+    finished_at integer
+);
+
+
+--
+-- Name: jobs; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.jobs (
+    id bigint NOT NULL,
+    queue character varying(255) NOT NULL,
+    payload text NOT NULL,
+    attempts smallint NOT NULL,
+    reserved_at integer,
+    available_at integer NOT NULL,
+    created_at integer NOT NULL
+);
+
+
+--
+-- Name: jobs_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.jobs_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: jobs_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.jobs_id_seq OWNED BY public.jobs.id;
 
 
 --
@@ -504,6 +639,60 @@ CREATE SEQUENCE public.social_accounts_id_seq
 --
 
 ALTER SEQUENCE public.social_accounts_id_seq OWNED BY public.social_accounts.id;
+
+
+--
+-- Name: telescope_entries; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.telescope_entries (
+    sequence bigint NOT NULL,
+    uuid uuid NOT NULL,
+    batch_id uuid NOT NULL,
+    family_hash character varying(255),
+    should_display_on_index boolean DEFAULT true NOT NULL,
+    type character varying(20) NOT NULL,
+    content text NOT NULL,
+    created_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: telescope_entries_sequence_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.telescope_entries_sequence_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: telescope_entries_sequence_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.telescope_entries_sequence_seq OWNED BY public.telescope_entries.sequence;
+
+
+--
+-- Name: telescope_entries_tags; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.telescope_entries_tags (
+    entry_uuid uuid NOT NULL,
+    tag character varying(255) NOT NULL
+);
+
+
+--
+-- Name: telescope_monitoring; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.telescope_monitoring (
+    tag character varying(255) NOT NULL
+);
 
 
 --
@@ -751,7 +940,7 @@ CREATE TABLE public.tenant_currencies (
     created_at timestamp(0) without time zone,
     updated_at timestamp(0) without time zone,
     deleted_at timestamp(0) without time zone,
-    CONSTRAINT tenant_currencies_symbol_position_check CHECK (((symbol_position)::text = ANY ((ARRAY['before'::character varying, 'after'::character varying])::text[])))
+    CONSTRAINT tenant_currencies_symbol_position_check CHECK (((symbol_position)::text = ANY (ARRAY[('before'::character varying)::text, ('after'::character varying)::text])))
 );
 
 
@@ -772,6 +961,301 @@ CREATE SEQUENCE public.tenant_currencies_id_seq
 --
 
 ALTER SEQUENCE public.tenant_currencies_id_seq OWNED BY public.tenant_currencies.id;
+
+
+--
+-- Name: tenant_curriculum_entitlements; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tenant_curriculum_entitlements (
+    id bigint NOT NULL,
+    tenant_id bigint NOT NULL,
+    user_id bigint,
+    educational_phase character varying(30),
+    grade integer,
+    subject character varying(120) NOT NULL,
+    is_active boolean DEFAULT true NOT NULL,
+    valid_until timestamp(0) without time zone,
+    metadata json,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: tenant_curriculum_entitlements_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tenant_curriculum_entitlements_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tenant_curriculum_entitlements_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tenant_curriculum_entitlements_id_seq OWNED BY public.tenant_curriculum_entitlements.id;
+
+
+--
+-- Name: tenant_game_curriculum_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tenant_game_curriculum_settings (
+    id bigint NOT NULL,
+    tenant_id bigint NOT NULL,
+    member_id bigint NOT NULL,
+    grade integer,
+    default_mode character varying(50) DEFAULT 'practice'::character varying NOT NULL,
+    default_question_count integer DEFAULT 10 NOT NULL,
+    default_time_limit integer DEFAULT 20 NOT NULL,
+    mastered_threshold integer DEFAULT 5 NOT NULL,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: tenant_game_curriculum_settings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tenant_game_curriculum_settings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tenant_game_curriculum_settings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tenant_game_curriculum_settings_id_seq OWNED BY public.tenant_game_curriculum_settings.id;
+
+
+--
+-- Name: tenant_game_math_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tenant_game_math_settings (
+    id bigint NOT NULL,
+    tenant_id bigint NOT NULL,
+    member_id bigint NOT NULL,
+    operator character varying(10) NOT NULL,
+    default_mode character varying(50) DEFAULT 'mencariC'::character varying NOT NULL,
+    default_question_count integer DEFAULT 10 NOT NULL,
+    default_time_limit integer DEFAULT 15 NOT NULL,
+    mastered_threshold integer DEFAULT 8 NOT NULL,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: tenant_game_math_settings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tenant_game_math_settings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tenant_game_math_settings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tenant_game_math_settings_id_seq OWNED BY public.tenant_game_math_settings.id;
+
+
+--
+-- Name: tenant_game_math_stats; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tenant_game_math_stats (
+    id bigint NOT NULL,
+    tenant_id bigint NOT NULL,
+    member_id bigint NOT NULL,
+    operator character varying(10) NOT NULL,
+    angka_pilihan integer NOT NULL,
+    angka_random integer NOT NULL,
+    jumlah_benar integer DEFAULT 0 NOT NULL,
+    jumlah_salah integer DEFAULT 0 NOT NULL,
+    current_streak_benar integer DEFAULT 0 NOT NULL,
+    max_streak_benar integer DEFAULT 0 NOT NULL,
+    last_played_at timestamp(0) without time zone,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: tenant_game_math_stats_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tenant_game_math_stats_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tenant_game_math_stats_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tenant_game_math_stats_id_seq OWNED BY public.tenant_game_math_stats.id;
+
+
+--
+-- Name: tenant_game_sessions; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tenant_game_sessions (
+    id character(26) NOT NULL,
+    tenant_id bigint NOT NULL,
+    member_id bigint NOT NULL,
+    game_slug character varying(50) NOT NULL,
+    metadata json,
+    question_count integer DEFAULT 0 NOT NULL,
+    correct_count integer DEFAULT 0 NOT NULL,
+    wrong_count integer DEFAULT 0 NOT NULL,
+    best_streak integer DEFAULT 0 NOT NULL,
+    score_percent numeric(5,2) DEFAULT '0'::numeric NOT NULL,
+    duration_seconds integer DEFAULT 0 NOT NULL,
+    summary json,
+    started_at timestamp(0) without time zone,
+    finished_at timestamp(0) without time zone,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: tenant_game_vocabulary_progress; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tenant_game_vocabulary_progress (
+    id bigint NOT NULL,
+    tenant_id bigint NOT NULL,
+    member_id bigint NOT NULL,
+    word_id bigint NOT NULL,
+    language character varying(20) NOT NULL,
+    jumlah_benar integer DEFAULT 0 NOT NULL,
+    jumlah_salah integer DEFAULT 0 NOT NULL,
+    correct_streak integer DEFAULT 0 NOT NULL,
+    max_streak integer DEFAULT 0 NOT NULL,
+    is_mastered boolean DEFAULT false NOT NULL,
+    last_practiced_at timestamp(0) without time zone,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: tenant_game_vocabulary_progress_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tenant_game_vocabulary_progress_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tenant_game_vocabulary_progress_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tenant_game_vocabulary_progress_id_seq OWNED BY public.tenant_game_vocabulary_progress.id;
+
+
+--
+-- Name: tenant_game_vocabulary_settings; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tenant_game_vocabulary_settings (
+    id bigint NOT NULL,
+    tenant_id bigint NOT NULL,
+    member_id bigint NOT NULL,
+    language character varying(20) NOT NULL,
+    default_mode character varying(50) DEFAULT 'practice'::character varying NOT NULL,
+    default_question_count integer DEFAULT 6 NOT NULL,
+    mastered_threshold integer DEFAULT 8 NOT NULL,
+    default_time_limit integer DEFAULT 8 NOT NULL,
+    auto_tts boolean DEFAULT true NOT NULL,
+    translation_direction character varying(30) DEFAULT 'id_to_target'::character varying NOT NULL,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: tenant_game_vocabulary_settings_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tenant_game_vocabulary_settings_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tenant_game_vocabulary_settings_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tenant_game_vocabulary_settings_id_seq OWNED BY public.tenant_game_vocabulary_settings.id;
+
+
+--
+-- Name: tenant_game_vocabulary_words; Type: TABLE; Schema: public; Owner: -
+--
+
+CREATE TABLE public.tenant_game_vocabulary_words (
+    id bigint NOT NULL,
+    tenant_id bigint,
+    bahasa_indonesia character varying(255) NOT NULL,
+    bahasa_inggris character varying(255),
+    fonetik character varying(255),
+    bahasa_arab character varying(255),
+    fonetik_arab character varying(255),
+    bahasa_mandarin character varying(255),
+    fonetik_mandarin character varying(255),
+    kategori character varying(120) NOT NULL,
+    hari integer NOT NULL,
+    created_at timestamp(0) without time zone,
+    updated_at timestamp(0) without time zone
+);
+
+
+--
+-- Name: tenant_game_vocabulary_words_id_seq; Type: SEQUENCE; Schema: public; Owner: -
+--
+
+CREATE SEQUENCE public.tenant_game_vocabulary_words_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+--
+-- Name: tenant_game_vocabulary_words_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
+--
+
+ALTER SEQUENCE public.tenant_game_vocabulary_words_id_seq OWNED BY public.tenant_game_vocabulary_words.id;
 
 
 --
@@ -1504,6 +1988,20 @@ ALTER TABLE ONLY public.activity_logs ALTER COLUMN id SET DEFAULT nextval('publi
 
 
 --
+-- Name: curriculum_questions id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.curriculum_questions ALTER COLUMN id SET DEFAULT nextval('public.curriculum_questions_id_seq'::regclass);
+
+
+--
+-- Name: curriculum_units id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.curriculum_units ALTER COLUMN id SET DEFAULT nextval('public.curriculum_units_id_seq'::regclass);
+
+
+--
 -- Name: failed_jobs id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1522,6 +2020,13 @@ ALTER TABLE ONLY public.finance_wallet_member_access ALTER COLUMN id SET DEFAULT
 --
 
 ALTER TABLE ONLY public.idempotency_keys ALTER COLUMN id SET DEFAULT nextval('public.idempotency_keys_id_seq'::regclass);
+
+
+--
+-- Name: jobs id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.jobs ALTER COLUMN id SET DEFAULT nextval('public.jobs_id_seq'::regclass);
 
 
 --
@@ -1560,6 +2065,13 @@ ALTER TABLE ONLY public.social_accounts ALTER COLUMN id SET DEFAULT nextval('pub
 
 
 --
+-- Name: telescope_entries sequence; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.telescope_entries ALTER COLUMN sequence SET DEFAULT nextval('public.telescope_entries_sequence_seq'::regclass);
+
+
+--
 -- Name: tenant_attachments id; Type: DEFAULT; Schema: public; Owner: -
 --
 
@@ -1592,6 +2104,55 @@ ALTER TABLE ONLY public.tenant_categories ALTER COLUMN id SET DEFAULT nextval('p
 --
 
 ALTER TABLE ONLY public.tenant_currencies ALTER COLUMN id SET DEFAULT nextval('public.tenant_currencies_id_seq'::regclass);
+
+
+--
+-- Name: tenant_curriculum_entitlements id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_curriculum_entitlements ALTER COLUMN id SET DEFAULT nextval('public.tenant_curriculum_entitlements_id_seq'::regclass);
+
+
+--
+-- Name: tenant_game_curriculum_settings id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_curriculum_settings ALTER COLUMN id SET DEFAULT nextval('public.tenant_game_curriculum_settings_id_seq'::regclass);
+
+
+--
+-- Name: tenant_game_math_settings id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_math_settings ALTER COLUMN id SET DEFAULT nextval('public.tenant_game_math_settings_id_seq'::regclass);
+
+
+--
+-- Name: tenant_game_math_stats id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_math_stats ALTER COLUMN id SET DEFAULT nextval('public.tenant_game_math_stats_id_seq'::regclass);
+
+
+--
+-- Name: tenant_game_vocabulary_progress id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_progress ALTER COLUMN id SET DEFAULT nextval('public.tenant_game_vocabulary_progress_id_seq'::regclass);
+
+
+--
+-- Name: tenant_game_vocabulary_settings id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_settings ALTER COLUMN id SET DEFAULT nextval('public.tenant_game_vocabulary_settings_id_seq'::regclass);
+
+
+--
+-- Name: tenant_game_vocabulary_words id; Type: DEFAULT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_words ALTER COLUMN id SET DEFAULT nextval('public.tenant_game_vocabulary_words_id_seq'::regclass);
 
 
 --
@@ -1722,6 +2283,38 @@ ALTER TABLE ONLY public.activity_logs
 
 
 --
+-- Name: curriculum_questions curriculum_questions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.curriculum_questions
+    ADD CONSTRAINT curriculum_questions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: curriculum_questions curriculum_questions_unique_key; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.curriculum_questions
+    ADD CONSTRAINT curriculum_questions_unique_key UNIQUE (curriculum_unit_id, question_key);
+
+
+--
+-- Name: tenant_game_curriculum_settings curriculum_settings_unique_grade; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_curriculum_settings
+    ADD CONSTRAINT curriculum_settings_unique_grade UNIQUE (tenant_id, member_id, grade);
+
+
+--
+-- Name: curriculum_units curriculum_units_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.curriculum_units
+    ADD CONSTRAINT curriculum_units_pkey PRIMARY KEY (id);
+
+
+--
 -- Name: failed_jobs failed_jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -1815,6 +2408,38 @@ ALTER TABLE ONLY public.idempotency_keys
 
 ALTER TABLE ONLY public.idempotency_keys
     ADD CONSTRAINT idempotency_keys_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: job_batches job_batches_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.job_batches
+    ADD CONSTRAINT job_batches_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: jobs jobs_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.jobs
+    ADD CONSTRAINT jobs_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tenant_game_math_settings math_settings_unique_operator; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_math_settings
+    ADD CONSTRAINT math_settings_unique_operator UNIQUE (tenant_id, member_id, operator);
+
+
+--
+-- Name: tenant_game_math_stats math_stats_unique_pair; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_math_stats
+    ADD CONSTRAINT math_stats_unique_pair UNIQUE (tenant_id, member_id, operator, angka_pilihan, angka_random);
 
 
 --
@@ -1938,6 +2563,38 @@ ALTER TABLE ONLY public.tenant_budget_member_access
 
 
 --
+-- Name: telescope_entries telescope_entries_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.telescope_entries
+    ADD CONSTRAINT telescope_entries_pkey PRIMARY KEY (sequence);
+
+
+--
+-- Name: telescope_entries_tags telescope_entries_tags_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.telescope_entries_tags
+    ADD CONSTRAINT telescope_entries_tags_pkey PRIMARY KEY (entry_uuid, tag);
+
+
+--
+-- Name: telescope_entries telescope_entries_uuid_unique; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.telescope_entries
+    ADD CONSTRAINT telescope_entries_uuid_unique UNIQUE (uuid);
+
+
+--
+-- Name: telescope_monitoring telescope_monitoring_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.telescope_monitoring
+    ADD CONSTRAINT telescope_monitoring_pkey PRIMARY KEY (tag);
+
+
+--
 -- Name: tenant_attachments tenant_attachments_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2007,6 +2664,70 @@ ALTER TABLE ONLY public.tenant_categories
 
 ALTER TABLE ONLY public.tenant_currencies
     ADD CONSTRAINT tenant_currencies_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tenant_curriculum_entitlements tenant_curriculum_entitlements_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_curriculum_entitlements
+    ADD CONSTRAINT tenant_curriculum_entitlements_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tenant_game_curriculum_settings tenant_game_curriculum_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_curriculum_settings
+    ADD CONSTRAINT tenant_game_curriculum_settings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tenant_game_math_settings tenant_game_math_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_math_settings
+    ADD CONSTRAINT tenant_game_math_settings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tenant_game_math_stats tenant_game_math_stats_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_math_stats
+    ADD CONSTRAINT tenant_game_math_stats_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tenant_game_sessions tenant_game_sessions_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_sessions
+    ADD CONSTRAINT tenant_game_sessions_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tenant_game_vocabulary_progress tenant_game_vocabulary_progress_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_progress
+    ADD CONSTRAINT tenant_game_vocabulary_progress_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tenant_game_vocabulary_settings tenant_game_vocabulary_settings_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_settings
+    ADD CONSTRAINT tenant_game_vocabulary_settings_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: tenant_game_vocabulary_words tenant_game_vocabulary_words_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_words
+    ADD CONSTRAINT tenant_game_vocabulary_words_pkey PRIMARY KEY (id);
 
 
 --
@@ -2226,6 +2947,22 @@ ALTER TABLE ONLY public.users
 
 
 --
+-- Name: tenant_game_vocabulary_progress vocabulary_progress_unique_word; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_progress
+    ADD CONSTRAINT vocabulary_progress_unique_word UNIQUE (tenant_id, member_id, word_id, language);
+
+
+--
+-- Name: tenant_game_vocabulary_settings vocabulary_settings_unique_language; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_settings
+    ADD CONSTRAINT vocabulary_settings_unique_language UNIQUE (tenant_id, member_id, language);
+
+
+--
 -- Name: wallet_wishes wallet_wishes_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -2245,6 +2982,20 @@ CREATE INDEX activity_logs_tenant_id_action_index ON public.activity_logs USING 
 --
 
 CREATE INDEX activity_logs_tenant_id_occurred_at_index ON public.activity_logs USING btree (tenant_id, occurred_at);
+
+
+--
+-- Name: curriculum_entitlements_lookup_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX curriculum_entitlements_lookup_idx ON public.tenant_curriculum_entitlements USING btree (tenant_id, user_id, subject);
+
+
+--
+-- Name: curriculum_units_lookup_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX curriculum_units_lookup_idx ON public.curriculum_units USING btree (tenant_id, subject, grade, semester);
 
 
 --
@@ -2416,6 +3167,13 @@ CREATE INDEX fpma_member_can_view_pocket_idx ON public.finance_wallet_member_acc
 
 
 --
+-- Name: game_sessions_lookup_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX game_sessions_lookup_idx ON public.tenant_game_sessions USING btree (tenant_id, member_id, game_slug, finished_at);
+
+
+--
 -- Name: idx_accounts_list_perf; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2448,6 +3206,13 @@ CREATE INDEX idx_trans_owner_date ON public.finance_transactions USING btree (te
 --
 
 CREATE INDEX idx_trans_pocket_date ON public.finance_transactions USING btree (tenant_id, wallet_id, transaction_date);
+
+
+--
+-- Name: jobs_queue_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX jobs_queue_index ON public.jobs USING btree (queue);
 
 
 --
@@ -2518,6 +3283,41 @@ CREATE INDEX tbama_member_can_view_account_idx ON public.tenant_bank_account_mem
 --
 
 CREATE INDEX tbma_member_can_view_budget_idx ON public.tenant_budget_member_access USING btree (member_id, can_view, tenant_budget_id);
+
+
+--
+-- Name: telescope_entries_batch_id_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX telescope_entries_batch_id_index ON public.telescope_entries USING btree (batch_id);
+
+
+--
+-- Name: telescope_entries_created_at_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX telescope_entries_created_at_index ON public.telescope_entries USING btree (created_at);
+
+
+--
+-- Name: telescope_entries_family_hash_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX telescope_entries_family_hash_index ON public.telescope_entries USING btree (family_hash);
+
+
+--
+-- Name: telescope_entries_tags_tag_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX telescope_entries_tags_tag_index ON public.telescope_entries_tags USING btree (tag);
+
+
+--
+-- Name: telescope_entries_type_should_display_on_index_index; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX telescope_entries_type_should_display_on_index_index ON public.telescope_entries USING btree (type, should_display_on_index);
 
 
 --
@@ -2913,6 +3713,13 @@ CREATE INDEX users_is_superadmin_index ON public.users USING btree (is_superadmi
 
 
 --
+-- Name: vocabulary_words_lookup_idx; Type: INDEX; Schema: public; Owner: -
+--
+
+CREATE INDEX vocabulary_words_lookup_idx ON public.tenant_game_vocabulary_words USING btree (tenant_id, kategori, hari);
+
+
+--
 -- Name: wallet_wishes_tenant_id_priority_index; Type: INDEX; Schema: public; Owner: -
 --
 
@@ -2948,6 +3755,30 @@ ALTER TABLE ONLY public.activity_logs
 
 ALTER TABLE ONLY public.activity_logs
     ADD CONSTRAINT activity_logs_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: curriculum_questions curriculum_questions_curriculum_unit_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.curriculum_questions
+    ADD CONSTRAINT curriculum_questions_curriculum_unit_id_foreign FOREIGN KEY (curriculum_unit_id) REFERENCES public.curriculum_units(id) ON DELETE CASCADE;
+
+
+--
+-- Name: curriculum_questions curriculum_questions_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.curriculum_questions
+    ADD CONSTRAINT curriculum_questions_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE SET NULL;
+
+
+--
+-- Name: curriculum_units curriculum_units_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.curriculum_units
+    ADD CONSTRAINT curriculum_units_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE SET NULL;
 
 
 --
@@ -3183,6 +4014,14 @@ ALTER TABLE ONLY public.social_accounts
 
 
 --
+-- Name: telescope_entries_tags telescope_entries_tags_entry_uuid_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.telescope_entries_tags
+    ADD CONSTRAINT telescope_entries_tags_entry_uuid_foreign FOREIGN KEY (entry_uuid) REFERENCES public.telescope_entries(uuid) ON DELETE CASCADE;
+
+
+--
 -- Name: tenant_attachments tenant_attachments_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
 --
 
@@ -3316,6 +4155,134 @@ ALTER TABLE ONLY public.tenant_categories
 
 ALTER TABLE ONLY public.tenant_currencies
     ADD CONSTRAINT tenant_currencies_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_curriculum_entitlements tenant_curriculum_entitlements_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_curriculum_entitlements
+    ADD CONSTRAINT tenant_curriculum_entitlements_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_curriculum_entitlements tenant_curriculum_entitlements_user_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_curriculum_entitlements
+    ADD CONSTRAINT tenant_curriculum_entitlements_user_id_foreign FOREIGN KEY (user_id) REFERENCES public.users(id) ON DELETE SET NULL;
+
+
+--
+-- Name: tenant_game_curriculum_settings tenant_game_curriculum_settings_member_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_curriculum_settings
+    ADD CONSTRAINT tenant_game_curriculum_settings_member_id_foreign FOREIGN KEY (member_id) REFERENCES public.tenant_members(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_curriculum_settings tenant_game_curriculum_settings_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_curriculum_settings
+    ADD CONSTRAINT tenant_game_curriculum_settings_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_math_settings tenant_game_math_settings_member_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_math_settings
+    ADD CONSTRAINT tenant_game_math_settings_member_id_foreign FOREIGN KEY (member_id) REFERENCES public.tenant_members(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_math_settings tenant_game_math_settings_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_math_settings
+    ADD CONSTRAINT tenant_game_math_settings_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_math_stats tenant_game_math_stats_member_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_math_stats
+    ADD CONSTRAINT tenant_game_math_stats_member_id_foreign FOREIGN KEY (member_id) REFERENCES public.tenant_members(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_math_stats tenant_game_math_stats_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_math_stats
+    ADD CONSTRAINT tenant_game_math_stats_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_sessions tenant_game_sessions_member_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_sessions
+    ADD CONSTRAINT tenant_game_sessions_member_id_foreign FOREIGN KEY (member_id) REFERENCES public.tenant_members(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_sessions tenant_game_sessions_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_sessions
+    ADD CONSTRAINT tenant_game_sessions_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_vocabulary_progress tenant_game_vocabulary_progress_member_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_progress
+    ADD CONSTRAINT tenant_game_vocabulary_progress_member_id_foreign FOREIGN KEY (member_id) REFERENCES public.tenant_members(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_vocabulary_progress tenant_game_vocabulary_progress_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_progress
+    ADD CONSTRAINT tenant_game_vocabulary_progress_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_vocabulary_progress tenant_game_vocabulary_progress_word_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_progress
+    ADD CONSTRAINT tenant_game_vocabulary_progress_word_id_foreign FOREIGN KEY (word_id) REFERENCES public.tenant_game_vocabulary_words(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_vocabulary_settings tenant_game_vocabulary_settings_member_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_settings
+    ADD CONSTRAINT tenant_game_vocabulary_settings_member_id_foreign FOREIGN KEY (member_id) REFERENCES public.tenant_members(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_vocabulary_settings tenant_game_vocabulary_settings_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_settings
+    ADD CONSTRAINT tenant_game_vocabulary_settings_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE CASCADE;
+
+
+--
+-- Name: tenant_game_vocabulary_words tenant_game_vocabulary_words_tenant_id_foreign; Type: FK CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY public.tenant_game_vocabulary_words
+    ADD CONSTRAINT tenant_game_vocabulary_words_tenant_id_foreign FOREIGN KEY (tenant_id) REFERENCES public.tenants(id) ON DELETE SET NULL;
 
 
 --
@@ -3578,13 +4545,13 @@ ALTER TABLE ONLY public.wallet_wishes
 -- PostgreSQL database dump complete
 --
 
-\unrestrict H2KlthTAWSla0AubpZU0wpSsZ9AKghMT8yDgpiY9oje033Og2DRn2G3DC6Lk0WU
+\unrestrict eZfNB39JFfYyikRcVizuNIJcUa4m2qKsIxcXuzjYhCpnmaLyhMg2jaoibHC8XDt
 
 --
 -- PostgreSQL database dump
 --
 
-\restrict nC3P3NBBVoYHysYIsVacgE7P3I9ndDLw6OlLQ9ieqU985IMC2h3MExcfNs7HDxN
+\restrict Aal3RmjC1ImAeu7i6Yde3aLrJMSEEtRniQ83DcSo9YOq6Ep3cbzQfKghq5CgGlp
 
 -- Dumped from database version 14.22 (Ubuntu 14.22-0ubuntu0.22.04.1)
 -- Dumped by pg_dump version 14.22 (Ubuntu 14.22-0ubuntu0.22.04.1)
@@ -3671,6 +4638,8 @@ COPY public.migrations (id, migration, batch) FROM stdin;
 64	2026_04_09_031053_add_performance_indexes_to_finance_tables	2
 65	2026_04_06_010000_create_finance_wallets_table	3
 66	2026_04_09_170000_migrate_pockets_to_wallets	4
+67	2018_08_08_100000_create_telescope_entries_table	5
+68	2026_04_15_120000_create_games_and_queue_tables	5
 \.
 
 
@@ -3678,12 +4647,12 @@ COPY public.migrations (id, migration, batch) FROM stdin;
 -- Name: migrations_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('public.migrations_id_seq', 66, true);
+SELECT pg_catalog.setval('public.migrations_id_seq', 68, true);
 
 
 --
 -- PostgreSQL database dump complete
 --
 
-\unrestrict nC3P3NBBVoYHysYIsVacgE7P3I9ndDLw6OlLQ9ieqU985IMC2h3MExcfNs7HDxN
+\unrestrict Aal3RmjC1ImAeu7i6Yde3aLrJMSEEtRniQ83DcSo9YOq6Ep3cbzQfKghq5CgGlp
 

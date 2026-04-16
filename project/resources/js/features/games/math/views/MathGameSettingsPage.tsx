@@ -289,6 +289,7 @@ const MathGameSettingsPage: React.FC<Props> = ({ member }) => {
                                         </Form.Text>
                                         <div className="d-flex align-items-center gap-3">
                                             <Form.Range
+                                                className="games-flex-1"
                                                 min={1}
                                                 max={50}
                                                 value={masteredThreshold}
@@ -297,7 +298,6 @@ const MathGameSettingsPage: React.FC<Props> = ({ member }) => {
                                                         parseInt(e.target.value, 10),
                                                     )
                                                 }
-                                                style={{ flex: 1 }}
                                             />
                                             <Badge bg="primary" className="fs-6 px-3 py-2">
                                                 {masteredThreshold}x

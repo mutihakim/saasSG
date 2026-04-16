@@ -1,0 +1,208 @@
+.vocab-practice-prompt-card {
+    background: white;
+    border: 2px solid #f3f4f6;
+    border-radius: 2rem;
+    padding: clamp(1.25rem, 3.2vh, 2rem);
+    text-align: center;
+    margin-bottom: clamp(0.9rem, 2vh, 2rem);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+
+    @media (min-width: 640px) {
+        padding: 3rem;
+    }
+
+    .vocab-prompt-gradient-top {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 0.25rem;
+        background: linear-gradient(to right, #2dd4bf, #c084fc);
+    }
+
+    .vocab-prompt-label {
+        color: #6b7280;
+        margin-bottom: 1rem;
+        font-weight: 500;
+    }
+}
+
+.vocab-prompt-text {
+    font-size: 2.25rem;
+    font-weight: 700;
+    color: #111827;
+    letter-spacing: -0.025em;
+    text-align: center;
+
+    @media (min-width: 640px) {
+        font-size: 3rem;
+    }
+}
+
+.vocab-prompt-text--rtl {
+    text-align: right;
+}
+
+.vocab-practice-phonetic,
+.vocab-option-phonetic {
+    direction: ltr;
+}
+
+.vocab-options-container {
+    width: 100%;
+    max-width: 36rem;
+    margin: auto;
+
+    .vocab-option-title {
+        color: #4b5563;
+        font-weight: 500;
+        margin-bottom: 1rem;
+        padding: 0 0.5rem;
+    }
+}
+
+.vocab-option-btn-v2 {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    text-align: left;
+    padding: 1rem 1.25rem;
+    border-radius: 1rem;
+    border: 2px solid rgba(233, 213, 255, 0.7);
+    color: #7e22ce;
+    background: #ffffff;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    transform: translateY(0);
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+    margin-bottom: 0.75rem;
+
+    span {
+        font-size: 1rem;
+
+        @media (min-width: 640px) {
+            font-size: 1.125rem;
+        }
+    }
+
+    @media (hover: hover) and (pointer: fine) {
+        &:hover:not(:disabled) {
+            background: rgba(250, 245, 255, 0.5);
+            border-color: #d8b4fe;
+            transform: translateY(-2px);
+        }
+    }
+
+    &.selected {
+        border-color: #a855f7;
+        background: #faf5ff;
+        color: #6b21a8;
+        box-shadow: 0 4px 20px rgba(147, 51, 234, 0.15);
+        outline: 1px solid #e9d5ff;
+    }
+
+    &:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+        transform: none;
+    }
+}
+
+@media (max-height: 760px) {
+    .vocab-prompt-text {
+        font-size: clamp(1.75rem, 4.5vh, 2.25rem);
+    }
+
+    .vocab-option-btn-v2 {
+        padding: 0.875rem 1rem;
+        margin-bottom: 0.6rem;
+    }
+}
+
+.vocab-option-icon-blank {
+    color: rgba(233, 213, 255, 0.7);
+}
+
+.vocab-notification-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.5rem;
+    background: rgba(17, 24, 39, 0.6);
+    backdrop-filter: blur(4px);
+}
+
+.vocab-notification-card {
+    width: 100%;
+    max-width: 24rem;
+    border-radius: 2.5rem;
+    border-width: 2px;
+    border-style: solid;
+    padding: 2rem;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    animation: vocab-zoom-in 0.2s ease-out;
+}
+
+.vocab-notification-card__icon-circle {
+    width: 6rem;
+    height: 6rem;
+    font-size: 3rem;
+}
+
+.vocab-notification-card__action {
+    transition: transform 0.2s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+    }
+}
+
+@keyframes vocab-zoom-in {
+    from { opacity: 0; transform: scale(0.95); }
+    to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes vocab-bounce-slow {
+    0%, 100% { transform: translateY(-5%); animation-timing-function: cubic-bezier(0.8,0,1,1); }
+    50% { transform: none; animation-timing-function: cubic-bezier(0,0,0.2,1); }
+}
+
+.animate-vocab-bounce {
+    animation: vocab-bounce-slow 1s infinite;
+}
+
+.vocab-notif-correct {
+    background: #dcfce7;
+    border-color: #86efac;
+    box-shadow: 0 0 40px rgba(34, 197, 94, 0.3);
+
+    .icon-wrapper { background: #dcfce7; }
+    h3, p { color: #166534; }
+}
+
+.vocab-notif-incorrect {
+    background: #fef2f2;
+    border-color: #fecaca;
+    box-shadow: 0 0 40px rgba(239, 68, 68, 0.3);
+
+    .icon-wrapper { background: #fee2e2; }
+    h3, p { color: #991b1b; }
+}
+
+.vocab-notif-timeout {
+    background: #fff4d1;
+    border-color: #fce38a;
+    box-shadow: 0 0 40px rgba(252, 227, 138, 0.6);
+
+    .icon-wrapper { background: #fef08a; }
+    h3, p { color: #713f12; }
+}

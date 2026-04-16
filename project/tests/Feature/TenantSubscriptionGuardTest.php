@@ -5,14 +5,13 @@ namespace Tests\Feature;
 use App\Models\Tenant\Tenant;
 use App\Models\Tenant\TenantMember;
 use App\Models\Identity\User;
-use Illuminate\Foundation\Testing\RefreshDatabase;
+
 use Inertia\Testing\AssertableInertia as Assert;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
 class TenantSubscriptionGuardTest extends TestCase
 {
-    use RefreshDatabase;
 
     private function seedTenant(string $planCode): array
     {

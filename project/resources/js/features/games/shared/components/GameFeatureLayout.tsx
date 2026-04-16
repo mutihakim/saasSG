@@ -97,7 +97,7 @@ const GameFeatureLayout: React.FC<GameFeatureLayoutProps> = ({
     };
 
     return (
-        <div className={`math-game-layout${allowPageScroll ? " math-game-layout--page-scroll" : ""}${featureClass ? ` ${featureClass}` : ""}`}>
+        <div className={`math-game-layout${!allowPageScroll ? " math-game-layout--no-inner-scroll" : ""}${featureClass ? ` ${featureClass}` : ""}`}>
             <header className="math-game-layout__topbar">
                 <button
                     type="button"

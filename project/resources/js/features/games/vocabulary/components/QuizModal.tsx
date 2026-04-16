@@ -37,14 +37,13 @@ const QuizModal: React.FC<Props> = ({
                         <button
                             key={i}
                             type="button"
-                            className={btnClass}
+                            className={`${btnClass} quiz-section__option ${direction === "rtl" ? "quiz-section__option--rtl" : "quiz-section__option--ltr"} game-touch-manipulation`}
                             disabled={disabled}
                             onClick={(e) => {
                                 e.currentTarget.blur();
                                 onSelect(i);
                             }}
                             dir={direction}
-                            style={{ textAlign: direction === "rtl" ? "right" : "left", touchAction: "manipulation" }}
                         >
                             {opt}
                         </button>

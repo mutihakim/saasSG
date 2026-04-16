@@ -15,8 +15,9 @@ class VocabularyApiController extends Controller
 {
     use ApiResponder;
 
-    private const LANGUAGES = ['english', 'arabic'];
+    private const LANGUAGES = ['english', 'arabic', 'mandarin'];
     private const MODES = ['learn', 'practice'];
+    private const SESSION_MODES = ['practice', 'memory_test'];
     private const DIRECTIONS = ['id_to_target', 'target_to_id'];
 
     public function __construct(private readonly VocabularyGameService $vocabularyGameService)
@@ -105,7 +106,7 @@ class VocabularyApiController extends Controller
 
         $data = $request->validate([
             'language' => ['required', 'string', Rule::in(self::LANGUAGES)],
-            'mode' => ['required', 'string', Rule::in(['practice'])],
+            'mode' => ['required', 'string', Rule::in(self::SESSION_MODES)],
             'category' => ['required', 'string', 'max:120'],
             'day' => ['required', 'integer', 'min:1', 'max:365'],
             'question_count' => ['required', 'integer', 'min:1', 'max:200'],
@@ -131,7 +132,7 @@ class VocabularyApiController extends Controller
         }
 
         $validated = $request->validate([
-            'limit' => ['nullable', 'integer', 'min:1', 'max:50'],
+            'limit' => ['nullable', 'integer', 'min:1', 'max:200'],
             'language' => ['nullable', 'string', Rule::in(self::LANGUAGES)],
         ]);
 
@@ -193,6 +194,7 @@ class VocabularyApiController extends Controller
         $data = $request->validate([
             'language' => ['required', 'string', Rule::in(self::LANGUAGES)],
             'default_mode' => ['required', 'string', Rule::in(self::MODES)],
+            'default_question_count' => ['required', 'integer', 'min:1', 'max:50'],
             'mastered_threshold' => ['required', 'integer', 'min:1', 'max:50'],
             'default_time_limit' => ['required', 'integer', 'min:2', 'max:60'],
             'auto_tts' => ['required', 'boolean'],

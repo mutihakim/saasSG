@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Master\TenantCategory;
 use App\Models\Tenant\Tenant;
 use App\Services\ActivityLogService;
+use App\Support\MasterDataPagination;
 use App\Support\SubscriptionEntitlements;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -23,27 +24,122 @@ class MasterCategoryApiController extends Controller
     {
         $this->authorize('viewAny', TenantCategory::class);
 
-        $module = $request->get('module');
+        $resolved = MasterDataPagination::resolve($request);
+        $moduleFilters = MasterDataPagination::stringList($request, 'module');
+        $typeFilters = MasterDataPagination::stringList($request, 'sub_type');
+        $statusFilters = MasterDataPagination::stringList($request, 'status');
+        $name = trim($request->string('name')->toString());
+        $description = trim($request->string('description')->toString());
+        $nameTerms = MasterDataPagination::searchTerms($name);
+        $descriptionTerms = MasterDataPagination::searchTerms($description);
+        $rootsOnly = $request->boolean('roots_only', false);
+        $includeChildren = ! $request->boolean('exclude_children', false);
+        $allowedSorts = ['name', 'description', 'module', 'sub_type', 'is_active'];
+        $sortBy = $request->string('sort_by')->toString();
+        $sortDirection = strtolower($request->string('sort_direction')->toString()) === 'desc' ? 'desc' : 'asc';
+        $sortColumn = in_array($sortBy, $allowedSorts, true) ? $sortBy : 'name';
 
         $query = TenantCategory::forTenant($tenant->id)
-            ->roots()
-            ->with(['children' => function ($q) {
-                $q->active()->ordered();
-            }])
-            ->active()
-            ->ordered();
+            ->withCount('children')
+            ->roots();
 
-        if ($module) {
-            $query->forModule($module);
+        $applySort = static function ($builder) use ($sortColumn, $sortDirection) {
+            $builder->withCount('children')
+                ->orderBy($sortColumn, $sortDirection)
+                ->orderBy('sort_order')
+                ->orderBy('id');
+        };
+
+        $applySort($query);
+
+        if ($includeChildren) {
+            $query->with(['children' => function ($childQuery) use ($applySort) {
+                $applySort($childQuery);
+            }]);
         }
 
-        if ($request->sub_type) {
-            $query->bySubType($request->sub_type);
+        if ($rootsOnly) {
+            $query->roots();
         }
+
+        if ($moduleFilters !== []) {
+            $query->whereIn('module', $moduleFilters);
+        }
+
+        if ($typeFilters !== []) {
+            $query->whereIn('sub_type', $typeFilters);
+        }
+
+        if ($statusFilters !== []) {
+            $statusValues = collect($statusFilters)
+                ->map(static fn (string $item) => match ($item) {
+                    'active' => true,
+                    'inactive' => false,
+                    default => null,
+                })
+                ->filter(static fn ($item) => $item !== null)
+                ->values()
+                ->all();
+
+            if ($statusValues !== []) {
+                $query->whereIn('is_active', $statusValues);
+            }
+        }
+
+        if ($nameTerms !== []) {
+            $query->where(function ($searchQuery) use ($includeChildren, $nameTerms) {
+                $searchQuery->where(function ($directQuery) use ($nameTerms) {
+                    MasterDataPagination::applyTokenizedContains($directQuery, 'name', $nameTerms);
+                });
+
+                if ($includeChildren) {
+                    $searchQuery->orWhereHas('children', function ($childQuery) use ($nameTerms) {
+                        MasterDataPagination::applyTokenizedContains($childQuery, 'name', $nameTerms);
+                    });
+                }
+            });
+        }
+
+        if ($descriptionTerms !== []) {
+            $query->where(function ($searchQuery) use ($descriptionTerms, $includeChildren) {
+                $searchQuery->where(function ($directQuery) use ($descriptionTerms) {
+                    MasterDataPagination::applyTokenizedContains($directQuery, 'description', $descriptionTerms);
+                });
+
+                if ($includeChildren) {
+                    $searchQuery->orWhereHas('children', function ($childQuery) use ($descriptionTerms) {
+                        MasterDataPagination::applyTokenizedContains($childQuery, 'description', $descriptionTerms);
+                    });
+                }
+            });
+        }
+
+        $categories = $query->paginate(
+            $resolved['per_page'],
+            ['id', 'name', 'description', 'sub_type', 'icon', 'color', 'is_default', 'is_active', 'module', 'parent_id', 'row_version'],
+            'page',
+            $resolved['page']
+        );
+
+        $statsQuery = TenantCategory::forTenant($tenant->id);
+        $stats = [
+            'total' => (clone $statsQuery)->count(),
+            'finance' => (clone $statsQuery)->where('module', 'finance')->count(),
+            'grocery' => (clone $statsQuery)->where('module', 'grocery')->count(),
+            'task' => (clone $statsQuery)->where('module', 'task')->count(),
+        ];
 
         return response()->json([
             'ok'   => true,
-            'data' => ['categories' => $query->get(['id', 'name', 'description', 'sub_type', 'icon', 'color', 'is_default', 'is_active', 'module', 'parent_id', 'row_version'])],
+            'data' => [
+                'categories' => $categories->items(),
+                'pagination' => MasterDataPagination::meta($categories, $resolved),
+                'stats' => $stats,
+                'sort' => [
+                    'by' => $sortColumn,
+                    'direction' => $sortDirection,
+                ],
+            ],
         ]);
     }
 
@@ -203,6 +299,15 @@ class MasterCategoryApiController extends Controller
             ], 403);
         }
 
+        $childCount = $category->children()->count();
+        if ($childCount > 0) {
+            return response()->json([
+                'ok'         => false,
+                'error_code' => 'CATEGORY_HAS_CHILDREN',
+                'message'    => "Kategori tidak dapat dihapus karena masih memiliki {$childCount} sub-kategori.",
+            ], 422);
+        }
+
         $txCount = $category->financeTransactions()->count();
         if ($txCount > 0) {
             return response()->json([
@@ -240,43 +345,98 @@ class MasterCategoryApiController extends Controller
 
         $categories = TenantCategory::forTenant($tenant->id)
             ->whereIn('id', $ids)
-            ->where('is_default', false)
+            ->withCount(['financeTransactions', 'children'])
             ->get();
 
-        $count = TenantCategory::forTenant($tenant->id)
-            ->whereIn('id', $categories->pluck('id'))
-            ->delete();
+        $results = [];
+        $idsToDestroy = [];
+        $categoriesToDestroy = [];
 
         foreach ($categories as $category) {
+            if ($category->is_default) {
+                $results[] = [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'ok' => false,
+                    'error_code' => 'IS_SYSTEM'
+                ];
+                continue;
+            }
+
+            if ($category->children_count > 0) {
+                $results[] = [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'ok' => false,
+                    'error_code' => 'HAS_CHILDREN'
+                ];
+                continue;
+            }
+
+            if ($category->finance_transactions_count > 0) {
+                $results[] = [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'ok' => false,
+                    'error_code' => 'IN_USE'
+                ];
+                continue;
+            }
+
+            $idsToDestroy[] = $category->id;
+            $categoriesToDestroy[] = $category;
+            $results[] = [
+                'id' => $category->id,
+                'name' => $category->name,
+                'ok' => true
+            ];
+        }
+
+        $count = 0;
+        if (!empty($idsToDestroy)) {
+            $count = TenantCategory::forTenant($tenant->id)
+                ->whereIn('id', $idsToDestroy)
+                ->delete();
+
+            foreach ($categoriesToDestroy as $category) {
+                $this->activityLogs->log(
+                    $request,
+                    $tenant,
+                    'master.category.deleted',
+                    'tenant_categories',
+                    $category->id,
+                    $this->activityLogs->snapshot($category),
+                    null,
+                    ['module' => $category->module, 'bulk' => true],
+                    (int) $category->row_version,
+                    null
+                );
+            }
+
             $this->activityLogs->log(
                 $request,
                 $tenant,
-                'master.category.deleted',
-                'tenant_categories',
-                $category->id,
-                $this->activityLogs->snapshot($category),
+                'master.category.bulk_deleted',
+                'tenants',
+                $tenant->id,
                 null,
-                ['module' => $category->module, 'bulk' => true],
-                (int) $category->row_version,
-                null
+                null,
+                [
+                    'ids' => $idsToDestroy,
+                    'deleted_count' => $count,
+                ]
             );
         }
 
-        $this->activityLogs->log(
-            $request,
-            $tenant,
-            'master.category.bulk_deleted',
-            'tenants',
-            $tenant->id,
-            null,
-            null,
-            [
-                'ids' => $categories->pluck('id')->values()->all(),
-                'deleted_count' => $count,
-            ]
-        );
-
-        return response()->json(['ok' => true, 'deleted' => $count]);
+        return response()->json([
+            'ok' => true,
+            'summary' => [
+                'total' => count($ids),
+                'deleted' => $count,
+                'failed' => count($results) - $count
+            ],
+            'results' => $results
+        ]);
     }
 
     // PATCH /master/categories/bulk-parent

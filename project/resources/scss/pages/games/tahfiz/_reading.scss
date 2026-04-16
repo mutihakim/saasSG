@@ -1,0 +1,119 @@
+.tahfiz-reading {
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+
+    .math-game__session-card {
+        background: white;
+        border-radius: 0;
+        border: none;
+    }
+
+    .ayah-display-area {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        padding: 2rem;
+        overflow-y: auto;
+        background: linear-gradient(to bottom, #fff, #f8fafc);
+    }
+
+    .ayah-card {
+        text-align: center;
+        margin-bottom: 2rem;
+        padding: 3rem;
+        border-radius: 2.5rem;
+        transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        background: transparent;
+
+        &__arabic {
+            font-family: "Amiri", serif;
+            font-size: clamp(2.2rem, 6vh, 3.8rem);
+            line-height: 2.2;
+            color: #0f172a;
+            margin-bottom: 2rem;
+            direction: rtl;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.05);
+        }
+
+        &__translation {
+            font-size: 1.15rem;
+            color: #475569;
+            font-style: italic;
+            line-height: 1.8;
+            max-width: 750px;
+            margin: 0 auto;
+            opacity: 0.9;
+        }
+
+        &:hover {
+            transform: scale(1.02);
+        }
+    }
+
+    .tahfiz-controls {
+        background: white;
+        border-top: 1px solid #f1f5f9;
+        padding: 1.5rem 2rem calc(1.5rem + env(safe-area-inset-bottom, 0px));
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+        box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.03);
+
+        &__main {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 2rem;
+        }
+
+        &__meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 600;
+        }
+    }
+
+    .btn-control {
+        width: 3.5rem;
+        height: 3.5rem;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: #f1f5f9;
+        color: #475569;
+        border: none;
+        transition: all 0.2s ease;
+
+        &:hover {
+            background: #e2e8f0;
+            color: #1e293b;
+            transform: scale(1.05);
+        }
+
+        &--play {
+            width: 4.5rem;
+            height: 4.5rem;
+            background: #0d9488;
+            color: white;
+            box-shadow: 0 8px 20px rgba(13, 148, 136, 0.3);
+
+            &:hover {
+                background: #0f766e;
+                color: white;
+                box-shadow: 0 10px 25px rgba(13, 148, 136, 0.4);
+            }
+        }
+    }
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}

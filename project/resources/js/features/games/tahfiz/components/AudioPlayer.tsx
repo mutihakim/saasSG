@@ -45,8 +45,7 @@ const AudioPlayer: React.FC<Props> = ({
             <div className="d-flex justify-content-center mb-3">
                 <button
                     type="button"
-                    className="btn btn-primary btn-lg rounded-circle"
-                    style={{ width: 64, height: 64 }}
+                    className="btn btn-primary btn-lg rounded-circle game-audio-player__button"
                     onClick={onPlayPause}
                 >
                     <i

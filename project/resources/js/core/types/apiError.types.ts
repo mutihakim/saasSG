@@ -9,7 +9,7 @@ export function parseApiError(err: any, fallback: string): ParsedApiError {
     const t = i18n.t.bind(i18n);
     const status = err?.response?.status as number | undefined;
     const data = err?.response?.data;
-    const code = data?.error?.code ?? data?.code;
+    const code = data?.error?.code ?? data?.code ?? data?.error_code;
 
     let message = data?.error?.message ?? data?.message ?? fallback;
     const fields = data?.error?.details?.fields ?? data?.errors;

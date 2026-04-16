@@ -28,5 +28,11 @@
   "api.error.UNAUTHENTICATED.detail": "Your session has expired. Please sign in again and retry.",
   "api.error.NOT_FOUND.title": "Resource not found",
   "api.error.PLAN_QUOTA_EXCEEDED.title": "Plan quota exceeded",
-  "api.error.VERSION_CONFLICT.title": "Data Conflict"
+  "api.error.VERSION_CONFLICT.title": "Data Conflict",
+  "api.error.UOM_IN_USE.title": "Unit in Use",
+  "api.error.UOM_IN_USE.detail": "Unit of measure cannot be deleted because it is used as a base unit by other units.",
+  "api.error.CURRENCY_IN_USE.title": "Currency in Use",
+  "api.error.CURRENCY_IN_USE.detail": "Currency is currently used in transactions and cannot be deleted.",
+  "api.error.IS_SYSTEM_CURRENCY.title": "System Currency",
+  "api.error.IS_SYSTEM_CURRENCY.detail": "Is the system base currency and cannot be deleted."
 }

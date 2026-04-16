@@ -42,7 +42,7 @@ const GameSummaryCard: React.FC<GameSummaryCardProps> = ({ title, metrics, actio
             {children}
 
             {actions.length > 0 && (
-                <div className="d-flex justify-content-end gap-2">
+                <div className="d-flex justify-content-end gap-2 mb-2">
                     {actions.map((action) => (
                         <Button
                             key={action.label}
