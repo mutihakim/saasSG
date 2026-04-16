@@ -33,6 +33,8 @@ Dokumen ini memetakan halaman UI ke route dan backend contract untuk mempercepat
 | Vocabulary Mastered | `Tenant/Games/VocabularyMasteredPage` | `https://{tenant}.appsah.my.id/games/vocabulary/mastered` | member shell route |
 | Vocabulary History | `Tenant/Games/VocabularyHistoryPage` | `https://{tenant}.appsah.my.id/games/vocabulary/history` | member shell route |
 | Vocabulary Settings | `Tenant/Games/VocabularySettingsPage` | `https://{tenant}.appsah.my.id/games/vocabulary/settings` | member shell route |
+| Curriculum Game | `Tenant/Games/CurriculumPage` | `https://{tenant}.appsah.my.id/games/curriculum` | member shell route + Curriculum Game API |
+| Curriculum History | `Tenant/Games/CurriculumHistoryPage` | `https://{tenant}.appsah.my.id/games/curriculum/history` | member shell route |
 
 Wallet UX contract:
 
@@ -48,6 +50,12 @@ Games UX contract:
 4. Submenu Vocabulary `Mastered`, `History`, dan `Settings` harus membuka halaman data nyata member, bukan placeholder "segera hadir".
 5. Popup feedback game harus auto-hide sekitar 1.2 detik dan wajib hilang saat prompt berikutnya muncul agar tidak menutupi soal baru, termasuk pada mode landscape.
 6. Vocabulary `Practice` memakai timer per soal sesuai settings per bahasa dan dapat membalik arah terjemahan (`Indonesia -> Bahasa Pilihan` atau `Bahasa Pilihan -> Indonesia`).
+7. Vocabulary `Memory Test` memakai counter sesi sebesar jumlah effective words pada hari aktif dan tidak boleh selesai otomatis hanya karena seluruh kata sudah berstatus mastered sebelum sesi dimulai.
+8. Vocabulary `History` harus dapat menampilkan sesi `memory_test` sebagai mode terpisah dari `practice`.
+9. Vocabulary `Settings` memakai satu content container besar dengan grouped chips/cards dan sticky floating save action yang konsisten dengan halaman setup Vocabulary.
+10. Curriculum Game mengikuti pattern Vocabulary untuk `setup -> countdown -> practice -> summary`, tetapi tetap hanya `practice-only` tanpa `learn/mastered/memory_test`.
+11. Curriculum `Setup` memakai container, chip selection, dan floating start action yang satu keluarga visual dengan Vocabulary.
+12. Curriculum `Practice` wajib menampilkan timer progress, question counter, streak, feedback benar/salah/timeout, dan auto-advance untuk jawaban benar.
 
 ## Admin Area
 
@@ -56,6 +64,18 @@ Games UX contract:
 | Admin Dashboard | `Admin/Dashboard` | `/admin/dashboard` | `superadmin.only` |
 | Tenant Directory | `Admin/Tenants` | `/admin/tenants` | `superadmin.only` |
 | Tenant Subscriptions | `Admin/TenantSubscriptions` | `/admin/tenants/subscriptions` | `superadmin.only` |
+
+## Master Data UX Contract
+
+1. Surface `/admin/master/categories`, `/admin/master/tags`, `/admin/master/currencies`, dan `/admin/master/uom` memakai list tenant-side di dalam shared shell admin tenant.
+2. List master data menggunakan server-side batch pagination dengan lazy loading otomatis saat user mencapai area bawah tabel; tidak ada UI nomor halaman maupun page size selector.
+3. Baris header pertama dipakai untuk label + affordance sort; klik header mengubah sort `asc -> desc -> reset default`.
+4. Baris header kedua dipakai untuk filter per kolom sesuai tipe data:
+   - text input untuk kolom teks
+   - dropdown checklist untuk enum/multi-select seperti module, type, status
+   - range min/max untuk angka seperti usage count atau base factor
+5. Category modal harus tetap bisa memuat parent root sesuai modul walau tabel utama baru memuat sebagian batch.
+6. UOM modal harus tetap bisa memuat kandidat `base unit` sesuai dimensi walau tabel utama baru memuat sebagian batch.
 
 ## Auth/Profile Area
 

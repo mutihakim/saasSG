@@ -19,6 +19,21 @@ Setiap modul baru WAJIB mengikuti prinsip berikut:
 
 ---
 
+## Kebijakan Database Baru
+
+Untuk modul baru, ikuti aturan database berikut:
+
+1. Migration hanya boleh mendefinisikan schema final: tabel, kolom, foreign key, constraint, dan index.
+2. Jangan menaruh seed data, backfill, normalize, recalculation, atau rollout permission di migration.
+3. Data default wajib ditempatkan di seeder atau service provisioning.
+4. Jika data hanya dibutuhkan untuk demo/dev, buat seeder manual terpisah dan jangan panggil dari `DatabaseSeeder`.
+5. Jika ada data turunan yang perlu dibangun ulang, sediakan artisan command maintenance, bukan migration.
+
+> [!IMPORTANT]
+> Repo ini memakai baseline schema dump PostgreSQL di `database/schema/pgsql-schema.sql`. Migration baru harus diperlakukan sebagai perubahan schema setelah baseline dump, bukan tempat menyimpan sejarah data rollout.
+
+---
+
 ## Langkah Lengkap: Membuat Modul Master Data Baru
 
 Contoh di bawah menggunakan modul `master.warehouses` (Gudang) sebagai ilustrasi.

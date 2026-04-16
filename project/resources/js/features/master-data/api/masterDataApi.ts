@@ -145,6 +145,13 @@ export async function deleteTag(tenantRoute: TenantRouteLike, id: number): Promi
     await axios.delete(tenantRoute.apiTo(`/master/tags/${id}`));
 }
 
+export async function deleteTags(tenantRoute: TenantRouteLike, ids: number[]): Promise<any> {
+    const res = await axios.delete(tenantRoute.apiTo('/master/tags'), {
+        data: { ids },
+    });
+    return res.data;
+}
+
 export async function fetchUom(tenantRoute: TenantRouteLike, options: UomParams = {}): Promise<PaginatedCollection<Uom>> {
     const res = await axios.get(tenantRoute.apiTo('/master/uom'), {
         params: {

@@ -38,12 +38,14 @@ const mergeUniqueTags = (existing: Tag[], incoming: Tag[]) => {
 
 const TagsIndex = ({ tags: initialTags, pagination: initialPagination, filters, sort, permissions }: TagsProps) => {
     const { t } = useTranslation();
-    const { refreshTags, removeTag } = useMasterData();
+    const { refreshTags, removeTag, removeTags } = useMasterData();
     const [tags, setTags] = useState(initialTags);
     const [pagination, setPagination] = useState(initialPagination);
     const [selectedTag, setSelectedTag] = useState<Tag | null>(null);
+    const [selectedRows, setSelectedRows] = useState<number[]>([]);
     const [showModal, setShowModal] = useState(false);
     const [showDeleteModal, setShowDeleteModal] = useState(false);
+    const [isBulkDelete, setIsBulkDelete] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
     const [loadingMore, setLoadingMore] = useState(false);
@@ -88,7 +90,9 @@ const TagsIndex = ({ tags: initialTags, pagination: initialPagination, filters, 
         }
 
         setIsRefreshing(true);
-        void fetchTagsPage(1, { replace: true }).finally(() => setIsRefreshing(false));
+        void fetchTagsPage(1, { replace: true }).finally(() => {
+            setIsRefreshing(false);
+        });
     }, [fetchTagsPage]);
 
     useEffect(() => {
@@ -125,21 +129,55 @@ const TagsIndex = ({ tags: initialTags, pagination: initialPagination, filters, 
     };
 
     const confirmDelete = async () => {
-        if (!selectedTag) {
-            return;
-        }
-
         setIsDeleting(true);
         try {
-            await removeTag(selectedTag.id);
-            notify.success(t("master.tags.messages.delete_success"));
+            if (isBulkDelete) {
+                const response = await removeTags(selectedRows);
+                const results = response.results || [];
+                const failed = results.filter((r: any) => !r.ok);
+                
+                if (failed.length > 0) {
+                    const errorDetail = failed.map((r: any) => {
+                        const errorMsg = r.error_code ? t(`master.tags.errors.${r.error_code}`) : t("master.tags.messages.delete_error");
+                        return `${r.name}: ${errorMsg}`;
+                    }).join("\n");
+
+                    notify.error({
+                        title: t("master.tags.messages.bulk_delete_partial_error"),
+                        detail: errorDetail,
+                    });
+                } else {
+                    notify.success(t("master.tags.messages.delete_success"));
+                }
+            } else if (selectedTag) {
+                await removeTag(selectedTag.id);
+                notify.success(t("master.tags.messages.delete_success"));
+            }
+            
             await fetchTagsPage(1, { replace: true });
             setShowDeleteModal(false);
+            setSelectedRows([]);
         } catch (error: any) {
             const parsed = parseApiError(error, t("master.tags.messages.delete_error"));
             notify.error({ title: parsed.title, detail: parsed.detail });
         } finally {
             setIsDeleting(false);
+        }
+    };
+
+    const handleSelectAll = (checked: boolean) => {
+        if (checked) {
+            setSelectedRows(tags.map((t) => t.id));
+        } else {
+            setSelectedRows([]);
+        }
+    };
+
+    const handleSelectRow = (id: number, checked: boolean) => {
+        if (checked) {
+            setSelectedRows((prev) => [...prev, id]);
+        } else {
+            setSelectedRows((prev) => prev.filter((rowId) => rowId !== id));
         }
     };
 
@@ -153,11 +191,33 @@ const TagsIndex = ({ tags: initialTags, pagination: initialPagination, filters, 
                     <Card id="tagsList">
                         <Card.Header className="border-0 align-items-center d-flex">
                             <h4 className="card-title mb-0 flex-grow-1">{t("master.tags.title")}</h4>
-                            {permissions.create ? (
-                                <Button variant="danger" size="sm" onClick={() => { setSelectedTag(null); setShowModal(true); }}>
-                                    <i className="ri-add-line align-bottom me-1"></i> {t("master.tags.add_new")}
-                                </Button>
-                            ) : null}
+                            <div className="d-flex gap-2">
+                                {selectedRows.length > 1 && permissions.delete ? (
+                                    <Button
+                                        variant="soft-danger"
+                                        size="sm"
+                                        onClick={() => {
+                                            setIsBulkDelete(true);
+                                            setSelectedTag(null);
+                                            setShowDeleteModal(true);
+                                        }}
+                                        data-testid="bulk-delete-btn"
+                                    >
+                                        <i className="ri-delete-bin-line align-bottom me-1"></i>
+                                        {t("master.common.buttons.delete_selected")} ({selectedRows.length})
+                                    </Button>
+                                ) : null}
+                                {permissions.create ? (
+                                    <Button
+                                        variant="danger"
+                                        size="sm"
+                                        onClick={() => { setSelectedTag(null); setShowModal(true); }}
+                                        data-testid="add-btn"
+                                    >
+                                        <i className="ri-add-line align-bottom me-1"></i> {t("master.tags.add_new")}
+                                    </Button>
+                                ) : null}
+                            </div>
                         </Card.Header>
 
                         <Card.Body>
@@ -165,23 +225,52 @@ const TagsIndex = ({ tags: initialTags, pagination: initialPagination, filters, 
                                 <table className="table align-middle table-nowrap table-striped table-hover" id="tagTable" style={{ tableLayout: "fixed", minWidth: "560px" }}>
                                     <thead className="table-light text-muted">
                                         <tr className="text-uppercase">
-                                            <th style={{ width: "44%" }}><SortableHeader label={t("master.tags.headers.name")} isActive={sortBy === "name"} direction={sortDirection} onToggle={() => handleSort("name")} /></th>
+                                            <th style={{ width: "40px" }}>
+                                                <div className="form-check">
+                                                    <input
+                                                        className="form-check-input"
+                                                        type="checkbox"
+                                                        checked={tags.length > 0 && selectedRows.length === tags.length}
+                                                        onChange={(e) => handleSelectAll(e.target.checked)}
+                                                    />
+                                                </div>
+                                            </th>
+                                            <th style={{ width: "40%" }}><SortableHeader label={t("master.tags.headers.name")} isActive={sortBy === "name"} direction={sortDirection} onToggle={() => handleSort("name")} /></th>
                                             <th style={{ width: "36%" }}><SortableHeader label={t("master.tags.headers.usage")} isActive={sortBy === "usage_count"} direction={sortDirection} onToggle={() => handleSort("usage_count")} /></th>
                                             <th style={{ width: "96px" }}>{t("master.common.headers.action")}</th>
                                         </tr>
                                         <tr>
-                                            <th><HeaderTextFilter value={nameFilter} placeholder={t("master.common.search_placeholder")} onChange={setNameFilter} /></th>
-                                            <th><HeaderNumberExpressionFilter value={usageFilter} placeholder={t("master.common.filters.number_expression")} onChange={setUsageFilter} /></th>
+                                            <th></th>
+                                            <th><HeaderTextFilter value={nameFilter} placeholder={t("master.common.search_placeholder")} onChange={setNameFilter} data-testid="tag-name-filter" /></th>
+                                            <th><HeaderNumberExpressionFilter value={usageFilter} placeholder={t("master.common.filters.number_expression")} onChange={setUsageFilter} data-testid="tag-usage-filter" /></th>
                                             <th></th>
                                         </tr>
                                     </thead>
                                     <tbody className="list">
                                         {tags.map((tag) => (
-                                            <tr key={tag.id}>
+                                            <tr key={tag.id} data-testid="tag-row">
                                                 <td>
-                                                    <Badge style={{ backgroundColor: tag.color || "#677abd", color: "#fff", fontSize: "0.85rem", padding: "0.35em 0.65em" }}>
+                                                    <div className="form-check">
+                                                        <input
+                                                            className="form-check-input"
+                                                            type="checkbox"
+                                                            checked={selectedRows.includes(tag.id)}
+                                                            onChange={(e) => handleSelectRow(tag.id, e.target.checked)}
+                                                        />
+                                                    </div>
+                                                </td>
+                                                <td>
+                                                    <span 
+                                                        className="badge"
+                                                        style={{ 
+                                                            backgroundColor: tag.color || "#677abd", 
+                                                            color: "#fff", 
+                                                            fontSize: "0.85rem", 
+                                                            padding: "0.35em 0.65em" 
+                                                        }}
+                                                    >
                                                         {tag.name}
-                                                    </Badge>
+                                                    </span>
                                                 </td>
                                                 <td><span className="text-muted">{t("master.tags.usage_template", { count: Math.max(0, Number(tag.usage_count || 0)) })}</span></td>
                                                 <td>
@@ -190,11 +279,11 @@ const TagsIndex = ({ tags: initialTags, pagination: initialPagination, filters, 
                                                             <i className="ri-more-fill align-middle"></i>
                                                         </Dropdown.Toggle>
                                                         <Dropdown.Menu className="dropdown-menu-end">
-                                                            <Dropdown.Item onClick={() => { setSelectedTag(tag); setShowModal(true); }}>
+                                                            <Dropdown.Item onClick={() => { setSelectedTag(tag); setIsBulkDelete(false); setShowModal(true); }} data-testid="edit-btn">
                                                                 <i className="ri-pencil-fill align-bottom me-2 text-muted"></i> {t("master.categories.actions.edit")}
                                                             </Dropdown.Item>
                                                             <Dropdown.Divider />
-                                                            <Dropdown.Item className="text-danger" onClick={() => { setSelectedTag(tag); setShowDeleteModal(true); }}>
+                                                            <Dropdown.Item className="text-danger" onClick={() => { setSelectedTag(tag); setIsBulkDelete(false); setShowDeleteModal(true); }} data-testid="delete-btn">
                                                                 <i className="ri-delete-bin-fill align-bottom me-2 text-danger"></i> {t("master.categories.actions.delete")}
                                                             </Dropdown.Item>
                                                         </Dropdown.Menu>
@@ -204,7 +293,7 @@ const TagsIndex = ({ tags: initialTags, pagination: initialPagination, filters, 
                                         ))}
                                         {tags.length === 0 ? (
                                             <tr>
-                                                <td colSpan={3} className="text-center py-4">{t("master.categories.messages.no_result")}</td>
+                                                <td colSpan={4} className="text-center py-4">{t("master.categories.messages.no_result")}</td>
                                             </tr>
                                         ) : null}
                                     </tbody>
@@ -235,7 +324,13 @@ const TagsIndex = ({ tags: initialTags, pagination: initialPagination, filters, 
                 </Suspense>
             ) : null}
 
-            <DeleteModal show={showDeleteModal} onCloseClick={() => setShowDeleteModal(false)} onDeleteClick={confirmDelete} loading={isDeleting} />
+            <DeleteModal 
+                show={showDeleteModal} 
+                onCloseClick={() => setShowDeleteModal(false)} 
+                onDeleteClick={confirmDelete} 
+                loading={isDeleting} 
+                message={isBulkDelete ? t("master.tags.messages.bulk_delete_confirm", { count: selectedRows.length }) : undefined}
+            />
         </>
     );
 };

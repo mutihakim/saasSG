@@ -221,8 +221,8 @@ Route::prefix('v1')
                     Route::get('/tags', [MasterTagApiController::class, 'index'])->middleware('tenant.feature:master.tags,view');
                     Route::post('/tags', [MasterTagApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:master.tags,create', 'throttle:tenant.mutation']);
                     Route::patch('/tags/{tag}', [MasterTagApiController::class, 'update'])->middleware(['superadmin.impersonation', 'tenant.feature:master.tags,update', 'throttle:tenant.mutation']);
+                    Route::delete('/tags', [MasterTagApiController::class, 'bulkDestroy'])->middleware(['superadmin.impersonation', 'tenant.feature:master.tags,delete', 'throttle:tenant.mutation']);
                     Route::delete('/tags/{tag}', [MasterTagApiController::class, 'destroy'])->middleware(['superadmin.impersonation', 'tenant.feature:master.tags,delete', 'throttle:tenant.mutation']);
-
                     // Currencies
                     Route::get('/currencies', [MasterCurrencyApiController::class, 'index'])->middleware('tenant.feature:master.currencies,view');
                     Route::post('/currencies', [MasterCurrencyApiController::class, 'store'])->middleware(['superadmin.impersonation', 'tenant.feature:master.currencies,create', 'throttle:tenant.mutation']);

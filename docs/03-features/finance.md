@@ -10,6 +10,12 @@ Fokus implementasi saat ini:
 - visibilitas transaksi berbasis role + akses akun/budget
 - akun dan budget tenant dapat **private** atau **shared**
 - pocket tenant dapat berdiri di atas **akun riil** sebagai dompet virtual berbasis tujuan
+- baseline tenant sekarang juga membuat starter finance infrastructure:
+  - `1` account private + `1` main wallet sistem untuk tiap member linked aktif
+  - `1` account shared keluarga + `1` main wallet shared saat tenant bootstrap
+  - baseline ditangani oleh `TenantFinanceBaselineService`, bukan oleh demo seeder
+  - lifecycle hooks: tenant bootstrap, member create linked, invitation accept, normalize-roles repair
+- demo sample data (budget, planning, pockets, transactions) dipisah tegas ke namespace `Database\Seeders\Tenant\Finance\Demo`
 - member biasa memakai model **Private Only** untuk account dan budget
 - transfer dicatat sebagai **pasangan transaksi internal**
 - shell `/finance` berdiri sebagai **Finance PWA Module**
@@ -207,15 +213,48 @@ Aturan penting:
 
 ## 8) Seed Data
 
-Seeder tenant finance saat ini:
+Struktur seeder finance sekarang dipisah menjadi **baseline infrastructure** dan **demo layering**:
 
-- `project/database/seeders/TenantBankAccountSeeder.php`
-  - akun private per member
-  - akun shared tenant
-- `project/database/seeders/TenantBudgetSeeder.php`
-  - budget shared dan sample budget personal
-- `project/database/seeders/FinanceTransactionSeeder.php`
-  - sample transaksi finance yang memakai account dan budget
+### Baseline Infrastructure (provisioning)
+
+Baseline accounts/wallets tidak lagi dibuat oleh seeder terpisah. 
+`TenantFinanceBaselineService` menangani provisioning saat:
+- tenant bootstrap (`TenantBaselineSeeder` → `TenantProvisionService::provision()`)
+- tenant registration (`TenantProvisionService::provisionDefaultWorkspaceForUser()`)
+- member create linked (`TenantMemberApiController@store`)
+- invitation accept (`TenantLifecycleApiController@invitationsAccept`)
+- role normalize/repair (`NormalizeTenantMemberRoles` command)
+
+Hasil baseline per tenant:
+- 1 shared account "Kas Keluarga" + 1 main wallet "Utama" (is_system=true)
+- 1 private account "Kas {FirstName}" + 1 main wallet "Utama" per member linked aktif
+
+### Demo Layering
+
+Demo sample data berada di namespace `Database\Seeders\Tenant\Finance\Demo`:
+
+- `Tenant/Finance/Demo/TenantFinanceWalletSeeder.php`
+  - ensures main wallet icon/color per baseline account
+  - membuat demo pockets dari `FamilyFinanceSeed::pocketBlueprints()` (gracefully skip jika account tidak match)
+- `Tenant/Finance/Demo/TenantFinanceBudgetSeeder.php`
+  - sample budgets dari `FamilyFinanceSeed::budgetBlueprints()` (skip jika account/pocket tidak ada)
+- `Tenant/Finance/Demo/TenantFinancePlanningSeeder.php`
+  - sample savings goals/wishes (enterprise only, skip jika account tidak ada)
+- `Tenant/Finance/Demo/TenantFinanceDemoSeeder.php`
+  - sample transaksi finance dari `FamilyFinanceSeed::demoTransactions()` (skip jika account/pocket/category tidak ada)
+
+`FamilyFinanceSeed` (di `database/seeders/Support/`) berisi **static blueprints** untuk demo saja, bukan source of truth baseline.
+
+`DevDemoSeeder` menjalankan urutan:
+1. Platform identity & permissions
+2. Tenant baseline (members, roles, master data, finance baseline accounts/wallets)
+3. Demo wallets/pockets (TenantFinanceWalletSeeder)
+4. Demo budgets, planning, transactions (TenantFinanceBudgetSeeder, TenantFinancePlanningSeeder, TenantFinanceDemoSeeder)
+5. Other domain demos (CurriculumPilotSeeder, MandarinVocabularySeeder)
+
+```bash
+php artisan migrate:fresh --seed --force
+```
 
 ## 9) Testing & Verification
 

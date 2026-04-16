@@ -7,6 +7,7 @@ import {
     deleteCurrency,
     deleteCurrencies,
     deleteTag,
+    deleteTags,
     deleteUom,
     deleteUoms,
     fetchCategories,
@@ -48,6 +49,7 @@ export function useMasterData() {
         [tenantRoute]
     );
     const removeTag = useCallback((id: number) => deleteTag(tenantRoute, id), [tenantRoute]);
+    const removeTags = useCallback((ids: number[]) => deleteTags(tenantRoute, ids), [tenantRoute]);
 
     const refreshUom = useCallback(
         (options?: { code?: string; name?: string; abbreviation?: string; dimensionTypes?: string[]; statuses?: Array<"active" | "inactive">; baseFactor?: string; page?: number; sortBy?: string; sortDirection?: SortDirection }) => fetchUom(tenantRoute, options),
@@ -65,6 +67,7 @@ export function useMasterData() {
         removeCurrencies,
         refreshTags,
         removeTag,
+        removeTags,
         refreshUom,
         removeUom,
         removeUoms,

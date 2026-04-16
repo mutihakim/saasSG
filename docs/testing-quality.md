@@ -13,6 +13,30 @@ npm run docs:build
 php artisan test
 ```
 
+## Database Bootstrap Policy
+
+Mulai `2026-04-15`, repo ini memakai policy berikut:
+
+1. Migration hanya untuk schema, constraint, dan index.
+2. Dilarang menaruh backfill, insert/update/delete data, atau recalculation counter di migration.
+3. Baseline schema untuk install baru mengandalkan `database/schema/pgsql-schema.sql` + migration schema baru setelah dump.
+4. `DatabaseSeeder` hanya untuk baseline minimum yang aman di semua environment.
+5. Demo/sample data wajib dipisah ke seeder manual terpisah dan tidak boleh dipanggil otomatis oleh `DatabaseSeeder`.
+
+Workflow yang diharapkan:
+
+```bash
+php artisan migrate --seed
+php artisan migrate:fresh --seed
+php artisan db:seed --class=DevDemoSeeder
+```
+
+Untuk derived data repair, gunakan command maintenance terpisah, misalnya:
+
+```bash
+php artisan app:rebuild-tag-usage-counts
+```
+
 Kriteria lulus:
 
 1. Tidak ada namespace page non-core di `resources/js/Pages`.
@@ -45,6 +69,17 @@ Subscription:
 - `tests/Feature/TenantSubscriptionGuardTest.php`
 - `tests/Feature/TenantSubscriptionQuotaTest.php`
 
+Master Data:
+
+- `tests/Feature/MasterDataQuotaTest.php`
+- Wajib mencakup:
+  - list endpoint `categories/tags/currencies/uom` menerima `page`, `sort_by`, `sort_direction`, dan filter per kolom
+  - filter list (`name`, `description`, `module[]`, `status[]`, `dimension_type[]`, range number`) tidak merusak pagination meta
+  - lazy load frontend mengappend page berikutnya tanpa menduplikasi row lama
+  - category parent dropdown tetap bisa mengambil root options lintas batch pagination
+  - UOM base unit dropdown tetap bisa mengambil opsi lintas batch pagination
+  - bulk delete category tetap bekerja saat list surface memakai lazy loading
+
 Finance WhatsApp Draft:
 
 - `tests/Feature/WhatsappFinanceIntentTest.php`
@@ -71,10 +106,22 @@ Finance PWA / Attachment:
 - edit item bulk tidak boleh menghapus `source_type/source_id`
 - upload gambar attachment harus tersimpan sebagai WebP teroptimasi di backend
 
+Finance baseline lifecycle:
+
+- provisioning tenant baru wajib membuat baseline finance shared + private yang idempotent
+- create member linked wajib membuat baseline private account + main wallet
+- invitation accept wajib membuat baseline private account + main wallet untuk member aktif
+- command `tenant:members:normalize-roles` wajib bisa repair baseline private finance yang hilang tanpa duplikasi
+- baseline accounts/wallets tidak boleh dibuat oleh demo seeder; hanya `TenantFinanceBaselineService` yang membuat baseline
+- demo seeders (Budget, Planning, Wallet/Pockets, Transactions) harus graceful skip ketika baseline accounts tidak match nama blueprint
+- DevDemoSeeder harus menjalankan TenantBaselineSeeder dulu, baru demo layering dari `Database\Seeders\Tenant\Finance\Demo\*`
+- test `TenantSettingsTest` memverifikasi: member tanpa permission `tenant.settings.view` mendapat 403, dan tenant delete harus cascade ke `tenant_bank_accounts` baseline
+
 Games:
 
 - `tests/Feature/MathGameApiTest.php`
 - `tests/Feature/VocabularyGameApiTest.php`
+- `tests/Feature/CurriculumGameApiTest.php`
 - Wajib mencakup:
   - attempt benar mengupdate `tenant_game_math_stats` dan menandai mastered saat streak mencapai threshold
   - attempt salah mereset current streak tanpa menurunkan max streak
@@ -82,9 +129,25 @@ Games:
   - finish session menyimpan `tenant_game_sessions` dan history mengembalikan sesi terbaru
   - vocabulary words mengembalikan progress map member untuk hari aktif
   - vocabulary attempt mengupdate `tenant_game_vocabulary_progress` dan menandai mastered sesuai threshold per bahasa
+  - vocabulary attempt salah mereset `correct_streak` ke `0`, mempertahankan `max_streak`, dan dapat menurunkan `is_mastered`
   - vocabulary finish session menyimpan `tenant_game_vocabulary_sessions` dan history mengembalikan sesi terbaru
+  - vocabulary finish session menerima `mode=memory_test` dan history menampilkan mode tersebut
   - vocabulary mastered mengembalikan daftar kata mastered yang dapat difilter per bahasa
-  - vocabulary settings menyimpan `default_time_limit` dan `translation_direction` per bahasa
+  - vocabulary config menghitung `mastered_days` dari effective words setelah dedupe global/tenant override, bukan dari raw row count
+  - vocabulary config tidak boleh membocorkan `mastered_days` member lain dalam tenant yang sama
+  - vocabulary settings menyimpan `default_question_count`, `default_time_limit`, dan `translation_direction` per bahasa
+  - vocabulary summary dan memory test CTA hanya muncul saat seluruh kata pada `language + category + day` aktif benar-benar mastered
+  - vocabulary practice mengulang kata yang belum mastered sampai target jumlah soal tercapai atau level selesai mastered di tengah sesi
+  - vocabulary memory test memakai target sebesar jumlah effective words hari aktif dan tidak boleh auto-finish hanya karena semua kata sudah mastered
+  - vocabulary mastered page menampilkan translasi yang sesuai untuk English, Arabic, dan Mandarin
+  - curriculum config hanya mengembalikan unit yang lolos entitlement member aktif
+  - curriculum config mengembalikan opsi jumlah soal + timer untuk setup parity frontend
+  - curriculum questions endpoint mengembalikan deck soal untuk unit yang visible
+  - curriculum attempt memvalidasi jawaban dan mengembalikan `correct_answer` + `points`
+  - curriculum finish menyimpan history ke `tenant_game_sessions` dengan `game_slug=curriculum` dan metadata `time_limit_seconds`
+  - curriculum admin update memakai OCC `row_version` dan stale write mengembalikan `409 VERSION_CONFLICT`
+  - curriculum import CSV membuat soal baru dan menolak row invalid
+  - curriculum CRUD/import/grant menulis `activity_logs`
   - akses lintas tenant disembunyikan dengan `404`
 
 WhatsApp (API + Realtime):

@@ -105,17 +105,50 @@ JID accepted:
 
 Semua endpoint master data ada di bawah `/api/v1/tenants/{tenant}/master/`
 
+Kontrak list endpoint master data:
+
+- `page` (`int`, default `1`)
+- batch internal default dipakai untuk lazy loading tabel; UI master data tidak lagi menampilkan page size selector
+- Response list sekarang memakai envelope:
+  - `data.<items>[]`
+  - `data.pagination.current_page`
+  - `data.pagination.total`
+  - `data.pagination.last_page`
+  - `data.pagination.has_more`
+  - `data.sort.by`
+  - `data.sort.direction`
+
 **UOM (Unit of Measure):**
 - `GET /master/uom` — `tenant.feature:master.uom,view`
 - `POST /master/uom` — `tenant.feature:master.uom,create`
 - `PATCH /master/uom/{uom}` — `tenant.feature:master.uom,update`
 - `DELETE /master/uom/{uom}` — `tenant.feature:master.uom,delete`
 
+Query tambahan:
+- `code`
+- `name`
+- `abbreviation`
+- `dimension_type[]`
+- `status[]`
+- `base_factor_min`
+- `base_factor_max`
+- `sort_by`
+- `sort_direction=asc|desc`
+
 **Currencies:**
 - `GET /master/currencies` — `tenant.feature:master.currencies,view`
 - `POST /master/currencies` — `tenant.feature:master.currencies,create`
 - `PATCH /master/currencies/{currency}` — `tenant.feature:master.currencies,update`
 - `DELETE /master/currencies/{currency}` — `tenant.feature:master.currencies,delete`
+
+Query tambahan:
+- `code`
+- `name`
+- `symbol`
+- `symbol_position[]`
+- `status[]`
+- `sort_by`
+- `sort_direction=asc|desc`
 
 **Tags:**
 - `GET /master/tags` — `tenant.feature:master.tags,view`
@@ -124,6 +157,13 @@ Semua endpoint master data ada di bawah `/api/v1/tenants/{tenant}/master/`
 - `PATCH /master/tags/{tag}` — `tenant.feature:master.tags,update`
 - `DELETE /master/tags/{tag}` — `tenant.feature:master.tags,delete`
 
+Query tambahan:
+- `name`
+- `usage_min`
+- `usage_max`
+- `sort_by`
+- `sort_direction=asc|desc`
+
 **Categories:**
 - `GET /master/categories` — `tenant.feature:master.categories,view`
 - `POST /master/categories` — `tenant.feature:master.categories,create`
@@ -131,6 +171,22 @@ Semua endpoint master data ada di bawah `/api/v1/tenants/{tenant}/master/`
 - `PATCH /master/categories/bulk-parent` — `tenant.feature:master.categories,update`
 - `DELETE /master/categories/{category}` — `tenant.feature:master.categories,delete`
 - `DELETE /master/categories` (bulk) — `tenant.feature:master.categories,delete`
+
+Query tambahan:
+- `name`
+- `description`
+- `module[]`
+- `sub_type[]`
+- `status[]`
+- `sort_by`
+- `sort_direction=asc|desc`
+- `roots_only=1`
+- `exclude_children=1`
+
+Catatan:
+- `GET /master/categories` tetap mengembalikan root category beserta `children` saat `exclude_children` tidak diberikan.
+- Payload list kategori juga menyertakan `data.stats` untuk widget total kategori per modul utama.
+- Grid frontend master data memakai auto-load saat scroll bawah; `page` dipakai internal antar batch, bukan untuk UI pagination klasik.
 
 ### Finance
 
@@ -203,4 +259,35 @@ Vocabulary Game endpoint berada di bawah `/api/v1/tenants/{tenant}/games/vocabul
 - `POST /games/vocabulary/settings`
 
 `POST /games/vocabulary/attempt` menerima `word_id`, `language`, `is_correct`, dan `current_streak`, lalu mengembalikan `data.stats` berisi hit counter, streak, dan `is_mastered`.
+Jika `is_correct=false`, backend mereset `correct_streak` ke `0` dan `is_mastered` bisa turun kembali ke `false` bila threshold tidak lagi terpenuhi.
+`POST /games/vocabulary/session/finish` menerima `mode = practice | memory_test`; sesi `memory_test` ikut tersimpan ke history Vocabulary.
 `POST /games/vocabulary/settings` sekarang menerima `default_mode`, `mastered_threshold`, `default_time_limit`, `auto_tts`, dan `translation_direction`.
+
+Curriculum Game endpoint berada di bawah `/api/v1/tenants/{tenant}/games/curriculum`.
+
+- `GET /games/curriculum/config`
+- `GET /games/curriculum/units/{unitId}/questions?limit=10`
+- `POST /games/curriculum/attempt`
+- `POST /games/curriculum/session/finish`
+- `GET /games/curriculum/history?limit=10`
+- `GET /games/curriculum/admin/units`
+- `POST /games/curriculum/admin/units`
+- `PATCH /games/curriculum/admin/units/{unit}`
+- `DELETE /games/curriculum/admin/units/{unit}`
+- `GET /games/curriculum/admin/units/{unitId}/questions`
+- `POST /games/curriculum/admin/units/{unitId}/questions`
+- `POST /games/curriculum/admin/units/{unitId}/questions/import`
+- `PATCH /games/curriculum/admin/questions/{question}`
+- `DELETE /games/curriculum/admin/questions/{question}`
+- `GET /games/curriculum/admin/entitlements`
+- `POST /games/curriculum/admin/entitlements`
+- `DELETE /games/curriculum/admin/entitlements/{entitlement}`
+
+Contract penting Curriculum:
+
+- `GET /games/curriculum/config` hanya mengembalikan unit yang lolos entitlement untuk member aktif.
+- `GET /games/curriculum/config` juga mengembalikan `question_count_options`, `time_limit_options`, dan `default_time_limit` untuk setup screen.
+- `POST /games/curriculum/attempt` menerima `question_id` dan `selected_answer`, lalu mengembalikan `data.result` berisi `is_correct`, `correct_answer`, dan `points`.
+- `POST /games/curriculum/session/finish` menerima `unit_id`, `time_limit`, metrik sesi, dan `summary`, lalu menyimpan history ke `tenant_game_sessions` dengan `game_slug=curriculum`.
+- `PATCH /admin/units/{unit}` dan `PATCH /admin/questions/{question}` wajib menerima `row_version`; stale write mengembalikan `409 VERSION_CONFLICT`.
+- `POST /admin/units/{unitId}/questions/import` adalah CSV-only untuk v1.

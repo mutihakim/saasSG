@@ -1,7 +1,7 @@
 # Progress - Finance
 
 Status: `In Progress`  
-Last updated: `2026-04-06`  
+Last updated: `2026-04-15`  
 Owner: `Finance Team`
 
 ## Tujuan Modul
@@ -45,6 +45,14 @@ Menjadikan Finance sebagai modul cashflow tenant yang:
   - `Page.tsx`
   - `Index.tsx`
   - `components/pwa/*`
+- baseline finance kini bergerak ke service provisioning tenant:
+  - tenant baru otomatis mendapat account shared keluarga
+  - member linked aktif otomatis mendapat account private + main wallet sistem
+  - invitation accept dan normalize roles bisa repair baseline private yang hilang
+  - seeders lama (TenantFinanceAccountSeeder, TenantFinanceWalletSeeder) dihapus; baseline accounts/wallets sekarang ditangani TenantFinanceBaselineService
+  - demo seeders (Budget, Planning, Wallet/Pockets, Transactions) dipindah ke namespace `Database\Seeders\Tenant\Finance\Demo`
+  - FamilyFinanceSeed kini diberi dokumentasi eksplisit: bukan baseline, hanya demo blueprints
+  - DevDemoSeeder sekarang bersih: baseline dari TenantBaselineSeeder, demo layering dari Demo namespace
 
 ## Evaluasi Perubahan Worktree
 
@@ -115,6 +123,7 @@ Area perubahan utama yang terlihat dari worktree saat ini:
 - [x] Grouped bulk item mendukung add/delete item
 - [x] Preview lampiran finance dan WhatsApp tidak lagi full-buffer raw response
 - [x] Wallet/Pocket v1 terhubung ke akun riil dan tersedia di `/wallet`
+- [x] Finance baseline tidak lagi hanya demo seeder; sekarang menjadi tenant infrastructure lintas lifecycle
 - [ ] Screenshot real device dan QA visual masih perlu dirapikan
 - [ ] Export/report advanced masih bisa diperdalam
 
@@ -128,8 +137,8 @@ Area perubahan utama yang terlihat dari worktree saat ini:
 
 ## Next Actions
 
-1. Tambahkan feature test khusus wallet/pocket CRUD dan integrasi transaksi berbasis pocket.
-2. Perluas wallet shared access agar member selector nyata ikut dipakai di UI v1.1.
+1. ~~Rapikan demo seeder finance lama agar seluruh sample data berada di namespace demo yang eksplisit.~~ **DONE**
+2. Review apakah member yang join belakangan perlu auto-join juga ke shared finance access policy.
 3. Tambahkan smoke test visual/manual checklist untuk `/wallet` dan form transaksi berbasis pocket.
 
 ## Referensi

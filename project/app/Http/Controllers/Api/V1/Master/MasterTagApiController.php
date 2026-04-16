@@ -233,6 +233,80 @@ class MasterTagApiController extends Controller
         return response()->json(['ok' => true]);
     }
 
+    public function bulkDestroy(Request $request, Tenant $tenant): JsonResponse
+    {
+        $this->authorize('delete', TenantTag::class);
+
+        $data = $request->validate([
+            'ids' => ['required', 'array'],
+            'ids.*' => ['required', 'integer'],
+        ]);
+
+        $ids = $data['ids'];
+        $tags = TenantTag::query()
+            ->where('tenant_id', $tenant->id)
+            ->whereIn('id', $ids)
+            ->get();
+
+        $results = [];
+        $idsToDestroy = [];
+        $tagsToDestroy = [];
+
+        foreach ($tags as $tag) {
+            $isUsed = \Illuminate\Support\Facades\DB::table('tenant_taggables')->where('tenant_tag_id', $tag->id)->exists();
+            if ($isUsed) {
+                $results[] = [
+                    'id' => $tag->id,
+                    'name' => $tag->name,
+                    'ok' => false,
+                    'error_code' => 'TAG_IN_USE'
+                ];
+                continue;
+            }
+
+            $idsToDestroy[] = $tag->id;
+            $tagsToDestroy[] = $tag;
+            $results[] = [
+                'id' => $tag->id,
+                'name' => $tag->name,
+                'ok' => true
+            ];
+        }
+
+        $count = 0;
+        if (!empty($idsToDestroy)) {
+            $count = TenantTag::query()
+                ->where('tenant_id', $tenant->id)
+                ->whereIn('id', $idsToDestroy)
+                ->delete();
+
+            foreach ($tagsToDestroy as $tag) {
+                $this->activityLogs->log(
+                    $request,
+                    $tenant,
+                    'master.tag.deleted',
+                    'tenant_tags',
+                    $tag->id,
+                    $this->activityLogs->snapshot($tag),
+                    null,
+                    ['bulk' => true],
+                    (int) $tag->row_version,
+                    null
+                );
+            }
+        }
+
+        return response()->json([
+            'ok' => true,
+            'summary' => [
+                'total' => count($ids),
+                'deleted' => $count,
+                'failed' => count($ids) - $count
+            ],
+            'results' => $results
+        ]);
+    }
+
     // ── Private Helpers ──────────────────────────────────────────────────────
 
     private function generateColor(string $name): string

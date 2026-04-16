@@ -20,12 +20,12 @@ class TenantTagPolicy
         return $user->hasPermissionTo('master.tags.create');
     }
 
-    public function update(User $user, TenantTag $tag): bool
+    public function update(User $user, ?TenantTag $tag = null): bool
     {
         return $user->hasPermissionTo('master.tags.update');
     }
 
-    public function delete(User $user, TenantTag $tag): bool
+    public function delete(User $user, ?TenantTag $tag = null): bool
     {
         return $user->hasPermissionTo('master.tags.delete');
     }

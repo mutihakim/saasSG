@@ -1,6 +1,6 @@
 # 08 - Progress Dashboard
 
-Last updated: `2026-04-13`
+Last updated: `2026-04-15 19:30`
 
 Progress dashboard ini dipakai untuk memantau execution health lintas modul. Detail teknis tetap ada di `03-features/*`.
 
@@ -11,17 +11,26 @@ Progress dashboard ini dipakai untuk memantau execution health lintas modul. Det
 | RBAC | Done | 100% | Platform Team | 2026-04-02 | Policy per-entitas (`TenantUomPolicy`, `TenantCurrencyPolicy`, dll) sudah modular. [RBAC Progress](./modules/rbac.md) |
 | i18n | Done | 100% | Frontend Team | 2026-04-03 | Locale end-to-end selesai: `X-Locale` header → `SetRequestLocale` → `EnsureTenantAccess` respects header → `lang/en+id/validation.php` → `parseApiError` frontend reactive. Finance & Master Data i18n diperluas. [i18n Progress](./modules/i18n.md) |
 | Subscription | Done | 95% | Platform Team | 2026-04-02 | Guard + quota tersedia di semua modul Master Data. Tersisa E2E test upgrade flow. [Subscription Progress](./modules/subscription.md) |
-| Master Data CRUD | Done | 100% | Platform Team | 2026-04-03 | UoM, Currency, Tag, Category: full CRUD + Policy + Soft-Delete Aware Unique Index + i18n + Toast standardized. Tag `is_active` management ditambahkan. |
-| Finance | In Progress | 99% | Finance Team | 2026-04-06 | Finance V2 aktif: ULID string, accounts, budgets, shared access, attachment, grouped bulk entry, Wallet/Pocket PWA v1, dan WhatsApp draft loop end-to-end. [Finance Progress](./modules/finance.md) |
+| Master Data CRUD | Done | 100% | Platform Team | 2026-04-15 | UoM, Currency, Tag, Category: full CRUD + Policy + Soft-Delete Aware Unique Index + i18n + Toast standardized. List surface kini memakai lazy loading otomatis dengan sort/filter per kolom dan tanpa pagination klasik. |
+| Finance | In Progress | 99% | Finance Team | 2026-04-15 | Finance V2 aktif: ULID string, accounts, budgets, shared access, attachment, grouped bulk entry, Wallet/Pocket PWA v1, WhatsApp draft loop, dan baseline provisioning tenant/member yang kini berjalan lintas lifecycle. [Finance Progress](./modules/finance.md) |
 | Wallet | In Progress | 75% | Finance Team | 2026-04-06 | Wallet/Pocket v1 aktif: pocket tenant, wallet PWA `/wallet`, CRUD pocket, dan integrasi transaksi normal berbasis pocket. [Wallet Progress](./modules/wallet.md) |
-| Games | In Progress | 90% | Frontend Team | 2026-04-13 | Math dan Vocabulary kini memakai shared backend/session layer, shared frontend primitives, submenu Vocabulary aktif, serta timer + reverse direction di Vocabulary; tersisa E2E, screenshot docs, dan selector profil belajar. [Games Progress](./modules/games.md) |
+| Games | In Progress | 96% | Frontend Team | 2026-04-14 | Math, Vocabulary, dan Curriculum kini aktif di member area; Curriculum v1 sudah membawa schema global+tenant, entitlement, OCC, import CSV, seeded pilot content, dan history, sementara sisa utama tinggal E2E, screenshot docs, dan selector profil belajar. [Games Progress](./modules/games.md) |
 | Tenant Settings | Done | 90% | Platform Team | 2026-03-30 | Tenant profile, billing, localization, dan branding upload per tenant sudah aktif; tersisa verifikasi browser/E2E visual. |
 | WhatsApp | Done | 100% | Integration Team | 2026-04-08 | Realtime tetap stabil dengan Reverb internal-only di belakang proxy Nginx `/app`. [WhatsApp Progress](./modules/whatsapp.md) |
 | Routing & Websocket | Done | 100% | Platform Team | 2026-04-08 | Ingress publik dipersempit ke Nginx (`80/443`), Reverb bind lokal `127.0.0.1`, dan docs dipublish sebagai static site Nginx. |
 
 ## Top Global Blocker
 
-- *Belum ada blocker sistemik yang menghalangi rilis ke staging.*
+- *Belum ada blocker sistemik yang menghalangi rilis ke staging. Workflow database kini sudah dipangkas ke baseline schema dump + baseline seeder minimum.*
+
+## Perubahan Arsitektural Besar (2026-04-15)
+
+1. **Database Bootstrap Reset**: history migration repo dibersihkan sehingga baseline install baru bertumpu pada `database/schema/pgsql-schema.sql` dan migration schema-only setelahnya.
+2. **No Data in Migrations**: permission rollout, morph normalize, counter recalculation, dan backfill tidak lagi disimpan di migration.
+3. **Strict Baseline Seeder**: `DatabaseSeeder` kini hanya memanggil baseline platform minimum; sample/demo data dipindah ke jalur manual `DevDemoSeeder`.
+4. **Tenant Default Master Data Provisioning**: tenant baru sekarang mengisi currency, UOM, finance categories, dan finance tags lewat service provisioning, bukan mengandalkan seeder global.
+5. **Finance Baseline Provisioning**: tenant baru, member linked baru, invitation accept, dan normalize-role repair sekarang bisa memastikan account/wallet baseline finance tanpa bergantung pada demo seeder.
+6. **Finance Seeder Restructuring**: baseline finance dipisah tegas dari demo layer. `TenantFinanceAccountSeeder` dan `TenantFinanceWalletSeeder` dihapus karena fungsinya diambil alih `TenantFinanceBaselineService`. Demo seeders (Budget, Planning, Wallet/Pockets, Transactions) dipindah ke namespace `Database\Seeders\Tenant\Finance\Demo`. `FamilyFinanceSeed` kini didokumentasikan sebagai demo-only blueprints.
 
 ## Perubahan Arsitektural Besar (2026-04-03)
 

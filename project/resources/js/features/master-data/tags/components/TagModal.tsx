@@ -83,7 +83,7 @@ const TagModal = ({
   };
 
   return (
-    <Modal show={show} onHide={onClose} centered size="sm">
+    <Modal show={show} onHide={onClose} centered size="sm" data-testid="tag-modal">
       <Modal.Header closeButton>
         <Modal.Title>{isEdit ? t("master.tags.modals.edit_title") : t("master.tags.modals.add_title")}</Modal.Title>
       </Modal.Header>
@@ -97,6 +97,7 @@ const TagModal = ({
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="e.g. penting, liburan"
+              data-testid="tag-name-input"
             />
           </Form.Group>
 
@@ -107,12 +108,13 @@ const TagModal = ({
               value={formData.color}
               onChange={(e) => setFormData({ ...formData, color: e.target.value })}
               className="form-control-color w-100"
+              data-testid="tag-color-input"
             />
           </Form.Group>
         </Modal.Body>
         <Modal.Footer>
-          <Button variant="light" onClick={onClose} className="w-100">{t("master.tags.buttons.cancel")}</Button>
-          <Button variant="primary" type="submit" disabled={loading} className="w-100">
+          <Button variant="light" onClick={onClose} className="w-100" data-testid="tag-cancel-btn">{t("master.tags.buttons.cancel")}</Button>
+          <Button variant="primary" type="submit" disabled={loading} className="w-100" data-testid="tag-submit-btn">
             {loading ? t("master.tags.buttons.saving") : t("master.tags.buttons.save")}
           </Button>
         </Modal.Footer>
