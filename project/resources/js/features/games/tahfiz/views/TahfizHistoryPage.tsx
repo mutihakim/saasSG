@@ -102,8 +102,8 @@ const TahfizHistoryPage: React.FC = () => {
                         <div className={`vocab-mode-slider ${activeTab === "murojaah" ? "is-learn" : "is-practice"} has-two-options`} />
                     </div>
 
-                    <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        <div className="card-body p-4 p-md-5">
+                    <div>
+                        <div className="tahfiz-history__tab-content p-0">
                             {isLoading ? (
                                 <div className="d-flex align-items-center gap-2 py-5 justify-content-center">
                                     <div className="spinner-border spinner-border-sm text-teal-500" role="status" />
@@ -174,8 +174,8 @@ const TahfizHistoryPage: React.FC = () => {
                                 ) : (
                                     <Accordion defaultActiveKey="0" className="game-history-accordion">
                                         {groupedMurojaah.map(([dateKey, surahs], dateIdx) => (
-                                            <Accordion.Item eventKey={String(dateIdx)} key={dateKey} className="border-0 shadow-sm mb-3">
-                                                <Accordion.Header className="rounded shadow-none border-bottom-0">
+                                            <Accordion.Item eventKey={String(dateIdx)} key={dateKey} className="border-0 shadow-sm mb-3 rounded-4 overflow-hidden bg-white">
+                                                <Accordion.Header className="shadow-none border-bottom-0">
                                                     <div className="d-flex justify-content-between align-items-center w-100 me-3">
                                                         <div className="d-flex align-items-center gap-3">
                                                             <div className="tahfiz-history__group-header-icon">
@@ -193,8 +193,8 @@ const TahfizHistoryPage: React.FC = () => {
                                                         {surahs.map(([surahKey, items], subIdx) => {
                                                             const surahName = surahKey.split('-').slice(1).join('-');
                                                             return (
-                                                            <Accordion.Item eventKey={String(subIdx)} key={surahKey} className="border-0 mb-2 shadow-sm bg-white">
-                                                                <Accordion.Header className="shadow-none py-2">
+                                                            <Accordion.Item eventKey={String(subIdx)} key={surahKey} className="border-0 mb-2 shadow-sm bg-white rounded-4 overflow-hidden mx-2">
+                                                                <Accordion.Header className="shadow-none py-1">
                                                                     <div className="d-flex align-items-center gap-2 small fw-bold text-slate-700">
                                                                         <div className="tahfiz-history__surah-header-icon">
                                                                             <i className="ri-book-read-line"></i>
@@ -212,7 +212,7 @@ const TahfizHistoryPage: React.FC = () => {
                                                                         {items.map((item, idx) => (
                                                                             <ListGroup.Item
                                                                                 key={item.id}
-                                                                                className={`py-3 px-3 border-light small ${idx !== items.length - 1 ? 'border-bottom' : ''}`}
+                                                                                className={`py-2 px-3 border-light small ${idx !== items.length - 1 ? 'border-bottom' : ''}`}
                                                                             >
                                                                                 <div className="d-flex w-100 gap-3">
                                                                                     {/* Left side: Nomor Ayat (Fixed Size via SCSS) */}
@@ -243,7 +243,7 @@ const TahfizHistoryPage: React.FC = () => {
                                                                                                 {t(`tenant.games.tahfiz.history.hafalan.${item.hafalan_status}`)}
                                                                                             </span>
 
-                                                                                            <div className="d-flex align-items-center justify-content-end flex-shrink-0" style={{ fontSize: "0.7rem", fontWeight: 500, color: "var(--bs-secondary)" }}>
+                                                                                            <div className="tahfiz-history__time-info">
                                                                                                 <i className="ri-time-line me-1"></i>
                                                                                                 <span style={{ whiteSpace: "nowrap" }}>
                                                                                                     {new Date(item.created_at).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })}
