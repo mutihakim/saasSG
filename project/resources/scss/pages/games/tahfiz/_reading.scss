@@ -82,6 +82,12 @@
         justify-content: center;
         flex: 1;
         position: relative;
+        overflow-y: auto; // Allow internal scroll
+        max-height: 100%; // Dont push footer
+        
+        // Hide scrollbar but keep functionality
+        scrollbar-width: none;
+        &::-webkit-scrollbar { display: none; }
     }
 
     &__fav-btn {

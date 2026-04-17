@@ -22,7 +22,14 @@
     &__card {
         border-radius: 1.5rem;
         min-height: max-content;
+        flex: 1;
         position: relative;
+        overflow-y: auto;
+        max-height: 100%;
+        
+        // Hide scrollbar but keep functionality
+        scrollbar-width: none;
+        &::-webkit-scrollbar { display: none; }
     }
 
     &__badge-wrap {

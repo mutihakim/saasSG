@@ -74,9 +74,24 @@
         display: none !important;
     }
 
+    #layout-wrapper {
+        display: block !important;
+    }
+
+    .main-content {
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
     .page-content {
         padding: 0 !important;
+        margin: 0 !important;
+        height: 100dvh !important;
         min-height: 100dvh !important;
+        max-height: 100dvh !important;
+        overflow: hidden !important;
+        display: flex;
+        flex-direction: column;
     }
 }
 
