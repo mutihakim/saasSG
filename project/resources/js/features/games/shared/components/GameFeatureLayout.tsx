@@ -17,7 +17,7 @@ export type GameFeatureMenuItem = {
 };
 
 type GameFeatureLayoutProps = {
-    title: string;
+    title: React.ReactNode;
     menuKey: GameFeatureMenuKey;
     menuItems: GameFeatureMenuItem[];
     memberName?: string;

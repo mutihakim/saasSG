@@ -45,4 +45,9 @@ class TenantGameTahfizStat extends Model
     {
         return $this->belongsTo(TenantMember::class, 'member_id');
     }
+
+    public function surah(): BelongsTo
+    {
+        return $this->belongsTo(GameTahfizSurah::class, 'surah_number', 'id');
+    }
 }

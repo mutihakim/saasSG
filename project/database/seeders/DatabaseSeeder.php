@@ -47,6 +47,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             \Database\Seeders\Tenant\Game\Demo\VocabularyDemoSeeder::class,
             \Database\Seeders\Tenant\Game\Demo\TahfizQuranSeeder::class,
+            \Database\Seeders\Tenant\Game\Demo\TahfizFavoriteSeeder::class,
         ]);
 
         app(PermissionRegistrar::class)->forgetCachedPermissions();

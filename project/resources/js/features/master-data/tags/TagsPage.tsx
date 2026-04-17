@@ -1,6 +1,6 @@
 import { Head } from "@inertiajs/react";
 import React, { Suspense, lazy, useCallback, useEffect, useRef, useState } from "react";
-import { Badge, Button, Card, Col, Dropdown, Row } from "react-bootstrap";
+import { Button, Card, Col, Dropdown, Row } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import TenantPageTitle from "@/components/layouts/TenantPageTitle";

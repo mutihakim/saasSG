@@ -2,7 +2,6 @@ import { createElement, isValidElement, type ReactNode } from "react";
 import { toast, ToastOptions } from "react-toastify";
 
 let audioContext: AudioContext | null = null;
-const GLOBAL_TOAST_ID = "appsah-global-toast";
 
 function getAudioContext(): AudioContext | null {
     if (typeof window === "undefined") return null;

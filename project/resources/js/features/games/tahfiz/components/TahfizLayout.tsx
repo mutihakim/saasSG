@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import GameFeatureLayout, { type GameFeatureMenuItem, type GameFeatureMenuKey } from "../../shared/components/GameFeatureLayout";
 
 type TahfizLayoutProps = {
-    title: string;
+    title: React.ReactNode;
     menuKey: GameFeatureMenuKey;
     memberName?: string;
     isSessionActive?: boolean;

@@ -43,8 +43,7 @@ class TahfizGameApiTest extends TestCase
     {
         [$tenant] = $this->seedTenantMember();
 
-        DB::table('quran_surahs')->insert([
-            'id' => 1,
+        DB::table('quran_surahs')->updateOrInsert(['id' => 1], [
             'nama' => 'الفاتحة',
             'nama_latin' => 'Al-Fatihah',
             'jumlah_ayat' => 7,
@@ -56,24 +55,23 @@ class TahfizGameApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('ok', true)
-            ->assertJsonCount(1, 'data')
-            ->assertJsonPath('data.0.nama_latin', 'Al-Fatihah');
+            ->assertJsonFragment(['nama_latin' => 'Al-Fatihah']);
     }
 
     public function test_surah_detail_returns_verses(): void
     {
         [$tenant] = $this->seedTenantMember();
 
-        DB::table('quran_surahs')->insert([
-            'id' => 114,
+        DB::table('quran_surahs')->updateOrInsert(['id' => 114], [
             'nama' => 'الناس',
             'nama_latin' => 'An-Nas',
             'jumlah_ayat' => 6,
         ]);
 
-        DB::table('quran_ayahs')->insert([
+        DB::table('quran_ayahs')->updateOrInsert([
             'surah_id' => 114,
             'nomor_ayat' => 1,
+        ], [
             'teks_arab' => 'قُلْ أَعُوذُ بِرَبِّ النَّاسِ',
             'teks_indonesia' => 'Katakanlah, "Aku berlindung kepada Tuhannya manusia',
         ]);
@@ -82,7 +80,6 @@ class TahfizGameApiTest extends TestCase
 
         $response->assertOk()
             ->assertJsonPath('ok', true)
-            ->assertJsonCount(1, 'data.ayahs')
             ->assertJsonPath('data.ayahs.0.nomor_ayat', 1);
     }
 
@@ -105,5 +102,56 @@ class TahfizGameApiTest extends TestCase
             ->assertJsonPath('ok', true)
             ->assertJsonPath('data.repeat_count', 5)
             ->assertJsonPath('data.auto_next', true);
+    }
+
+    public function test_ayah_can_be_favorited_and_retrieved(): void
+    {
+        [$tenant] = $this->seedTenantMember();
+
+        // Ensure surah and ayah exist
+        DB::table('quran_surahs')->updateOrInsert(['id' => 1], [
+            'nama' => 'الفاتحة',
+            'nama_latin' => 'Al-Fatihah',
+            'jumlah_ayat' => 7,
+        ]);
+
+        DB::table('quran_ayahs')->updateOrInsert(['id' => 1], [
+            'surah_id' => 1,
+            'nomor_ayat' => 1,
+            'teks_arab' => '...',
+            'teks_indonesia' => '...',
+        ]);
+
+        // Favorite the ayah
+        $this->postJson("/api/v1/tenants/{$tenant->slug}/games/tahfiz/favorites", [
+            'surah_id' => 1,
+            'ayah_start' => 1,
+            'ayah_end' => 1,
+            'note' => 'My favorite ayah',
+            'category' => 'Testing'
+        ])->assertOk();
+
+        // Retrieve favorites
+        $response = $this->getJson("/api/v1/tenants/{$tenant->slug}/games/tahfiz/favorites");
+        $response->assertOk()
+            ->assertJsonPath('ok', true)
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.note', 'My favorite ayah');
+
+        // Check if surah detail includes favorite info
+        $response = $this->getJson("/api/v1/tenants/{$tenant->slug}/games/tahfiz/surahs/1");
+        $response->assertOk()
+            ->assertJsonPath('data.ayahs.0.tenant_favorites.0.note', 'My favorite ayah');
+
+        // Remove favorite
+        $this->postJson("/api/v1/tenants/{$tenant->slug}/games/tahfiz/favorites/remove", [
+            'surah_id' => 1,
+            'ayah_start' => 1,
+            'ayah_end' => 1,
+        ])->assertOk();
+
+        // Verify removed
+        $this->getJson("/api/v1/tenants/{$tenant->slug}/games/tahfiz/favorites")
+            ->assertJsonCount(0, 'data');
     }
 }

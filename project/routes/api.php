@@ -142,12 +142,19 @@ Route::prefix('v1')
                 });
 
                 Route::prefix('games/tahfiz')->group(function () {
+                    Route::get('/bootstrap', [TahfizApiController::class, 'bootstrap'])->middleware('tenant.feature:games.tahfiz,view');
                     Route::get('/surahs', [TahfizApiController::class, 'surahs'])->middleware('tenant.feature:games.tahfiz,view');
                     Route::get('/surahs/{id}', [TahfizApiController::class, 'surah'])->middleware('tenant.feature:games.tahfiz,view');
                     Route::get('/settings', [TahfizApiController::class, 'settings'])->middleware('tenant.feature:games.tahfiz,view');
                     Route::post('/settings', [TahfizApiController::class, 'updateSettings'])->middleware(['tenant.feature:games.tahfiz,update', 'throttle:tenant.mutation']);
                     Route::get('/history', [TahfizApiController::class, 'history'])->middleware('tenant.feature:games.tahfiz,view');
+                    Route::get('/murojaah/history', [TahfizApiController::class, 'murojaahHistory'])->middleware('tenant.feature:games.tahfiz,view');
                     Route::post('/progress', [TahfizApiController::class, 'recordProgress'])->middleware(['tenant.feature:games.tahfiz,update', 'throttle:tenant.mutation']);
+                    Route::post('/murojaah', [TahfizApiController::class, 'recordMurojaah'])->middleware(['tenant.feature:games.tahfiz,update', 'throttle:tenant.mutation']);
+
+                    Route::get('/favorites', [TahfizApiController::class, 'favorites'])->middleware('tenant.feature:games.tahfiz,view');
+                    Route::post('/favorites', [TahfizApiController::class, 'updateFavorite'])->middleware(['tenant.feature:games.tahfiz,update', 'throttle:tenant.mutation']);
+                    Route::post('/favorites/remove', [TahfizApiController::class, 'removeFavorite'])->middleware(['tenant.feature:games.tahfiz,update', 'throttle:tenant.mutation']);
                 });
 
                 // ── Finance ────────────────────────────────────────────────────────────

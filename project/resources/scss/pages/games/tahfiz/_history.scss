@@ -1,0 +1,200 @@
+.tahfiz-history {
+    &__tab-container {
+        max-width: 400px;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    &__entry {
+        display: flex;
+        align-items: center;
+        gap: 1rem;
+        padding: 1.5rem;
+        border-radius: 1rem;
+        border: 1px solid var(--#{$prefix}border-color);
+        background-color: white;
+        box-shadow: var(--#{$prefix}box-shadow-sm);
+    }
+
+    &__surah-number {
+        min-width: 3.5rem;
+        height: 3.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 1rem;
+        color: white;
+        font-weight: 700;
+        font-size: 1.25rem;
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+    }
+
+    &__info {
+        flex: 1;
+
+        .title {
+            font-weight: 700;
+            font-size: 1.25rem;
+            
+            .meta {
+                color: var(--#{$prefix}secondary-color);
+                font-weight: 400;
+                font-size: 0.875rem;
+                margin-left: 0.5rem;
+            }
+        }
+
+        .date {
+            font-size: 0.875rem;
+            color: var(--#{$prefix}secondary-color);
+            margin-top: 0.25rem;
+        }
+    }
+
+    &__empty-state {
+        text-align: center;
+        padding: 3rem 0;
+
+        .emoji {
+            font-size: 4rem;
+        }
+
+        .text {
+            color: var(--#{$prefix}secondary-color);
+            margin-top: 1rem;
+            font-size: 1.25rem;
+        }
+    }
+
+    &__group-header-icon {
+        width: 2.5rem;
+        height: 2.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 0.5rem;
+        background-color: var(--#{$prefix}teal-50);
+        color: var(--#{$prefix}teal-600);
+    }
+
+    &__group-meta {
+        font-size: 0.75rem;
+        color: var(--#{$prefix}secondary-color);
+    }
+
+    &__surah-header-icon {
+        width: 2rem;
+        height: 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: var(--#{$prefix}indigo-50);
+        color: var(--#{$prefix}indigo-600);
+        border: 1px solid var(--#{$prefix}indigo-100);
+        margin-right: 0.25rem;
+    }
+
+    &__surah-meta {
+        font-size: 0.65rem;
+        color: var(--#{$prefix}secondary-color);
+    }
+
+    &__ayat-badge {
+        width: 1.75rem;
+        height: 1.75rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+        background-color: var(--#{$prefix}light);
+        border: 1px solid var(--#{$prefix}border-color);
+        color: var(--#{$prefix}secondary-color);
+        font-weight: 700;
+        font-size: 0.75rem;
+        flex-shrink: 0;
+    }
+
+    &__ayat-badge-large {
+        width: 3.5rem;
+        height: 3.5rem;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 1rem;
+        background-color: var(--#{$prefix}teal-50);
+        border: 1px solid var(--#{$prefix}teal-100);
+        color: var(--#{$prefix}teal-700);
+        font-weight: 700;
+        font-size: 1.2rem;
+        flex-shrink: 0;
+        box-shadow: var(--#{$prefix}box-shadow-sm);
+    }
+
+    &__status-badge {
+        font-size: 0.65rem;
+        letter-spacing: 0.02em;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 0.25rem 0.5rem;
+        border-radius: 0.25rem;
+        border: 1px solid transparent;
+        display: inline-flex;
+        align-items: center;
+        white-space: nowrap; // cegah wrapping
+        flex-shrink: 0;
+
+        i {
+            margin-right: 0.25rem;
+        }
+    }
+
+    &__time-info {
+        font-size: 0.7rem;
+        color: var(--#{$prefix}secondary-color);
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        flex: 1;
+        justify-content: flex-end;
+    }
+
+    &__note-text {
+        font-size: 0.75rem;
+        font-style: italic;
+        color: var(--#{$prefix}secondary-color);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        width: 100%;
+        margin-top: 0.25rem;
+    }
+
+    &__item-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        width: 100%;
+        gap: 0.35rem;
+        flex-wrap: nowrap; // paksa satu baris
+        overflow: hidden;
+    }
+
+    &__item-col {
+        display: flex;
+        align-items: center;
+        gap: 0.35rem;
+        flex-shrink: 0;   // jangan diperkecil
+        min-width: 0;
+
+        &--center {
+            flex: 1;             // kolom hafalan meregang di tengah
+            justify-content: center;
+            flex-shrink: 1;
+        }
+
+        &--end {
+            justify-content: flex-end;
+        }
+    }
+}

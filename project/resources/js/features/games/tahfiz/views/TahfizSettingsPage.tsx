@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useTranslation } from "react-i18next";
 
 import TahfizLayout from "../components/TahfizLayout";
 import useTahfizGameController from "../hooks/useTahfizGameController";
@@ -12,6 +13,7 @@ const RECITERS = [
 ];
 
 const TahfizSettingsPage: React.FC = () => {
+    const { t } = useTranslation();
     const { settings, isLoading, updateSettings } = useTahfizGameController();
     const [saving, setSaving] = useState(false);
     const [success, setSuccess] = useState(false);
@@ -30,29 +32,29 @@ const TahfizSettingsPage: React.FC = () => {
 
     return (
         <TahfizLayout
-            title="Pengaturan Tahfiz"
+            title={t("tenant.games.tahfiz.settings.page_title")}
             menuKey="settings"
             allowPageScroll
         >
             <div className="math-game-layout__scroll">
                 <div className="math-game">
-                    <div className="card border-0 shadow-sm rounded-4 overflow-hidden">
-                        <div className="card-header bg-white border-bottom-0 pt-4 pb-0 px-4">
-                            <h2 className="fs-4 fw-bold mb-0 text-primary">
-                                <i className="ri-settings-3-line me-2" /> Pengaturan Default
+                    <div className="tahfiz-settings__card card">
+                        <div className="tahfiz-settings__header card-header">
+                            <h2 className="tahfiz-settings__title">
+                                <i className="ri-settings-3-line" /> {t("tenant.games.tahfiz.settings.section_default")}
                             </h2>
                         </div>
-                        <div className="card-body p-4 p-md-5">
+                        <div className="tahfiz-settings__body card-body">
                             {isLoading ? (
                                 <div className="d-flex align-items-center gap-2">
                                     <div className="spinner-border spinner-border-sm" role="status" />
-                                    <span>Memuat pengaturan...</span>
+                                    <span>{t("tenant.games.tahfiz.settings.loading")}</span>
                                 </div>
                             ) : (
                                 <form onSubmit={handleSave}>
                                     <div className="row g-4">
                                         <div className="col-12 col-md-6">
-                                            <label className="form-label fw-bold small text-uppercase text-muted">Qari / Reciter</label>
+                                            <label className="form-label fw-bold small text-uppercase text-muted">{t("tenant.games.tahfiz.settings.reciter_label")}</label>
                                             <select
                                                 id="tahfiz-settings-reciter"
                                                 className="form-select form-select-lg border-secondary-subtle"
@@ -63,35 +65,33 @@ const TahfizSettingsPage: React.FC = () => {
                                                     <option key={r.id} value={r.id}>{r.name}</option>
                                                 ))}
                                             </select>
-                                            <div className="form-text mt-2">Suara yang akan diputar saat memutar audio ayat.</div>
+                                            <div className="form-text mt-2">{t("tenant.games.tahfiz.settings.reciter_help")}</div>
                                         </div>
 
                                         <div className="col-12 col-md-6">
-                                            <label className="form-label fw-bold small text-uppercase text-muted">Jumlah Pengulangan per Ayat</label>
+                                            <label className="form-label fw-bold small text-uppercase text-muted">{t("tenant.games.tahfiz.settings.repeat_label")}</label>
                                             <div className="d-flex align-items-center gap-3">
                                                 <button
                                                     type="button"
-                                                    className="btn btn-outline-secondary rounded-circle p-0 d-flex align-items-center justify-content-center"
+                                                    className="tahfiz-settings__control-btn btn btn-outline-secondary"
                                                     id="tahfiz-settings-repeat-minus"
-                                                    style={{ width: "2.5rem", height: "2.5rem" }}
                                                     onClick={() => void updateSettings({ repeat_count: Math.max(1, settings.repeat_count - 1) })}
                                                 >
                                                     <i className="ri-subtract-line" />
                                                 </button>
-                                                <span className="fs-4 fw-bold text-primary px-2" style={{ minWidth: "2rem", textAlign: "center" }}>
+                                                <span className="tahfiz-settings__value-display">
                                                     {settings.repeat_count}x
                                                 </span>
                                                 <button
                                                     type="button"
-                                                    className="btn btn-outline-secondary rounded-circle p-0 d-flex align-items-center justify-content-center"
+                                                    className="tahfiz-settings__control-btn btn btn-outline-secondary"
                                                     id="tahfiz-settings-repeat-plus"
-                                                    style={{ width: "2.5rem", height: "2.5rem" }}
                                                     onClick={() => void updateSettings({ repeat_count: Math.min(10, settings.repeat_count + 1) })}
                                                 >
                                                     <i className="ri-add-line" />
                                                 </button>
                                             </div>
-                                            <div className="form-text mt-2">Ulangi setiap ayat sebelum lanjut ke ayat berikutnya.</div>
+                                            <div className="form-text mt-2">{t("tenant.games.tahfiz.settings.repeat_help")}</div>
                                         </div>
 
                                         <div className="col-12">
@@ -101,20 +101,19 @@ const TahfizSettingsPage: React.FC = () => {
                                         <div className="col-12">
                                             <div className="form-check form-switch mb-2">
                                                 <input
-                                                    className="form-check-input"
+                                                    className="tahfiz-settings__switch form-check-input"
                                                     type="checkbox"
                                                     role="switch"
                                                     id="tahfiz-settings-auto-next"
-                                                    style={{ width: "3rem", height: "1.5rem" }}
                                                     checked={settings.auto_next}
                                                     onChange={(e) => void updateSettings({ auto_next: e.target.checked })}
                                                 />
                                                 <label className="form-check-label fw-semibold ms-2" htmlFor="tahfiz-settings-auto-next">
-                                                    Putar Ayat Berikutnya Otomatis
+                                                    {t("tenant.games.tahfiz.settings.auto_next_label")}
                                                 </label>
                                             </div>
                                             <p className="text-muted small ms-5">
-                                                Setelah audio selesai, lanjutkan otomatis ke ayat berikutnya.
+                                                {t("tenant.games.tahfiz.settings.auto_next_help")}
                                             </p>
                                         </div>
                                     </div>
@@ -123,15 +122,15 @@ const TahfizSettingsPage: React.FC = () => {
                                         <button
                                             id="tahfiz-settings-save"
                                             type="submit"
-                                            className="btn btn-primary btn-lg px-5 py-3 rounded-pill shadow-sm fw-bold d-flex align-items-center gap-2"
+                                            className="tahfiz-settings__save-btn btn btn-primary btn-lg"
                                             disabled={saving}
                                         >
                                             {saving ? <div className="spinner-border spinner-border-sm" role="status" /> : <i className="ri-save-line fs-5" />}
-                                            Simpan Perubahan
+                                            {t("tenant.games.tahfiz.settings.save_btn")}
                                         </button>
                                         {success && (
                                             <span className="text-success fw-semibold d-flex align-items-center gap-1">
-                                                <i className="ri-checkbox-circle-line fs-5" /> Tersimpan!
+                                                <i className="ri-checkbox-circle-line fs-5" /> {t("tenant.games.tahfiz.settings.save_success")}
                                             </span>
                                         )}
                                     </div>

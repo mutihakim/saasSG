@@ -541,6 +541,12 @@
         border-radius: 2rem;
         overflow: hidden;
         box-shadow: 0 10px 40px rgba(0, 0, 0, 0.05);
+
+        // Kartu yang mengandung react-select HARUS overflow: visible
+        // agar mouse wheel scroll pada dropdown menu bisa bekerja
+        &:has(.tahfiz-setup-fav-select) {
+            overflow: visible;
+        }
     }
 }
 
@@ -710,4 +716,6 @@
 @import "games/tahfiz/theme";
 @import "games/tahfiz/setup";
 @import "games/tahfiz/reading";
+@import "games/tahfiz/history";
+@import "games/tahfiz/murojaah";
 @import "vocab_makeover";

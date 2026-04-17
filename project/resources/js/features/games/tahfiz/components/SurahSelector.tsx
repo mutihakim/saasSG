@@ -13,7 +13,7 @@ const SurahSelector: React.FC<Props> = ({ surahs, selected, onSelect }) => {
         <div className="surah-selector">
             <h6 className="fw-semibold mb-2">Pilih Surah</h6>
             <div className="list-group">
-                {surahs.map((s) => (
+                {[...surahs].sort((a, b) => b.number - a.number).map((s) => (
                     <button
                         key={s.id}
                         type="button"
