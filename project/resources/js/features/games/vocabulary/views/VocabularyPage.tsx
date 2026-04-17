@@ -20,8 +20,6 @@ const VocabularyPage: React.FC<PageProps> = ({ member }) => {
     const { t } = useTranslation();
     const game = useVocabularyGameController();
 
-    const isUILayoutActive = game.phase === "learn" || game.phase === "practice" || game.phase === "summary";
-
     return (
         <VocabularyLayout
             title={t("tenant.games.vocabulary.title")}
@@ -30,125 +28,120 @@ const VocabularyPage: React.FC<PageProps> = ({ member }) => {
             isSessionActive={game.isSessionActive}
             allowPageScroll={false}
         >
-            <div className={`math-game-layout__scroll${isUILayoutActive ? " math-game-layout__scroll--session" : ""}`}>
-                <div className={`math-game${isUILayoutActive ? " math-game--session" : ""}`}>
+            <VocabularyMemoryTestDialog
+                show={game.showMemoryTestDialog}
+                onClose={() => game.setShowMemoryTestDialog(false)}
+                onStart={() => {
+                    game.setShowMemoryTestDialog(false);
+                    void game.startPracticeMode(true);
+                }}
+            />
 
-                    <VocabularyMemoryTestDialog
-                        show={game.showMemoryTestDialog}
-                        onClose={() => game.setShowMemoryTestDialog(false)}
-                        onStart={() => {
-                            game.setShowMemoryTestDialog(false);
+            {game.isLoadingConfig && (
+                <div className="card border-0 shadow-sm">
+                    <div className="card-body d-flex align-items-center gap-2 py-4">
+                        <div className="spinner-border spinner-border-sm" role="status" />
+                        <span>{t("tenant.games.vocabulary.loading")}</span>
+                    </div>
+                </div>
+            )}
+
+            {!game.isLoadingConfig && game.phase === "setup" && (
+                <VocabularySetupScreen
+                    language={game.language}
+                    mode={game.mode}
+                    selectedCategory={game.selectedCategory}
+                    selectedDay={game.selectedDay}
+                    autoTts={game.autoTts}
+                    timeLimit={game.timeLimit}
+                    translationDirection={game.translationDirection}
+                    daysForCategory={game.daysForCategory}
+                    masteredDaysForCategory={game.masteredDaysForCategory}
+                    hasCategories={game.hasCategories}
+                    hasDaysInSelectedCategory={game.hasDaysInSelectedCategory}
+                    categoryOptions={game.categoryOptions}
+                    isStartingSession={game.isStartingSession}
+                    onLanguageChange={game.setLanguage}
+                    onModeChange={game.setMode}
+                    onCategorySelect={game.setSelectedCategory}
+                    onDayChange={game.setSelectedDay}
+                    onAutoTtsChange={game.setAutoTts}
+                    onTimeLimitChange={game.setTimeLimit}
+                    onTranslationDirectionChange={game.setTranslationDirection}
+                    onStart={() => void (game.mode === "learn" ? game.startLearnMode() : game.startPracticeMode())}
+                />
+            )}
+
+            {!game.isLoadingConfig && game.phase === "learn" && game.currentLearnWord && (
+                <VocabularyLearnScreen
+                    currentWord={game.currentLearnWord}
+                    learnIndex={game.learnIndex}
+                    totalWords={game.dayWords.length}
+                    selectedCategoryLabel={game.selectedCategoryLabel}
+                    selectedDay={game.selectedDay}
+                    language={game.language}
+                    translationDirection={game.translationDirection}
+                    isFlipped={game.isFlipped}
+                    isMastered={game.progressMap[String(game.currentLearnWord.id)]?.is_mastered ?? false}
+                    onFlip={() => game.setIsFlipped((prev) => !prev)}
+                    onPronounce={game.pronounce}
+                    onLeave={game.leaveToSetup}
+                    onPrevious={() => {
+                        game.setLearnIndex((prev) => Math.max(0, prev - 1));
+                        game.setIsFlipped(false);
+                    }}
+                    onNext={() => {
+                        game.setLearnIndex((prev) => Math.min(game.dayWords.length - 1, prev + 1));
+                        game.setIsFlipped(false);
+                    }}
+                />
+            )}
+
+            {!game.isLoadingConfig && game.phase === "practice" && game.currentPracticeWord && (
+                <VocabularyPracticeScreen
+                    currentQuestionNumber={game.attempts.length + 1}
+                    totalQuestions={game.sessionQuestionTarget}
+                    selectedCategoryLabel={game.selectedCategoryLabel}
+                    selectedDay={game.selectedDay}
+                    currentStreak={game.currentStreak}
+                    timeRemaining={game.timeRemaining}
+                    timeLimit={game.timeLimit}
+                    countdownState={game.countdownState}
+                    promptText={promptTextFor(game.currentPracticeWord, game.language, game.translationDirection)}
+                    promptPhonetic={promptPhoneticFor(game.currentPracticeWord, game.language, game.translationDirection)}
+                    promptDirection={promptDirectionFor(game.language, game.translationDirection)}
+                    answerDirection={answerDirectionFor(game.language, game.translationDirection)}
+                    practiceOptions={game.practiceOptions}
+                    selectedOption={game.selectedOption}
+                    isAnswerLocked={game.isAnswerLocked}
+                    feedbackState={game.feedbackState}
+                    onLeave={game.leaveToSetup}
+                    onSelect={(index) => {
+                        void game.submitPracticeAnswer(index);
+                    }}
+                    onContinue={game.continuePractice}
+                />
+            )}
+
+            {!game.isLoadingConfig && game.phase === "summary" && (
+                <div className="vocab-summary-scroll">
+                    <VocabularySummaryCard
+                        attempts={game.attempts}
+                        scorePercent={game.scorePercent}
+                        correctCount={game.correctCount}
+                        bestStreak={game.bestStreak}
+                        isSavingSummary={game.isSavingSummary}
+                        isLevelMastered={game.isLevelMastered}
+                        onChangeSetup={game.leaveToSetup}
+                        onPlayAgain={() => {
+                            void game.startPracticeMode();
+                        }}
+                        onStartMemoryTest={() => {
                             void game.startPracticeMode(true);
                         }}
                     />
-
-                    {game.isLoadingConfig && (
-                        <div className="card border-0 shadow-sm">
-                            <div className="card-body d-flex align-items-center gap-2 py-4">
-                                <div className="spinner-border spinner-border-sm" role="status" />
-                                <span>{t("tenant.games.vocabulary.loading")}</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {!game.isLoadingConfig && game.phase === "setup" && (
-                        <VocabularySetupScreen
-                            language={game.language}
-                            mode={game.mode}
-                            selectedCategory={game.selectedCategory}
-                            selectedDay={game.selectedDay}
-                            autoTts={game.autoTts}
-                            timeLimit={game.timeLimit}
-                            translationDirection={game.translationDirection}
-                            daysForCategory={game.daysForCategory}
-                            masteredDaysForCategory={game.masteredDaysForCategory}
-                            hasCategories={game.hasCategories}
-                            hasDaysInSelectedCategory={game.hasDaysInSelectedCategory}
-                            categoryOptions={game.categoryOptions}
-                            isStartingSession={game.isStartingSession}
-                            onLanguageChange={game.setLanguage}
-                            onModeChange={game.setMode}
-                            onCategorySelect={game.setSelectedCategory}
-                            onDayChange={game.setSelectedDay}
-                            onAutoTtsChange={game.setAutoTts}
-                            onTimeLimitChange={game.setTimeLimit}
-                            onTranslationDirectionChange={game.setTranslationDirection}
-                            onStart={() => void (game.mode === "learn" ? game.startLearnMode() : game.startPracticeMode())}
-                        />
-                    )}
-
-                    {!game.isLoadingConfig && game.phase === "learn" && game.currentLearnWord && (
-                        <VocabularyLearnScreen
-                            currentWord={game.currentLearnWord}
-                            learnIndex={game.learnIndex}
-                            totalWords={game.dayWords.length}
-                            selectedCategoryLabel={game.selectedCategoryLabel}
-                            selectedDay={game.selectedDay}
-                            language={game.language}
-                            translationDirection={game.translationDirection}
-                            isFlipped={game.isFlipped}
-                            isMastered={game.progressMap[String(game.currentLearnWord.id)]?.is_mastered ?? false}
-                            onFlip={() => game.setIsFlipped((prev) => !prev)}
-                            onPronounce={game.pronounce}
-                            onLeave={game.leaveToSetup}
-                            onPrevious={() => {
-                                game.setLearnIndex((prev) => Math.max(0, prev - 1));
-                                game.setIsFlipped(false);
-                            }}
-                            onNext={() => {
-                                game.setLearnIndex((prev) => Math.min(game.dayWords.length - 1, prev + 1));
-                                game.setIsFlipped(false);
-                            }}
-                        />
-                    )}
-
-                    {!game.isLoadingConfig && game.phase === "practice" && game.currentPracticeWord && (
-                        <VocabularyPracticeScreen
-                            currentQuestionNumber={game.attempts.length + 1}
-                            totalQuestions={game.sessionQuestionTarget}
-                            selectedCategoryLabel={game.selectedCategoryLabel}
-                            selectedDay={game.selectedDay}
-                            currentStreak={game.currentStreak}
-                            timeRemaining={game.timeRemaining}
-                            timeLimit={game.timeLimit}
-                            countdownState={game.countdownState}
-                            promptText={promptTextFor(game.currentPracticeWord, game.language, game.translationDirection)}
-                            promptPhonetic={promptPhoneticFor(game.currentPracticeWord, game.language, game.translationDirection)}
-                            promptDirection={promptDirectionFor(game.language, game.translationDirection)}
-                            answerDirection={answerDirectionFor(game.language, game.translationDirection)}
-                            practiceOptions={game.practiceOptions}
-                            selectedOption={game.selectedOption}
-                            isAnswerLocked={game.isAnswerLocked}
-                            feedbackState={game.feedbackState}
-                            onLeave={game.leaveToSetup}
-                            onSelect={(index) => {
-                                void game.submitPracticeAnswer(index);
-                            }}
-                            onContinue={game.continuePractice}
-                        />
-                    )}
-
-                    {!game.isLoadingConfig && game.phase === "summary" && (
-                        <div className="vocab-summary-scroll">
-                            <VocabularySummaryCard
-                                attempts={game.attempts}
-                                scorePercent={game.scorePercent}
-                                correctCount={game.correctCount}
-                                bestStreak={game.bestStreak}
-                                isSavingSummary={game.isSavingSummary}
-                                isLevelMastered={game.isLevelMastered}
-                                onChangeSetup={game.leaveToSetup}
-                                onPlayAgain={() => {
-                                    void game.startPracticeMode();
-                                }}
-                                onStartMemoryTest={() => {
-                                    void game.startPracticeMode(true);
-                                }}
-                            />
-                        </div>
-                    )}
                 </div>
-            </div>
+            )}
         </VocabularyLayout>
     );
 };

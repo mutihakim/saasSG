@@ -26,7 +26,7 @@ const CurriculumPage: React.FC<Props> = ({ member }) => {
             allowPageScroll={false}
             isSessionActive={game.isSessionActive}
         >
-            <div className={`math-game-layout__scroll${isUILayoutActive ? " math-game-layout__scroll--session" : ""}`}>
+            <div className={`game-feature-shell__scroll${isUILayoutActive ? " game-feature-shell__scroll--session" : ""}`}>
                 <div className={`math-game${isUILayoutActive ? " math-game--session" : ""}`}>
                     {game.phase === "setup" && (
                         <CurriculumSetupScreen

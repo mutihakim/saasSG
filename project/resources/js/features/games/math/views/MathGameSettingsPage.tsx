@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { Badge, Button, Card, Col, Form, Row, Spinner } from "react-bootstrap";
+import { Spinner } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
-import Select from "react-select";
 
 import MathGameLayout from "../components/MathGameLayout";
 import {
@@ -22,11 +21,6 @@ type Props = {
     } | null;
 };
 
-type OperatorOption = {
-    value: MathGameOperator;
-    label: string;
-};
-
 const operatorOrder: MathGameOperator[] = ["+", "-", "*", "/"];
 
 const MathGameSettingsPage: React.FC<Props> = ({ member }) => {
@@ -34,16 +28,16 @@ const MathGameSettingsPage: React.FC<Props> = ({ member }) => {
     const tenantRoute = useTenantRoute();
     const gamesApi = useMemo(() => createGamesApi(tenantRoute), [tenantRoute]);
 
-    const operatorOptions = useMemo<OperatorOption[]>(() => [
-        { value: "+", label: `${t("tenant.games.math.operator.addition")} (+)` },
-        { value: "-", label: `${t("tenant.games.math.operator.subtraction")} (-)` },
-        { value: "*", label: `${t("tenant.games.math.operator.multiplication")} (x)` },
-        { value: "/", label: `${t("tenant.games.math.operator.division")} (/)` },
+    const operatorButtons: Array<{ value: MathGameOperator; label: string }> = useMemo(() => [
+        { value: "+", label: t("tenant.games.math.operator.addition") },
+        { value: "-", label: t("tenant.games.math.operator.subtraction") },
+        { value: "*", label: t("tenant.games.math.operator.multiplication") },
+        { value: "/", label: t("tenant.games.math.operator.division") },
     ], [t]);
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [selectedOperator, setSelectedOperator] = useState<OperatorOption>(operatorOptions[0]);
+    const [selectedOperator, setSelectedOperator] = useState<MathGameOperator>("+");
     const [settings, setSettings] = useState<Record<MathGameOperator, MathGameSetting | null>>({
         "+": null,
         "-": null,
@@ -55,9 +49,6 @@ const MathGameSettingsPage: React.FC<Props> = ({ member }) => {
     const [defaultQuestionCount, setDefaultQuestionCount] = useState(10);
     const [defaultTimeLimit, setDefaultTimeLimit] = useState(5);
     const [masteredThreshold, setMasteredThreshold] = useState(8);
-
-    const questionCountOptions = [5, 10, 15, 20, 25, 30, 35, 40, 45, 50];
-    const timeLimitOptions = [2, 3, 5, 10, 15, 20, 30, 45, 60];
 
     useEffect(() => {
         let cancelled = false;
@@ -119,17 +110,16 @@ const MathGameSettingsPage: React.FC<Props> = ({ member }) => {
         }
     }, [settings]);
 
-    const handleOperatorChange = (option: OperatorOption | null) => {
-        if (!option) return;
-        setSelectedOperator(option);
-        loadOperatorSettings(option.value);
+    const handleOperatorChange = (op: MathGameOperator) => {
+        setSelectedOperator(op);
+        loadOperatorSettings(op);
     };
 
     const handleSave = async () => {
         setIsSaving(true);
 
         const payload: MathGameSettingPayload = {
-            operator: selectedOperator.value,
+            operator: selectedOperator,
             default_mode: defaultMode,
             default_question_count: defaultQuestionCount,
             default_time_limit: defaultTimeLimit,
@@ -142,8 +132,8 @@ const MathGameSettingsPage: React.FC<Props> = ({ member }) => {
             // Update local state
             setSettings((prev) => ({
                 ...prev,
-                [selectedOperator.value]: {
-                    operator: selectedOperator.value,
+                [selectedOperator]: {
+                    operator: selectedOperator,
                     default_mode: defaultMode,
                     default_question_count: defaultQuestionCount,
                     default_time_limit: defaultTimeLimit,
@@ -165,176 +155,113 @@ const MathGameSettingsPage: React.FC<Props> = ({ member }) => {
             menuKey="settings"
             memberName={member?.full_name ?? member?.name ?? undefined}
         >
-            {isLoading ? (
-                <div className="d-flex justify-content-center py-5">
-                    <Spinner animation="border" variant="primary" />
-                </div>
-            ) : (
-                <Row className="justify-content-center">
-                    <Col lg={8}>
-                        <Card>
-                            <Card.Body>
-                                <Row className="mb-4 align-items-center">
-                                    <Col>
-                                        <h5 className="fw-semibold mb-0">
-                                            {t("tenant.games.settings.select_operator")}
-                                        </h5>
-                                    </Col>
-                                    <Col xs="auto">
-                                        <Select<OperatorOption>
-                                            options={operatorOptions}
-                                            value={selectedOperator}
-                                            onChange={handleOperatorChange}
-                                            menuPlacement="auto"
-                                            styles={{
-                                                control: (base) => ({
-                                                    ...base,
-                                                    minWidth: 200,
-                                                }),
-                                            }}
-                                        />
-                                    </Col>
-                                </Row>
-
-                                <Form>
-                                    {/* Game Mode */}
-                                    <Form.Group className="mb-4">
-                                        <Form.Label className="fw-semibold mb-2">
-                                            {t("tenant.games.settings.default_mode")}
-                                        </Form.Label>
-                                        <Form.Text className="text-muted d-block mb-2">
-                                            {t("tenant.games.settings.default_mode_desc")}
-                                        </Form.Text>
-                                        <div className="d-flex gap-3">
-                                            <Form.Check
-                                                type="radio"
-                                                id="mode-mencariC"
-                                                name="gameMode"
-                                                label={t("tenant.games.math.mode.mencariC")}
-                                                value="mencariC"
-                                                checked={defaultMode === "mencariC"}
-                                                onChange={() => setDefaultMode("mencariC")}
-                                            />
-                                            <Form.Check
-                                                type="radio"
-                                                id="mode-mencariB"
-                                                name="gameMode"
-                                                label={t("tenant.games.math.mode.mencariB")}
-                                                value="mencariB"
-                                                checked={defaultMode === "mencariB"}
-                                                onChange={() => setDefaultMode("mencariB")}
-                                            />
-                                        </div>
-                                    </Form.Group>
-
-                                    {/* Question Count */}
-                                    <Form.Group className="mb-4">
-                                        <Form.Label className="fw-semibold mb-2">
-                                            {t("tenant.games.settings.default_question_count")}
-                                        </Form.Label>
-                                        <Form.Text className="text-muted d-block mb-2">
-                                            {t("tenant.games.settings.default_question_count_desc")}
-                                        </Form.Text>
-                                        <div className="d-flex flex-wrap gap-2">
-                                            {questionCountOptions.map((count) => (
-                                                <Button
-                                                    key={count}
-                                                    variant={
-                                                        defaultQuestionCount === count
-                                                            ? "primary"
-                                                            : "outline-primary"
-                                                    }
-                                                    size="sm"
-                                                    onClick={() => setDefaultQuestionCount(count)}
-                                                >
-                                                    {count}
-                                                </Button>
-                                            ))}
-                                        </div>
-                                    </Form.Group>
-
-                                    {/* Time Limit */}
-                                    <Form.Group className="mb-4">
-                                        <Form.Label className="fw-semibold mb-2">
-                                            {t("tenant.games.settings.default_time_limit")}
-                                        </Form.Label>
-                                        <Form.Text className="text-muted d-block mb-2">
-                                            {t("tenant.games.settings.default_time_limit_desc")}
-                                        </Form.Text>
-                                        <div className="d-flex flex-wrap gap-2">
-                                            {timeLimitOptions.map((time) => (
-                                                <Button
-                                                    key={time}
-                                                    variant={
-                                                        defaultTimeLimit === time
-                                                            ? "primary"
-                                                            : "outline-primary"
-                                                    }
-                                                    size="sm"
-                                                    onClick={() => setDefaultTimeLimit(time)}
-                                                >
-                                                    {time}s
-                                                </Button>
-                                            ))}
-                                        </div>
-                                    </Form.Group>
-
-                                    {/* Mastered Threshold */}
-                                    <Form.Group className="mb-4">
-                                        <Form.Label className="fw-semibold mb-2">
-                                            {t("tenant.games.settings.mastered_threshold")}
-                                        </Form.Label>
-                                        <Form.Text className="text-muted d-block mb-2">
-                                            {t("tenant.games.settings.mastered_threshold_desc")}
-                                        </Form.Text>
-                                        <div className="d-flex align-items-center gap-3">
-                                            <Form.Range
-                                                className="games-flex-1"
-                                                min={1}
-                                                max={50}
-                                                value={masteredThreshold}
-                                                onChange={(e) =>
-                                                    setMasteredThreshold(
-                                                        parseInt(e.target.value, 10),
-                                                    )
-                                                }
-                                            />
-                                            <Badge bg="primary" className="fs-6 px-3 py-2">
-                                                {masteredThreshold}x
-                                            </Badge>
-                                        </div>
-                                    </Form.Group>
-
-                                    {/* Save Button */}
-                                    <div className="d-flex justify-content-end mt-4">
-                                        <Button
-                                            variant="primary"
-                                            onClick={handleSave}
-                                            disabled={isSaving}
+            <div className="game-setup-card h-100">
+                {isLoading ? (
+                    <div className="d-flex justify-content-center align-items-center flex-grow-1 py-5">
+                        <Spinner animation="border" variant="primary" />
+                    </div>
+                ) : (
+                    <>
+                        <div className="game-setup-content game-setup-inner-content pb-5">
+                            {/* Selector Operator */}
+                            <section className="game-setup-section mb-3">
+                                <label className="game-setup-label mb-2">
+                                    {t("tenant.games.settings.select_operator")}
+                                </label>
+                                <div className="game-lang-container">
+                                    {operatorButtons.map((item) => (
+                                        <button
+                                            key={item.value}
+                                            type="button"
+                                            className={`game-lang-btn ${selectedOperator === item.value ? "active" : ""}`}
+                                            onClick={() => handleOperatorChange(item.value)}
                                         >
-                                            {isSaving ? (
-                                                <>
-                                                    <Spinner
-                                                        as="span"
-                                                        animation="border"
-                                                        size="sm"
-                                                        className="me-2"
-                                                    />
-                                                    {t("tenant.games.settings.saving")}
-                                                </>
-                                            ) : (
-                                                t("tenant.games.settings.save")
-                                            )}
-                                        </Button>
+                                            <span className="fw-bold" style={{ fontSize: '1.2rem' }}>
+                                                {item.value === "*" ? "×" : item.value}
+                                            </span>
+                                            <span className="ms-2 d-none d-md-inline">{item.label}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Default mode */}
+                            <section className="game-setup-section mb-3">
+                                <label className="game-setup-label">{t("tenant.games.settings.default_mode")}</label>
+                                <div className="game-mode-container">
+                                    <button type="button" className={`game-mode-btn ${defaultMode === "mencariC" ? "active" : ""}`} onClick={() => setDefaultMode("mencariC")}>
+                                        {t("tenant.games.math.mode.mencariC")}
+                                    </button>
+                                    <button type="button" className={`game-mode-btn ${defaultMode === "mencariB" ? "active" : ""}`} onClick={() => setDefaultMode("mencariB")}>
+                                        {t("tenant.games.math.mode.mencariB")}
+                                    </button>
+                                    <div className={`game-mode-slider ${defaultMode === "mencariB" ? "is-mencariB" : "is-mencariC"} has-two-options`} />
+                                </div>
+                            </section>
+
+                            {/* Settings grid */}
+                            <div className="game-setup-grid mb-3">
+                                <section className="game-setup-section">
+                                    <label className="game-setup-label">{t("tenant.games.settings.mastered_threshold")}</label>
+                                    <div className="game-setup-chip-row">
+                                        {[3, 5, 8, 10, 15, 20].map((value) => (
+                                            <button key={value} type="button" className={`game-setup-chip ${masteredThreshold === value ? "is-active" : ""}`} onClick={() => setMasteredThreshold(value)}>
+                                                {value}x
+                                            </button>
+                                        ))}
                                     </div>
-                                </Form>
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                </Row>
+                                </section>
+
+                                <section className="game-setup-section">
+                                    <label className="game-setup-label">{t("tenant.games.settings.default_question_count")}</label>
+                                    <div className="game-setup-chip-row">
+                                        {[5, 10, 15, 20].map((value) => (
+                                            <button key={value} type="button" className={`game-setup-chip ${defaultQuestionCount === value ? "is-active" : ""}`} onClick={() => setDefaultQuestionCount(value)}>
+                                                {value}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section className="game-setup-section">
+                                    <label className="game-setup-label">{t("tenant.games.settings.default_time_limit")}</label>
+                                    <div className="game-setup-chip-row">
+                                        {[2, 3, 5, 8, 10, 15].map((value) => (
+                                            <button key={value} type="button" className={`game-setup-chip ${defaultTimeLimit === value ? "is-active" : ""}`} onClick={() => setDefaultTimeLimit(value)}>
+                                                {value}s
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
+                            </div>
+                        </div>
+                    </>
+                )}
+            </div>
+
+            {!isLoading && (
+                <div 
+                    className="game-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 d-flex justify-content-center"
+                    style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+                >
+                    <div className="w-100 game-start-floating__inner">
+                        <button
+                            type="button"
+                            className="btn game-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
+                            onClick={() => void handleSave()}
+                            disabled={isSaving}
+                        >
+                            {isSaving
+                                ? t("tenant.games.settings.saving")
+                                : <>{t("tenant.games.settings.save")} 💾</>}
+                        </button>
+                    </div>
+                </div>
             )}
         </MathGameLayout>
     );
 };
+
+(MathGameSettingsPage as any).layout = null;
 
 export default MathGameSettingsPage;

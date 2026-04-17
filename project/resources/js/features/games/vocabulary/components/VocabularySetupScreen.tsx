@@ -58,23 +58,23 @@ const VocabularySetupScreen: React.FC<Props> = ({
 
     return (
         <>
-        <div className="vocab-setup-card d-flex flex-column h-100">
-            <div className="vocab-setup-content vocab-inner-content pb-5">
+        <div className="game-setup-card d-flex flex-column h-100">
+            <div className="game-setup-content game-setup-inner-content pb-5">
 
                 <div className="mb-2">
                         <label className="d-block text-sm text-gray-600 mb-1 font-medium small fw-semibold text-muted">{t("tenant.games.vocabulary.setup.language")}</label>
-                        <div className="vocab-lang-container">
-                            <button type="button" className={`vocab-lang-btn ${language === "english" ? "active" : ""}`} onClick={() => onLanguageChange("english")}>
+                        <div className="game-lang-container">
+                            <button type="button" className={`game-lang-btn ${language === "english" ? "active" : ""}`} onClick={() => onLanguageChange("english")}>
                                 <img src="https://flagcdn.com/w20/us.png" srcSet="https://flagcdn.com/w40/us.png 2x" width="20" alt="English" className="rounded-1" />
                                 <span className="d-none d-md-inline">{t("tenant.games.vocabulary.setup.language_en")}</span>
                                 <span className="d-md-none">{t("tenant.games.vocabulary.setup.language_en").substring(0, 3)}</span>
                             </button>
-                            <button type="button" className={`vocab-lang-btn ${language === "arabic" ? "active" : ""}`} onClick={() => onLanguageChange("arabic")}>
+                            <button type="button" className={`game-lang-btn ${language === "arabic" ? "active" : ""}`} onClick={() => onLanguageChange("arabic")}>
                                 <img src="https://flagcdn.com/w20/sa.png" srcSet="https://flagcdn.com/w40/sa.png 2x" width="20" alt="Arabic" className="rounded-1" />
                                 <span className="d-none d-md-inline">{t("tenant.games.vocabulary.setup.language_ar")}</span>
                                 <span className="d-md-none">{t("tenant.games.vocabulary.setup.language_ar").substring(0, 3)}</span>
                             </button>
-                            <button type="button" className={`vocab-lang-btn ${language === "mandarin" ? "active" : ""}`} onClick={() => onLanguageChange("mandarin")}>
+                            <button type="button" className={`game-lang-btn ${language === "mandarin" ? "active" : ""}`} onClick={() => onLanguageChange("mandarin")}>
                                 <img src="https://flagcdn.com/w20/cn.png" srcSet="https://flagcdn.com/w40/cn.png 2x" width="20" alt={t("tenant.games.vocabulary.setup.language_zh")} className="rounded-1" />
                                 <span className="d-none d-md-inline">{t("tenant.games.vocabulary.setup.language_zh")}</span>
                                 <span className="d-md-none">{t("tenant.games.vocabulary.setup.language_zh").substring(0, 3)}</span>
@@ -111,19 +111,19 @@ const VocabularySetupScreen: React.FC<Props> = ({
 
                     <div className="mb-2 mt-2">
                         <label className="d-block text-sm text-gray-600 mb-1 font-medium small fw-semibold text-muted">{t("tenant.games.vocabulary.setup.mode")}</label>
-                        <div className="vocab-mode-container">
-                            <button type="button" className={`vocab-mode-btn ${mode === "practice" ? "active" : ""}`} onClick={() => onModeChange("practice")}>
+                        <div className="game-mode-container">
+                            <button type="button" className={`game-mode-btn ${mode === "practice" ? "active" : ""}`} onClick={() => onModeChange("practice")}>
                                 Practice (Kuis)
                             </button>
-                            <button type="button" className={`vocab-mode-btn ${mode === "learn" ? "active" : ""}`} onClick={() => onModeChange("learn")}>
+                            <button type="button" className={`game-mode-btn ${mode === "learn" ? "active" : ""}`} onClick={() => onModeChange("learn")}>
                                 Review
                             </button>
                             {mode === "memory_test" && (
-                                <button type="button" className={`vocab-mode-btn ${mode === "memory_test" ? "active" : ""}`} onClick={() => onModeChange("memory_test")}>
+                                <button type="button" className={`game-mode-btn ${mode === "memory_test" ? "active" : ""}`} onClick={() => onModeChange("memory_test")}>
                                     Memory
                                 </button>
                             )}
-                            <div className={`vocab-mode-slider ${mode === "learn" ? "is-learn" : mode === "memory_test" ? "is-memory-test" : "is-practice"} ${mode === "memory_test" ? "has-three-options" : "has-two-options"}`} />
+                            <div className={`game-mode-slider ${mode === "learn" ? "is-learn" : mode === "memory_test" ? "is-memory-test" : "is-practice"} ${mode === "memory_test" ? "has-three-options" : "has-two-options"}`} />
                         </div>
                     </div>
 
@@ -146,10 +146,10 @@ const VocabularySetupScreen: React.FC<Props> = ({
                             <button
                                 type="button"
                                 onClick={() => onAutoTtsChange(!autoTts)}
-                                className={`vocab-switch ${autoTts ? 'on' : 'off'}`}
+                                className={`game-switch ${autoTts ? 'on' : 'off'}`}
                                 aria-label="Toggle Auto TTS"
                             >
-                                <div className={`vocab-switch-thumb ${autoTts ? 'on' : 'off'}`} />
+                                <div className={`game-switch-thumb ${autoTts ? 'on' : 'off'}`} />
                             </button>
                             <span className="text-sm font-medium small text-muted text-dark text-nowrap">Read options when selected</span>
                         </div>
@@ -170,13 +170,13 @@ const VocabularySetupScreen: React.FC<Props> = ({
             </div>
 
         <div 
-            className="vocab-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 p-md-5 d-flex justify-content-center"
+            className="game-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 p-md-5 d-flex justify-content-center"
             style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
         >
-            <div className="w-100 vocab-start-floating__inner">
+            <div className="w-100 game-start-floating__inner">
                 <button
                     type="button"
-                    className="btn vocab-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
+                    className="btn game-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
                     onClick={onStart}
                     disabled={isStartingSession || !selectedCategory || !hasDaysInSelectedCategory}
                 >

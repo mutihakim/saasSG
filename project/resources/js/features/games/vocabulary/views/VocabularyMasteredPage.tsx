@@ -103,89 +103,81 @@ const VocabularyMasteredPage: React.FC<PageProps> = ({ member }) => {
             menuKey="mastered"
             memberName={member?.full_name ?? member?.name ?? undefined}
         >
-            {/* Struktur sama dengan VocabularyPage:
-                math-game-layout__scroll → math-game → vocab-setup-card → vocab-setup-content */}
-            <div className="math-game-layout__scroll">
-                <div className="math-game">
-
-                    <div className="vocab-setup-card">
-                        {/* Header ringkasan — sticky di atas dalam container putih */}
-                        <div className="px-3 px-sm-4 pt-3 pb-2 border-bottom border-light d-flex align-items-center justify-content-between gap-3 flex-wrap">
-                            <div>
-                                <div className="small text-muted">{t("tenant.games.vocabulary.mastered.total")}</div>
-                                <div className="fs-2 fw-bold text-success lh-1">{rows.length}</div>
-                            </div>
-                            <LanguageFilterTabs
-                                selected={language}
-                                onChange={setLanguage}
-                            />
-                        </div>
-
-                        {/* Konten utama — scrollable */}
-                        <div className="vocab-setup-content vocab-inner-content">
-                            {isLoading ? (
-                                <div className="d-flex align-items-center gap-2 text-muted py-4">
-                                    <Spinner size="sm" animation="border" />
-                                    <span>{t("tenant.games.vocabulary.loading")}</span>
-                                </div>
-                            ) : rows.length === 0 ? (
-                                <div className="text-center py-5">
-                                    <div className="fs-1 mb-2">🏆</div>
-                                    <div className="text-muted small">{t("tenant.games.vocabulary.mastered.empty")}</div>
-                                </div>
-                            ) : (
-                                <Accordion
-                                    activeKey={activeAccordion ?? undefined}
-                                    onSelect={(eventKey) => setActiveAccordion(
-                                        Array.isArray(eventKey) ? (eventKey[0] ?? null) : (eventKey ?? null)
-                                    )}
-                                >
-                                    {grouped.map(([key, items]) => {
-                                        const [category, day] = key.split("|||");
-                                        return (
-                                            <Accordion.Item eventKey={key} key={key}>
-                                                <Accordion.Header>
-                                                    {category} • {t("tenant.games.vocabulary.setup.day_value", { day })}
-                                                    <span className="ms-2 text-muted small">
-                                                        ({t("tenant.games.vocabulary.mastered.word_count", { count: items.length })})
-                                                    </span>
-                                                </Accordion.Header>
-                                                <Accordion.Body>
-                                                    <div className="table-responsive">
-                                                        <Table size="sm" className="align-middle mb-0">
-                                                            <thead className="table-light">
-                                                                <tr>
-                                                                    <th>#</th>
-                                                                    <th>{t("tenant.games.vocabulary.mastered.table.indonesian")}</th>
-                                                                    <th>{languageLabel}</th>
-                                                                    <th className="text-center">{t("tenant.games.vocabulary.mastered.table.correct")}</th>
-                                                                    <th className="text-center">{t("tenant.games.vocabulary.mastered.table.max_streak")}</th>
-                                                                </tr>
-                                                            </thead>
-                                                            <tbody>
-                                                                {items.map((item, index) => (
-                                                                    <tr key={`${item.word_id}-${item.language}`}>
-                                                                        <td>{index + 1}</td>
-                                                                        <td className="fw-semibold">{item.word.bahasa_indonesia}</td>
-                                                                        <td>{translationFor(item) ?? "-"}</td>
-                                                                        <td className="text-center">{item.jumlah_benar}</td>
-                                                                        <td className="text-center">
-                                                                            <Badge bg="success-subtle" text="success">{item.max_streak}x</Badge>
-                                                                        </td>
-                                                                    </tr>
-                                                                ))}
-                                                            </tbody>
-                                                        </Table>
-                                                    </div>
-                                                </Accordion.Body>
-                                            </Accordion.Item>
-                                        );
-                                    })}
-                                </Accordion>
-                            )}
-                        </div>
+            <div className="game-setup-card h-100">
+                {/* Header ringkasan — sticky di atas dalam container putih */}
+                <div className="px-3 px-sm-4 pt-3 pb-2 border-bottom border-light d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                    <div>
+                        <div className="small text-muted">{t("tenant.games.vocabulary.mastered.total")}</div>
+                        <div className="fs-2 fw-bold text-success lh-1">{rows.length}</div>
                     </div>
+                    <LanguageFilterTabs
+                        selected={language}
+                        onChange={setLanguage}
+                    />
+                </div>
 
+                {/* Konten utama — scrollable */}
+                <div className="game-setup-content game-setup-inner-content">
+                    {isLoading ? (
+                        <div className="d-flex align-items-center gap-2 text-muted py-4">
+                            <Spinner size="sm" animation="border" />
+                            <span>{t("tenant.games.vocabulary.loading")}</span>
+                        </div>
+                    ) : rows.length === 0 ? (
+                        <div className="text-center py-5">
+                            <div className="fs-1 mb-2">🏆</div>
+                            <div className="text-muted small">{t("tenant.games.vocabulary.mastered.empty")}</div>
+                        </div>
+                    ) : (
+                        <Accordion
+                            activeKey={activeAccordion ?? undefined}
+                            onSelect={(eventKey) => setActiveAccordion(
+                                Array.isArray(eventKey) ? (eventKey[0] ?? null) : (eventKey ?? null)
+                            )}
+                        >
+                            {grouped.map(([key, items]) => {
+                                const [category, day] = key.split("|||");
+                                return (
+                                    <Accordion.Item eventKey={key} key={key}>
+                                        <Accordion.Header>
+                                            {category} • {t("tenant.games.vocabulary.setup.day_value", { day })}
+                                            <span className="ms-2 text-muted small">
+                                                ({t("tenant.games.vocabulary.mastered.word_count", { count: items.length })})
+                                            </span>
+                                        </Accordion.Header>
+                                        <Accordion.Body>
+                                            <div className="table-responsive">
+                                                <Table size="sm" className="align-middle mb-0">
+                                                    <thead className="table-light">
+                                                        <tr>
+                                                            <th>#</th>
+                                                            <th>{t("tenant.games.vocabulary.mastered.table.indonesian")}</th>
+                                                            <th>{languageLabel}</th>
+                                                            <th className="text-center">{t("tenant.games.vocabulary.mastered.table.correct")}</th>
+                                                            <th className="text-center">{t("tenant.games.vocabulary.mastered.table.max_streak")}</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {items.map((item, index) => (
+                                                            <tr key={`${item.word_id}-${item.language}`}>
+                                                                <td>{index + 1}</td>
+                                                                <td className="fw-semibold">{item.word.bahasa_indonesia}</td>
+                                                                <td>{translationFor(item) ?? "-"}</td>
+                                                                <td className="text-center">{item.jumlah_benar}</td>
+                                                                <td className="text-center">
+                                                                    <Badge bg="success-subtle" text="success">{item.max_streak}x</Badge>
+                                                                </td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </Table>
+                                            </div>
+                                        </Accordion.Body>
+                                    </Accordion.Item>
+                                );
+                            })}
+                        </Accordion>
+                    )}
                 </div>
             </div>
         </VocabularyLayout>

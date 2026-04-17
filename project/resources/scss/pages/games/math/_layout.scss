@@ -1,0 +1,38 @@
+.module-math-wrapper {
+    &.game-feature-shell {
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+
+        .game-feature-shell__topbar {
+            height: 64px;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            z-index: 10;
+        }
+
+        .game-feature-shell__content {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+        }
+
+        .game-feature-shell__scroll {
+            height: 100%;
+            overflow: auto;
+            padding: 1rem;
+        }
+
+        &.game-feature-shell--no-inner-scroll {
+            .game-feature-shell__content {
+                overflow: hidden;
+            }
+        }
+    }
+}

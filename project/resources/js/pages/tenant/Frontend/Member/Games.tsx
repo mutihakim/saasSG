@@ -60,16 +60,16 @@ const GamesPage: React.FC<Props> = () => {
                                 <div className="p-3 border rounded-3">
                                     <div className="fw-semibold">Belajar Kosakata</div>
                                     <div className="small text-muted">Mode flashcard dan kuis adaptif.</div>
-                                    <a href="/games/vocabulary" className="btn btn-sm btn-outline-primary mt-2">
+                                    <Link href="/games/vocabulary" className="btn btn-sm btn-outline-primary mt-2">
                                         Buka Vocabulary
-                                    </a>
+                                    </Link>
                                 </div>
                                 <div className="p-3 border rounded-3">
                                     <div className="fw-semibold">Kurikulum</div>
                                     <div className="small text-muted">Latihan soal pilihan ganda per unit pelajaran dengan history sesi.</div>
-                                    <a href="/games/curriculum" className="btn btn-sm btn-outline-primary mt-2">
+                                    <Link href="/games/curriculum" className="btn btn-sm btn-outline-primary mt-2">
                                         Buka Curriculum
-                                    </a>
+                                    </Link>
                                 </div>
                                 <div className="p-3 border rounded-3">
                                     <div className="fw-semibold">Dongeng Teladan</div>
@@ -78,9 +78,9 @@ const GamesPage: React.FC<Props> = () => {
                                 <div className="p-3 border rounded-3">
                                     <div className="fw-semibold">Alat Bantu Tahfiz</div>
                                     <div className="small text-muted">Pendamping hafalan dengan audio ayat.</div>
-                                    <a href="/games/tahfiz" className="btn btn-sm btn-outline-primary mt-2">
+                                    <Link href="/games/tahfiz" className="btn btn-sm btn-outline-primary mt-2">
                                         Buka Tahfiz
-                                    </a>
+                                    </Link>
                                 </div>
                             </div>
                         </Card.Body>

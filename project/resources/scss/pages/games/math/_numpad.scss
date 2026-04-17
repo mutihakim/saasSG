@@ -1,0 +1,28 @@
+.module-math-wrapper {
+    // ─────────────────────────────────────────────────────────────────
+    // NUMPAD (Numeric Input Keyboard)
+    // ─────────────────────────────────────────────────────────────────
+
+    .math-game {
+        &__session-numpad {
+            align-self: center;
+            width: min(100%, 380px);
+            margin-top: auto;
+        }
+
+        &__numpad {
+            display: grid;
+            max-width: 380px;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 0.5rem;
+        }
+
+        &__numpad-button {
+            min-height: clamp(2.55rem, 6.3vh, 3.35rem);
+            font-size: clamp(1rem, 2.7vh, 1.35rem);
+            padding-block: clamp(0.35rem, 1.2vh, 0.75rem);
+            border-radius: var(--vz-border-radius);
+            font-weight: 700;
+        }
+    }
+}

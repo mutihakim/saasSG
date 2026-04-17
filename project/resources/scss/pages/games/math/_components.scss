@@ -1,0 +1,92 @@
+.module-math-wrapper {
+    // ─────────────────────────────────────────────────────────────────
+    // GAMEPLAY COMPONENTS (Tiles, Cards, Inputs)
+    // ─────────────────────────────────────────────────────────────────
+
+    .math-game {
+        &__tile {
+            aspect-ratio: 1 / 1;
+            min-height: 92px;
+            width: 100%;
+            border-radius: var(--vz-border-radius-lg);
+            transition: all 0.2s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border: none !important;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+
+            &::after {
+                content: "";
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.15) 0%, transparent 100%);
+                pointer-events: none;
+            }
+
+            i { transition: transform 0.2s ease; }
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 0 rgba(0, 0, 0, 0.1);
+                i { transform: scale(1.1); }
+            }
+
+            &:active {
+                transform: translateY(2px);
+                box-shadow: 0 2px 0 rgba(0, 0, 0, 0.1);
+            }
+
+            &.btn-soft-success { background-color: #d1e7dd !important; box-shadow: 0 4px 0 #a3cfbb; }
+            &.btn-soft-warning { background-color: #fff3cd !important; box-shadow: 0 4px 0 #ffe69c; }
+            &.btn-soft-danger { background-color: #f8d7da !important; box-shadow: 0 4px 0 #f1aeb5; }
+            &.btn-soft-info { background-color: #cff4fc !important; box-shadow: 0 4px 0 #9eeaf9; }
+        }
+
+        &__number-tile {
+            min-height: 64px;
+            aspect-ratio: 1 / 1;
+            border-radius: var(--vz-border-radius);
+            font-size: 1.5rem;
+            font-weight: 800;
+            transition: all 0.15s ease;
+            border: none !important;
+            box-shadow: 0 4px 0 rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+
+            &::after {
+                content: "";
+                position: absolute;
+                top: 0; left: 0; right: 0; bottom: 0;
+                background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, transparent 100%);
+                pointer-events: none;
+            }
+
+            &:hover {
+                transform: translateY(-2px);
+                box-shadow: 0 6px 0 rgba(0, 0, 0, 0.1);
+            }
+
+            &.btn-soft-success { background-color: #d1e7dd !important; color: #0a3622 !important; box-shadow: 0 4px 0 #a3cfbb; }
+            &.btn-soft-warning { background-color: #fff3cd !important; color: #664d03 !important; box-shadow: 0 4px 0 #ffe69c; }
+            &.btn-soft-danger { background-color: #f8d7da !important; color: #58151c !important; box-shadow: 0 4px 0 #f1aeb5; }
+            &.btn-soft-info { background-color: #cff4fc !important; color: #055160 !important; box-shadow: 0 4px 0 #9eeaf9; }
+        }
+
+        &__answer-box {
+            min-width: 86px;
+            border-bottom: 3px solid var(--vz-border-color);
+            font-size: clamp(1.2rem, 4vh, 2rem) !important;
+            line-height: 1.15;
+            text-align: center;
+            padding: 0.5rem;
+        }
+    }
+}

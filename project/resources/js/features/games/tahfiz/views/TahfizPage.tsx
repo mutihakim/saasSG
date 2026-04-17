@@ -1,9 +1,8 @@
+import { router } from "@inertiajs/react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 
 import TahfizLayout from "../components/TahfizLayout";
-import TahfizMurojaahScreen from "../components/TahfizMurojaahScreen";
-import TahfizReadingScreen from "../components/TahfizReadingScreen";
 import TahfizSetupScreen from "../components/TahfizSetupScreen";
 import useTahfizGameController from "../hooks/useTahfizGameController";
 
@@ -11,111 +10,85 @@ const TahfizPage: React.FC = () => {
     const { t } = useTranslation();
     const game = useTahfizGameController();
 
-    const isSessionActive = game.phase === "reading" || game.phase === "murojaah";
-
-    const getLayoutTitle = () => {
-        if ((game.phase === "murojaah" || game.phase === "reading") && game.selectedSurah) {
-            const subTitle = game.phase === "murojaah" 
-                ? t("tenant.games.tahfiz.page.subtitle_murojaah")
-                : t("tenant.games.tahfiz.page.subtitle_reading");
-                
-            return (
-                <div className="tahfiz-page-title">
-                    <span className="tahfiz-page-title__main">{game.selectedSurah.nama_latin}</span>
-                    <span className="tahfiz-page-title__sub">{subTitle}</span>
-                </div>
-            );
+    const startSession = () => {
+        if (!game.selectedSurah) return;
+        
+        const params = new URLSearchParams();
+        params.append("surah", game.selectedSurah.id.toString());
+        
+        if (game.mode === "test") {
+            params.append("ayah", game.ayahFrom.toString());
+            router.visit(`/games/tahfiz/murojaah?${params.toString()}`);
+        } else {
+            params.append("from", game.ayahFrom.toString());
+            params.append("to", game.ayahTo.toString());
+            router.visit(`/games/tahfiz/reading?${params.toString()}`);
         }
-        return t("tenant.games.tahfiz.page.title");
+    };
+
+    const handleResumeProgress = (type: "reading" | "murojaah") => {
+        const item = type === "reading" ? game.lastReadingProgress : game.lastMurojaahProgress;
+        if (!item) return;
+
+        const params = new URLSearchParams();
+        params.append("surah", item.surah_number.toString());
+        
+        if (type === "murojaah") {
+            params.append("ayah", item.ayat?.toString() || "1");
+            router.visit(`/games/tahfiz/murojaah?${params.toString()}`);
+        } else {
+            params.append("from", item.ayat_awal?.toString() || "1");
+            params.append("to", item.ayat_akhir?.toString() || "1");
+            router.visit(`/games/tahfiz/reading?${params.toString()}`);
+        }
+    };
+
+    const handleSelectFavorite = (fav: any) => {
+        const params = new URLSearchParams();
+        params.append("surah", fav.surah_id.toString());
+        params.append("from", fav.ayah_start.toString());
+        params.append("to", fav.ayah_end.toString());
+        router.visit(`/games/tahfiz/reading?${params.toString()}`);
     };
 
     return (
         <TahfizLayout
-            title={getLayoutTitle()}
+            title={t("tenant.games.tahfiz.page.title")}
             menuKey="main"
-            isSessionActive={isSessionActive}
-            allowPageScroll={!isSessionActive}
-            onLeavingSession={game.stopSession}
+            isSessionActive={false}
+            allowPageScroll={true}
         >
-            <div className={`math-game-layout__scroll${isSessionActive ? " math-game-layout__scroll--session" : ""}`}>
-                <div className={`math-game${isSessionActive ? " math-game--session" : ""}`}>
-
-                    {/* Loading state */}
-                    {game.isLoading && (
-                        <div className="card border-0 shadow-sm">
-                            <div className="card-body d-flex align-items-center gap-2 py-4">
-                                <div className="spinner-border spinner-border-sm" role="status" />
-                                <span>{t("tenant.games.tahfiz.page.loading")}</span>
-                            </div>
-                        </div>
-                    )}
-
-                    {/* Setup Phase */}
-                    {!game.isLoading && game.phase === "setup" && (
-                        <TahfizSetupScreen
-                            surahs={game.surahs}
-                            selectedSurahId={game.selectedSurah?.id ?? null}
-                            ayahFrom={game.ayahFrom}
-                            ayahTo={game.ayahTo}
-                            totalAyahs={game.selectedSurah?.jumlah_ayat ?? 0}
-                            isLoading={game.isLoading}
-                            isSurahLoading={game.isSurahLoading}
-                            mode={game.mode}
-                            lastReadingProgress={game.lastReadingProgress}
-                            lastMurojaahProgress={game.lastMurojaahProgress}
-                            favoriteAyahs={game.favoriteAyahs}
-                            onSurahChange={(id) => void game.loadSurahDetail(id)}
-                            onAyahFromChange={game.setAyahFrom}
-                            onAyahToChange={game.setAyahTo}
-                            onModeChange={game.setMode}
-                            onStart={game.startSession}
-                            onResumeProgress={game.resumeProgress}
-                            onSelectFavorite={game.loadFavorite}
-                        />
-                    )}
-
-                    {/* Reading Phase */}
-                    {game.phase === "reading" && game.selectedSurah && game.currentAyah && (
-                        <TahfizReadingScreen
-                            surah={game.selectedSurah}
-                            activeSurahAyahs={game.activeSurahAyahs}
-                            currentAyahIndex={game.currentAyahIndex}
-                            currentAyah={game.currentAyah}
-                            isPlaying={game.isPlaying}
-                            isTtsPlaying={game.isTtsPlaying}
-                            activeTab={game.activeTab}
-                            playbackRate={game.playbackRate}
-                            currentRepeat={game.currentRepeat}
-                            settings={game.settings}
-                            uniqueCategories={game.uniqueCategories}
-                            audioRef={game.audioRef}
-                            onTogglePlay={game.togglePlay}
-                            onNext={game.goToNext}
-                            onPrev={game.goToPrev}
-                            onTabChange={game.setActiveTab}
-                            onSpeedChange={game.setPlaybackRate}
-                            onAudioEnded={game.handlePlaybackEnded}
-                            onToggleFavorite={game.toggleFavorite}
-                            onRemoveFavorite={game.removeFavorite}
-                        />
-                    )}
-
-                    {/* Murojaah Phase */}
-                    {game.phase === "murojaah" && game.selectedSurah && game.currentAyah && (
-                        <TahfizMurojaahScreen
-                            key={`${game.selectedSurah.id}-${game.currentAyah.nomor_ayat}`}
-                            surah={game.selectedSurah}
-                            activeSurahAyahs={game.activeSurahAyahs}
-                            currentAyahIndex={game.currentAyahIndex}
-                            currentAyah={game.currentAyah}
-                            murojaahHistory={game.murojaahHistory}
-                            onNext={game.goToNext}
-                            onPrev={game.goToPrev}
-                            onRecord={game.recordMurojaah}
-                        />
-                    )}
+            {/* Loading state */}
+            {game.isLoading && (
+                <div className="d-flex align-items-center gap-2 py-4 justify-content-center text-muted">
+                    <div className="spinner-border spinner-border-sm" role="status" />
+                    <span>{t("tenant.games.tahfiz.page.loading")}</span>
                 </div>
-            </div>
+            )}
+
+            {/* Setup Screen Only */}
+            {!game.isLoading && (
+                <TahfizSetupScreen
+                    surahs={game.surahs}
+                    selectedSurahId={game.selectedSurah?.id ?? null}
+                    ayahFrom={game.ayahFrom}
+                    ayahTo={game.ayahTo}
+                    totalAyahs={game.selectedSurah?.jumlah_ayat ?? 0}
+                    isLoading={game.isLoading}
+                    isSurahLoading={game.isSurahLoading}
+                    mode={game.mode}
+                    lastReadingProgress={game.lastReadingProgress}
+                    lastMurojaahProgress={game.lastMurojaahProgress}
+                    favoriteAyahs={game.favoriteAyahs}
+                    onSurahChange={(id) => void game.loadSurahDetail(id)}
+                    onAyahFromChange={game.setAyahFrom}
+                    onAyahToChange={game.setAyahTo}
+                    onModeChange={game.setMode}
+                    onStart={startSession}
+                    onResumeProgress={handleResumeProgress}
+                    onSelectFavorite={handleSelectFavorite}
+                />
+            )}
         </TahfizLayout>
     );
 };

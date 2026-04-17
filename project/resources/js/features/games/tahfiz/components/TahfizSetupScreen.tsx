@@ -88,128 +88,124 @@ const TahfizSetupScreen: React.FC<Props> = ({
     }, [favoriteAyahs, t]);
 
     return (
-        <>
-            <div className="tahfiz-setup d-flex flex-column h-100">
-                <div className="vocab-setup-card d-flex flex-column h-100 mb-3">
-                    <div className="vocab-setup-content vocab-inner-content p-3 p-md-4">
-                        {/* Mode Selector */}
-                        <div className="mb-4">
-                            <label className="tahfiz-setup__section-label">
-                                {t("tenant.games.tahfiz.setup.mode_label")} 🎯
-                            </label>
-                            <div className="vocab-mode-container">
-                                <button 
-                                    type="button" 
-                                    className={`vocab-mode-btn ${mode === "learn" ? "active" : ""}`} 
-                                    onClick={() => onModeChange("learn")}
-                                >
-                                    {t("tenant.games.tahfiz.setup.mode_learn")}
-                                </button>
-                                <button 
-                                    type="button" 
-                                    className={`vocab-mode-btn ${mode === "test" ? "active" : ""}`} 
-                                    onClick={() => onModeChange("test")}
-                                >
-                                    {t("tenant.games.tahfiz.setup.mode_test")}
-                                </button>
-                                <div className={`vocab-mode-slider ${mode === "test" ? "is-learn" : "is-practice"} has-two-options`} />
-                            </div>
+        <div className="game-setup-card flex-grow-1 d-flex flex-column h-100">
+            <div className="game-setup-content game-setup-inner-content p-3 p-md-4 pb-5">
+                <div className="tahfiz-setup d-flex flex-column">
+                    {/* Mode Selector */}
+                    <div className="mb-4">
+                        <label className="tahfiz-setup__section-label">
+                            {t("tenant.games.tahfiz.setup.mode_label")} 🎯
+                        </label>
+                        <div className="game-mode-container">
+                            <button 
+                                type="button" 
+                                className={`game-mode-btn ${mode === "learn" ? "active" : ""}`} 
+                                onClick={() => onModeChange("learn")}
+                            >
+                                {t("tenant.games.tahfiz.setup.mode_learn")}
+                            </button>
+                            <button 
+                                type="button" 
+                                className={`game-mode-btn ${mode === "test" ? "active" : ""}`} 
+                                onClick={() => onModeChange("test")}
+                            >
+                                {t("tenant.games.tahfiz.setup.mode_test")}
+                            </button>
+                            <div className={`game-mode-slider ${mode === "test" ? "is-learn" : "is-practice"} has-two-options`} />
                         </div>
+                    </div>
 
-                        {/* Surah Selector */}
-                        <div className="mb-4">
-                            <label className="tahfiz-setup__section-label">
-                                {t("tenant.games.tahfiz.setup.surah_label")} 📖
-                            </label>
-                            {isLoading ? (
-                                <div className="tahfiz-setup__loading-placeholder">
-                                    <div className="spinner-border spinner-border-sm text-teal-500" role="status" />
-                                    <span>{t("tenant.games.tahfiz.setup.loading_surahs")}</span>
-                                </div>
-                            ) : (
-                                <select
-                                    className="tahfiz-setup__surah-select form-select"
-                                    value={selectedSurahId || ""}
-                                    onChange={(e) => onSurahChange(Number(e.target.value))}
-                                >
-                                    <option value="" disabled>{t("tenant.games.tahfiz.setup.surah_placeholder")}</option>
-                                    {[...surahs].slice(0, 114).sort((a, b) => b.id - a.id).map((s) => (
-                                        <option key={s.id} value={s.id}>
-                                            #{s.id} {s.nama_latin} ({s.nama}) - {s.jumlah_ayat} {t("tenant.games.tahfiz.setup.ayah_count_label")}
-                                        </option>
-                                    ))}
-                                </select>
-                            )}
-                        </div>
-
-                        {/* Ayah Range */}
-                        <div className="mb-3 mt-2">
-                            <label className="tahfiz-setup__section-label">
-                                {t("tenant.games.tahfiz.setup.range_label")} 🎯
-                            </label>
-                            <div className="tahfiz-setup__range-wrapper">
-                                {isSurahLoading ? (
-                                    <div className="d-flex align-items-center gap-2 py-2">
-                                        <div className="spinner-border spinner-border-sm text-teal-500" role="status" />
-                                        <span className="small text-muted fw-medium">{t("tenant.games.tahfiz.setup.loading_ayahs")}</span>
-                                    </div>
-                                ) : (
-                                    <div className="row g-3 align-items-center">
-                                        <div className="col">
-                                            <label className="form-label small text-muted mb-1 fw-semibold">{t("tenant.games.tahfiz.setup.range_from")}</label>
-                                            <select
-                                                className="tahfiz-setup__range-select form-select"
-                                                value={ayahFrom}
-                                                onChange={(e) => onAyahFromChange(Number(e.target.value))}
-                                                disabled={!isReady}
-                                            >
-                                                {ayahOptions.filter(n => n <= ayahTo).map((n) => (
-                                                    <option key={n} value={n}>{t("tenant.games.tahfiz.setup.ayah_number", { n })}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                        <div className="col-auto pt-4">
-                                            <i className="ri-arrow-right-line text-muted" />
-                                        </div>
-                                        <div className="col">
-                                            <label className="form-label small text-muted mb-1 fw-semibold">{t("tenant.games.tahfiz.setup.range_to")}</label>
-                                            <select
-                                                className="tahfiz-setup__range-select form-select"
-                                                value={ayahTo}
-                                                onChange={(e) => onAyahToChange(Number(e.target.value))}
-                                                disabled={!isReady}
-                                            >
-                                                {ayahOptions.filter(n => n >= ayahFrom).map((n) => (
-                                                    <option key={n} value={n}>{t("tenant.games.tahfiz.setup.ayah_number", { n })}</option>
-                                                ))}
-                                            </select>
-                                        </div>
-                                    </div>
-                                )}
+                    {/* Surah Selector */}
+                    <div className="mb-4">
+                        <label className="tahfiz-setup__section-label">
+                            {t("tenant.games.tahfiz.setup.surah_label")} 📖
+                        </label>
+                        {isLoading ? (
+                            <div className="tahfiz-setup__loading-placeholder">
+                                <div className="spinner-border spinner-border-sm text-teal-500" role="status" />
+                                <span>{t("tenant.games.tahfiz.setup.loading_surahs")}</span>
                             </div>
-                        </div>
-
-                        {/* Info summary */}
-                        {isReady && (
-                            <div className="tahfiz-setup__info-box">
-                                <span className="info-item info-item--bold">
-                                    <i className="ri-book-open-fill" />
-                                    <span>{t("tenant.games.tahfiz.setup.selected_info", { count: ayahTo - ayahFrom + 1 })}</span>
-                                </span>
-                                <div className="divider" />
-                                <span className="info-item info-item--medium">
-                                    <i className="ri-volume-up-fill" />
-                                    <span>{t("tenant.games.tahfiz.setup.audio_ready")}</span>
-                                </span>
-                            </div>
+                        ) : (
+                            <select
+                                className="tahfiz-setup__surah-select form-select"
+                                value={selectedSurahId || ""}
+                                onChange={(e) => onSurahChange(Number(e.target.value))}
+                            >
+                                <option value="" disabled>{t("tenant.games.tahfiz.setup.surah_placeholder")}</option>
+                                {[...surahs].slice(0, 114).sort((a, b) => b.id - a.id).map((s) => (
+                                    <option key={s.id} value={s.id}>
+                                        #{s.id} {s.nama_latin} ({s.nama}) - {s.jumlah_ayat} {t("tenant.games.tahfiz.setup.ayah_count_label")}
+                                    </option>
+                                ))}
+                            </select>
                         )}
                     </div>
-                </div>
 
-                {/* Favorite Ayahs Section */}
-                {favoriteAyahs.length > 0 && (
-                    <div className="vocab-setup-card mb-3">
-                        <div className="vocab-setup-content p-3 p-md-4">
+                    {/* Ayah Range */}
+                    <div className="mb-4 mt-2">
+                        <label className="tahfiz-setup__section-label">
+                            {t("tenant.games.tahfiz.setup.range_label")} 🎯
+                        </label>
+                        <div className="tahfiz-setup__range-wrapper">
+                            {isSurahLoading ? (
+                                <div className="d-flex align-items-center gap-2 py-2">
+                                    <div className="spinner-border spinner-border-sm text-teal-500" role="status" />
+                                    <span className="small text-muted fw-medium">{t("tenant.games.tahfiz.setup.loading_ayahs")}</span>
+                                </div>
+                            ) : (
+                                <div className="row g-3 align-items-center">
+                                    <div className="col">
+                                        <label className="form-label small text-muted mb-1 fw-semibold">{t("tenant.games.tahfiz.setup.range_from")}</label>
+                                        <select
+                                            className="tahfiz-setup__range-select form-select"
+                                            value={ayahFrom}
+                                            onChange={(e) => onAyahFromChange(Number(e.target.value))}
+                                            disabled={!isReady}
+                                        >
+                                            {ayahOptions.filter(n => n <= ayahTo).map((n) => (
+                                                <option key={n} value={n}>{t("tenant.games.tahfiz.setup.ayah_number", { n })}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                    <div className="col-auto pt-4">
+                                        <i className="ri-arrow-right-line text-muted" />
+                                    </div>
+                                    <div className="col">
+                                        <label className="form-label small text-muted mb-1 fw-semibold">{t("tenant.games.tahfiz.setup.range_to")}</label>
+                                        <select
+                                            className="tahfiz-setup__range-select form-select"
+                                            value={ayahTo}
+                                            onChange={(e) => onAyahToChange(Number(e.target.value))}
+                                            disabled={!isReady}
+                                        >
+                                            {ayahOptions.filter(n => n >= ayahFrom).map((n) => (
+                                                <option key={n} value={n}>{t("tenant.games.tahfiz.setup.ayah_number", { n })}</option>
+                                            ))}
+                                        </select>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Info summary */}
+                    {isReady && (
+                        <div className="tahfiz-setup__info-box mb-4">
+                            <span className="info-item info-item--bold">
+                                <i className="ri-book-open-fill" />
+                                <span>{t("tenant.games.tahfiz.setup.selected_info", { count: ayahTo - ayahFrom + 1 })}</span>
+                            </span>
+                            <div className="divider" />
+                            <span className="info-item info-item--medium">
+                                <i className="ri-volume-up-fill" />
+                                <span>{t("tenant.games.tahfiz.setup.audio_ready")}</span>
+                            </span>
+                        </div>
+                    )}
+
+                    {/* Favorite Ayahs Section */}
+                    {favoriteAyahs.length > 0 && (
+                        <div className="mt-2 pb-5">
                             <label className="tahfiz-setup__section-label">
                                 {t("tenant.games.tahfiz.setup.favorite_section_label")} ⭐
                             </label>
@@ -245,13 +241,13 @@ const TahfizSetupScreen: React.FC<Props> = ({
                                 />
                             </div>
                         </div>
-                    </div>
-                )}
+                    )}
+                </div>
             </div>
 
             {/* Floating Start Button / Resume Progress */}
-            <div className="vocab-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 p-md-5 d-flex justify-content-center pb-safe-inset">
-                <div className="w-100 vocab-start-floating__inner">
+            <div className="game-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 p-md-5 d-flex justify-content-center pb-safe-inset">
+                <div className="w-100 game-start-floating__inner">
                     {!isReady ? (
                         (() => {
                             const lastProgress = mode === "learn" ? lastReadingProgress : lastMurojaahProgress;
@@ -261,7 +257,7 @@ const TahfizSetupScreen: React.FC<Props> = ({
                                 return (
                                     <button
                                         type="button"
-                                        className={`btn vocab-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2 tahfiz-setup__resume-btn--${mode === "learn" ? "learn" : "test"}`}
+                                        className={`btn game-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2 tahfiz-setup__resume-btn--${mode === "learn" ? "learn" : "test"}`}
                                         onClick={() => onResumeProgress(mode === "learn" ? "reading" : "murojaah")}
                                     >
                                         <i className="ri-history-line fs-5" />
@@ -278,7 +274,7 @@ const TahfizSetupScreen: React.FC<Props> = ({
                             return (
                                 <button
                                     type="button"
-                                    className="btn vocab-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2 opacity-75"
+                                    className="btn game-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2 opacity-75"
                                     disabled
                                 >
                                     <i className="ri-error-warning-line fs-5" />
@@ -290,7 +286,7 @@ const TahfizSetupScreen: React.FC<Props> = ({
                         <button
                             id="tahfiz-btn-start-reading"
                             type="button"
-                            className="btn vocab-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
+                            className="btn game-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
                             onClick={onStart}
                         >
                             <i className={mode === "test" ? "ri-test-tube-line fs-5" : "ri-book-open-line fs-5"} />
@@ -299,7 +295,7 @@ const TahfizSetupScreen: React.FC<Props> = ({
                     )}
                 </div>
             </div>
-        </>
+        </div>
     );
 };
 

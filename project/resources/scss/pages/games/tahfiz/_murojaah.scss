@@ -1,198 +1,104 @@
-.tahfiz-murojaah {
-    max-width: 768px;
+.module-tahfiz-wrapper {
+    .tahfiz-murojaah {
+        &__badge-wrap {
+            // position handled in JSX inline style for now to avoid conflicts
+        }
 
-    &__content {
-        scrollbar-width: none;
-        &::-webkit-scrollbar {
-            display: none;
+        &__badge {
+            font-size: 0.65rem;
+            letter-spacing: 0.1em;
+        }
+
+        &__arabic {
+            font-size: clamp(1.8rem, 5vh, 2.5rem) !important; 
+            line-height: 2.2;
+            font-family: "Amiri", "Scheherazade", serif;
+            padding: 1rem 1rem;
+        }
+
+        &__notes-trigger {
+            color: #4a9d92;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            
+            .note-dot {
+                position: absolute;
+                background-color: var(--#{$prefix}danger);
+                border: 2px solid white;
+                border-radius: 50%;
+                width: 8px;
+                height: 8px;
+                top: -1px;
+                right: -1px;
+            }
+        }
+
+        &__meta-label {
+            font-size: 0.6rem;
+            letter-spacing: 0.08em;
+            color: var(--#{$prefix}secondary-color);
+            text-transform: uppercase;
+            font-weight: 700;
+            margin: 0;
         }
     }
 
-    &__bg {
-        position: absolute;
+    .tahfiz-murojaah-modal {
+        background-color: rgba(15, 23, 42, 0.4);
+        backdrop-filter: blur(4px);
+        z-index: 1060;
+        position: fixed;
+        top: 0;
+        left: 0;
         width: 100%;
         height: 100%;
-        z-index: 0;
-        opacity: 0.1;
-        background-image: radial-gradient(#b0cac0 2px, transparent 2px);
-        background-size: 24px 24px;
-        pointer-events: none;
-    }
-
-    &__card {
-        border-radius: 1.5rem;
-        min-height: max-content;
-        flex: 1;
-        position: relative;
-        overflow-y: auto;
-        max-height: 100%;
-        padding: 4.5rem 1.25rem 1.25rem; // Clear absolute ayah pill
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        
-        // Hide scrollbar but keep functionality
-        scrollbar-width: none;
-        &::-webkit-scrollbar { display: none; }
-    }
-
-    &__badge-wrap {
-        position: absolute;
-        top: 0;
-        right: 0;
-        margin-top: 1.5rem;
-        margin-right: 1.5rem;
-        z-index: 10;
-    }
-
-    &__badge {
-        font-size: 0.65rem;
-        letter-spacing: 0.1em;
-    }
-
-    &__arabic {
-        font-size: clamp(2.5rem, 10vw, 4rem) !important; // disamakan dengan ukuran TSX sebelumnya
-        line-height: 1.8;
-        font-family: "Amiri", "Scheherazade", serif;
-        padding: 1rem 1rem;
-    }
-
-    &__footer {
-        z-index: 20;
-    }
-
-    &__notes-trigger {
-        // Ribbon memotong tepi kontainer footer
-        position: absolute;
-        width: 2.25rem;
-        height: 2.25rem;
-        top: -1.125rem;
-        right: 1.5rem;
-        z-index: 30;
-        color: #4a9d92;
-        border-radius: 50%;
-        background: white;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
         display: flex;
         align-items: center;
         justify-content: center;
-        transition: all 0.2s ease;
 
-        &:hover {
-            background: #f0fdf9;
-            border-color: #4a9d92;
+        &__inner {
+            background-color: white;
+            box-shadow: var(--#{$prefix}box-shadow-lg);
+            overflow: hidden;
+            width: 100%;
+            max-width: 384px;
+            border-radius: 1.5rem;
         }
-        
-        .note-dot {
-            position: absolute;
-            background-color: var(--#{$prefix}danger);
-            border: 2px solid white;
-            border-radius: 50%;
-            width: 8px;
-            height: 8px;
-            top: -1px;
-            right: -1px;
-        }
-    }
 
-    &__action-btn {
-        width: 2.5rem;
-        height: 2.5rem;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    &__save-btn {
-        background-color: #413594;
-        min-height: 2.5rem;
-        border: none;
-        color: white;
-        
-        span {
+        &__title {
             font-size: 0.75rem;
-            font-weight: 600;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+            font-weight: 700;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            color: var(--#{$prefix}secondary-color);
+
+            i {
+                color: #4a9d92;
+                margin-right: 0.5rem;
+            }
         }
 
-        &:hover {
-            background-color: lighten(#413594, 5%);
+        &__textarea {
+            border-radius: 0.75rem;
+            font-size: 0.75rem;
+            min-height: 100px;
+            resize: none;
+            padding: 0.75rem;
+            background-color: var(--#{$prefix}light);
         }
-    }
 
-    &__meta-label {
-        font-size: 0.6rem;  // lebih kecil — label pendek saja (Tajwid / Hafalan)
-        letter-spacing: 0.08em;
-        color: var(--#{$prefix}secondary-color);
-        text-transform: uppercase;
-        font-weight: 700;
-        margin: 0;
-    }
+        &__submit {
+            background-color: #4a9d92;
+            font-size: 0.75rem;
+            letter-spacing: 0.025em;
+            border: none;
+            color: white;
 
-    &__divider {
-        width: 100%;
-        height: 1px;
-        background-color: var(--#{$prefix}light);
-        margin-bottom: 1rem;
-    }
-}
-
-.tahfiz-murojaah-modal {
-    background-color: rgba(15, 23, 42, 0.4);
-    backdrop-filter: blur(4px);
-    z-index: 1060;
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    &__inner {
-        background-color: white;
-        box-shadow: var(--#{$prefix}box-shadow-lg);
-        overflow: hidden;
-        width: 100%;
-        max-width: 384px;
-        border-radius: 1.5rem;
-    }
-
-    &__title {
-        font-size: 0.75rem;
-        letter-spacing: 0.05em;
-        text-transform: uppercase;
-        font-weight: 700;
-        margin: 0;
-        display: flex;
-        align-items: center;
-        color: var(--#{$prefix}secondary-color);
-
-        i {
-            color: #4a9d92;
-            margin-right: 0.5rem;
-        }
-    }
-
-    &__textarea {
-        border-radius: 0.75rem;
-        font-size: 0.75rem;
-        min-height: 100px;
-        resize: none;
-        padding: 0.75rem;
-    }
-
-    &__submit {
-        background-color: #4a9d92;
-        font-size: 0.75rem;
-        letter-spacing: 0.025em;
-        border: none;
-        color: white;
-
-        &:hover {
-            background-color: darken(#4a9d92, 5%);
+            &:hover {
+                background-color: darken(#4a9d92, 5%);
+            }
         }
     }
 }

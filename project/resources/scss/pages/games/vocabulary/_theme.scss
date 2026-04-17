@@ -1,394 +1,268 @@
-.vocab-theme.math-game-layout {
-    background-color: #6eb4ab;
-    background-image: none;
+.module-vocabulary-wrapper {
+    &.game-feature-shell {
+        background-color: #6eb4ab;
+        background-image: none;
 
-    .math-game-layout__scroll {
-        padding: 0;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-    }
+        .game-feature-shell__scroll {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            padding: 0;
 
-    .math-game {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        position: relative;
-    }
-
-    .math-game-layout__topbar {
-        background: transparent;
-        border-bottom: none;
-    }
-
-    .math-game-layout__title {
-        font-family: "Georgia", serif;
-        font-size: 1.125rem;
-        color: #111827;
-        font-weight: 700;
-        letter-spacing: 0.025em;
-        white-space: normal;
-        overflow: hidden;
-        text-overflow: clip;
-        line-height: 1.2;
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        line-clamp: 2;
-        -webkit-box-orient: vertical;
-        text-align: center;
-    }
-
-    .math-game-layout__topbar .btn-light {
-        background: rgba(204, 251, 241, 0.4);
-        backdrop-filter: blur(12px);
-        border: 1px solid rgba(55, 65, 81, 0.2);
-        color: #111827;
-        border-radius: 9999px;
-        padding: 0.5rem 1rem;
-    }
-
-    .math-game-layout__topbar .btn-light:hover {
-        background: rgba(204, 251, 241, 0.6);
-    }
-
-    .math-game-layout__user-dropdown .avatar-xs {
-        background: #f3e8ff;
-        color: #581c87;
-        border: 2px dashed #9333ea;
-        font-family: "Georgia", serif;
-    }
-
-    .vocab-setup-card {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-        overflow: hidden;
-        background-color: #ffffff;
-        border-radius: 2rem 2rem 0 0;
-        margin: 0 auto;
-        width: 96%;
-        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-
-        @media (min-width: 640px) {
-            border-radius: 2.5rem;
-            margin-bottom: 1.5rem;
-            width: 96%;
-            max-width: 56rem;
-            margin-left: auto;
-            margin-right: auto;
-        }
-    }
-
-    .vocab-setup-content {
-        flex: 1;
-        min-width: 0;          // Cegah flex item expand melebihi parent width
-        overflow-y: auto;
-        overflow-x: hidden;    // Chip rows scroll dalam dirinya, bukan expand parent
-        padding: 1rem;
-        scrollbar-width: none;
-
-        &::-webkit-scrollbar {
-            display: none;
+            &--session {
+                overflow: hidden;
+            }
         }
 
-        @media (min-width: 640px) {
-            padding: 1.5rem;
+        .game-feature-shell__inner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            overflow: visible; // Allow setup screen to expand its internal scroll
+            position: relative;
+            min-height: min-content; // Important for content visibility on short screens
+
+            &--session {
+                overflow: hidden;
+                height: 100%;
+            }
         }
 
-        @media (min-width: 1024px) {
-            padding: 2rem;
-        }
-    }
-
-    .vocab-setup-footer {
-        flex-shrink: 0;
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(8px);
-        padding: 1rem;
-        border-top: 1px solid #f3f4f6;
-        z-index: 20;
-
-        @media (min-width: 640px) {
-            padding: 1.5rem;
-        }
-    }
-}
-
-// ============================================================
-// Overrides untuk elemen berwarna putih di dalam vocab-setup-card
-// Gunakan class vocab-inner-content pada wrapping div
-// ============================================================
-.vocab-inner-content {
-    // Bootstrap cards → subtle background
-    .card {
-        background-color: #f9fafb !important;
-        border-color: #f3f4f6 !important;
-    }
-
-    // Settings chips → subtle gray
-    .vocab-settings-chip {
-        background: #f3f4f6;
-        border-color: #e5e7eb;
-    }
-
-    // Settings section wrapper
-    .vocab-settings-section {
-        background: transparent;
-    }
-
-    // Settings option cards & toggle cards
-    .vocab-settings-option-card,
-    .vocab-settings-toggle-card {
-        background: #f3f4f6;
-        border-color: #e5e7eb;
-
-        &.is-active {
-            background: #effcf8;
-            border-color: #4a978d;
-        }
-    }
-
-    // Day buttons inside the white container
-    .vocab-day-btn {
-        &:not(.active) {
-            background: #f3f4f6;
-        }
-    }
-
-    // Accordion items
-    .accordion-item {
-        background-color: #f9fafb;
-        border-color: #f3f4f6;
-    }
-    .accordion-body {
-        background-color: #f9fafb;
-    }
-    .accordion-button {
-        background-color: #f9fafb;
-        &:not(.collapsed) {
-            background-color: #effcf8;
-        }
-    }
-}
-
-// ============================================================
-// Colored stat cards untuk history page
-// ============================================================
-.vocab-stat-row {
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-    padding: 1rem 1rem 0.75rem;
-    scrollbar-width: none;
-    border-bottom: 1px solid #f0f0f0;
-
-    &::-webkit-scrollbar { display: none; }
-}
-
-.vocab-stat-card {
-    flex: 1;
-    min-width: 4.75rem;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 0.75rem 0.5rem;
-    border-radius: 1rem;
-    text-align: center;
-    transition: transform 0.15s ease;
-
-    &__value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        line-height: 1;
-        letter-spacing: -0.02em;
-    }
-
-    &__label {
-        font-size: 0.6rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.07em;
-        margin-top: 0.3rem;
-        opacity: 0.7;
-        white-space: nowrap;
-    }
-
-    &--indigo {
-        background: #eef2ff;
-        color: #3730a3;
-        border: 1.5px solid #c7d2fe;
-    }
-
-    &--teal {
-        background: #ccfbf1;
-        color: #0f766e;
-        border: 1.5px solid #99f6e4;
-    }
-
-    &--amber {
-        background: #fef9c3;
-        color: #a16207;
-        border: 1.5px solid #fef08a;
-    }
-
-    &--split {
-        background: #f0fdf4;
-        color: #15803d;
-        border: 1.5px solid #bbf7d0;
-
-        .vocab-stat-card__value { font-size: 1.05rem; }
-    }
-}
-
-
-.vocab-bg-pattern {
-    position: fixed;
-    inset: 0;
-    z-index: 0;
-    pointer-events: none;
-    overflow: hidden;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-around;
-    align-items: center;
-    opacity: 0.1;
-}
-
-.vocab-bg-emoji {
-    font-size: 2.25rem;
-    margin: 2rem;
-}
-
-.vocab-bg-emoji--0 { transform: rotate(0deg); }
-.vocab-bg-emoji--1 { transform: rotate(60deg); }
-.vocab-bg-emoji--2 { transform: rotate(120deg); }
-.vocab-bg-emoji--3 { transform: rotate(180deg); }
-.vocab-bg-emoji--4 { transform: rotate(240deg); }
-.vocab-bg-emoji--5 { transform: rotate(300deg); }
-
-.math-game-layout__content {
-    z-index: 10;
-    position: relative;
-}
-
-.math-game-layout__topbar {
-    z-index: 20;
-    position: relative;
-}
-
-.vocab-lang-container {
-    background: #f3f4f6;
-    padding: 0.5rem;
-    border-radius: 2rem;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    align-items: center;
-    justify-content: space-between;
-
-    .vocab-lang-btn {
-        flex: 1;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 0.375rem;
-        padding: 0.375rem 0.75rem;
-        border-radius: 9999px;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        transition: all 0.2s;
-        border: none;
-        white-space: nowrap;
-
-        &.active {
-            background: #ffffff;
-            color: #1f2937;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-            border-bottom: 2px solid #e5e7eb;
-        }
-
-        &:not(.active) {
+        .game-feature-shell__topbar {
             background: transparent;
-            color: #6b7280;
+            border-bottom: none;
+            z-index: 20;
+            position: relative;
+        }
 
-            &:hover {
-                background: #e5e7eb;
+        .game-feature-shell__title {
+            font-family: "Georgia", serif;
+            font-size: 1.125rem;
+            color: #111827;
+            font-weight: 700;
+            letter-spacing: 0.025em;
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: clip;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            text-align: center;
+        }
+
+        .game-feature-shell__topbar .btn-light {
+            background: rgba(204, 251, 241, 0.4);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(55, 65, 81, 0.2);
+            color: #111827;
+            border-radius: 9999px;
+            padding: 0.5rem 1rem;
+        }
+
+        .game-feature-shell__topbar .btn-light:hover {
+            background: rgba(204, 251, 241, 0.6);
+        }
+
+        .game-feature-shell__user-dropdown .avatar-xs {
+            background: #f3e8ff;
+            color: #581c87;
+            border: 2px dashed #9333ea;
+            font-family: "Georgia", serif;
+        }
+
+        .vocab-setup-footer {
+            flex-shrink: 0;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(8px);
+            padding: 1rem;
+            border-top: 1px solid #f3f4f6;
+            z-index: 20;
+
+            @media (min-width: 640px) {
+                padding: 1.5rem;
             }
         }
     }
-}
 
-.vocab-day-container {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-
-    .vocab-day-arrow {
-        padding: 0.5rem;
-        color: #9ca3af;
-        background: #f9fafb;
-        border-radius: 9999px;
-        border: none;
-        transition: color 0.2s;
-
-        &:hover {
-            color: #4b5563;
-        }
-    }
-
-    .vocab-day-scroll {
+    .vocab-stat-row {
         display: flex;
         gap: 0.5rem;
         overflow-x: auto;
-        flex: 1;
-        padding: 0.25rem;
+        padding: 1rem 1rem 0.75rem;
         scrollbar-width: none;
+        border-bottom: 1px solid #f0f0f0;
 
-        &::-webkit-scrollbar {
-            display: none;
+        &::-webkit-scrollbar { display: none; }
+    }
+
+    .vocab-stat-card {
+        flex: 1;
+        min-width: 4.75rem;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 0.75rem 0.5rem;
+        border-radius: 1rem;
+        text-align: center;
+        transition: transform 0.15s ease;
+
+        &__value {
+            font-size: 1.5rem;
+            font-weight: 800;
+            line-height: 1;
+            letter-spacing: -0.02em;
+        }
+
+        &__label {
+            font-size: 0.6rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            margin-top: 0.3rem;
+            opacity: 0.7;
+            white-space: nowrap;
+        }
+
+        &--indigo {
+            background: #eef2ff;
+            color: #3730a3;
+            border: 1.5px solid #c7d2fe;
+        }
+
+        &--teal {
+            background: #ccfbf1;
+            color: #0f766e;
+            border: 1.5px solid #99f6e4;
+        }
+
+        &--amber {
+            background: #fef9c3;
+            color: #a16207;
+            border: 1.5px solid #fef08a;
+        }
+
+        &--mint {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1.5px solid #bbf7d0;
+        }
+
+        &--peach {
+            background: #fff7ed;
+            color: #c2410c;
+            border: 1.5px solid #fed7aa;
+        }
+
+        &--split {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1.5px solid #bbf7d0;
+
+            .vocab-stat-card__value { font-size: 1.05rem; }
         }
     }
 
-    .vocab-day-btn {
-        position: relative;
-        padding: 0.375rem 0.875rem 0.375rem 0.875rem;
-        padding-right: 1.6rem;
-        border-radius: 0.75rem;
-        font-size: 0.8125rem;
-        font-weight: 500;
-        transition: all 0.2s;
-        white-space: nowrap;
 
-        &.active {
-            border: 1px solid #4a978d;
-            color: #ffffff;
-            background: #4a978d;
-            box-shadow: 0 8px 20px rgba(47, 111, 103, 0.2);
-        }
+    .vocab-bg-pattern {
+        position: fixed;
+        inset: 0;
+        z-index: 0;
+        pointer-events: none;
+        overflow: hidden;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: space-around;
+        align-items: center;
+        opacity: 0.1;
+    }
 
-        &:not(.active) {
-            border: 1px solid #e5e7eb;
-            color: #6b7280;
-            background: #ffffff;
+    .vocab-bg-emoji {
+        font-size: 2.25rem;
+        margin: 2rem;
+    }
+
+    .vocab-bg-emoji--0 { transform: rotate(0deg); }
+    .vocab-bg-emoji--1 { transform: rotate(60deg); }
+    .vocab-bg-emoji--2 { transform: rotate(120deg); }
+    .vocab-bg-emoji--3 { transform: rotate(180deg); }
+    .vocab-bg-emoji--4 { transform: rotate(240deg); }
+    .vocab-bg-emoji--5 { transform: rotate(300deg); }
+
+    .vocab-day-container {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+
+        .vocab-day-arrow {
+            padding: 0.5rem;
+            color: #9ca3af;
+            background: #f9fafb;
+            border-radius: 9999px;
+            border: none;
+            transition: color 0.2s;
 
             &:hover {
-                border-color: #d1d5db;
+                color: #4b5563;
             }
         }
 
-        .vocab-day-trophy {
-            position: absolute;
-            top: 0.2rem;
-            right: 0.35rem;
-            font-size: 0.78rem;
-            line-height: 1;
-            z-index: 1;
+        .vocab-day-scroll {
+            display: flex;
+            gap: 0.5rem;
+            overflow-x: auto;
+            flex: 1;
+            padding: 0.25rem;
+            scrollbar-width: none;
+
+            &::-webkit-scrollbar {
+                display: none;
+            }
         }
 
-        &.active .vocab-day-trophy {
-            filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+        .vocab-day-btn {
+            position: relative;
+            padding: 0.375rem 0.875rem 0.375rem 0.875rem;
+            padding-right: 1.6rem;
+            border-radius: 0.75rem;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+
+            &.active {
+                border: 1px solid #4a978d;
+                color: #ffffff;
+                background: #4a978d;
+                box-shadow: 0 8px 20px rgba(47, 111, 103, 0.2);
+            }
+
+            &:not(.active) {
+                border: 1px solid #e5e7eb;
+                color: #6b7280;
+                background: #ffffff;
+
+                &:hover {
+                    border-color: #d1d5db;
+                }
+            }
+
+            .vocab-day-trophy {
+                position: absolute;
+                top: 0.2rem;
+                right: 0.35rem;
+                font-size: 0.78rem;
+                line-height: 1;
+                z-index: 1;
+            }
+
+            &.active .vocab-day-trophy {
+                filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.25));
+            }
         }
     }
 }

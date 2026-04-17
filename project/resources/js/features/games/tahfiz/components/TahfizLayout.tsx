@@ -1,6 +1,7 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
+import '../../../../../scss/modules/games/tahfiz.scss';
 import GameFeatureLayout, { type GameFeatureMenuItem, type GameFeatureMenuKey } from "../../shared/components/GameFeatureLayout";
 
 type TahfizLayoutProps = {
@@ -13,31 +14,12 @@ type TahfizLayoutProps = {
     children: React.ReactNode;
 };
 
-const BackgroundPattern = () => {
-    const [items] = useState(() => {
-        const emojis = ["🕌", "📖", "🌙", "⭐", "📿"];
-        return Array.from({ length: 20 }).map((_, i) => ({
-            emoji: emojis[i % 5],
-            rotation: Math.random() * 360,
-        }));
-    });
-
-    return (
-        <div className="vocab-bg-pattern" aria-hidden="true">
-            {items.map((item: { emoji: string; rotation: number }, i: number) => (
-                <div key={i} className={`vocab-bg-emoji vocab-bg-emoji--${Math.round(item.rotation) % 6}`}>
-                    {item.emoji}
-                </div>
-            ))}
-        </div>
-    );
-};
-
 const TahfizLayout: React.FC<TahfizLayoutProps> = ({
     title,
     menuKey,
     memberName,
     isSessionActive = false,
+    allowPageScroll = false,
     onLeavingSession,
     children,
 }) => {
@@ -56,11 +38,10 @@ const TahfizLayout: React.FC<TahfizLayoutProps> = ({
             menuItems={menuItems}
             memberName={memberName}
             isSessionActive={isSessionActive}
-            allowPageScroll={false}
+            allowPageScroll={allowPageScroll}
             onLeavingSession={onLeavingSession}
-            featureClass="tahfiz-theme"
+            featureClass="module-tahfiz-wrapper"
         >
-            <BackgroundPattern />
             {children}
         </GameFeatureLayout>
     );

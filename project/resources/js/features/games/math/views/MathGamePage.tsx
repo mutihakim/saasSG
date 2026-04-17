@@ -1,12 +1,10 @@
 import React, { useMemo } from "react";
-import { Col, Row } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import GameFeedbackPopup from "../../shared/components/GameFeedbackPopup";
 import MathGameLayout from "../components/MathGameLayout";
 import MathConfigState from "../components/math-game/MathConfigState";
 import MathMemoryTestDialog from "../components/math-game/MathMemoryTestDialog";
-import MathOperatorSelectScreen from "../components/math-game/MathOperatorSelectScreen";
 import MathSessionCard from "../components/math-game/MathSessionCard";
 import MathSetupScreen from "../components/math-game/MathSetupScreen";
 import MathSummaryCard from "../components/math-game/MathSummaryCard";
@@ -55,77 +53,66 @@ const MathGamePage: React.FC<MathGamePageProps> = ({ member }) => {
                 onStart={startMemoryTest}
             />
 
-            <div className={`math-game-layout__scroll${game.isSessionActive ? " math-game-layout__scroll--session" : ""}`}>
-                <div className={`math-game${game.isSessionActive ? " math-game--session" : ""}`}>
-                    <Row className="justify-content-center">
-                        <Col xxl={10}>
-                            <MathConfigState
-                                isLoading={game.isLoading}
-                                loadFailed={game.loadFailed}
-                                onRetry={() => void game.loadConfig()}
-                            />
+            <div className={game.isSessionActive ? "h-100" : "game-setup-card h-100"}>
+                <div className={game.isSessionActive ? "h-100" : "game-setup-content"}>
+                    <MathConfigState
+                        isLoading={game.isLoading}
+                        loadFailed={game.loadFailed}
+                        onRetry={() => void game.loadConfig()}
+                    />
 
-                            {!game.isLoading && !game.loadFailed && game.setup && !game.hasRunningSession && game.screen === "operator" && (
-                                <MathOperatorSelectScreen
-                                    config={game.mathConfig}
-                                    operatorMeta={game.operatorMeta}
-                                    onSelect={game.handleOperatorSelect}
-                                />
-                            )}
+                    {!game.isLoading && !game.loadFailed && game.setup && !game.hasRunningSession && game.screen === "setup" && (
+                        <MathSetupScreen
+                            setup={game.setup}
+                            rangeOptions={game.rangeOptions}
+                            operatorMeta={game.operatorMeta}
+                            isStarting={game.isStarting}
+                            setSetup={game.setSetup}
+                            onStart={(setup) => void game.runStartGame(setup)}
+                        />
+                    )}
 
-                            {!game.isLoading && !game.loadFailed && game.setup && !game.hasRunningSession && game.screen === "setup" && (
-                                <MathSetupScreen
-                                    setup={game.setup}
-                                    rangeOptions={game.rangeOptions}
-                                    operatorMeta={game.operatorMeta}
-                                    isStarting={game.isStarting}
-                                    setSetup={game.setSetup}
-                                    onBack={() => game.setScreen("operator")}
-                                    onStart={(setup) => void game.runStartGame(setup)}
-                                />
-                            )}
+                    {game.isSessionActive && game.currentQuestion && game.setup && (
+                        <MathSessionCard
+                            currentQuestion={game.currentQuestion}
+                            currentQuestionNumber={currentQuestionNumber}
+                            setup={game.setup}
+                            userAnswer={game.userAnswer}
+                            isCorrect={game.isCorrect}
+                            timeRemaining={game.timeRemaining}
+                            isLocked={game.isLocked}
+                            isCountdownActive={game.isCountdownActive}
+                            countdownState={game.countdownState}
+                            getCurrentStreak={game.getCurrentStreak}
+                            onDigit={game.inputDigit}
+                            onDelete={game.deleteDigit}
+                            onSubmit={() => game.submitAnswer()}
+                            onLeave={game.persistPartialSessionOnLeave}
+                        />
+                    )}
 
-                            {game.isSessionActive && game.currentQuestion && game.setup && (
-                                <MathSessionCard
-                                    currentQuestion={game.currentQuestion}
-                                    currentQuestionNumber={currentQuestionNumber}
-                                    setup={game.setup}
-                                    userAnswer={game.userAnswer}
-                                    isCorrect={game.isCorrect}
-                                    timeRemaining={game.timeRemaining}
-                                    isLocked={game.isLocked}
-                                    isCountdownActive={game.isCountdownActive}
-                                    countdownState={game.countdownState}
-                                    getCurrentStreak={game.getCurrentStreak}
-                                    onDigit={game.inputDigit}
-                                    onDelete={game.deleteDigit}
-                                    onSubmit={() => game.submitAnswer()}
-                                    onLeave={game.persistPartialSessionOnLeave}
-                                />
-                            )}
-
-                            {game.isFinished && game.hasRunningSession && (
-                                <MathSummaryCard
-                                    attempts={game.attempts}
-                                    result={game.result}
-                                    summaryStats={game.summaryStats}
-                                    onChangeSetup={() => {
-                                        game.reset();
-                                        game.setScreen("setup");
-                                    }}
-                                    onPlayAgain={() => {
-                                        if (game.setup) {
-                                            void game.runStartGame(game.setup);
-                                        }
-                                    }}
-                                />
-                            )}
-                        </Col>
-                    </Row>
+                    {game.isFinished && game.hasRunningSession && (
+                        <MathSummaryCard
+                            attempts={game.attempts}
+                            result={game.result}
+                            summaryStats={game.summaryStats}
+                            onChangeSetup={() => {
+                                game.reset();
+                                game.setScreen("setup");
+                            }}
+                            onPlayAgain={() => {
+                                if (game.setup) {
+                                    void game.runStartGame(game.setup);
+                                }
+                            }}
+                        />
+                    )}
                 </div>
             </div>
         </MathGameLayout>
     );
 };
+
+(MathGamePage as any).layout = null;
 
 export default MathGamePage;

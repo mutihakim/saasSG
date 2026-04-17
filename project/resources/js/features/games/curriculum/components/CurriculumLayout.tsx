@@ -29,7 +29,7 @@ const CurriculumLayout: React.FC<Props> = ({ title, menuKey, memberName, allowPa
             memberName={memberName}
             allowPageScroll={allowPageScroll}
             isSessionActive={isSessionActive}
-            featureClass="vocab-theme"
+            featureClass="module-curriculum-wrapper"
         >
             {children}
         </GameFeatureLayout>

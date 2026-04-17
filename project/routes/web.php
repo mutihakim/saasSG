@@ -146,6 +146,8 @@ Route::middleware([
             Route::get('/games/vocabulary/history', [TenantHubController::class, 'gamesVocabularyHistory'])->name('tenant.games.vocabulary.history')->middleware('tenant.feature:games.vocabulary,view');
             Route::get('/games/vocabulary/settings', [TenantHubController::class, 'gamesVocabularySettings'])->name('tenant.games.vocabulary.settings')->middleware('tenant.feature:games.vocabulary,view');
             Route::get('/games/tahfiz', [TenantHubController::class, 'gamesTahfiz'])->name('tenant.games.tahfiz');
+            Route::get('/games/tahfiz/reading', [TenantHubController::class, 'gamesTahfizReading'])->name('tenant.games.tahfiz.reading');
+            Route::get('/games/tahfiz/murojaah', [TenantHubController::class, 'gamesTahfizMurojaah'])->name('tenant.games.tahfiz.murojaah');
             Route::get('/games/tahfiz/history', [TenantHubController::class, 'gamesTahfizHistory'])->name('tenant.games.tahfiz.history');
             Route::get('/games/tahfiz/settings', [TenantHubController::class, 'gamesTahfizSettings'])->name('tenant.games.tahfiz.settings');
             Route::get('/games/curriculum', [TenantHubController::class, 'gamesCurriculum'])->name('tenant.games.curriculum')->middleware('tenant.feature:games.curriculum,view');

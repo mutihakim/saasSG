@@ -23,7 +23,7 @@ export const useMathGameController = () => {
 
     const [mathConfig, setMathConfig] = useState<MathConfigResponse | null>(null);
     const [setup, setSetup] = useState<MathGameSetupState | null>(null);
-    const [screen, setScreen] = useState<MathGameScreen>("operator");
+    const [screen, setScreen] = useState<MathGameScreen>("setup");
     const [isLoading, setIsLoading] = useState(true);
     const [isStarting, setIsStarting] = useState(false);
     const [loadFailed, setLoadFailed] = useState(false);

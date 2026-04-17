@@ -290,7 +290,7 @@ export default function useTahfizGameController() {
         return Array.from(new Set(cats));
     }, [favoriteAyahs]);
 
-    return {
+    return useMemo(() => ({
         phase, mode, activeTab, surahs, selectedSurah, ayahFrom, ayahTo,
         currentAyahIndex, currentAyah, activeSurahAyahs, isLoading, isSurahLoading,
         isPlaying: audio.isPlaying, isTtsPlaying: audio.isTtsPlaying,
@@ -302,5 +302,14 @@ export default function useTahfizGameController() {
         startSession, stopSession, goToNext, goToPrev, togglePlay: audio.togglePlay,
         handlePlaybackEnded: audio.handlePlaybackEnded, setPlaybackRate: audio.setPlaybackRate,
         updateSettings, recordMurojaah, resumeProgress, toggleFavorite, removeFavorite, loadFavorite,
-    };
+    }), [
+        phase, mode, activeTab, surahs, selectedSurah, ayahFrom, ayahTo,
+        currentAyahIndex, currentAyah, activeSurahAyahs, isLoading, isSurahLoading,
+        audio.isPlaying, audio.isTtsPlaying, audio.playbackRate, audio.currentRepeat,
+        settings, history, murojaahHistory, favoriteAyahs, uniqueCategories,
+        audio.audioRef, changeMode, setActiveTab, loadSurahDetail, setAyahFrom, setAyahTo,
+        startSession, stopSession, goToNext, goToPrev, audio.togglePlay,
+        audio.handlePlaybackEnded, audio.setPlaybackRate, updateSettings, recordMurojaah,
+        resumeProgress, toggleFavorite, removeFavorite, loadFavorite
+    ]);
 }

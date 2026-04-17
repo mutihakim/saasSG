@@ -1,0 +1,65 @@
+.module-vocabulary-wrapper {
+    &.game-feature-shell {
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+
+        .game-feature-shell__topbar {
+            height: 64px;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            z-index: 20;
+        }
+
+        .game-feature-shell__content {
+            flex: 1;
+            min-height: 0;
+            overflow: hidden; // Content shell handles high-level layout
+            display: flex;
+            flex-direction: column;
+        }
+
+        &.game-feature-shell--no-inner-scroll {
+            .game-feature-shell__content {
+                overflow: hidden;
+            }
+        }
+    }
+}
+
+// Global active state for full-screen game experience
+// These are applied to body via GameFeatureLayout.tsx
+body.math-game-layout-active {
+    #page-topbar, 
+    .app-menu, 
+    .footer { 
+        display: none !important; 
+    }
+    
+    #layout-wrapper { 
+        display: block !important; 
+        height: 100% !important; 
+    }
+    
+    .main-content { 
+        margin: 0 !important; 
+        padding: 0 !important; 
+        height: 100% !important; 
+    }
+    
+    .page-content {
+        padding: 0 !important;
+        margin: 0 !important;
+        height: 100% !important;
+        min-height: 100% !important;
+        overflow: hidden !important;
+        display: flex;
+        flex-direction: column;
+    }
+}

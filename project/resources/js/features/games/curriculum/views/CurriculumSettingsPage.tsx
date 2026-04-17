@@ -88,24 +88,24 @@ const CurriculumSettingsPage: React.FC<PageProps> = ({ member }) => {
             menuKey="settings"
             memberName={member?.full_name ?? member?.name ?? undefined}
         >
-            <div className="math-game-layout__scroll">
+            <div className="game-feature-shell__scroll">
                 <div className="math-game">
-                    <div className="vocab-setup-card">
+                    <div className="game-setup-card">
                         {isLoading ? (
                             <div className="d-flex justify-content-center align-items-center flex-grow-1 py-5">
                                 <Spinner animation="border" variant="primary" />
                             </div>
                         ) : (
                             <>
-                                <div className="vocab-setup-content vocab-inner-content pb-5">
-                                    <section className="vocab-settings-section mb-3">
-                                        <label className="vocab-settings-label mb-2">{t("tenant.games.curriculum.setup.grade", "Kelas")}</label>
-                                        <div className="vocab-lang-container d-flex flex-wrap gap-2">
+                                <div className="game-setup-content game-setup-inner-content pb-5">
+                                    <section className="game-setup-section mb-3">
+                                        <label className="game-setup-label mb-2">{t("tenant.games.curriculum.setup.grade", "Kelas")}</label>
+                                        <div className="game-lang-container d-flex flex-wrap gap-2">
                                             {grades.map((grade) => (
                                                 <button
                                                     key={grade}
                                                     type="button"
-                                                    className={`vocab-lang-btn ${selectedGrade === grade ? "active" : ""}`}
+                                                    className={`game-lang-btn ${selectedGrade === grade ? "active" : ""}`}
                                                     onClick={() => setSelectedGrade(grade)}
                                                     style={{ minWidth: '60px', justifyContent: 'center' }}
                                                 >
@@ -115,47 +115,47 @@ const CurriculumSettingsPage: React.FC<PageProps> = ({ member }) => {
                                         </div>
                                     </section>
 
-                                    <section className="vocab-settings-section mb-3">
-                                        <label className="vocab-settings-label">{t("tenant.games.curriculum.settings.mode_label", "Default Mode")}</label>
-                                        <div className="vocab-mode-container">
-                                            <button type="button" className={`vocab-mode-btn ${defaultMode === "practice" ? "active" : ""}`} onClick={() => setDefaultMode("practice")}>
+                                    <section className="game-setup-section mb-3">
+                                        <label className="game-setup-label">{t("tenant.games.curriculum.settings.mode_label", "Default Mode")}</label>
+                                        <div className="game-mode-container">
+                                            <button type="button" className={`game-mode-btn ${defaultMode === "practice" ? "active" : ""}`} onClick={() => setDefaultMode("practice")}>
                                                 {t("tenant.games.vocabulary.setup.mode_practice", "Practice")}
                                             </button>
-                                            <button type="button" className={`vocab-mode-btn ${defaultMode === "learn" ? "active" : ""}`} onClick={() => setDefaultMode("learn")}>
+                                            <button type="button" className={`game-mode-btn ${defaultMode === "learn" ? "active" : ""}`} onClick={() => setDefaultMode("learn")}>
                                                 {t("tenant.games.vocabulary.setup.mode_learn", "Learn")}
                                             </button>
-                                            <div className={`vocab-mode-slider ${defaultMode === "learn" ? "is-learn" : "is-practice"} has-two-options`} />
+                                            <div className={`game-mode-slider ${defaultMode === "learn" ? "is-learn" : "is-practice"} has-two-options`} />
                                         </div>
                                     </section>
 
-                                    <div className="vocab-settings-grid mb-3">
-                                        <section className="vocab-settings-section">
-                                            <label className="vocab-settings-label">{t("tenant.games.curriculum.settings.mastered_threshold_label", "Mastered Threshold")}</label>
-                                            <div className="vocab-settings-chip-row">
+                                    <div className="game-setup-grid mb-3">
+                                        <section className="game-setup-section">
+                                            <label className="game-setup-label">{t("tenant.games.curriculum.settings.mastered_threshold_label", "Mastered Threshold")}</label>
+                                            <div className="game-setup-chip-row">
                                                 {[3, 5, 8, 10, 12, 15].map((value) => (
-                                                    <button key={value} type="button" className={`vocab-settings-chip ${masteredThreshold === value ? "is-active" : ""}`} onClick={() => setMasteredThreshold(value)}>
+                                                    <button key={value} type="button" className={`game-setup-chip ${masteredThreshold === value ? "is-active" : ""}`} onClick={() => setMasteredThreshold(value)}>
                                                         {value}x
                                                     </button>
                                                 ))}
                                             </div>
                                         </section>
 
-                                        <section className="vocab-settings-section">
-                                            <label className="vocab-settings-label">{t("tenant.games.curriculum.settings.question_count_label", "Default Question Count")}</label>
-                                            <div className="vocab-settings-chip-row">
+                                        <section className="game-setup-section">
+                                            <label className="game-setup-label">{t("tenant.games.curriculum.settings.question_count_label", "Default Question Count")}</label>
+                                            <div className="game-setup-chip-row">
                                                 {[6, 12, 18, 24].map((value) => (
-                                                    <button key={value} type="button" className={`vocab-settings-chip ${defaultQuestionCount === value ? "is-active" : ""}`} onClick={() => setDefaultQuestionCount(value)}>
+                                                    <button key={value} type="button" className={`game-setup-chip ${defaultQuestionCount === value ? "is-active" : ""}`} onClick={() => setDefaultQuestionCount(value)}>
                                                         {value}
                                                     </button>
                                                 ))}
                                             </div>
                                         </section>
 
-                                        <section className="vocab-settings-section">
-                                            <label className="vocab-settings-label">{t("tenant.games.curriculum.settings.time_limit_label", "Default Timer")}</label>
-                                            <div className="vocab-settings-chip-row">
+                                        <section className="game-setup-section">
+                                            <label className="game-setup-label">{t("tenant.games.curriculum.settings.time_limit_label", "Default Timer")}</label>
+                                            <div className="game-setup-chip-row">
                                                 {[2, 3, 5, 8, 10, 15].map((value) => (
-                                                    <button key={value} type="button" className={`vocab-settings-chip ${defaultTimeLimit === value ? "is-active" : ""}`} onClick={() => setDefaultTimeLimit(value)}>
+                                                    <button key={value} type="button" className={`game-setup-chip ${defaultTimeLimit === value ? "is-active" : ""}`} onClick={() => setDefaultTimeLimit(value)}>
                                                         {value}s
                                                     </button>
                                                 ))}
@@ -169,13 +169,13 @@ const CurriculumSettingsPage: React.FC<PageProps> = ({ member }) => {
 
                     {!isLoading && (
                         <div 
-                            className="vocab-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 d-flex justify-content-center"
+                            className="game-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 d-flex justify-content-center"
                             style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
                         >
-                            <div className="w-100 vocab-start-floating__inner">
+                            <div className="w-100 game-start-floating__inner">
                                 <button
                                     type="button"
-                                    className="btn vocab-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
+                                    className="btn game-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
                                     onClick={() => void handleSave()}
                                     disabled={isSaving}
                                 >

@@ -1,6 +1,6 @@
 export type MathGameOperator = "+" | "-" | "*" | "/";
 export type MathGameMode = "mencariC" | "mencariB";
-export type MathGameScreen = "operator" | "setup";
+export type MathGameScreen = "setup";
 export type MathCountdownState = "yellow" | "green" | null;
 
 export interface MathQuestion {

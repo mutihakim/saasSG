@@ -161,151 +161,143 @@ const VocabularySettingsPage: React.FC<PageProps> = ({ member }) => {
             menuKey="settings"
             memberName={member?.full_name ?? member?.name ?? undefined}
         >
-            {/* Struktur sama dengan VocabularyPage:
-                math-game-layout__scroll → math-game → vocab-setup-card → vocab-setup-content + vocab-setup-footer */}
-            <div className="math-game-layout__scroll">
-                <div className="math-game">
-
-                    <div className="vocab-setup-card">
-                        {isLoading ? (
-                            <div className="d-flex justify-content-center align-items-center flex-grow-1 py-5">
-                                <Spinner animation="border" variant="primary" />
-                            </div>
-                        ) : (
-                            <>
-                                {/* Konten settings — scrollable, pb-5 agar tidak tertutup floating button */}
-                                <div className="vocab-setup-content vocab-inner-content pb-5">
-
-                                    {/* Language selector */}
-                                    <section className="vocab-settings-section mb-3">
-                                        <label className="vocab-settings-label mb-2">{t("tenant.games.vocabulary.setup.language")}</label>
-                                        <div className="vocab-lang-container">
-                                            {languageButtons.map((item) => (
-                                                <button
-                                                    key={item.value}
-                                                    type="button"
-                                                    className={`vocab-lang-btn ${selectedLanguage === item.value ? "active" : ""}`}
-                                                    onClick={() => setSelectedLanguage(item.value)}
-                                                >
-                                                    <img src={item.flag} width="20" alt={item.label} className="rounded-1" />
-                                                    <span className="d-none d-md-inline">{item.label}</span>
-                                                    <span className="d-md-none">{item.shortLabel}</span>
-                                                </button>
-                                            ))}
-                                        </div>
-                                    </section>
-
-                                    {/* Default mode */}
-                                    <section className="vocab-settings-section mb-3">
-                                        <label className="vocab-settings-label">{t("tenant.games.vocabulary.settings.mode_label")}</label>
-                                        <div className="vocab-mode-container">
-                                            <button type="button" className={`vocab-mode-btn ${defaultMode === "practice" ? "active" : ""}`} onClick={() => setDefaultMode("practice")}>
-                                                {t("tenant.games.vocabulary.setup.mode_practice")}
-                                            </button>
-                                            <button type="button" className={`vocab-mode-btn ${defaultMode === "learn" ? "active" : ""}`} onClick={() => setDefaultMode("learn")}>
-                                                {t("tenant.games.vocabulary.setup.mode_learn")}
-                                            </button>
-                                            <div className={`vocab-mode-slider ${defaultMode === "learn" ? "is-learn" : "is-practice"} has-two-options`} />
-                                        </div>
-                                    </section>
-
-                                    {/* Settings grid */}
-                                    <div className="vocab-settings-grid mb-3">
-                                        <section className="vocab-settings-section">
-                                            <label className="vocab-settings-label">{t("tenant.games.vocabulary.settings.mastered_threshold_label")}</label>
-                                            <div className="vocab-settings-chip-row">
-                                                {[3, 5, 8, 10, 12, 15].map((value) => (
-                                                    <button key={value} type="button" className={`vocab-settings-chip ${masteredThreshold === value ? "is-active" : ""}`} onClick={() => setMasteredThreshold(value)}>
-                                                        {value}x
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </section>
-
-                                        <section className="vocab-settings-section">
-                                            <label className="vocab-settings-label">{t("tenant.games.vocabulary.settings.question_count_label")}</label>
-                                            <div className="vocab-settings-chip-row">
-                                                {[6, 12, 18, 24].map((value) => (
-                                                    <button key={value} type="button" className={`vocab-settings-chip ${defaultQuestionCount === value ? "is-active" : ""}`} onClick={() => setDefaultQuestionCount(value)}>
-                                                        {value}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </section>
-
-                                        <section className="vocab-settings-section">
-                                            <label className="vocab-settings-label">{t("tenant.games.vocabulary.settings.time_limit_label")}</label>
-                                            <div className="vocab-settings-chip-row">
-                                                {[2, 3, 5, 8, 10, 15].map((value) => (
-                                                    <button key={value} type="button" className={`vocab-settings-chip ${defaultTimeLimit === value ? "is-active" : ""}`} onClick={() => setDefaultTimeLimit(value)}>
-                                                        {t("tenant.games.vocabulary.settings.time_limit_value", { seconds: value })}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </section>
-
-                                        <section className="vocab-settings-section">
-                                            <label className="vocab-settings-label">{t("tenant.games.vocabulary.settings.translation_direction_label")}</label>
-                                            <div className="vocab-settings-chip-row">
-                                                <button
-                                                    type="button"
-                                                    className={`vocab-settings-chip vocab-settings-chip--wide ${translationDirection === "id_to_target" ? "is-active" : ""}`}
-                                                    onClick={() => setTranslationDirection("id_to_target")}
-                                                >
-                                                    ID → {targetLanguageShortLabel}
-                                                </button>
-                                                <button
-                                                    type="button"
-                                                    className={`vocab-settings-chip vocab-settings-chip--wide ${translationDirection === "target_to_id" ? "is-active" : ""}`}
-                                                    onClick={() => setTranslationDirection("target_to_id")}
-                                                >
-                                                    {targetLanguageShortLabel} → ID
-                                                </button>
-                                            </div>
-                                        </section>
-                                    </div>
-
-                                    {/* Auto TTS toggle */}
-                                    <section className="vocab-settings-section">
-                                        <button type="button" className={`vocab-settings-toggle-card ${autoTts ? "is-active" : ""}`} onClick={() => setAutoTts((prev) => !prev)}>
-                                            <span className={`vocab-switch ${autoTts ? "on" : "off"}`}>
-                                                <span className={`vocab-switch-thumb ${autoTts ? "on" : "off"}`} />
-                                            </span>
-                                            <span className="vocab-settings-toggle-copy">
-                                                <strong>{autoTts ? t("tenant.games.vocabulary.settings.auto_tts_enabled") : t("tenant.games.vocabulary.settings.auto_tts_disabled")}</strong>
-                                                <small>{t("tenant.games.vocabulary.settings.auto_tts_help")}</small>
-                                            </span>
-                                        </button>
-                                    </section>
-
-                                </div>
-                            </>
-                        )}
+            <div className="game-setup-card h-100">
+                {isLoading ? (
+                    <div className="d-flex justify-content-center align-items-center flex-grow-1 py-5">
+                        <Spinner animation="border" variant="primary" />
                     </div>
+                ) : (
+                    <>
+                        {/* Konten settings — scrollable, pb-5 agar tidak tertutup floating button */}
+                        <div className="game-setup-content game-setup-inner-content pb-5">
 
-                    {/* Tombol Save — identical ke pattern vocab-start-floating pada VocabularySetupScreen */}
-                    {!isLoading && (
-                        <div 
-                            className="vocab-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 d-flex justify-content-center"
-                            style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
-                        >
-                            <div className="w-100 vocab-start-floating__inner">
-                                <button
-                                    type="button"
-                                    className="btn vocab-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
-                                    onClick={() => void handleSave()}
-                                    disabled={isSaving}
-                                >
-                                    {isSaving
-                                        ? t("tenant.games.vocabulary.settings.saving_button")
-                                        : <>{t("tenant.games.vocabulary.settings.save_button")} 💾</>}
-                                </button>
+                            {/* Language selector */}
+                            <section className="game-setup-section mb-3">
+                                <label className="game-setup-label mb-2">{t("tenant.games.vocabulary.setup.language")}</label>
+                                <div className="game-lang-container">
+                                    {languageButtons.map((item) => (
+                                        <button
+                                            key={item.value}
+                                            type="button"
+                                            className={`game-lang-btn ${selectedLanguage === item.value ? "active" : ""}`}
+                                            onClick={() => setSelectedLanguage(item.value)}
+                                        >
+                                            <img src={item.flag} width="20" alt={item.label} className="rounded-1" />
+                                            <span className="d-none d-md-inline">{item.label}</span>
+                                            <span className="d-md-none">{item.shortLabel}</span>
+                                        </button>
+                                    ))}
+                                </div>
+                            </section>
+
+                            {/* Default mode */}
+                            <section className="game-setup-section mb-3">
+                                <label className="game-setup-label">{t("tenant.games.vocabulary.settings.mode_label")}</label>
+                                <div className="game-mode-container">
+                                    <button type="button" className={`game-mode-btn ${defaultMode === "practice" ? "active" : ""}`} onClick={() => setDefaultMode("practice")}>
+                                        {t("tenant.games.vocabulary.setup.mode_practice")}
+                                    </button>
+                                    <button type="button" className={`game-mode-btn ${defaultMode === "learn" ? "active" : ""}`} onClick={() => setDefaultMode("learn")}>
+                                        {t("tenant.games.vocabulary.setup.mode_learn")}
+                                    </button>
+                                    <div className={`game-mode-slider ${defaultMode === "learn" ? "is-learn" : "is-practice"} has-two-options`} />
+                                </div>
+                            </section>
+
+                            {/* Settings grid */}
+                            <div className="game-setup-grid mb-3">
+                                <section className="game-setup-section">
+                                    <label className="game-setup-label">{t("tenant.games.vocabulary.settings.mastered_threshold_label")}</label>
+                                    <div className="game-setup-chip-row">
+                                        {[3, 5, 8, 10, 12, 15].map((value) => (
+                                            <button key={value} type="button" className={`game-setup-chip ${masteredThreshold === value ? "is-active" : ""}`} onClick={() => setMasteredThreshold(value)}>
+                                                {value}x
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section className="game-setup-section">
+                                    <label className="game-setup-label">{t("tenant.games.vocabulary.settings.question_count_label")}</label>
+                                    <div className="game-setup-chip-row">
+                                        {[6, 12, 18, 24].map((value) => (
+                                            <button key={value} type="button" className={`game-setup-chip ${defaultQuestionCount === value ? "is-active" : ""}`} onClick={() => setDefaultQuestionCount(value)}>
+                                                {value}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section className="game-setup-section">
+                                    <label className="game-setup-label">{t("tenant.games.vocabulary.settings.time_limit_label")}</label>
+                                    <div className="game-setup-chip-row">
+                                        {[2, 3, 5, 8, 10, 15].map((value) => (
+                                            <button key={value} type="button" className={`game-setup-chip ${defaultTimeLimit === value ? "is-active" : ""}`} onClick={() => setDefaultTimeLimit(value)}>
+                                                {t("tenant.games.vocabulary.settings.time_limit_value", { seconds: value })}
+                                            </button>
+                                        ))}
+                                    </div>
+                                </section>
+
+                                <section className="game-setup-section">
+                                    <label className="game-setup-label">{t("tenant.games.vocabulary.settings.translation_direction_label")}</label>
+                                    <div className="game-setup-chip-row">
+                                        <button
+                                            type="button"
+                                            className={`game-setup-chip game-setup-chip--wide ${translationDirection === "id_to_target" ? "is-active" : ""}`}
+                                            onClick={() => setTranslationDirection("id_to_target")}
+                                        >
+                                            ID → {targetLanguageShortLabel}
+                                        </button>
+                                        <button
+                                            type="button"
+                                            className={`game-setup-chip game-setup-chip--wide ${translationDirection === "target_to_id" ? "is-active" : ""}`}
+                                            onClick={() => setTranslationDirection("target_to_id")}
+                                        >
+                                            {targetLanguageShortLabel} → ID
+                                        </button>
+                                    </div>
+                                </section>
                             </div>
-                        </div>
-                    )}
 
-                </div>
+                            {/* Auto TTS toggle */}
+                            <section className="game-setup-section">
+                                <button type="button" className={`game-setup-toggle-card ${autoTts ? "is-active" : ""}`} onClick={() => setAutoTts((prev) => !prev)}>
+                                    <span className={`game-switch ${autoTts ? "on" : "off"}`}>
+                                        <span className={`game-switch-thumb ${autoTts ? "on" : "off"}`} />
+                                    </span>
+                                    <span className="game-setup-toggle-copy">
+                                        <strong>{autoTts ? t("tenant.games.vocabulary.settings.auto_tts_enabled") : t("tenant.games.vocabulary.settings.auto_tts_disabled")}</strong>
+                                        <small>{t("tenant.games.vocabulary.settings.auto_tts_help")}</small>
+                                    </span>
+                                </button>
+                            </section>
+
+                        </div>
+                    </>
+                )}
             </div>
+
+            {/* Tombol Save — identical ke pattern game-start-floating pada VocabularySetupScreen */}
+            {!isLoading && (
+                <div 
+                    className="game-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 d-flex justify-content-center"
+                    style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+                >
+                    <div className="w-100 game-start-floating__inner">
+                        <button
+                            type="button"
+                            className="btn game-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
+                            onClick={() => void handleSave()}
+                            disabled={isSaving}
+                        >
+                            {isSaving
+                                ? t("tenant.games.vocabulary.settings.saving_button")
+                                : <>{t("tenant.games.vocabulary.settings.save_button")} 💾</>}
+                        </button>
+                    </div>
+                </div>
+            )}
         </VocabularyLayout>
     );
 };

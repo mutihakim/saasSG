@@ -1,168 +1,70 @@
-.vocab-settings-card {
-    width: 96%;
-    max-width: 56rem;
-    margin: 0 auto 1.5rem;
-}
+.module-vocabulary-wrapper {
+    // ─────────────────────────────────────────────────────────────────
+    // VOCABULARY SETTINGS (Restored from Git History)
+    // ─────────────────────────────────────────────────────────────────
 
-.vocab-settings-card--stretch {
-    min-height: calc(100vh - 10rem);
-    display: flex;
-    flex-direction: column;
-}
-
-.vocab-settings-content--flex {
-    display: flex;
-    flex-direction: column;
-    flex: 1 1 auto;
-}
-
-.vocab-settings-grid {
-    display: grid;
-    gap: 1rem;
-
-    @media (min-width: 992px) {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
-    }
-}
-
-.vocab-settings-section {
-    background: #ffffff;
-    border: none;
-    border-radius: 1.25rem;
-    padding: 0;
-    margin-bottom: 1rem;
-}
-
-.vocab-settings-label {
-    display: block;
-    color: #111827;
-    font-size: 0.92rem;
-    font-weight: 700;
-    margin-bottom: 0.35rem;
-}
-
-.vocab-settings-chip-row {
-    display: flex;
-    flex-wrap: nowrap;
-    justify-content: space-between;
-    gap: 0.35rem;
-    padding-bottom: 0.15rem;
-}
-
-.vocab-settings-chip {
-    flex: 1 1 auto;
-    border: 1px solid #d1d5db;
-    background: #ffffff;
-    color: #374151;
-    border-radius: 9999px;
-    padding: 0.62rem 0.95rem;
-    font-size: 0.87rem;
-    font-weight: 600;
-    white-space: nowrap;
-    transition: all 0.2s ease;
-
-    &:hover {
-        border-color: #9ca3af;
-        transform: translateY(-1px);
+    .vocab-settings-card {
+        width: 96%;
+        max-width: 56rem;
+        margin: 0 auto 1.5rem;
     }
 
-    &.is-active {
-        background: #163b69;
-        border-color: #163b69;
+    .vocab-settings-card--stretch {
+        min-height: calc(100vh - 10rem);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .vocab-settings-content--flex {
+        display: flex;
+        flex-direction: column;
+        flex: 1 1 auto;
+    }
+
+    .vocab-settings-option-stack {
+        display: grid;
+        gap: 0.75rem;
+    }
+
+    .vocab-settings-option-check {
+        width: 1.4rem;
+        height: 1.4rem;
+        border-radius: 9999px;
+        border: 1.5px solid #9ca3af;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
         color: #ffffff;
-        box-shadow: 0 10px 24px rgba(22, 59, 105, 0.2);
+        background: #4a978d;
+        font-size: 0.8rem;
+        font-weight: 700;
     }
 
-    &.vocab-settings-chip--wide {
-        min-width: calc(50% - 0.35rem);
-        text-align: center;
-    }
-}
-
-.vocab-settings-option-stack {
-    display: grid;
-    gap: 0.75rem;
-}
-
-.vocab-settings-option-card,
-.vocab-settings-toggle-card {
-    width: 100%;
-    border: 1px solid #d1d5db;
-    border-radius: 1.25rem;
-    background: #ffffff;
-    padding: 0.95rem 1rem;
-    display: flex;
-    align-items: center;
-    gap: 0.85rem;
-    color: #111827;
-    text-align: left;
-    transition: all 0.2s ease;
-
-    &:hover {
-        border-color: #9ca3af;
-        transform: translateY(-1px);
+    .vocab-settings-floating-bar {
+        position: sticky;
+        bottom: 0;
+        z-index: 30;
+        display: flex;
+        justify-content: center;
+        padding: 0 1rem 1rem;
+        pointer-events: none;
     }
 
-    &.is-active {
-        border-color: #4a978d;
-        background: #effcf8;
-        box-shadow: 0 10px 24px rgba(74, 151, 141, 0.14);
-    }
-}
-
-.vocab-settings-option-check {
-    width: 1.4rem;
-    height: 1.4rem;
-    border-radius: 9999px;
-    border: 1.5px solid #9ca3af;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-    color: #ffffff;
-    background: #4a978d;
-    font-size: 0.8rem;
-    font-weight: 700;
-}
-
-.vocab-settings-toggle-copy {
-    display: flex;
-    flex-direction: column;
-    gap: 0.15rem;
-
-    strong {
-        font-size: 0.95rem;
+    // Sticky variant: tetap terlihat saat konten di-scroll (dipakai di content-scroll mode)
+    .vocab-settings-floating-bar--sticky {
+        position: sticky;
+        bottom: 0;
+        z-index: 30;
+        padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom, 0px));
+        background: linear-gradient(to top, var(--bs-body-bg) 65%, transparent);
+        pointer-events: auto;
     }
 
-    small {
-        color: #6b7280;
-        line-height: 1.4;
+    .vocab-settings-floating-inner {
+        width: 100%;
+        max-width: 56rem;
+        padding: 0 4%;
+        pointer-events: auto;
     }
-}
-
-.vocab-settings-floating-bar {
-    position: sticky;
-    bottom: 0;
-    z-index: 30;
-    display: flex;
-    justify-content: center;
-    padding: 0 1rem 1rem;
-    pointer-events: none;
-}
-
-// Sticky variant: tetap terlihat saat konten di-scroll (dipakai di content-scroll mode)
-.vocab-settings-floating-bar--sticky {
-    position: sticky;
-    bottom: 0;
-    z-index: 30;
-    padding: 0.75rem 0 calc(0.75rem + env(safe-area-inset-bottom, 0px));
-    background: linear-gradient(to top, var(--bs-body-bg) 65%, transparent);
-    pointer-events: auto;
-}
-
-.vocab-settings-floating-inner {
-    width: 100%;
-    max-width: 56rem;
-    padding: 0 4%;
-    pointer-events: auto;
 }

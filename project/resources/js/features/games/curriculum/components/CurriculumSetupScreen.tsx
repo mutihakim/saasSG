@@ -28,8 +28,8 @@ const CurriculumSetupScreen: React.FC<Props> = ({
 
     return (
         <>
-            <div className="vocab-setup-card d-flex flex-column h-100">
-                <div className="vocab-setup-content vocab-inner-content pb-5">
+            <div className="game-setup-card d-flex flex-column h-100">
+                <div className="game-setup-content game-setup-inner-content pb-5">
                     <div className="d-flex align-items-start justify-content-between gap-3 flex-wrap mb-3">
                         <div>
                             <h3 className="fw-bold mb-1">{t("tenant.games.curriculum.setup.title")}</h3>
@@ -66,7 +66,7 @@ const CurriculumSetupScreen: React.FC<Props> = ({
                         </div>
                     </div>
 
-                    <div className="vocab-bottom-controls-v2 mt-3 pt-3 border-top pb-5 mb-5 pb-md-0 mb-md-0">
+                    <div className="vocab-bottom-controls mt-3 pt-3 border-top pb-5 mb-5 pb-md-0 mb-md-0">
                         <div className="vocab-bottom-meta d-flex align-items-center gap-2 px-3 py-2 bg-light rounded-pill small flex-nowrap text-nowrap">
                             <span className="text-muted d-flex align-items-center gap-1">
                                 <i className="ri-file-list-3-line text-success" />
@@ -82,11 +82,11 @@ const CurriculumSetupScreen: React.FC<Props> = ({
                 </div>
             </div>
 
-            <div className="vocab-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 p-md-5 d-flex justify-content-center">
-                <div className="w-100 vocab-start-floating__inner">
+            <div className="game-start-floating position-fixed bottom-0 start-0 w-100 p-3 p-sm-4 p-md-5 d-flex justify-content-center">
+                <div className="w-100 game-start-floating__inner">
                     <button
                         type="button"
-                        className="btn vocab-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
+                        className="btn game-start-pwa-btn m-0 w-100 d-flex align-items-center justify-content-center gap-2"
                         onClick={onStart}
                         disabled={isStartingSession || isLoading || units.length === 0 || !selectedUnitId}
                     >

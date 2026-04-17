@@ -145,6 +145,16 @@ class TenantHubController extends Controller
         return Inertia::render('Tenant/Games/TahfizPage', $this->baseProps($request));
     }
 
+    public function gamesTahfizReading(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/TahfizReadingPage', $this->baseProps($request));
+    }
+
+    public function gamesTahfizMurojaah(Request $request): Response
+    {
+        return Inertia::render('Tenant/Games/TahfizMurojaahPage', $this->baseProps($request));
+    }
+
     public function gamesTahfizHistory(Request $request): Response
     {
         return Inertia::render('Tenant/Games/TahfizHistoryPage', $this->baseProps($request));

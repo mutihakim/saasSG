@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import '../../../../../scss/modules/games/vocabulary.scss';
 import GameFeatureLayout, { type GameFeatureMenuItem, type GameFeatureMenuKey } from "../../shared/components/GameFeatureLayout";
 
 type VocabularyLayoutProps = {
@@ -61,7 +62,7 @@ const VocabularyLayout: React.FC<VocabularyLayoutProps> = ({
             isSessionActive={isSessionActive}
             allowPageScroll={allowPageScroll}
             onLeavingSession={onLeavingSession}
-            featureClass="vocab-theme"
+            featureClass="module-vocabulary-wrapper"
         >
             <BackgroundPattern />
             {children}

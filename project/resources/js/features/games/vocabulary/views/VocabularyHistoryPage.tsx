@@ -95,69 +95,61 @@ const VocabularyHistoryPage: React.FC<PageProps> = ({ member }) => {
             menuKey="history"
             memberName={member?.full_name ?? member?.name ?? undefined}
         >
-            {/* Gunakan struktur yang sama dengan VocabularyPage:
-                math-game-layout__scroll → math-game → vocab-setup-card → vocab-setup-content (scrollable) */}
-            <div className="math-game-layout__scroll">
-                <div className="math-game">
-
-                    <div className="vocab-setup-card">
-                        {/* Stats bar — colored pill cards */}
-                        <div className="vocab-stat-row">
-                            <div className="vocab-stat-card vocab-stat-card--indigo">
-                                <div className="vocab-stat-card__value">{metrics.totalSessions}</div>
-                                <div className="vocab-stat-card__label">{t("tenant.games.history.total_sessions")}</div>
-                            </div>
-                            <div className="vocab-stat-card vocab-stat-card--teal">
-                                <div className="vocab-stat-card__value">{metrics.avgScore}%</div>
-                                <div className="vocab-stat-card__label">{t("tenant.games.history.average_score")}</div>
-                            </div>
-                            <div className="vocab-stat-card vocab-stat-card--amber">
-                                <div className="vocab-stat-card__value">{metrics.bestStreak}x</div>
-                                <div className="vocab-stat-card__label">{t("tenant.games.history.best_streak")}</div>
-                            </div>
-                            <div className="vocab-stat-card vocab-stat-card--split">
-                                <div className="vocab-stat-card__value">
-                                    <span className="text-success">{metrics.totalCorrect}</span>
-                                    <span className="text-muted mx-1" style={{ fontSize: "0.8rem" }}>/</span>
-                                    <span className="text-danger">{metrics.totalWrong}</span>
-                                </div>
-                                <div className="vocab-stat-card__label">{t("tenant.games.history.correct_wrong")}</div>
-                            </div>
+            <div className="game-setup-card h-100">
+                {/* Stats bar — colored pill cards */}
+                <div className="vocab-stat-row">
+                    <div className="vocab-stat-card vocab-stat-card--indigo">
+                        <div className="vocab-stat-card__value">{metrics.totalSessions}</div>
+                        <div className="vocab-stat-card__label">{t("tenant.games.history.total_sessions")}</div>
+                    </div>
+                    <div className="vocab-stat-card vocab-stat-card--teal">
+                        <div className="vocab-stat-card__value">{metrics.avgScore}%</div>
+                        <div className="vocab-stat-card__label">{t("tenant.games.history.average_score")}</div>
+                    </div>
+                    <div className="vocab-stat-card vocab-stat-card--amber">
+                        <div className="vocab-stat-card__value">{metrics.bestStreak}x</div>
+                        <div className="vocab-stat-card__label">{t("tenant.games.history.best_streak")}</div>
+                    </div>
+                    <div className="vocab-stat-card vocab-stat-card--split">
+                        <div className="vocab-stat-card__value">
+                            <span className="text-success">{metrics.totalCorrect}</span>
+                            <span className="text-muted mx-1" style={{ fontSize: "0.8rem" }}>/</span>
+                            <span className="text-danger">{metrics.totalWrong}</span>
                         </div>
+                        <div className="vocab-stat-card__label">{t("tenant.games.history.correct_wrong")}</div>
+                    </div>
+                </div>
 
-                        {/* Konten utama — scrollable */}
-                        <div className="vocab-setup-content vocab-inner-content">
-                            <div className="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
-                                <h6 className="fw-bold mb-0">{t("tenant.games.history.session_table_title")}</h6>
-                                <LanguageFilterTabs
-                                    selected={language}
-                                    onChange={setLanguage}
-                                />
-                            </div>
-
-                            <GameHistoryView
-                                history={history}
-                                isLoading={isLoading}
-                                emptyMessage={t("tenant.games.vocabulary.history.empty")}
-                                renderSubGroupKey={(item) => `${item.category}-${item.day}`}
-                                renderSubGroupHeader={(item) => (
-                                    <span>{item.category} <span className="text-muted mx-1">•</span> {t("tenant.games.vocabulary.setup.day_value", { day: item.day })}</span>
-                                )}
-                                renderSummaryBadges={(item) => (
-                                    <>
-                                        <span className="fs-5 game-history-flag" title={item.language} onClick={() => handleSessionClick(item)}>
-                                            {LANGUAGE_FLAGS[item.language] ?? "🏳️"}
-                                        </span>
-                                        {item.mode === "memory_test" && (
-                                            <Badge bg="info-subtle" text="info" className="x-small">{t("tenant.games.vocabulary.setup.mode_memory_test")}</Badge>
-                                        )}
-                                    </>
-                                )}
-                                onItemClick={handleSessionClick}
-                            />
-                        </div>
+                {/* Konten utama — scrollable */}
+                <div className="game-setup-content game-setup-inner-content">
+                    <div className="d-flex justify-content-between align-items-center mb-3 gap-2 flex-wrap">
+                        <h6 className="fw-bold mb-0">{t("tenant.games.history.session_table_title")}</h6>
+                        <LanguageFilterTabs
+                            selected={language}
+                            onChange={setLanguage}
+                        />
                     </div>
 
+                    <GameHistoryView
+                        history={history}
+                        isLoading={isLoading}
+                        emptyMessage={t("tenant.games.vocabulary.history.empty")}
+                        renderSubGroupKey={(item) => `${item.category}-${item.day}`}
+                        renderSubGroupHeader={(item) => (
+                            <span>{item.category} <span className="text-muted mx-1">•</span> {t("tenant.games.vocabulary.setup.day_value", { day: item.day })}</span>
+                        )}
+                        renderSummaryBadges={(item) => (
+                            <>
+                                <span className="fs-5 game-history-flag" title={item.language} onClick={() => handleSessionClick(item)}>
+                                    {LANGUAGE_FLAGS[item.language] ?? "🏳️"}
+                                </span>
+                                {item.mode === "memory_test" && (
+                                    <Badge bg="info-subtle" text="info" className="x-small">{t("tenant.games.vocabulary.setup.mode_memory_test")}</Badge>
+                                )}
+                            </>
+                        )}
+                        onItemClick={handleSessionClick}
+                    />
                 </div>
             </div>
 

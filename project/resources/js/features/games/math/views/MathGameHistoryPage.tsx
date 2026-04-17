@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Badge, Card } from "react-bootstrap";
+import { Badge } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 
 import GameHistoryView from "../../shared/components/GameHistoryView";
@@ -80,72 +80,61 @@ const MathGameHistoryPage: React.FC<Props> = ({ member }) => {
             title={t("tenant.games.history.title")}
             menuKey="history"
             memberName={member?.full_name ?? member?.name ?? undefined}
-            allowPageScroll
         >
-            <div className="container-fluid py-3">
-                <div className="row g-3 mb-4 flex-nowrap">
-                    <div className="col-3">
-                        <Card className="border-0 shadow-sm h-100">
-                            <Card.Body className="d-flex flex-column">
-                                <div className="small text-muted flex-grow-1">{t("tenant.games.history.total_sessions")}</div>
-                                <div className="fs-3 fw-bold mt-auto">{metrics.totalSessions}</div>
-                            </Card.Body>
-                        </Card>
+            <div className="game-setup-card h-100">
+                {/* Stats bar — colored pill cards (using math-stat-card classes from _theme.scss) */}
+                <div className="math-stat-row">
+                    <div className="math-stat-card math-stat-card--blue">
+                        <div className="math-stat-card__value">{metrics.totalSessions}</div>
+                        <div className="math-stat-card__label">{t("tenant.games.history.total_sessions")}</div>
                     </div>
-                    <div className="col-3">
-                        <Card className="border-0 shadow-sm h-100">
-                            <Card.Body className="d-flex flex-column">
-                                <div className="small text-muted flex-grow-1">{t("tenant.games.history.average_score")}</div>
-                                <div className="fs-3 fw-bold text-primary mt-auto">{metrics.avgScore}%</div>
-                            </Card.Body>
-                        </Card>
+                    <div className="math-stat-card math-stat-card--indigo">
+                        <div className="math-stat-card__value">{metrics.avgScore}%</div>
+                        <div className="math-stat-card__label">{t("tenant.games.history.average_score")}</div>
                     </div>
-                    <div className="col-3">
-                        <Card className="border-0 shadow-sm h-100">
-                            <Card.Body className="d-flex flex-column">
-                                <div className="small text-muted flex-grow-1">{t("tenant.games.history.best_streak")}</div>
-                                <div className="fs-3 fw-bold text-success mt-auto">{metrics.bestStreak}x</div>
-                            </Card.Body>
-                        </Card>
+                    <div className="math-stat-card math-stat-card--teal">
+                        <div className="math-stat-card__value">{metrics.bestStreak}x</div>
+                        <div className="math-stat-card__label">{t("tenant.games.history.best_streak")}</div>
                     </div>
-                    <div className="col-3">
-                        <Card className="border-0 shadow-sm h-100">
-                            <Card.Body className="d-flex flex-column">
-                                <div className="small text-muted flex-grow-1">{t("tenant.games.history.correct_wrong")}</div>
-                                <div className="fs-5 fw-bold mt-auto">
-                                    <span className="text-success">{metrics.totalCorrect}</span>
-                                    <span className="text-muted mx-1">/</span>
-                                    <span className="text-danger">{metrics.totalWrong}</span>
-                                </div>
-                            </Card.Body>
-                        </Card>
+                    <div className="math-stat-card math-stat-card--split">
+                        <div className="math-stat-card__value">
+                            <span className="text-success">{metrics.totalCorrect}</span>
+                            <span className="text-muted mx-1" style={{ fontSize: "0.8rem" }}>/</span>
+                            <span className="text-danger">{metrics.totalWrong}</span>
+                        </div>
+                        <div className="math-stat-card__label">{t("tenant.games.history.correct_wrong")}</div>
                     </div>
                 </div>
 
-                <h5 className="fw-bold mb-3">{t("tenant.games.history.session_table_title")}</h5>
+                {/* Main content — scrollable */}
+                <div className="game-setup-content game-setup-inner-content">
+                    <h6 className="fw-bold mb-3">{t("tenant.games.history.session_table_title")}</h6>
 
-                <GameHistoryView
-                    history={history}
-                    isLoading={isLoading}
-                    emptyMessage={t("tenant.games.history.empty")}
-                    renderSubGroupKey={(item) => `${item.operator}-${item.number_range}-${item.random_range ?? "na"}`}
-                    renderSubGroupHeader={(item) => (
-                        <span>
-                            Operator {item.operator} <span className="text-muted mx-1">•</span> Range {t("tenant.games.history.range_value", {
-                                a: item.number_range,
-                                b: item.random_range ?? "-",
-                            })}
-                        </span>
-                    )}
-                    renderSummaryBadges={(item) => (
-                        <Badge bg="secondary-subtle" text="secondary" className="x-small">
-                            {t(modeLabelKey(item.game_mode))}
-                        </Badge>
-                    )}
-                />
+                    <GameHistoryView
+                        history={history}
+                        isLoading={isLoading}
+                        emptyMessage={t("tenant.games.history.empty")}
+                        renderSubGroupKey={(item) => `${item.operator}-${item.number_range}-${item.random_range ?? "na"}`}
+                        renderSubGroupHeader={(item) => (
+                            <span>
+                                Operator {item.operator} <span className="text-muted mx-1">•</span> Range {t("tenant.games.history.range_value", {
+                                    a: item.number_range,
+                                    b: item.random_range ?? "-",
+                                })}
+                            </span>
+                        )}
+                        renderSummaryBadges={(item) => (
+                            <Badge bg="secondary-subtle" text="secondary" className="x-small">
+                                {t(modeLabelKey(item.game_mode))}
+                            </Badge>
+                        )}
+                    />
+                </div>
             </div>
         </MathGameLayout>
     );
 };
+
+(MathGameHistoryPage as any).layout = null;
 
 export default MathGameHistoryPage;

@@ -1,0 +1,90 @@
+.module-math-wrapper {
+    // ─────────────────────────────────────────────────────────────────
+    // SESSION CORE (Layout & Flow)
+    // ─────────────────────────────────────────────────────────────────
+
+    .math-game {
+        &--session {
+            height: 100%;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+
+            .row {
+                height: 100%;
+                min-height: 0;
+                margin: 0;
+            }
+
+            .col-xxl-10 {
+                min-height: 0;
+                display: flex;
+                padding: 0;
+            }
+        }
+
+        &__session-card {
+            width: 100%;
+            height: 100%;
+            min-height: 0;
+            margin: 0;
+            border-radius: 0;
+            display: flex;
+            flex-direction: column;
+        }
+
+        &__session-header {
+            padding: clamp(0.5rem, 1.8vh, 0.75rem) clamp(0.6rem, 2.4vw, 1rem) 0.45rem;
+
+            .badge {
+                font-size: clamp(0.68rem, 1.7vh, 0.8rem);
+                line-height: 1.25;
+            }
+        }
+
+        &__session-body {
+            min-height: 0;
+            flex: 1;
+            display: grid;
+            grid-template-rows: auto auto minmax(0, 1fr);
+            gap: clamp(0.35rem, 1.3vh, 0.7rem);
+            padding: clamp(0.45rem, 1.4vh, 0.8rem) clamp(0.6rem, 2.4vw, 1rem) calc(clamp(0.45rem, 1.4vh, 0.8rem) + env(safe-area-inset-bottom, 0px));
+            overflow: hidden;
+        }
+
+        &__session-question {
+            margin-bottom: 0 !important;
+            padding: clamp(0.6rem, 2vh, 1rem) !important;
+
+            .display-6 {
+                font-size: clamp(1.2rem, 4.3vh, 2rem);
+                line-height: 1.2;
+                font-weight: 700;
+            }
+        }
+
+        &__session-answer {
+            margin-bottom: 0 !important;
+            padding: clamp(0.45rem, 1.6vh, 0.7rem) !important;
+        }
+    }
+
+    @media (orientation: landscape) and (max-height: 520px) {
+        .math-game {
+            &__session-body {
+                gap: 0.35rem;
+                padding-top: 0.4rem;
+                padding-bottom: calc(0.45rem + env(safe-area-inset-bottom, 0px));
+            }
+
+            &__session-question {
+                padding: 0.45rem 0.55rem !important;
+                .display-6 { font-size: clamp(1rem, 4.7vh, 1.45rem); }
+            }
+
+            &__session-answer {
+                padding: 0.4rem 0.55rem !important;
+            }
+        }
+    }
+}

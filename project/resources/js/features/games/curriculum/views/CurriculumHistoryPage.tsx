@@ -70,9 +70,9 @@ const CurriculumHistoryPage: React.FC<Props> = ({ member }) => {
             memberName={member?.full_name ?? member?.name ?? undefined}
             allowPageScroll
         >
-            <div className="math-game-layout__scroll">
+            <div className="game-feature-shell__scroll">
                 <div className="math-game">
-                    <div className="vocab-setup-card">
+                    <div className="game-setup-card">
                         <div className="vocab-stat-row">
                             <div className="vocab-stat-card vocab-stat-card--indigo">
                                 <div className="vocab-stat-card__value">{metrics.totalSessions}</div>
@@ -88,7 +88,7 @@ const CurriculumHistoryPage: React.FC<Props> = ({ member }) => {
                             </div>
                         </div>
 
-                        <div className="vocab-setup-content vocab-inner-content">
+                        <div className="game-setup-content game-setup-inner-content">
                             <GameHistoryView
                                 history={history}
                                 isLoading={isLoading}

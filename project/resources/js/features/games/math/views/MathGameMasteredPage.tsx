@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { Accordion, Badge, Card, Col, Row, Spinner, Table } from "react-bootstrap";
+import { Accordion, Badge, Spinner, Table } from "react-bootstrap";
 import { useTranslation } from "react-i18next";
 import Select from "react-select";
 
@@ -114,110 +114,112 @@ const MathGameMasteredPage: React.FC<Props> = ({ member }) => {
             menuKey="mastered"
             memberName={member?.full_name ?? member?.name ?? undefined}
         >
-            <div className="math-game-layout__scroll">
-                <Row className="g-3 h-100">
-                    <Col lg={4}>
-                        <Card className="border-0 shadow-sm h-100">
-                            <Card.Body>
-                                <div className="small text-muted mb-2">{t("tenant.games.mastered.operator_group")}</div>
-                                <Select
-                                    classNamePrefix="react-select"
-                                    value={selectedOperator}
-                                    options={operatorOptions}
-                                    onChange={(option) => setSelectedOperator(option ?? operatorOptions[0])}
-                                    isSearchable={false}
-                                />
+            <div className="game-setup-card h-100">
+                {/* Header dengan Selector & Ringkasan */}
+                <div className="px-3 px-sm-4 pt-3 pb-2 border-bottom border-light d-flex align-items-center justify-content-between gap-3 flex-wrap">
+                    <div className="d-flex align-items-center gap-3 flex-grow-1">
+                        <div style={{ minWidth: "180px" }}>
+                            <div className="small text-muted mb-1">{t("tenant.games.mastered.operator_group")}</div>
+                            <Select
+                                classNamePrefix="react-select"
+                                value={selectedOperator}
+                                options={operatorOptions}
+                                onChange={(option) => setSelectedOperator(option ?? operatorOptions[0])}
+                                isSearchable={false}
+                            />
+                        </div>
+                        <div className="ms-auto text-end">
+                            <div className="small text-muted">{t("tenant.games.mastered.total_pairs")}</div>
+                            <div className="fs-2 fw-bold text-success lh-1">{pairs.length}</div>
+                        </div>
+                    </div>
+                </div>
 
-                                <div className="mt-4 p-3 rounded-3 bg-success-subtle">
-                                    <div className="small text-muted">{t("tenant.games.mastered.total_pairs")}</div>
-                                    <div className="fs-1 fw-bold text-success lh-1 mt-1">{pairs.length}</div>
-                                </div>
-                            </Card.Body>
-                        </Card>
-                    </Col>
+                {/* Konten Utama — scrollable */}
+                <div className="game-setup-content game-setup-inner-content">
+                    {isLoading ? (
+                        <div className="d-flex align-items-center gap-2 text-muted py-4">
+                            <Spinner size="sm" animation="border" />
+                            <span>{t("tenant.games.mastered.loading")}</span>
+                        </div>
+                    ) : pairs.length === 0 ? (
+                        <div className="text-center py-5">
+                            <div className="fs-1 mb-2">🏆</div>
+                            <div className="text-muted small">{t("tenant.games.mastered.empty")}</div>
+                        </div>
+                    ) : (
+                        <div className="math-game__details">
+                            {operatorOrder
+                                .filter((op) => grouped.has(op))
+                                .map((op) => {
+                                    const byA = grouped.get(op)!;
+                                    return (
+                                        <div key={op} className="mb-4">
+                                            <div className="d-flex align-items-center gap-2 mb-3">
+                                                <Badge bg="info-subtle" text="info" className="fs-6 px-3">{operatorSymbol[op]}</Badge>
+                                                <h6 className="fw-bold mb-0">
+                                                    {operatorOptions.find((item) => item.value === op)?.label ?? op}
+                                                </h6>
+                                            </div>
 
-                    <Col lg={8}>
-                        <Card className="border-0 shadow-sm h-100">
-                            <Card.Header className="bg-transparent border-0 pb-0">
-                                <h5 className="fw-semibold mb-0">{t("tenant.games.mastered.details_title")}</h5>
-                            </Card.Header>
-                            <Card.Body className="d-flex flex-column">
-                                {isLoading ? (
-                                    <div className="d-flex align-items-center gap-2 text-muted">
-                                        <Spinner size="sm" animation="border" />
-                                        <span>{t("tenant.games.mastered.loading")}</span>
-                                    </div>
-                                ) : pairs.length === 0 ? (
-                                    <div className="text-muted small">{t("tenant.games.mastered.empty")}</div>
-                                ) : (
-                                    <div className="math-game__table-scroll overflow-auto pe-1">
-                                        {operatorOrder
-                                            .filter((op) => grouped.has(op))
-                                            .map((op) => {
-                                                const byA = grouped.get(op)!;
-                                                return (
-                                                    <div key={op} className="mb-3">
-                                                        <div className="d-flex align-items-center gap-2 mb-2">
-                                                            <Badge bg="info-subtle" text="info">{operatorSymbol[op]}</Badge>
-                                                            <span className="fw-semibold">
-                                                                {operatorOptions.find((item) => item.value === op)?.label ?? op}
-                                                            </span>
-                                                        </div>
+                                            <Accordion
+                                                activeKey={activeAccordion ?? undefined}
+                                                onSelect={(eventKey) => setActiveAccordion(Array.isArray(eventKey) ? (eventKey[0] ?? null) : (eventKey ?? null))}
+                                                className="custom-accordionwithicon"
+                                            >
+                                                {Array.from(byA.keys())
+                                                    .sort((a, b) => a - b)
+                                                    .map((angkaA) => {
+                                                        const eventKey = `${op}-${angkaA}`;
+                                                        const rows = byA.get(angkaA) ?? [];
 
-                                                        <Accordion
-                                                            activeKey={activeAccordion ?? undefined}
-                                                            onSelect={(eventKey) => setActiveAccordion(Array.isArray(eventKey) ? (eventKey[0] ?? null) : (eventKey ?? null))}
-                                                            className="custom-accordionwithicon"
-                                                        >
-                                                            {Array.from(byA.keys())
-                                                                .sort((a, b) => a - b)
-                                                                .map((angkaA) => {
-                                                                    const eventKey = `${op}-${angkaA}`;
-                                                                    const rows = byA.get(angkaA) ?? [];
-
-                                                                    return (
-                                                                        <Accordion.Item eventKey={eventKey} key={eventKey}>
-                                                                            <Accordion.Header>
-                                                                                {t("tenant.games.mastered.accordion.angka_a", { value: angkaA })}
-                                                                            </Accordion.Header>
-                                                                            <Accordion.Body>
-                                                                                <div className="table-responsive">
-                                                                                    <Table size="sm" className="align-middle mb-0">
-                                                                                        <thead className="table-light">
-                                                                                            <tr>
-                                                                                                <th>{t("tenant.games.mastered.table.no")}</th>
-                                                                                                <th className="text-center">{t("tenant.games.mastered.table.angka_b")}</th>
-                                                                                                <th className="text-center">{t("tenant.games.mastered.table.max_streak")}</th>
-                                                                                            </tr>
-                                                                                        </thead>
-                                                                                        <tbody>
-                                                                                            {rows.map((row, index) => (
-                                                                                                <tr key={`${row.operator}-${row.angka_pilihan}-${row.angka_random}`}>
-                                                                                                    <td>{index + 1}</td>
-                                                                                                    <td className="text-center fw-semibold">{row.angka_random}</td>
-                                                                                                    <td className="text-center">{row.max_streak_benar}x</td>
-                                                                                                </tr>
-                                                                                            ))}
-                                                                                        </tbody>
-                                                                                    </Table>
-                                                                                </div>
-                                                                            </Accordion.Body>
-                                                                        </Accordion.Item>
-                                                                    );
-                                                                })}
-                                                        </Accordion>
-                                                    </div>
-                                                );
-                                            })}
-                                    </div>
-                                )}
-                            </Card.Body>
-                        </Card>
-                    </Col>
-                </Row>
+                                                        return (
+                                                            <Accordion.Item eventKey={eventKey} key={eventKey}>
+                                                                <Accordion.Header>
+                                                                    {t("tenant.games.mastered.accordion.angka_a", { value: angkaA })}
+                                                                    <span className="ms-2 text-muted small">
+                                                                        ({t("tenant.games.vocabulary.mastered.word_count", { count: rows.length })})
+                                                                    </span>
+                                                                </Accordion.Header>
+                                                                <Accordion.Body>
+                                                                    <div className="table-responsive">
+                                                                        <Table size="sm" className="align-middle mb-0">
+                                                                            <thead className="table-light">
+                                                                                <tr>
+                                                                                    <th>#</th>
+                                                                                    <th className="text-center">{t("tenant.games.mastered.table.angka_b")}</th>
+                                                                                    <th className="text-center">{t("tenant.games.mastered.table.max_streak")}</th>
+                                                                                </tr>
+                                                                            </thead>
+                                                                            <tbody>
+                                                                                {rows.map((row, index) => (
+                                                                                    <tr key={`${row.operator}-${row.angka_pilihan}-${row.angka_random}`}>
+                                                                                        <td>{index + 1}</td>
+                                                                                        <td className="text-center fw-semibold fs-5">{row.angka_random}</td>
+                                                                                        <td className="text-center">
+                                                                                            <Badge bg="success-subtle" text="success">{row.max_streak_benar}x</Badge>
+                                                                                        </td>
+                                                                                    </tr>
+                                                                                ))}
+                                                                            </tbody>
+                                                                        </Table>
+                                                                    </div>
+                                                                </Accordion.Body>
+                                                            </Accordion.Item>
+                                                        );
+                                                    })}
+                                            </Accordion>
+                                        </div>
+                                    );
+                                })}
+                        </div>
+                    )}
+                </div>
             </div>
         </MathGameLayout>
     );
 };
+
+(MathGameMasteredPage as any).layout = null;
 
 export default MathGameMasteredPage;

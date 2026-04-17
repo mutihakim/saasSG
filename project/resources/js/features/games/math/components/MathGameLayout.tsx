@@ -1,6 +1,7 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
+import '../../../../../scss/modules/games/math.scss';
 import GameFeatureLayout, { type GameFeatureMenuItem, type GameFeatureMenuKey } from "../../shared/components/GameFeatureLayout";
 
 type MathGameLayoutProps = {
@@ -40,6 +41,7 @@ const MathGameLayout: React.FC<MathGameLayoutProps> = ({
             isSessionActive={isSessionActive}
             allowPageScroll={allowPageScroll}
             onLeavingSession={onLeavingSession}
+            featureClass="module-math-wrapper"
         >
             {children}
         </GameFeatureLayout>

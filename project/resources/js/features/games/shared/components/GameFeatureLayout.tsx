@@ -97,8 +97,8 @@ const GameFeatureLayout: React.FC<GameFeatureLayoutProps> = ({
     };
 
     return (
-        <div className={`math-game-layout${!allowPageScroll ? " math-game-layout--no-inner-scroll" : ""}${featureClass ? ` ${featureClass}` : ""}`}>
-            <header className="math-game-layout__topbar">
+        <div className={`game-feature-shell${!allowPageScroll ? " game-feature-shell--no-inner-scroll" : ""}${featureClass ? ` ${featureClass}` : ""}`}>
+            <header className="game-feature-shell__topbar">
                 <button
                     type="button"
                     className="btn btn-light btn-sm"
@@ -108,12 +108,12 @@ const GameFeatureLayout: React.FC<GameFeatureLayoutProps> = ({
                     {t("tenant.games.layout.back")}
                 </button>
 
-                <div className="math-game-layout__title">{title}</div>
+                <div className="game-feature-shell__title">{title}</div>
 
                 <Dropdown
                     show={isDropdownOpen}
                     onToggle={(nextShow) => setIsDropdownOpen(nextShow)}
-                    className="header-item topbar-user math-game-layout__user-dropdown"
+                    className="header-item topbar-user game-feature-shell__user-dropdown"
                 >
                     <Dropdown.Toggle as="button" type="button" className="btn arrow-none">
                         <span className="d-flex align-items-center">
@@ -142,8 +142,12 @@ const GameFeatureLayout: React.FC<GameFeatureLayoutProps> = ({
                 </Dropdown>
             </header>
 
-            <main className="math-game-layout__content">
-                {children}
+            <main className="game-feature-shell__content">
+                <div className={`game-feature-shell__scroll${isSessionActive ? " game-feature-shell__scroll--session" : ""}`}>
+                    <div className={`game-feature-shell__inner${isSessionActive ? " game-feature-shell__inner--session" : ""}`}>
+                        {children}
+                    </div>
+                </div>
             </main>
 
             {isSessionActive && (

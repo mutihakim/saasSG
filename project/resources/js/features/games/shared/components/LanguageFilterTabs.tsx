@@ -44,12 +44,12 @@ const LanguageFilterTabs: React.FC<Props> = ({
     }, [onChange, selected]);
 
     return (
-        <div className={`vocab-lang-container ${className}`}>
+        <div className={`game-lang-container ${className}`}>
             {languages.map((item) => (
                 <button
                     key={item.value}
                     type="button"
-                    className={`vocab-lang-btn ${selected === item.value ? "active" : ""}`}
+                    className={`game-lang-btn ${selected === item.value ? "active" : ""}`}
                     onClick={() => handleClick(item.value)}
                 >
                     <img

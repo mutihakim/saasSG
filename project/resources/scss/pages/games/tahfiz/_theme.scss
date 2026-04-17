@@ -1,35 +1,73 @@
-.tahfiz-theme {
-    // Shared layout components
-    .tahfiz-page-title {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        justify-content: center;
-        line-height: 1;
+.module-tahfiz-wrapper {
+    &.game-feature-shell {
+        background-color: #634392; // Elegant Purple for Tahfiz
+        background-image: none !important;
+        position: relative;
 
-        &__main {
-            font-weight: 700;
-            font-size: 1.25rem;
-            color: #0d5b56;
+        .game-feature-shell__scroll {
+            &--session {
+                overflow: hidden;
+            }
         }
 
-        &__sub {
-            font-size: 0.65rem;
-            color: var(--#{$prefix}secondary-color);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
+        .game-feature-shell__inner {
+            &--session {
+                height: 100%;
+            }
+        }
+
+        .game-feature-shell__topbar {
+            background: transparent;
+            border-bottom: none;
+            z-index: 20;
+            position: relative;
+        }
+
+        .game-feature-shell__title {
+            font-family: var(--vz-body-font-family);
+            font-size: 1.125rem;
+            color: #ffffff;
             font-weight: 700;
-            margin-top: 0.25rem;
+            letter-spacing: 0.025em;
+            white-space: normal;
+            overflow: hidden;
+            text-overflow: clip;
+            line-height: 1.2;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            line-clamp: 2;
+            -webkit-box-orient: vertical;
+            text-align: center;
+        }
+
+        .game-feature-shell__topbar .btn-light {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: #ffffff;
+            border-radius: 9999px;
+            padding: 0.5rem 1rem;
+        }
+
+        .game-feature-shell__topbar .btn-light:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        .game-feature-shell__user-dropdown .avatar-xs {
+            background: rgba(255, 255, 255, 0.2);
+            color: #ffffff;
+            border: 2px dashed rgba(255, 255, 255, 0.5);
+        }
+
+        .game-feature-shell__content {
+            background: transparent !important;
         }
     }
-}
 
-// ─────────────────────────────────────────────────────────────────
-// Utility: padding-bottom safe area inset untuk PWA mobile
-// Berguna saat konten menyentuh bagian bawah layar (home indicator)
-// Di desktop/browser biasa, safe-area-inset-bottom = 0px sehingga
-// tidak berpengaruh sama sekali.
-// ─────────────────────────────────────────────────────────────────
-.pb-safe-inset {
-    padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
+    // ─────────────────────────────────────────────────────────────────
+    // Utility: padding-bottom safe area inset untuk PWA mobile
+    // ─────────────────────────────────────────────────────────────────
+    .pb-safe-inset {
+        padding-bottom: max(1rem, env(safe-area-inset-bottom, 0px)) !important;
+    }
 }

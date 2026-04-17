@@ -1,4 +1,3 @@
-@import "theme";
-@import "setup";
-@import "settings";
-@import "practice";
+// File internal ini sudah tidak digunakan (Deprecated).
+// Pengaturan impor sekarang dipusatkan di resources/scss/modules/games/vocabulary.scss
+// agar variabel (abstracts) dan layout terkelola di satu tempat.

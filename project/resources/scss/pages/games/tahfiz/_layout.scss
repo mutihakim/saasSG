@@ -1,0 +1,61 @@
+.module-tahfiz-wrapper {
+    &.game-feature-shell {
+        height: 100vh;
+        height: 100dvh;
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+
+        .game-feature-shell__topbar {
+            height: 64px;
+            min-height: 64px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.5rem 1rem;
+            z-index: 10;
+        }
+
+        .game-feature-shell__content {
+            flex: 1;
+            min-height: 0;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden; // Matikan scroll di main, biarkan __scroll yang menangani
+        }
+
+        .game-feature-shell__scroll {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            overflow-y: auto;
+            overflow-x: hidden;
+            padding: 1rem 0 0; // Padding atas saja, biarkan card mepet ke bawah jika h-100
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .game-feature-shell__inner {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-height: min-content;
+
+            &--session {
+                height: 100%;
+                min-height: 0;
+            }
+        }
+
+        &.game-feature-shell--no-inner-scroll {
+            .game-feature-shell__content {
+                overflow: hidden;
+            }
+            .game-feature-shell__scroll {
+                overflow: hidden;
+            }
+        }
+    }
+}
