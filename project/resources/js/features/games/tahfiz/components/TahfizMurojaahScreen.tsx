@@ -80,26 +80,27 @@ const TahfizMurojaahScreen: React.FC<Props> = ({
 
     return (
         <>
-        <div className="tahfiz-murojaah h-100 flex-column d-flex overflow-hidden mx-auto w-100 position-relative">
-            <div className="tahfiz-murojaah__bg"></div>
-            <main className="tahfiz-murojaah__content flex-grow-1 overflow-auto px-3 pb-3 pt-1 d-flex flex-column">
-                <div className="tahfiz-murojaah__card bg-white shadow-sm p-4 flex-grow-1 d-flex flex-column align-items-center justify-content-center position-relative">
-                    <div className="tahfiz-murojaah__badge-wrap">
-                        <span className="tahfiz-murojaah__badge badge bg-light text-secondary border border-light rounded-pill px-3 py-1 shadow-sm text-uppercase tracking-widest fw-bold">
-                            {t("tenant.games.tahfiz.murojaah.ayah_label", { number: currentAyah.nomor_ayat })}
-                        </span>
-                    </div>
+        <div className="tahfiz-reading tahfiz-murojaah h-100 flex-column d-flex position-relative">
+            <div className="tahfiz-reading__bg"></div>
 
-                    <div className="text-center w-100 my-auto">
-                        <div className="tahfiz-murojaah__arabic text-center w-100" dir="rtl">
-                            {currentAyah.teks_arab}
+            <div className="tahfiz-reading__content-wrapper px-3 d-flex flex-column h-100">
+                <main className="tahfiz-reading__main d-flex flex-column pt-3 flex-grow-1 overflow-hidden mb-4">
+                    <div className="tahfiz-reading__card bg-white shadow-sm flex-grow-1 d-flex flex-column align-items-center justify-content-center position-relative p-4">
+                        <div className="tahfiz-murojaah__badge-wrap">
+                            <span className="tahfiz-murojaah__badge badge bg-light text-secondary border border-light rounded-pill shadow-sm text-uppercase fw-bold px-3 py-1">
+                                {t("tenant.games.tahfiz.murojaah.ayah_label", { number: currentAyah.nomor_ayat })}
+                            </span>
+                        </div>
+
+                        <div className="text-center w-100 my-auto">
+                            <div className="tahfiz-murojaah__arabic text-center w-100" dir="rtl">
+                                {currentAyah.teks_arab}
+                            </div>
                         </div>
                     </div>
-                </div>
-            </main>
+                </main>
 
-            <div className="tahfiz-murojaah__footer flex-shrink-0 w-100 mt-auto position-relative px-3 pb-3">
-                <div className="bg-white px-4 py-4 position-relative mx-auto w-100 rounded-4 shadow-sm pb-safe-inset">
+                <div className="tahfiz-reading__controls-area w-100 position-relative mt-auto">
                     <button
                         type="button"
                         className="tahfiz-murojaah__notes-trigger btn btn-white bg-white shadow-sm border d-flex align-items-center justify-content-center p-0 transition-all rounded-circle"
@@ -111,99 +112,94 @@ const TahfizMurojaahScreen: React.FC<Props> = ({
                         )}
                     </button>
 
-                    <div className="row g-2 mb-3 mt-0">
-                        <div className="col-6">
-                            <div className="text-center mb-1">
-                                <h3 className="tahfiz-murojaah__meta-label text-slate-800 fw-bold m-0">
-                                    TAJWID 💎
-                                </h3>
+                    <div className="tahfiz-reading__controls-inner pb-safe-inset d-flex flex-column justify-content-center w-100 mx-auto">
+                        <div className="row g-2 mb-3 mt-0">
+                            <div className="col-6">
+                                <div className="text-center mb-1">
+                                    <h3 className="tahfiz-murojaah__meta-label text-slate-800 fw-bold m-0">
+                                        TAJWID 💎
+                                    </h3>
+                                </div>
+                                <div className="d-flex bg-slate-50 rounded-pill p-1 border border-light">
+                                    {[
+                                        { id: "bagus", icon: "ri-checkbox-circle-line" },
+                                        { id: "cukup", icon: "ri-subtract-line" },
+                                        { id: "kurang", icon: "ri-close-circle-line" }
+                                    ].map((item) => (
+                                        <button
+                                            key={item.id}
+                                            type="button"
+                                            className={`btn btn-sm flex-grow-1 border-0 rounded-pill d-flex align-items-center justify-content-center py-1 transition-all ${getActiveColorClass(item.id, 'tajwid')}`}
+                                            onClick={() => setTajwidStatus(item.id)}
+                                            title={t(`tenant.games.tahfiz.murojaah.status.${item.id}`)}
+                                        >
+                                            <i className={`${item.icon} fs-6`} />
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
-                            <div className="d-flex bg-slate-50 rounded-pill p-1 border border-light">
-                                {[
-                                    { id: "bagus", icon: "ri-checkbox-circle-line" },
-                                    { id: "cukup", icon: "ri-subtract-line" },
-                                    { id: "kurang", icon: "ri-close-circle-line" }
-                                ].map((item) => (
-                                    <button
-                                        key={item.id}
-                                        type="button"
-                                        className={`btn btn-sm flex-grow-1 border-0 rounded-pill d-flex align-items-center justify-content-center py-1 transition-all ${getActiveColorClass(item.id, 'tajwid')}`}
-                                        onClick={() => setTajwidStatus(item.id)}
-                                        title={t(`tenant.games.tahfiz.murojaah.status.${item.id}`)}
-                                    >
-                                        <i className={`${item.icon} fs-6`} />
-                                    </button>
-                                ))}
+
+                            <div className="col-6">
+                                <div className="text-center mb-1">
+                                    <h3 className="tahfiz-murojaah__meta-label text-slate-800 fw-bold m-0">
+                                        HAFALAN 🚀
+                                    </h3>
+                                </div>
+                                <div className="d-flex bg-slate-50 rounded-pill p-1 border border-light">
+                                    {[
+                                        { id: "lancar", icon: "ri-flashlight-line" },
+                                        { id: "terbata", icon: "ri-pulse-line" },
+                                        { id: "lupa", icon: "ri-error-warning-line" }
+                                    ].map((item) => (
+                                        <button
+                                            key={item.id}
+                                            type="button"
+                                            className={`btn btn-sm flex-grow-1 border-0 rounded-pill d-flex align-items-center justify-content-center py-1 transition-all ${getActiveColorClass(item.id, 'hafalan')}`}
+                                            onClick={() => setHafalanStatus(item.id)}
+                                            title={t(`tenant.games.tahfiz.murojaah.status.${item.id}`)}
+                                        >
+                                            <i className={`${item.icon} fs-6`} />
+                                        </button>
+                                    ))}
+                                </div>
                             </div>
                         </div>
 
-                        <div className="col-6">
-                            <div className="text-center mb-1">
-                                <h3 className="tahfiz-murojaah__meta-label text-slate-800 fw-bold m-0">
-                                    HAFALAN 🚀
-                                </h3>
-                            </div>
-                            <div className="d-flex bg-slate-50 rounded-pill p-1 border border-light">
-                                {[
-                                    { id: "lancar", icon: "ri-flashlight-line" },
-                                    { id: "terbata", icon: "ri-pulse-line" },
-                                    { id: "belum_hafal", icon: "ri-error-warning-line" }
-                                ].map((item) => (
-                                    <button
-                                        key={item.id}
-                                        type="button"
-                                        className={`btn btn-sm flex-grow-1 border-0 rounded-pill d-flex align-items-center justify-content-center py-1 transition-all ${getActiveColorClass(item.id, 'hafalan')}`}
-                                        onClick={() => setHafalanStatus(item.id)}
-                                        title={t(`tenant.games.tahfiz.murojaah.status.${item.id}`)}
-                                    >
-                                        <i className={`${item.icon} fs-6`} />
-                                    </button>
-                                ))}
-                            </div>
+                        <div className="d-flex align-items-center justify-content-between gap-3 px-2">
+                            <button 
+                                className="tahfiz-murojaah__action-btn btn btn-light text-secondary rounded-circle shadow-sm border"
+                                onClick={onPrev}
+                                disabled={currentAyahIndex === 0}
+                            >
+                                <i className="ri-skip-back-fill fs-5" />
+                            </button>
+                            
+                            <button
+                                type="button"
+                                className="tahfiz-murojaah__save-btn btn flex-grow-1 rounded-pill shadow-sm d-flex align-items-center justify-content-center gap-2"
+                                onClick={handleSave}
+                                disabled={isSaving}
+                            >
+                                {isSaving ? (
+                                    <span className="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                                ) : (
+                                    <i className="ri-save-3-line fs-5" />
+                                )}
+                                <span>{t("tenant.games.tahfiz.murojaah.save_btn")}</span>
+                            </button>
+
+                            <button 
+                                className="tahfiz-murojaah__action-btn btn btn-light text-secondary rounded-circle shadow-sm border"
+                                onClick={onNext}
+                                disabled={currentAyahIndex === activeSurahAyahs.length - 1}
+                            >
+                                <i className="ri-skip-forward-fill fs-5" />
+                            </button>
                         </div>
-                    </div>
-
-                    <div className="tahfiz-murojaah__divider"></div>
-
-                    <div className="d-flex align-items-center gap-2">
-                        <button 
-                            type="button" 
-                            className="tahfiz-murojaah__action-btn btn btn-light bg-light rounded-circle shadow-sm border border-light text-muted"
-                            onClick={onPrev}
-                            disabled={currentAyahIndex === 0 && surah.id === 1}
-                        >
-                            <i className="ri-skip-back-fill fs-6" />
-                        </button>
-
-                        <button 
-                            type="button" 
-                            className="tahfiz-murojaah__save-btn btn flex-grow-1 rounded-pill py-2 fw-bold shadow-sm d-flex align-items-center justify-content-center gap-2 tracking-wider"
-                            onClick={handleSave}
-                            disabled={isSaving}
-                        >
-                            {isSaving ? (
-                                <div className="spinner-border spinner-border-sm" role="status" />
-                            ) : (
-                                <>
-                                    <i className="ri-save-3-fill fs-6" />
-                                    <span>SIMPAN</span>
-                                </>
-                            )}
-                        </button>
-
-                        <button 
-                            type="button" 
-                            className="tahfiz-murojaah__action-btn btn btn-light bg-light rounded-circle shadow-sm border border-light text-muted"
-                            onClick={onNext}
-                            disabled={currentAyahIndex === activeSurahAyahs.length - 1 && surah.id === 114}
-                        >
-                            <i className="ri-skip-forward-fill fs-6" />
-                        </button>
                     </div>
                 </div>
             </div>
-
-            </div>
+        </div>
 
         {showNotesModal && (
             <div className="tahfiz-murojaah-modal p-4">
