@@ -26,6 +26,11 @@
         position: relative;
         overflow-y: auto;
         max-height: 100%;
+        padding: 4.5rem 1.25rem 1.25rem; // Clear absolute ayah pill
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
         
         // Hide scrollbar but keep functionality
         scrollbar-width: none;
