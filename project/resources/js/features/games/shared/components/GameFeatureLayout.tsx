@@ -24,6 +24,7 @@ type GameFeatureLayoutProps = {
     isSessionActive?: boolean;
     allowPageScroll?: boolean;
     onLeavingSession?: () => void;
+    onExitSession?: () => void;
     featureClass?: string;
     children: React.ReactNode;
 };
@@ -45,6 +46,7 @@ const GameFeatureLayout: React.FC<GameFeatureLayoutProps> = ({
     isSessionActive = false,
     allowPageScroll = false,
     onLeavingSession,
+    onExitSession,
     featureClass,
     children,
 }) => {
@@ -96,13 +98,52 @@ const GameFeatureLayout: React.FC<GameFeatureLayoutProps> = ({
         go();
     };
 
+    useEffect(() => {
+        if (!isSessionActive) {
+            return;
+        }
+
+        // Push a dummy state so we can intercept the back button
+        window.history.pushState({ session: "active" }, "");
+
+        const handlePopState = (event: PopStateEvent) => {
+            // Re-push state so the user stays on the page until they confirm
+            window.history.pushState({ session: "active" }, "");
+            
+            requestExit(() => {
+                onLeavingSession?.();
+                if (onExitSession) {
+                    onExitSession();
+                } else {
+                    router.visit("/games");
+                }
+            });
+        };
+
+        window.addEventListener("popstate", handlePopState);
+        return () => window.removeEventListener("popstate", handlePopState);
+    }, [isSessionActive, onExitSession, onLeavingSession, requestExit]);
+
     return (
         <div className={`game-feature-shell${!allowPageScroll ? " game-feature-shell--no-inner-scroll" : ""}${featureClass ? ` ${featureClass}` : ""}`}>
             <header className="game-feature-shell__topbar">
                 <button
                     type="button"
                     className="btn btn-light btn-sm"
-                    onClick={() => navigateWithGuard("/games")}
+                    onClick={() => {
+                        if (isSessionActive) {
+                            requestExit(() => {
+                                onLeavingSession?.();
+                                if (onExitSession) {
+                                    onExitSession();
+                                } else {
+                                    router.visit("/games");
+                                }
+                            });
+                        } else {
+                            router.visit("/games");
+                        }
+                    }}
                 >
                     <i className="ri-arrow-left-line me-1" />
                     {t("tenant.games.layout.back")}

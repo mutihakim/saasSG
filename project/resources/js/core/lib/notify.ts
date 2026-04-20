@@ -4,35 +4,48 @@ import { toast, ToastOptions } from "react-toastify";
 let audioContext: AudioContext | null = null;
 
 function getAudioContext(): AudioContext | null {
-    if (typeof window === "undefined") return null;
-    const Ctx = window.AudioContext || (window as typeof window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
-    if (!Ctx) return null;
-    if (!audioContext) {
-        audioContext = new Ctx();
+    try {
+        if (typeof window === "undefined") return null;
+        const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+        if (!Ctx) return null;
+        if (!audioContext) {
+            audioContext = new Ctx();
+        }
+        return audioContext;
+    } catch {
+        return null;
     }
-    return audioContext;
 }
 
 function playTone(frequency: number, durationSec: number, type: OscillatorType) {
-    const ctx = getAudioContext();
-    if (!ctx) return;
+    try {
+        const ctx = getAudioContext();
+        if (!ctx) return;
 
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const now = ctx.currentTime;
+        // On some mobile browsers, the context might be suspended and needs a resume call
+        if (ctx.state === "suspended") {
+            void ctx.resume();
+        }
 
-    oscillator.type = type;
-    oscillator.frequency.setValueAtTime(frequency, now);
+        const oscillator = ctx.createOscillator();
+        const gain = ctx.createGain();
+        const now = ctx.currentTime;
 
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
+        oscillator.type = type;
+        oscillator.frequency.setValueAtTime(frequency, now);
 
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
+        gain.gain.setValueAtTime(0.0001, now);
+        gain.gain.exponentialRampToValueAtTime(0.12, now + 0.01);
+        gain.gain.exponentialRampToValueAtTime(0.0001, now + durationSec);
 
-    oscillator.start(now);
-    oscillator.stop(now + durationSec);
+        oscillator.connect(gain);
+        gain.connect(ctx.destination);
+
+        oscillator.start(now);
+        oscillator.stop(now + durationSec);
+    } catch {
+        // Silently fail if audio cannot be played
+    }
 }
 
 function playSuccessSound() {

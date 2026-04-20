@@ -26,7 +26,7 @@ const MathSummaryCard: React.FC<Props> = ({ attempts, result, summaryStats, onCh
                 <Row className="g-3 mb-3">
                     <Col sm={4}>
                         <div className="rounded-3 bg-primary-subtle p-3 text-center h-100">
-                            <div className="fs-3 fw-bold text-primary">{Math.round((result.correctCount / Math.max(1, result.totalQuestions)) * 100)}%</div>
+                            <div className="fs-3 fw-bold text-primary">{Math.round((result.correctCount / Math.max(1, attempts.length)) * 100)}%</div>
                             <div className="small text-muted">{t("tenant.games.math.summary.accuracy")}</div>
                         </div>
                     </Col>

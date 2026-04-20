@@ -138,3 +138,59 @@ export const formatAttemptProblem = (attempt: MathAttemptEntry) => (
         ? `${attempt.question.a} ${attempt.question.operator} ${attempt.question.b} = ${attempt.question.answer}`
         : `${attempt.question.a} ${attempt.question.operator} ${attempt.question.answer} = ${attempt.question.result}`
 );
+
+let audioContext: AudioContext | null = null;
+
+const getAudioContext = (): AudioContext | null => {
+    if (typeof window === "undefined") return null;
+    const Ctx = window.AudioContext || (window as any).webkitAudioContext;
+    if (!Ctx) return null;
+    if (!audioContext) {
+        audioContext = new Ctx();
+    }
+    return audioContext;
+};
+
+export const playNote = (frequency: number, duration = 0.15) => {
+    const ctx = getAudioContext();
+    if (!ctx) return;
+
+    const oscillator = ctx.createOscillator();
+    const gain = ctx.createGain();
+    const now = ctx.currentTime;
+
+    oscillator.type = "sine";
+    oscillator.frequency.setValueAtTime(frequency, now);
+
+    gain.gain.setValueAtTime(0, now);
+    gain.gain.linearRampToValueAtTime(0.5, now + 0.01);
+    gain.gain.exponentialRampToValueAtTime(0.0001, now + duration);
+
+    oscillator.connect(gain);
+    gain.connect(ctx.destination);
+
+    oscillator.start(now);
+    oscillator.stop(now + duration);
+};
+
+export const playNumpadNote = (digit: string) => {
+    // Map digits to frequencies (C4 major scale roughly)
+    // 1:C4, 2:D4, 3:E4, 4:F4, 5:G4, 6:A4, 7:B4, 8:C5, 9:D5, 0:G3 (lower)
+    const frequencies: Record<string, number> = {
+        "1": 261.63, // Do
+        "2": 293.66, // Re
+        "3": 329.63, // Mi
+        "4": 349.23, // Fa
+        "5": 392.00, // Sol
+        "6": 440.00, // La
+        "7": 493.88, // Si
+        "8": 523.25, // Do (high)
+        "9": 587.33, // Re (high)
+        "0": 196.00, // Sol (low)
+    };
+
+    const freq = frequencies[digit];
+    if (freq) {
+        playNote(freq);
+    }
+};

@@ -91,7 +91,7 @@ export const useMathSessionPersistence = ({
             await finishSession(buildSessionPayload(
                 setup,
                 attempts,
-                { ...result, totalQuestions: setup.questionCount, correctCount, wrongCount, bestStreak, duration: startedAt ? Math.max(0, Math.round((Date.now() - startedAt) / 1000)) : 0 },
+                { ...result, totalQuestions: attempts.length, correctCount, wrongCount, bestStreak, duration: startedAt ? Math.max(0, Math.round((Date.now() - startedAt) / 1000)) : 0 },
                 startedAt,
                 Date.now(),
             ));

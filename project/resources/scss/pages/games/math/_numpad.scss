@@ -23,6 +23,23 @@
             padding-block: clamp(0.35rem, 1.2vh, 0.75rem);
             border-radius: var(--vz-border-radius);
             font-weight: 700;
+            transition: all 0.1s ease;
+
+            &:focus, &:active {
+                box-shadow: none !important;
+                outline: none !important;
+            }
+
+            // Optional: specifically for outline variants to prevent sticky hover on touch
+            @media (hover: none) {
+                &:hover {
+                    background-color: transparent !important;
+                    color: inherit !important;
+                }
+                &.btn-outline-primary:hover { color: var(--vz-primary) !important; }
+                &.btn-outline-warning:hover { color: var(--vz-warning) !important; }
+                &.btn-success:hover { background-color: var(--vz-success) !important; color: #fff !important; }
+            }
         }
     }
 }

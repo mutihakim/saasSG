@@ -11,6 +11,7 @@ type MathGameLayoutProps = {
     isSessionActive?: boolean;
     allowPageScroll?: boolean;
     onLeavingSession?: () => void;
+    onExitSession?: () => void;
     children: React.ReactNode;
 };
 
@@ -21,6 +22,7 @@ const MathGameLayout: React.FC<MathGameLayoutProps> = ({
     isSessionActive = false,
     allowPageScroll = false,
     onLeavingSession,
+    onExitSession,
     children,
 }) => {
     const { t } = useTranslation();
@@ -41,6 +43,7 @@ const MathGameLayout: React.FC<MathGameLayoutProps> = ({
             isSessionActive={isSessionActive}
             allowPageScroll={allowPageScroll}
             onLeavingSession={onLeavingSession}
+            onExitSession={onExitSession}
             featureClass="module-math-wrapper"
         >
             {children}

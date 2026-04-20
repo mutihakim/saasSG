@@ -10,6 +10,7 @@ import MathSetupScreen from "../components/math-game/MathSetupScreen";
 import MathSummaryCard from "../components/math-game/MathSummaryCard";
 import { useMathGameController } from "../hooks/useMathGameController";
 import type { MathGameMember } from "../types";
+import useExitConfirm from "@/core/hooks/useExitConfirm";
 
 type MathGamePageProps = {
     member?: MathGameMember | null;
@@ -18,6 +19,7 @@ type MathGamePageProps = {
 const MathGamePage: React.FC<MathGamePageProps> = ({ member }) => {
     const { t } = useTranslation();
     const game = useMathGameController();
+    const { requestExit } = useExitConfirm({ eventName: "games:request-exit" });
 
     const currentQuestionNumber = Math.min(game.currentIndex + 1, game.questions.length || 1);
 
@@ -37,6 +39,7 @@ const MathGamePage: React.FC<MathGamePageProps> = ({ member }) => {
             memberName={memberName}
             isSessionActive={game.isSessionActive}
             onLeavingSession={game.persistPartialSessionOnLeave}
+            onExitSession={game.reset}
         >
             <GameFeedbackPopup
                 show={game.feedbackState.show}
@@ -87,7 +90,10 @@ const MathGamePage: React.FC<MathGamePageProps> = ({ member }) => {
                             onDigit={game.inputDigit}
                             onDelete={game.deleteDigit}
                             onSubmit={() => game.submitAnswer()}
-                            onLeave={game.persistPartialSessionOnLeave}
+                            onLeave={() => requestExit(() => {
+                                game.persistPartialSessionOnLeave();
+                                game.reset();
+                            })}
                         />
                     )}
 

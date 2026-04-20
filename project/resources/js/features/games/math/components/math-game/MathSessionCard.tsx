@@ -6,7 +6,7 @@ import GameCountdownOverlay from "../../../shared/components/GameCountdownOverla
 import GameSessionHeader from "../../../shared/components/GameSessionHeader";
 import GameTimerProgress from "../../../shared/components/GameTimerProgress";
 import type { MathCountdownState, MathGameSetupState, MathQuestion } from "../../types";
-import { answerVariant, modeLabelKey } from "../../utils/mathGame";
+import { answerVariant, modeLabelKey, playNumpadNote } from "../../utils/mathGame";
 
 type Props = {
     currentQuestion: MathQuestion;
@@ -78,7 +78,7 @@ const MathSessionCard: React.FC<Props> = ({
                     </div>
                 </div>
 
-                <div className="math-game__session-numpad math-game__numpad d-grid gap-2 mx-auto">
+                <div className="math-game__session-numpad math-game__numpad d-grid gap-2 mx-auto" key={currentQuestionNumber}>
                     {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map((digit) => (
                         <Button
                             key={digit}
@@ -87,6 +87,7 @@ const MathSessionCard: React.FC<Props> = ({
                             className="math-game__numpad-button game-touch-manipulation"
                             onClick={(event) => {
                                 event.currentTarget.blur();
+                                playNumpadNote(digit);
                                 onDigit(digit);
                             }}
                             disabled={disabled}
@@ -114,6 +115,7 @@ const MathSessionCard: React.FC<Props> = ({
                         className="math-game__numpad-button game-touch-manipulation"
                         onClick={(event) => {
                             event.currentTarget.blur();
+                            playNumpadNote("0");
                             onDigit("0");
                         }}
                         disabled={disabled}
